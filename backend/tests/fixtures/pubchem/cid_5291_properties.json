@@ -1,0 +1,19 @@
+{
+  "PropertyTable": {
+    "Properties": [
+      {
+        "CID": 5291,
+        "MolecularFormula": "C29H31N7O",
+        "MolecularWeight": "493.6",
+        "SMILES": "CC1=C(C=C(C=C1)NC(=O)C2=CC=C(C=C2)CN3CCN(CC3)C)NC4=NC=CC(=N4)C5=CN=CC=C5",
+        "InChIKey": "KTUFNOKKBVMGRW-UHFFFAOYSA-N",
+        "XLogP": 3.5,
+        "TPSA": 86.3,
+        "HBondDonorCount": 2,
+        "HBondAcceptorCount": 7,
+        "RotatableBondCount": 7,
+        "HeavyAtomCount": 37
+      }
+    ]
+  }
+}

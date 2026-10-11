@@ -14,6 +14,10 @@ class OfflineError(SourceError):
     """A request was needed while OFFLINE=1."""
 
 
+class SourceFormatError(SourceError):
+    """The source answered successfully, but the body isn't in the shape the client expects."""
+
+
 class SourceResponseError(SourceError):
     """The source answered with a status the client doesn't handle."""
 
