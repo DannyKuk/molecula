@@ -4,9 +4,9 @@ import sys
 from collections.abc import Callable
 
 from molecula.config import Settings, get_settings
-from molecula.ingest import compounds
+from molecula.ingest import compounds, targets
 
-STEPS: dict[str, Callable[[Settings], int]] = {"compounds": compounds.run}
+STEPS: dict[str, Callable[[Settings], int]] = {"compounds": compounds.run, "targets": targets.run}
 
 
 def main(argv: list[str] | None = None) -> int:

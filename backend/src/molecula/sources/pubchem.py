@@ -1,11 +1,11 @@
 from typing import Any
 from urllib.parse import quote
 
-import httpx2
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from molecula.sources.errors import SourceFormatError, SourceNotFound
+from molecula.sources.errors import SourceNotFound
 from molecula.sources.http import SourceClient
+from molecula.sources.parsing import parse
 
 PUG = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
 PROPERTY_FIELDS = (
@@ -112,10 +112,3 @@ class PubChemClient:
         """All synonyms, most relevant first as PubChem ranks them."""
         response = self._http.get(f"{PUG}/compound/cid/{cid}/synonyms/JSON", refresh=refresh)
         return parse(response, SynonymsResponse).information.entries[0].synonyms
-
-
-def parse[M: BaseModel](response: httpx2.Response, model: type[M]) -> M:
-    try:
-        return model.model_validate_json(response.content)
-    except ValidationError as error:
-        raise SourceFormatError(f"{response.request.url}: unexpected response shape") from error

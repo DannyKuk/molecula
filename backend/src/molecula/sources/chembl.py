@@ -1,10 +1,7 @@
-from typing import Literal
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
-import httpx2
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, ValidationError
-
-from molecula.sources.errors import SourceFormatError, SourceNotFound
 from molecula.sources.http import SourceClient
+from molecula.sources.parsing import parse
 
 EBI = "https://www.ebi.ac.uk"
 API = f"{EBI}/chembl/api/data"
@@ -29,16 +26,6 @@ class Molecule(BaseModel):
         if self.hierarchy and self.hierarchy.parent_chembl_id:
             return self.hierarchy.parent_chembl_id
         return self.chembl_id
-
-
-class MoleculeMatch(BaseModel):
-    """The molecules found for an InChIKey, and whether the full key matched or only its
-    connectivity block (the first 14 characters, which leave out stereo)."""
-
-    model_config = ConfigDict(frozen=True)
-
-    matched_on: Literal["inchikey", "connectivity"]
-    molecules: list[Molecule]
 
 
 class Mechanism(BaseModel):
@@ -94,23 +81,26 @@ class ChemblClient:
     def __init__(self, http: SourceClient) -> None:
         self._http = http
 
-    def molecules_for_inchikey(self, inchikey: str, *, refresh: bool = False) -> MoleculeMatch:
-        """Molecules with this standard InChIKey, or else those sharing its connectivity block.
-
-        Raises SourceNotFound if neither matches.
-        """
-        exact = self._molecules(
+    def molecules_for_inchikey(self, inchikey: str, *, refresh: bool = False) -> list[Molecule]:
+        """Molecules with exactly this standard InChIKey; empty if none."""
+        return self._molecules(
             {"molecule_structures__standard_inchi_key": inchikey}, refresh=refresh
         )
-        if exact:
-            return MoleculeMatch(matched_on="inchikey", molecules=exact)
+
+    def molecules_for_connectivity(self, inchikey: str, *, refresh: bool = False) -> list[Molecule]:
+        """Molecules sharing the InChIKey's connectivity block (the first 14 characters, which
+        leave out stereo); empty if none."""
         block = inchikey[:CONNECTIVITY_BLOCK_LENGTH]
-        similar = self._molecules(
+        return self._molecules(
             {"molecule_structures__standard_inchi_key__startswith": block}, refresh=refresh
         )
-        if similar:
-            return MoleculeMatch(matched_on="connectivity", molecules=similar)
-        raise SourceNotFound(f"ChEMBL has no molecule for InChIKey {inchikey}")
+
+    def molecules_named(self, name: str, *, refresh: bool = False) -> list[Molecule]:
+        """Molecules whose preferred name is `name`, ignoring case; empty if none.
+
+        Finds drugs whose structure ChEMBL draws differently, such as another tautomer.
+        """
+        return self._molecules({"pref_name__iexact": name}, refresh=refresh)
 
     def mechanisms(self, parent_chembl_id: str, *, refresh: bool = False) -> list[Mechanism]:
         """Every mechanism of a parent molecule and its salts; empty if ChEMBL lists none.
@@ -148,10 +138,3 @@ class ChemblClient:
             page = parse(response, page_model)
             items.extend(page.items)
         return items
-
-
-def parse[M: BaseModel](response: httpx2.Response, model: type[M]) -> M:
-    try:
-        return model.model_validate_json(response.content)
-    except ValidationError as error:
-        raise SourceFormatError(f"{response.request.url}: unexpected response shape") from error

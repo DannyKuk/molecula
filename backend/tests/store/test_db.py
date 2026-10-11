@@ -57,3 +57,23 @@ def test_upgrades_a_version_1_store_and_keeps_the_cache(tmp_path: Path) -> None:
     assert conn.execute("SELECT count(*) FROM http_cache").fetchone()[0] == 1
     tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
     assert {"compound", "synonym"} <= tables
+
+
+def test_upgrades_a_version_2_store_and_keeps_the_compounds(tmp_path: Path) -> None:
+    path = tmp_path / "molecula.db"
+    old = sqlite3.connect(path)
+    old.executescript(MIGRATIONS[1] + MIGRATIONS[2])
+    old.execute(
+        "INSERT INTO compound VALUES (2519, 'caffeine', 'K', 'C', 'F', 1.0, NULL, NULL,"
+        " 0, 0, 0, 1, 0, NULL, 'pubchem', '2026-01-01')"
+    )
+    old.execute("PRAGMA user_version = 2")
+    old.commit()
+    old.close()
+
+    conn = connect(path)
+
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
+    assert conn.execute("SELECT count(*) FROM compound").fetchone()[0] == 1
+    tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    assert {"target", "ligand_code", "complex_candidate"} <= tables
