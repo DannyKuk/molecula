@@ -2,7 +2,7 @@
 name = "molecula"
 version = "0.1.0"
 description = "Medicines chatbot backend: RAG over FDA drug labels, chemistry tools and 3D drug-target structures"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.14,<3.15"
 dependencies = [
     "fastapi>=0.115",
     "pydantic-settings>=2.6",
@@ -22,7 +22,7 @@ build-backend = "uv_build"
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py314"
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF"]
