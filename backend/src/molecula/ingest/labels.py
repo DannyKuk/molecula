@@ -1,0 +1,226 @@
+import logging
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+
+from molecula.config import Settings
+from molecula.services.compounds import name_candidates
+from molecula.sources.errors import SourceError, SourceNotFound, SourceUnavailable
+from molecula.sources.http import SourceClient
+from molecula.sources.openfda import Label, OpenFdaClient
+from molecula.store.compounds import CompoundRecord, CompoundStore
+from molecula.store.db import connect
+from molecula.store.http_cache import HttpCache
+from molecula.store.labels import LabelRecord, LabelSection, LabelStore, ProductType, SectionGroup
+
+logger = logging.getLogger(__name__)
+
+SOURCE = "openfda"
+DAILYMED_URL = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid={set_id}"
+PRODUCT_TYPES: dict[ProductType, str] = {
+    "rx": "HUMAN PRESCRIPTION DRUG",
+    "otc": "HUMAN OTC DRUG",
+}
+# The sections the knowledge base uses, from PLR prescription labels, older prescription labels
+# and OTC Drug Facts. Everything else is left out, notably `overdosage` (it lists toxic doses)
+# and the `*_table` HTML copies of sections already kept as text.
+SECTION_GROUPS: dict[str, SectionGroup] = {
+    "mechanism_of_action": "pharmacology",
+    "clinical_pharmacology": "pharmacology",
+    "pharmacodynamics": "pharmacology",
+    "indications_and_usage": "indications",
+    "dosage_and_administration": "dosing",
+    "boxed_warning": "warnings",
+    "warnings_and_cautions": "warnings",
+    "warnings": "warnings",
+    "contraindications": "contraindications",
+    "drug_interactions": "interactions",
+    "adverse_reactions": "adverse_reactions",
+    "do_not_use": "otc_consumer",
+    "stop_use": "otc_consumer",
+    "ask_doctor": "otc_consumer",
+    "when_using": "otc_consumer",
+    "purpose": "otc_consumer",
+    "active_ingredient": "otc_consumer",
+}
+SENSITIVE_GROUPS: frozenset[SectionGroup] = frozenset({"dosing"})
+REFERENCE_APPLICATIONS = ("NDA", "BLA")
+
+
+@dataclass(frozen=True)
+class DrugLabels:
+    """The canonical labels chosen for a compound out of the `found` labels its search returned."""
+
+    compound: CompoundRecord
+    found: int
+    labels: tuple[LabelRecord, ...]
+
+
+@dataclass
+class LabelsReport:
+    results: list[DrugLabels] = field(default_factory=list)
+    failures: dict[str, str] = field(default_factory=dict)
+    not_attempted: list[str] = field(default_factory=list)
+
+    @property
+    def without_label(self) -> list[str]:
+        return [result.compound.name for result in self.results if not result.labels]
+
+
+def ingest_labels(
+    compounds: list[CompoundRecord], openfda: OpenFdaClient, store: LabelStore
+) -> LabelsReport:
+    """Store the canonical prescription and OTC label of every compound.
+
+    A compound that fails is reported and skipped. When openFDA stops answering, the run stops.
+    """
+    report = LabelsReport()
+    for position, compound in enumerate(compounds):
+        try:
+            result = ingest_compound(compound, openfda, store)
+        except SourceError as error:
+            logger.warning("%s: %s", compound.name, error)
+            report.failures[compound.name] = str(error)
+            if isinstance(error, SourceUnavailable):
+                report.not_attempted = [later.name for later in compounds[position + 1 :]]
+                break
+        else:
+            report.results.append(result)
+    return report
+
+
+def ingest_compound(
+    compound: CompoundRecord, openfda: OpenFdaClient, store: LabelStore
+) -> DrugLabels:
+    """Search openFDA by the compound's name, which `data/scope.yaml` keeps as the US generic."""
+    fetched_at = datetime.now(UTC)
+    try:
+        search = openfda.search(compound.name)
+    except SourceNotFound:
+        found: list[Label] = []
+    else:
+        found = search.labels
+        if search.disclaimer:
+            store.save_disclaimer(SOURCE, search.disclaimer, fetched_at)
+    labels = canonical_labels(compound.name, found)
+    store.save(compound.cid, labels, fetched_at)
+    return DrugLabels(compound, len(found), labels)
+
+
+def canonical_labels(name: str, labels: list[Label]) -> tuple[LabelRecord, ...]:
+    """At most one prescription and one OTC label: the best single-ingredient label of the drug.
+
+    A label of the parent itself or one of its salts is taken over another form of it (an ester
+    such as fluticasone propionate); other forms count only when a product type has no such label.
+    """
+    canonical = []
+    for product_type, openfda_type in PRODUCT_TYPES.items():
+        single = [
+            label
+            for label in labels
+            if openfda_type in label.openfda.product_type and len(label.openfda.substance_name) == 1
+        ]
+        parent = name.casefold()
+        parents = [label for label in single if substance_parent(label) == parent]
+        forms = [label for label in single if substance_parent(label).startswith(f"{parent} ")]
+        if candidates := parents or forms:
+            canonical.append(to_record(min(candidates, key=preference), product_type))
+    return tuple(canonical)
+
+
+def substance_parent(label: Label) -> str:
+    """The label's one substance without salt and hydrate words, in lower case."""
+    return name_candidates(label.openfda.substance_name[0])[-1].casefold()
+
+
+def preference(label: Label) -> tuple[bool, bool, int, int, str]:
+    """Sorts the better label first: a mechanism section, the brand's own label, the newest, the
+    one with the most sections the knowledge base uses, then by set_id so the choice is stable."""
+    return (
+        "mechanism_of_action" not in label.sections,
+        not is_reference_label(label),
+        -int(label.effective_time),
+        -len(kept_sections(label)),
+        label.set_id,
+    )
+
+
+def is_reference_label(label: Label) -> bool:
+    """The brand's own label: filed under a new drug or biologics application (NDA or BLA, not a
+    generic's ANDA or an OTC monograph) and sold under a name other than its generic name.
+
+    The name check leaves out authorized generics and biosimilars, which are filed the same way.
+    """
+    fields = label.openfda
+    filed_as_original = any(
+        number.startswith(REFERENCE_APPLICATIONS) for number in fields.application_number
+    )
+    generic = {name.casefold() for name in fields.generic_name}
+    branded = any(brand.casefold() not in generic for brand in fields.brand_name)
+    return filed_as_original and branded
+
+
+def kept_sections(label: Label) -> tuple[LabelSection, ...]:
+    sections = []
+    for section, texts in label.sections.items():
+        group = SECTION_GROUPS.get(section)
+        text = "\n\n".join(part.strip() for part in texts if part.strip())
+        if group and text:
+            sections.append(LabelSection(section, group, text, group in SENSITIVE_GROUPS))
+    return tuple(sections)
+
+
+def to_record(label: Label, product_type: ProductType) -> LabelRecord:
+    return LabelRecord(
+        set_id=label.set_id,
+        substance=label.openfda.substance_name[0],
+        brand=label.openfda.brand_name[0] if label.openfda.brand_name else None,
+        product_type=product_type,
+        effective_time=label.effective_time,
+        url=DAILYMED_URL.format(set_id=label.set_id),
+        sections=kept_sections(label),
+    )
+
+
+def run(settings: Settings) -> int:
+    """`python -m molecula.ingest labels`: canonical labels for every compound."""
+    conn = connect(settings.db_path)
+    http = SourceClient(HttpCache(conn), offline=settings.offline)
+    try:
+        report = ingest_labels(
+            CompoundStore(conn).all(),
+            OpenFdaClient(http, api_key=settings.openfda_api_key),
+            LabelStore(conn),
+        )
+    finally:
+        http.close()
+        conn.close()
+    log_summary(report)
+    return 1 if report.failures or report.not_attempted else 0
+
+
+def log_summary(report: LabelsReport) -> None:
+    labels = [label for result in report.results for label in result.labels]
+    logger.info(
+        "%d compounds: %d with a prescription label, %d with an OTC label; %d characters stored",
+        len(report.results),
+        sum(1 for label in labels if label.product_type == "rx"),
+        sum(1 for label in labels if label.product_type == "otc"),
+        sum(label.characters for label in labels),
+    )
+    for result in report.results:
+        chosen = ", ".join(
+            f"{label.product_type} {label.brand or label.substance} {label.set_id}"
+            f" ({label.characters} characters)"
+            for label in result.labels
+        )
+        logger.info("  %s: %d found; %s", result.compound.name, result.found, chosen or "none")
+    if report.without_label:
+        logger.info("no US label: %s", ", ".join(report.without_label))
+    for name, reason in report.failures.items():
+        logger.error("  failed: %s: %s", name, reason)
+    if report.not_attempted:
+        logger.error(
+            "stopped because openFDA stopped answering; %d compounds not attempted. "
+            "Re-run later: what is fetched so far is served from the cache.",
+            len(report.not_attempted),
+        )

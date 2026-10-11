@@ -9,6 +9,19 @@ label is 40-170k characters) and the JSON is re-indented. Everything else, inclu
   HYDROCODONE APAP, each with two substance names. Recorded once with the client's default page
   size and once with `limit=4`, which takes two pages (`*_limit4_page1.json`, `*_page2.json`).
 - paracetamol: openFDA has US labels only, so it answers 404 with `NOT_FOUND`.
+
+Two searches were recorded on 2026-10-12 (with an API key, which changes nothing in the answer)
+and cut down to a few chosen labels each, with `meta.results` set to match; the labels themselves
+are trimmed like the others:
+
+- ibuprofen (1147 labels): Caldolor (the only single-ingredient Rx label with a
+  `mechanism_of_action` section), an older ibuprofen tablet label whose `clinical_pharmacology`
+  keeps its first 250 characters, which hold the mechanism sentence, an ibuprofen + famotidine
+  label, Advil Menstrual Pain (ibuprofen sodium, OTC), a store-brand OTC label and Advil Dual
+  Action (ibuprofen + acetaminophen, OTC).
+- acetaminophen (3284 labels): two generic Rx injection labels, Apadaz (benzhydrocodone +
+  acetaminophen, a brand label with a mechanism section), a hydrocodone + acetaminophen label,
+  Feverall and Tylenol 8 HR (OTC), and Advil Dual Action.
 """
 
 from pathlib import Path
@@ -26,6 +39,8 @@ RECORDED: dict[tuple[str, int, int], tuple[int, str]] = {
     ("hydrocodone apap", 4, 0): (200, "labels_hydrocodone_apap_limit4_page1.json"),
     ("hydrocodone apap", 4, 4): (200, "labels_hydrocodone_apap_limit4_page2.json"),
     ("paracetamol", PAGE_SIZE, 0): (404, "labels_paracetamol_not_found.json"),
+    ("ibuprofen", PAGE_SIZE, 0): (200, "labels_ibuprofen_selected.json"),
+    ("acetaminophen", PAGE_SIZE, 0): (200, "labels_acetaminophen_selected.json"),
 }
 
 

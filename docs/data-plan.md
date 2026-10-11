@@ -170,7 +170,57 @@ Consequences:
 - `*_table` HTML fields are dropped; the plain-text versions are kept.
 - Chunks: split by section, then recursively to ~500 tokens with 50 overlap. Metadata: `{cid, substance, brand, product_type, section_group, set_id, effective_time, url}`.
 
-**Corpus estimate:** a canonical Rx label is 40–170k characters (measured), an OTC label 3–5k. For 120 drugs that is ~8–10M characters ≈ 2–2.5M tokens ≈ 4–5k chunks. Local embeddings handle this on a CPU in minutes.
+**Corpus estimate:** a canonical Rx label is 40–170k characters (measured), an OTC label 3–5k. For 120 drugs that is ~8–10M characters ≈ 2–2.5M tokens ≈ 4–5k chunks. Local embeddings handle this on a CPU in minutes. The first full run measured less (below).
+
+**How `ingest labels` works.** It runs after `ingest compounds`, for every compound in the store.
+
+1. **Search name:** the compound's name, which `data/scope.yaml` keeps as the US generic ("acetaminophen", with "paracetamol" as an alias). Aliases are not searched: they are brands or non-US names, and openFDA's `generic_name` holds neither. A 404 means the drug has no US label.
+2. **Single ingredient of this drug:** a label counts when it has exactly one `substance_name` and that substance, without salt and hydrate words (the list in `services/compounds.py`), is the compound ("IMATINIB MESYLATE" → imatinib). The phrase search also returns combinations and other drugs, so this filter runs on the whole result. When a product type has no such label, another form of the drug counts: a substance that starts with the compound's name ("FLUTICASONE PROPIONATE", "ESCITALOPRAM OXALATE").
+3. **Canonical label**, per product type (`HUMAN PRESCRIPTION DRUG` → `rx`, `HUMAN OTC DRUG` → `otc`): has `mechanism_of_action`, then the brand's own label, then the latest `effective_time`, then the most kept sections, then the lowest `set_id`. **The brand's own label** is one filed under an NDA or BLA (`openfda.application_number`; generics are ANDA, OTC monograph products `M…`, e.g. M013) whose `brand_name` differs from its `generic_name`. The name check leaves out authorized generics and biosimilars, which are filed the same way (on 2026-10-12, 1 of 234 single-ingredient ibuprofen Rx labels and 2 of 22 imatinib labels qualified).
+4. **Sections:** only those in the table below are stored; several strings of one section are joined with a blank line.
+
+| `section_group` | Label sections |
+|---|---|
+| `pharmacology` | `mechanism_of_action`, `clinical_pharmacology`, `pharmacodynamics` |
+| `indications` | `indications_and_usage` |
+| `dosing` | `dosage_and_administration` (`sensitive = 1`) |
+| `warnings` | `boxed_warning`, `warnings_and_cautions`, `warnings` |
+| `contraindications` | `contraindications` |
+| `interactions` | `drug_interactions` |
+| `adverse_reactions` | `adverse_reactions` |
+| `otc_consumer` | `do_not_use`, `stop_use`, `ask_doctor`, `when_using`, `purpose`, `active_ingredient` |
+
+Tables (schema version 4):
+
+- `label(set_id, cid, substance, brand, product_type, effective_time, url, source, fetched_at)`, one row per (`cid`, `product_type`); `product_type` is `rx` or `otc`, `substance` the label's own (often a salt), `url` the DailyMed page `https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid={set_id}`.
+- `label_section(set_id, section, section_group, text, sensitive)`.
+- `source_disclaimer(source, text, fetched_at)`: openFDA's `meta.disclaimer`, stored once for the UI.
+
+A pruned compound takes its labels and sections with it (`ON DELETE CASCADE`). A drug that fails is reported and skipped; the run stops when openFDA stops answering. Re-running is served from the HTTP cache and leaves the rows untouched.
+
+**First full run (2026-10-12, with an API key):** 134 compounds, 361 requests, 4 min 24 s; the re-run made no request and took 5 s.
+
+- **129 compounds have an Rx label, 27 an OTC label.** OTC only: aspirin, dextromethorphan, fexofenadine, pseudoephedrine. **No US label: metamizole** (not approved in the US; 404).
+- **5,489,533 characters** in 1,384 sections: Rx 5,415,051 (941 to 108,933 per label, mean 42k), OTC 74,482 (499 to 5,620). By group: pharmacology 1.41M, warnings 1.40M, adverse reactions 1.16M, dosing 0.70M, interactions 0.50M, indications 0.21M, contraindications 0.08M, OTC consumer 0.02M. No `overdosage` or `*_table` section is stored. That is about half the estimate above, because many canonical labels are short PLR labels and most drugs have no OTC label.
+- **The HTTP cache is large.** The 361 openFDA pages are 1.97 GB of response bodies; the store grew from 3.0 MB to 1.98 GB. Only the ~5.5 MB of kept sections is needed after the run.
+- Other forms used: fluticasone (propionate Rx, furoate OTC) and escitalopram (oxalate, which is not in the salt list).
+- **The preference order can pick a niche product.** The mechanism and brand rules come first, so the canonical label is sometimes an injection, implant or eye drop rather than the common tablet: ibuprofen → Caldolor (IV, the only single-ingredient ibuprofen Rx label with a mechanism section), dexamethasone → Ozurdex (implant), cetirizine → Zerviate (eye drops), clotrimazole → Clotic (ear drops). A few Rx labels are OTC Drug Facts filed as prescription: guaifenesin (941 characters), loratadine (944), diphenhydramine (4,739).
+
+Canonical labels from the first run (Rx / OTC; generic labels are named by their brand field):
+
+| Drug | Rx | OTC |
+|---|---|---|
+| acetaminophen | Acetaminophen (injection) | Feverall Jr. Strength |
+| aspirin | — | Low Dose Aspirin |
+| atorvastatin | Lipitor | — |
+| caffeine | caffeine citrate | Stay Awake |
+| cetirizine | Zerviate | Zyrtec Allergy |
+| diclofenac | Zipsor | Voltaren Arthritis Pain |
+| ibuprofen | Caldolor | Advil Menstrual Pain |
+| imatinib | Gleevec | — |
+| metamizole | — | — |
+
+The run logs the chosen labels of every drug with their `set_id` and size.
 
 ### 5.6 Updates (`ingest update`)
 
