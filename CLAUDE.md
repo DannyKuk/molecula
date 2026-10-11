@@ -69,6 +69,24 @@ Dependencies point one way: `api`, `tools`, `mcp` → `services` → `sources`, 
 
 There is no automatic CI. `.github/workflows/ci.yml` runs the same checks on a clean machine when started by hand from the Actions tab.
 
+### Splitting issues
+
+A PR should be reviewable in one sitting. Before starting an issue, check whether it fits:
+
+- **Split when** the work touches several areas (e.g. a source client and an ingest step and routes), when one part can ship and be tested without the others, or when the diff would clearly exceed ~400 changed lines excluding tests and fixtures. Size L is a candidate for splitting; size XL is always split.
+- **How:** create sub-issues of the original (GitHub sub-issues) with the issue forms. Each sub-issue stands alone with its own "Done when" list, taken from the parent's list without dropping any item. The parent closes when its last sub-issue does.
+- **Don't split** just to make PRs tiny: a change and its tests, or a prompt and the code that loads it, belong together.
+
+### Subagents
+
+Use subagents when work is independent and the result can be checked:
+
+- **Good uses:** researching or verifying an API or library before coding; exploring the codebase; running a data check; reviewing a finished diff against the issue and this file before the PR is opened; implementing independent sub-issues in parallel.
+- **Parallel implementation:** one subagent per sub-issue, each in its own git worktree and branch, one PR each. Never let two subagents edit the same files.
+- **Briefing:** every subagent gets a self-contained brief: the issue number, its "Done when" list, the files involved and the rules in this file. It doesn't see this conversation.
+- **Ownership:** the main session reviews what subagents produce, runs the checks itself, and owns the PR. A subagent's "tests pass" is not a test result until it's re-run.
+- **Not for:** decisions that belong to the owner (scope, data choices, anything in a Risk box), and small tasks a single session does faster.
+
 ## Data rules
 
 - **Local first.** The app reads from the store. Source clients are only called on a cache miss, through the rate limiter, and never when `OFFLINE=1`. Evals always run with `OFFLINE=1`.
