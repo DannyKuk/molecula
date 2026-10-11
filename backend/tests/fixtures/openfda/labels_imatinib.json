@@ -1,0 +1,3701 @@
+{
+ "meta": {
+  "disclaimer": "Do not rely on openFDA to make decisions regarding medical care. While we make every effort to ensure that data is accurate, you should assume all results are unvalidated. We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+  "terms": "https://open.fda.gov/terms/",
+  "license": "https://open.fda.gov/license/",
+  "last_updated": "2026-10-09",
+  "results": {
+   "skip": 0,
+   "limit": 100,
+   "total": 22
+  }
+ },
+ "results": [
+  {
+   "spl_product_data_elements": [
+    "Imatinib Mesylate Imatinib Mesylate IMAT"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imatinib mesylat"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION Adults with "
+   ],
+   "dosage_and_administration_table": [
+    "<table><tbody><tr><td> Adults with Ph+ C",
+    "<table rules=\"all\"><tbody><tr><td> ASM a"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS 100 mg film"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None ( 4 )."
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS • Edema and s"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table><thead><tr><td><content styleCode",
+    "<table rules=\"all\" width=\"90%\"><tbody al",
+    "<table rules=\"all\"><thead><tr><td> </td>",
+    "<table><thead><tr><td><content styleCode",
+    "<table frame=\"void\" width=\"90%\"><tbody a",
+    "<table rules=\"all\"><tbody><tr align=\"cen",
+    "<table rules=\"all\"><thead><tr><td><conte",
+    "<table><thead><tr><td><content styleCode",
+    "<table><thead><tr><td><content styleCode",
+    "<table><thead><tr><td><content styleCode",
+    "<table rules=\"all\"><tbody><tr><td rowspa",
+    "<table rules=\"all\"><tbody><tr><td> </td>",
+    "<table rules=\"all\"><tbody><tr><td> </td>",
+    "<table rules=\"all\"><tbody><tr><td><conte"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS CYP3A4 inducers may "
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table width=\"100%\"><tbody><tr><td align",
+    "<table width=\"60%\"><tbody><tr><td><conte"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "nursing_mothers": [
+    "8.2 Lactation Risk Summary Imatinib and "
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table rules=\"all\" width=\"80%\"><tbody><t",
+    "<table width=\"100%\"><tbody align=\"center",
+    "<table><tbody><tr><td> </td><td><content",
+    "<table width=\"75%\"><tbody><tr><td/><td a",
+    "<table width=\"60%\"><tbody><tr><td/><td a",
+    "<table width=\"70%\"><tbody><tr><td valign",
+    "<table width=\"70%\"><tbody><tr><td valign",
+    "<table width=\"70%\"><tbody><tr><td/><td a",
+    "<table><tbody><tr><td> </td><td><content"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Eac"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "information_for_patients_table": [
+    "<table rules=\"none\"><tbody><tr><td><cont"
+   ],
+   "package_label_principal_display_panel": [
+    "PACKAGE LABEL - PRINCIPAL DISPLAY PANEL ",
+    "PACKAGE LABEL - PRINCIPAL DISPLAY PANEL "
+   ],
+   "set_id": "0291eca5-7a1d-4a79-30be-252224d96509",
+   "id": "7560461e-a5f5-b4c8-c4c6-3145a0e98fda",
+   "effective_time": "20260908",
+   "version": "21",
+   "openfda": {
+    "application_number": [
+     "ANDA079179"
+    ],
+    "brand_name": [
+     "Imatinib Mesylate"
+    ],
+    "generic_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "manufacturer_name": [
+     "Apotex Corp"
+    ],
+    "product_ndc": [
+     "60505-2900",
+     "60505-2901"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879"
+    ],
+    "spl_id": [
+     "7560461e-a5f5-b4c8-c4c6-3145a0e98fda"
+    ],
+    "spl_set_id": [
+     "0291eca5-7a1d-4a79-30be-252224d96509"
+    ],
+    "package_ndc": [
+     "60505-2900-3",
+     "60505-2900-9",
+     "60505-2900-1",
+     "60505-2900-8",
+     "60505-2900-0",
+     "60505-2901-3",
+     "60505-2901-9",
+     "60505-2901-1",
+     "60505-2901-5",
+     "60505-2901-0"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "imatinib mesylate imatinib mesylate MICR"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imatinib mesylat"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION Adults with "
+   ],
+   "dosage_and_administration_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS 100 mg film"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None. ( 4 )"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS · Edema and s"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS CYP3A4 inducers may "
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table border=\"0\"><tbody><tr><td><conten",
+    "<table border=\"0\"><tbody><tr><td/><td><c",
+    "<table border=\"0\"><tbody><tr><td/><td><p",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Eac"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "PACKAGE LABEL.PRINCIPAL DISPLAY PANEL ND"
+   ],
+   "set_id": "07764bf9-21b4-4e32-9d7e-e348f8e4291f",
+   "id": "532fceb6-106a-0553-e063-6294a90a0d3a",
+   "effective_time": "20260601",
+   "version": "27",
+   "openfda": {
+    "application_number": [
+     "ANDA078340"
+    ],
+    "brand_name": [
+     "imatinib mesylate"
+    ],
+    "generic_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "manufacturer_name": [
+     "Sun Pharmaceutical Industries, Inc."
+    ],
+    "product_ndc": [
+     "47335-472",
+     "47335-475"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879"
+    ],
+    "spl_id": [
+     "532fceb6-106a-0553-e063-6294a90a0d3a"
+    ],
+    "spl_set_id": [
+     "07764bf9-21b4-4e32-9d7e-e348f8e4291f"
+    ],
+    "package_ndc": [
+     "47335-472-83",
+     "47335-472-88",
+     "47335-472-13",
+     "47335-472-81",
+     "47335-475-83",
+     "47335-475-88",
+     "47335-475-13",
+     "47335-475-64"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "upc": [
+     "0347335475838",
+     "0347335472813"
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Imatinib Mesylate imatinib SILICON DIOXI"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imatinib mesylat"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION Adults with "
+   ],
+   "dosage_and_administration_table": [
+    "<table ID=\"_RefID0EOMAE\" width=\"100%\"><c"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS Imatinib Me"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None. ( 4 )"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Edema and sev"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table ID=\"_RefID0E6IAG\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EMEBG\" width=\"100%\"><c",
+    "<table ID=\"_RefID0E2EAI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EVVBI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EK6BI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0ENJCI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EC1CI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EBODI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EMTDI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0ECZDI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EB6DI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0E55AK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EWKBK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0ENUCK\" width=\"100%\"><c"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS CYP3A4 inducers may ",
+    "Drug Interactions Agents Inducing CYP3A "
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table ID=\"_RefID0EPWEK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EH2EK\" width=\"100%\"><c"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "risks": [
+    "Risk Summary Imatinib mesylate tablets c",
+    "Risk Summary Imatinib and its active met"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti",
+    "Pediatric Use As in adult patients, imat"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table ID=\"_RefID0ERPFK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EKXFK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0E55FK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EOJGK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0E3OGK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EOUGK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0E5ZGK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0E55GK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EQCHK\" width=\"100%\"><c"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Ima"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "PRINCIPAL DISPLAY PANEL – 100 mg NDC 422",
+    "PRINCIPAL DISPLAY PANEL – 400 mg NDC 422"
+   ],
+   "set_id": "1debf3a0-7587-47d7-8ea6-e739698d7297",
+   "id": "3ed7760b-0703-b47e-e063-6294a90a61f3",
+   "effective_time": "20250915",
+   "version": "15",
+   "openfda": {
+    "application_number": [
+     "ANDA204644"
+    ],
+    "brand_name": [
+     "Imatinib Mesylate"
+    ],
+    "generic_name": [
+     "IMATINIB"
+    ],
+    "manufacturer_name": [
+     "Mylan Institutional Inc"
+    ],
+    "product_ndc": [
+     "42292-043",
+     "42292-044"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879"
+    ],
+    "spl_id": [
+     "3ed7760b-0703-b47e-e063-6294a90a61f3"
+    ],
+    "spl_set_id": [
+     "1debf3a0-7587-47d7-8ea6-e739698d7297"
+    ],
+    "package_ndc": [
+     "42292-043-01",
+     "42292-043-03",
+     "42292-044-01",
+     "42292-044-03"
+    ],
+    "original_packager_product_ndc": [
+     "0378-2245",
+     "0378-2246"
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Gleevec imatinib mesylate IMATINIB MESYL"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Gleevec is a kin"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION Adults with "
+   ],
+   "dosage_and_administration_table": [
+    "<table><caption>Table 1: Dose Adjustment"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS 100 mg film"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None. ( 4 )"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Edema and sev"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table><caption>Table 2: Adverse Reactio",
+    "<table><caption>Table 3: Most Frequently",
+    "<table><caption>Table 4: Adverse Reactio",
+    "<table><caption>Table 5: Laboratory Abno",
+    "<table><caption>Table 6: Percent Inciden",
+    "<table><caption>Table 7: Laboratory Abno",
+    "<table><caption>Table 8: Adverse Reactio",
+    "<table><caption>Table 9: Adverse Reactio",
+    "<table><caption>Table 10: Adverse Reacti",
+    "<table><caption>Table 11: Laboratory Abn",
+    "<table><caption>Table 12: Number (%) of ",
+    "<table><caption>Table 13: Laboratory Abn",
+    "<table><caption>Table 14: Adverse Reacti",
+    "<table><caption>Table 15: Adverse Reacti"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS CYP3A4 inducers may "
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table><caption>Table 16: Liver Function",
+    "<table><caption>Table 17: Renal Function"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Gleevec can c"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES Figure 1 Progression"
+   ],
+   "clinical_studies_table": [
+    "<table><caption>Table 18: Response in Ne",
+    "<table><caption>Table 19: Efficacy (MMR ",
+    "<table><caption>Table 20: Response in Ch",
+    "<table><caption>Table 21: Effect of Glee",
+    "<table><caption>Table 22: Response in MD",
+    "<table><caption>Table 23: Response in AS",
+    "<table><caption>Table 24: Response in HE",
+    "<table><caption>Table 25: Response in DF",
+    "<table><caption>Table 26: Overall Surviv"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Gle"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "PRINCIPAL DISPLAY PANEL NDC 0078-0401-34",
+    "PRINCIPAL DISPLAY PANEL NDC 0078-0649-13",
+    "PRINCIPAL DISPLAY PANEL NDC 0078-1490-13"
+   ],
+   "set_id": "211ef2da-2868-4a77-8055-1cb2cd78e24b",
+   "id": "2b30c65b-bf6e-4a30-9754-585d500d59f3",
+   "effective_time": "20260713",
+   "version": "41",
+   "openfda": {
+    "application_number": [
+     "NDA021588"
+    ],
+    "brand_name": [
+     "Gleevec"
+    ],
+    "generic_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "manufacturer_name": [
+     "Novartis Pharmaceuticals Corporation"
+    ],
+    "product_ndc": [
+     "0078-0401",
+     "0078-0649",
+     "0078-1490"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879",
+     "404588",
+     "404589"
+    ],
+    "spl_id": [
+     "2b30c65b-bf6e-4a30-9754-585d500d59f3"
+    ],
+    "spl_set_id": [
+     "211ef2da-2868-4a77-8055-1cb2cd78e24b"
+    ],
+    "package_ndc": [
+     "0078-0401-34",
+     "0078-0649-30",
+     "0078-0649-26",
+     "0078-0649-13",
+     "0078-1490-26",
+     "0078-1490-13"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "IMKELDI imatinib oral IMATINIB MESYLATE "
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imkeldi is a kin"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION Adults with "
+   ],
+   "dosage_and_administration_table": [
+    "<table width=\"100%\"><caption>Table 1: Do"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS Oral soluti"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None. ( 4 )"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Fluid Retenti"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table width=\"100%\"><caption>Table 2: Ad",
+    "<table width=\"100%\"><caption> Table 3: M",
+    "<table width=\"100%\"><caption> Table 4: A",
+    "<table width=\"100%\"><caption> Table 5: L",
+    "<table width=\"100%\"><caption> Table 6: P",
+    "<table width=\"100%\"><caption> Table 7: L",
+    "<table width=\"100%\"><caption> Table 8: A",
+    "<table width=\"100%\"><caption> Table 9: A",
+    "<table width=\"100%\"><caption> Table 10: ",
+    "<table width=\"100%\"><caption> Table 11: ",
+    "<table width=\"100%\"><caption> Table 12: ",
+    "<table width=\"100%\"><caption> Table 13: ",
+    "<table width=\"100%\"><caption> Table 14: ",
+    "<table width=\"100%\"><caption> Table 15: "
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS • CYP3A4 inducers: A"
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS Lactation:"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imkeldi can c"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imkeldi oral solution con"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacodynamics": [
+    "12.2 Pharmacodynamics Imatinib exposure-"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table width=\"100%\"><caption>Table 18: R",
+    "<table width=\"100%\"><caption>Table 19: E",
+    "<table width=\"100%\"><caption> Table 20: ",
+    "<table width=\"100%\"><caption>Table 21: E",
+    "<table width=\"100%\"><caption>Table 22: R",
+    "<table width=\"100%\"><caption> Table 23: ",
+    "<table width=\"100%\"><caption> Table 24: ",
+    "<table width=\"100%\"><caption> Table 25: ",
+    "<table width=\"100%\"><caption> Table 26: "
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING How"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Advise"
+   ],
+   "spl_patient_package_insert": [
+    "INSTRUCTIONS FOR USE IMKELDI (IM-KELL-DE"
+   ],
+   "package_label_principal_display_panel": [
+    "Principal Display Panel NDC 81927-201-01"
+   ],
+   "set_id": "26658bb7-9ba1-a10e-e063-6394a90a172e",
+   "id": "dead98c8-2ac0-4fe6-890a-cc8c92ddcffc",
+   "effective_time": "20241205",
+   "version": "2",
+   "openfda": {
+    "application_number": [
+     "NDA219097"
+    ],
+    "brand_name": [
+     "IMKELDI"
+    ],
+    "generic_name": [
+     "IMATINIB ORAL"
+    ],
+    "manufacturer_name": [
+     "Shorla Oncology Inc.,"
+    ],
+    "product_ndc": [
+     "81927-201"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "2699831",
+     "2699837"
+    ],
+    "spl_id": [
+     "dead98c8-2ac0-4fe6-890a-cc8c92ddcffc"
+    ],
+    "spl_set_id": [
+     "26658bb7-9ba1-a10e-e063-6394a90a172e"
+    ],
+    "package_ndc": [
+     "81927-201-01"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Imatinib mesylate imatinib mesylate IMAT"
+   ],
+   "recent_major_changes": [
+    "Warnings and Precautions, Renal Toxicity"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS & USAGE Imatinib mesylate "
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE & ADMINISTRATION Adults with Ph"
+   ],
+   "dosage_and_administration_table": [
+    "<table width=\"100%\" cellspacing=\"0\" cell"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS & STRENGTHS 100 mg film-c"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None None (4)"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Edema and sev"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table width=\"100%\" cellspacing=\"0\" cell",
+    "<table width=\"100%\" cellspacing=\"0\" cell",
+    "<table width=\"101%\" cellspacing=\"0\" cell",
+    "<table width=\"100%\" cellspacing=\"0\" cell",
+    "<table width=\"100%\" cellspacing=\"0\" cell",
+    "<table width=\"100%\" cellspacing=\"0\" cell",
+    "<table width=\"97%\" cellspacing=\"0\" cellp",
+    "<table width=\"100%\" cellspacing=\"0\" cell",
+    "<table width=\"99%\" cellspacing=\"0\" cellp"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS CYP3A4 inducers may "
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table width=\"100%\" cellspacing=\"0\" cell",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "labor_and_delivery": [
+    "8.2 Lactation Risk Summary Imatinib and "
+   ],
+   "nursing_mothers": [
+    "8.3 Females and Males of Reproductive Po"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis & Mutagenesis & Impa"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\"> ",
+    "<table cellspacing=\"0\" cellpadding=\"0\"> ",
+    "<table cellspacing=\"0\" cellpadding=\"0\"> ",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table width=\"100%\" cellspacing=\"0\" cell",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table width=\"100%\" cellspacing=\"0\" cell"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Eac"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "Packaging image description"
+   ],
+   "set_id": "2e931c49-6c9f-41e2-a34b-5f01cd295b56",
+   "id": "f3d17411-8424-4c6d-b244-47f125f17f31",
+   "effective_time": "20190304",
+   "version": "1",
+   "openfda": {
+    "application_number": [
+     "ANDA208302"
+    ],
+    "brand_name": [
+     "Imatinib mesylate"
+    ],
+    "generic_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "manufacturer_name": [
+     "Armas Pharmaceuticals Inc."
+    ],
+    "product_ndc": [
+     "72485-202"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878"
+    ],
+    "spl_id": [
+     "f3d17411-8424-4c6d-b244-47f125f17f31"
+    ],
+    "spl_set_id": [
+     "2e931c49-6c9f-41e2-a34b-5f01cd295b56"
+    ],
+    "package_ndc": [
+     "72485-202-90"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "imatinib mesylate imatinib mesylate SILI"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imatinib mesylat"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION Adults with "
+   ],
+   "dosage_and_administration_table": [
+    "<table><caption>Table 1: Dose Adjustment"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS Imatinib (f"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None. ( 4 )"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Edema and sev"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table><caption>Table 2: Adverse Reactio",
+    "<table><caption>Table 3: Most Frequently",
+    "<table><caption>Table 4: Adverse Reactio",
+    "<table><caption>Table 5: Laboratory Abno",
+    "<table><caption>Table 6: Percent Inciden",
+    "<table><caption>Table 7: Laboratory Abno",
+    "<table><caption>Table 8: Adverse Reactio",
+    "<table><caption>Table 9: Adverse Reactio",
+    "<table><caption>Table 10: Adverse Reacti",
+    "<table><caption>Table 11: Laboratory Abn",
+    "<table><caption>Table 12: Number (%) of ",
+    "<table><caption>Table 13: Laboratory Abn",
+    "<table><caption>Table 14: Adverse Reacti",
+    "<table><caption>Table 15: Adverse Reacti"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS CYP3A4 inducers may "
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table><caption>Table 16: Liver Function",
+    "<table><caption>Table 17: Renal Function"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table><caption>Table 18: Response in Ne",
+    "<table><caption>Table 19: Efficacy (MMR ",
+    "<table><caption>Table 20: Response in Ch",
+    "<table><caption>Table 21: Effect of Imat",
+    "<table><caption>Table 22: Response in MD",
+    "<table><caption>Table 23: Response in AS",
+    "<table><caption>Table 24: Response in HE",
+    "<table><caption>Table 25: Response in DF",
+    "<table><caption>Table 26: Overall Surviv"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Ima"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "PRINCIPAL DISPLAY PANEL – 100 mg NDC 083",
+    "PRINCIPAL DISPLAY PANEL – 400 mg NDC 083"
+   ],
+   "set_id": "5d07ac08-962e-41a8-8a3c-50febc8c5f34",
+   "id": "47f6137e-e0ea-4ada-e063-6394a90a37b5",
+   "effective_time": "20260109",
+   "version": "3",
+   "openfda": {
+    "application_number": [
+     "ANDA212135"
+    ],
+    "brand_name": [
+     "imatinib mesylate"
+    ],
+    "generic_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "manufacturer_name": [
+     "Upsher-Smith Laboratories, LLC"
+    ],
+    "product_ndc": [
+     "0832-0532",
+     "0832-0533"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879"
+    ],
+    "spl_id": [
+     "47f6137e-e0ea-4ada-e063-6394a90a37b5"
+    ],
+    "spl_set_id": [
+     "5d07ac08-962e-41a8-8a3c-50febc8c5f34"
+    ],
+    "package_ndc": [
+     "0832-0532-09",
+     "0832-0533-03"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "upc": [
+     "0308320533032"
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Imatinib Mesylate Imatinib Mesylate MAGN"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imatinib mesylat"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION ● Adults wit"
+   ],
+   "dosage_and_administration_table": [
+    "<table width=\"354px\" border=\"1\" cellspac",
+    "<table width=\"100%\" border=\"1\" cellspaci"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS Imatinib Me"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None. ( 4 )"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Edema and sev"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS CYP3A4 inducers may "
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib Mesylate Tablets"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"70%\" border=\"1\" cellspacin",
+    "<table width=\"90%\" border=\"1\" cellspacin",
+    "<table width=\"50%\" border=\"1\" cellspacin",
+    "<table cellspacing=\"0\"><tbody><tr><td st"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Ima"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "PRINCIPAL DISPLAY PANEL Imatinib Mesylat"
+   ],
+   "set_id": "65b4d8a6-349d-4fb1-9818-dad6b4ad4fa1",
+   "id": "459cd0de-3b95-ca25-e063-6294a90a9854",
+   "effective_time": "20251210",
+   "version": "2",
+   "openfda": {
+    "application_number": [
+     "ANDA208429"
+    ],
+    "brand_name": [
+     "Imatinib Mesylate"
+    ],
+    "generic_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "manufacturer_name": [
+     "Chartwell RX, LLC"
+    ],
+    "product_ndc": [
+     "62135-658",
+     "62135-659"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879"
+    ],
+    "spl_id": [
+     "459cd0de-3b95-ca25-e063-6294a90a9854"
+    ],
+    "spl_set_id": [
+     "65b4d8a6-349d-4fb1-9818-dad6b4ad4fa1"
+    ],
+    "package_ndc": [
+     "62135-658-90",
+     "62135-659-30"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "upc": [
+     "0362135658908",
+     "0362135659301"
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Imatinib Mesylate Imatinib Mesylate SILI"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imatinib mesylat"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION Adults with "
+   ],
+   "dosage_and_administration_table": [
+    "<table width=\"100%\" styleCode=\"Noautorul"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS 100 mg film"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None. (4)"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Edema and sev"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table width=\"100%\"><caption>Table 2: Ad",
+    "<table width=\"100%\"><caption>Table 3: Mo",
+    "<table width=\"100%\"><caption>Table 4: Ad",
+    "<table width=\"100%\"><caption>Table 5: La",
+    "<table width=\"100%\"><caption>Table 6: Pe",
+    "<table width=\"100%\"><caption>Table 7: La",
+    "<table width=\"100%\"><caption>Table 8: Ad",
+    "<table width=\"100%\"><caption>Table 9: Ad",
+    "<table width=\"100%\"><caption>Table 10: A",
+    "<table width=\"100%\"><caption>Table 11: L",
+    "<table width=\"100%\"><caption>Table 12: N",
+    "<table width=\"100%\"><caption>Table 13: L",
+    "<table width=\"100%\"><caption>Table 14: A",
+    "<table width=\"100%\"><caption>Table 15: A"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS CYP3A4 inducers may "
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table width=\"100%\"><caption>Table 16: L",
+    "<table width=\"100%\"><caption>Table 17: R"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table width=\"100%\"><caption>Table 18: R",
+    "<table width=\"100%\"><caption>Table 19: E",
+    "<table width=\"100%\"><caption>Table 20: R",
+    "<table width=\"100%\"><caption>Table 21: E",
+    "<table width=\"100%\"><caption>Table 22: R",
+    "<table width=\"100%\"><caption>Table 23: R",
+    "<table width=\"100%\"><caption>Table 24: R",
+    "<table width=\"100%\" styleCode=\"Noautorul",
+    "<table width=\"100%\"><caption>Table 25: R",
+    "<table width=\"100%\"><caption>Table 26: O"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Eac"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "spl_unclassified_section": [
+    "PACKAGING INFORMATION American Health Pa"
+   ],
+   "package_label_principal_display_panel": [
+    "Package/Label Display Panel – Carton – 1",
+    "Package/Label Display Panel – Blister – "
+   ],
+   "set_id": "6e7ed4ef-24e3-4545-9a99-2e34c946e8e7",
+   "id": "2e836e9c-5571-8d0b-e063-6394a90aa196",
+   "effective_time": "20250219",
+   "version": "2",
+   "openfda": {
+    "application_number": [
+     "ANDA079179"
+    ],
+    "brand_name": [
+     "Imatinib Mesylate"
+    ],
+    "generic_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "manufacturer_name": [
+     "American Health Packaging"
+    ],
+    "product_ndc": [
+     "60687-882"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878"
+    ],
+    "spl_id": [
+     "2e836e9c-5571-8d0b-e063-6394a90aa196"
+    ],
+    "spl_set_id": [
+     "6e7ed4ef-24e3-4545-9a99-2e34c946e8e7"
+    ],
+    "package_ndc": [
+     "60687-882-11",
+     "60687-882-21"
+    ],
+    "original_packager_product_ndc": [
+     "60505-2900"
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Imatinib mesylate imatinib mesylate IMAT"
+   ],
+   "recent_major_changes": [
+    "Warnings and Precautions, Renal Toxicity"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS & USAGE Imatinib mesylate "
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE & ADMINISTRATION Adults with Ph"
+   ],
+   "dosage_and_administration_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS & STRENGTHS 100 mg film-c"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None None."
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Edema and sev"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS CYP3A4 inducers may "
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "labor_and_delivery": [
+    "8.2 Lactation Risk Summary Imatinib and "
+   ],
+   "nursing_mothers": [
+    "8.3 Females and Males of Reproductive Po"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis & Mutagenesis & Impa"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Eac"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "PACKAGE LABEL.PRINCIPAL DISPLAY PANEL Im"
+   ],
+   "set_id": "7579620e-3748-46fa-8295-f9b47d0aa5b8",
+   "id": "7579620e-3748-46fa-8295-f9b47d0aa5b8",
+   "effective_time": "20190201",
+   "version": "1",
+   "openfda": {
+    "application_number": [
+     "ANDA208302"
+    ],
+    "brand_name": [
+     "Imatinib mesylate"
+    ],
+    "generic_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "manufacturer_name": [
+     "Ascend Laboratories, LLC"
+    ],
+    "product_ndc": [
+     "67877-633",
+     "67877-634"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879"
+    ],
+    "spl_id": [
+     "7579620e-3748-46fa-8295-f9b47d0aa5b8"
+    ],
+    "spl_set_id": [
+     "7579620e-3748-46fa-8295-f9b47d0aa5b8"
+    ],
+    "package_ndc": [
+     "67877-633-90",
+     "67877-634-30"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "upc": [
+     "0367877634302"
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Imatinib mesylate 400 mg imatinib mesyla"
+   ],
+   "recent_major_changes": [
+    "Warnings and Precautions, Renal Toxicity"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS & USAGE Imatinib mesylate "
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE & ADMINISTRATION Adults with Ph"
+   ],
+   "dosage_and_administration_table": [
+    "<table width=\"100%\" cellspacing=\"0\" cell"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS & STRENGTHS 100 mg film-c"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None None (4)"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Edema and sev"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table width=\"100%\" cellspacing=\"0\" cell",
+    "<table width=\"100%\" cellspacing=\"0\" cell",
+    "<table width=\"101%\" cellspacing=\"0\" cell",
+    "<table width=\"100%\" cellspacing=\"0\" cell",
+    "<table width=\"100%\" cellspacing=\"0\" cell",
+    "<table width=\"100%\" cellspacing=\"0\" cell",
+    "<table width=\"97%\" cellspacing=\"0\" cellp",
+    "<table width=\"100%\" cellspacing=\"0\" cell",
+    "<table width=\"99%\" cellspacing=\"0\" cellp"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS CYP3A4 inducers may "
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table width=\"100%\" cellspacing=\"0\" cell",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "labor_and_delivery": [
+    "8.2 Lactation Risk Summary Imatinib and "
+   ],
+   "nursing_mothers": [
+    "8.3 Females and Males of Reproductive Po"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis & Mutagenesis & Impa"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\"> ",
+    "<table cellspacing=\"0\" cellpadding=\"0\"> ",
+    "<table cellspacing=\"0\" cellpadding=\"0\"> ",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table width=\"100%\" cellspacing=\"0\" cell",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table width=\"100%\" cellspacing=\"0\" cell"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Eac"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "image description"
+   ],
+   "set_id": "7b7cc194-29e4-4484-a364-a1ac7d7d6cf5",
+   "id": "2e636646-af84-4711-84b4-9092bb51ca8a",
+   "effective_time": "20190308",
+   "version": "1",
+   "openfda": {
+    "application_number": [
+     "ANDA208302"
+    ],
+    "brand_name": [
+     "Imatinib mesylate 400 mg"
+    ],
+    "generic_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "manufacturer_name": [
+     "Armas Pharmaceuticals Inc."
+    ],
+    "product_ndc": [
+     "72485-203"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403879"
+    ],
+    "spl_id": [
+     "2e636646-af84-4711-84b4-9092bb51ca8a"
+    ],
+    "spl_set_id": [
+     "7b7cc194-29e4-4484-a364-a1ac7d7d6cf5"
+    ],
+    "package_ndc": [
+     "72485-203-30"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "upc": [
+     "0372485203307"
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Imatinib Mesylate Imatinib Mesylate IMAT"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imatinib mesylat"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION Adults with "
+   ],
+   "dosage_and_administration_table": [
+    "<table width=\"100%\"><col width=\"50%\"/><c",
+    "<table width=\"100%\"><col width=\"33%\"/><c"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS 100 mg film"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None ( 4 )."
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS • Edema and s"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table width=\"100%\"><col width=\"29%\"/><c",
+    "<table width=\"90%\"><col width=\"24%\"/><co",
+    "<table width=\"100%\"><col width=\"23%\"/><c",
+    "<table width=\"100%\"><col width=\"51%\"/><c",
+    "<table width=\"83.86%\"><col width=\"33%\"/>",
+    "<table width=\"100%\"><col width=\"23%\"/><c",
+    "<table width=\"100%\"><col width=\"19%\"/><c",
+    "<table width=\"100%\"><col width=\"50%\"/><c",
+    "<table width=\"100%\"><col width=\"50%\"/><c",
+    "<table width=\"100%\"><col width=\"39%\"/><c",
+    "<table width=\"100%\"><col width=\"28%\"/><c",
+    "<table width=\"100%\"><col width=\"29%\"/><c",
+    "<table width=\"100%\"><col width=\"29%\"/><c",
+    "<table width=\"100%\"><col width=\"29%\"/><c"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS • CYP3A4 inducers ma"
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table width=\"100%\"><col width=\"20%\"/><c",
+    "<table width=\"60%\"><col width=\"35%\"/><co"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "nursing_mothers": [
+    "8.2 Lactation Risk Summary Imatinib and "
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table width=\"80%\"><col width=\"31%\"/><co",
+    "<table width=\"100%\"><col width=\"43%\"/><c",
+    "<table width=\"100%\"><col width=\"25%\"/><c",
+    "<table width=\"75%\"><col width=\"29%\"/><co",
+    "<table width=\"60%\"><col width=\"18%\"/><co",
+    "<table width=\"70%\"><col width=\"21%\"/><co",
+    "<table width=\"70%\"><col width=\"20%\"/><co",
+    "<table width=\"70%\"><col width=\"28%\"/><co",
+    "<table width=\"100%\"><col width=\"31%\"/><c"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Eac"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "information_for_patients_table": [
+    "<table width=\"100%\"><col width=\"50%\"/><c"
+   ],
+   "package_label_principal_display_panel": [
+    "Package/Label Display Panel MAJOR® NDC 0",
+    "Package/Label Display Panel MAJOR® NDC 0"
+   ],
+   "set_id": "7c037022-7fc8-4b6e-9db3-427206c572b4",
+   "id": "f18ab171-08c3-43dc-95ff-70514b9acdfd",
+   "effective_time": "20260804",
+   "version": "8",
+   "openfda": {
+    "application_number": [
+     "ANDA079179"
+    ],
+    "brand_name": [
+     "Imatinib Mesylate"
+    ],
+    "generic_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "manufacturer_name": [
+     "Major Pharmaceuticals"
+    ],
+    "product_ndc": [
+     "0904-6621",
+     "0904-6901"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879"
+    ],
+    "spl_id": [
+     "f18ab171-08c3-43dc-95ff-70514b9acdfd"
+    ],
+    "spl_set_id": [
+     "7c037022-7fc8-4b6e-9db3-427206c572b4"
+    ],
+    "package_ndc": [
+     "0904-6901-04",
+     "0904-6621-04"
+    ],
+    "original_packager_product_ndc": [
+     "60505-2900",
+     "60505-2901"
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "imatinib mesylate imatinib mesylate SILI"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imatinib mesylat"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION Adults with "
+   ],
+   "dosage_and_administration_table": [
+    "<table><caption>Table 1: Dose Adjustment"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS 100 mg film"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None. ( 4 )"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Edema and sev"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table><caption>Table 2: Adverse Reactio",
+    "<table><caption>Table 3: Most Frequently",
+    "<table><caption>Table 4: Adverse Reactio",
+    "<table><caption>Table 5: Laboratory Abno",
+    "<table><caption>Table 6: Percent Inciden",
+    "<table><caption>Table 7: Laboratory Abno",
+    "<table><caption>Table 8: Adverse Reactio",
+    "<table><caption>Table 9: Adverse Reactio",
+    "<table><caption>Table 10: Adverse Reacti",
+    "<table><caption>Table 11: Laboratory Abn",
+    "<table><caption>Table 12: Number (%) of ",
+    "<table><caption>Table 13: Laboratory Abn",
+    "<table><caption>Table 14: Adverse Reacti",
+    "<table><caption>Table 15: Adverse Reacti"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS CYP3A4 inducers may "
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table><caption>Table 16: Liver Function",
+    "<table><caption>Table 17: Renal Function"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table><caption>Table 18: Response in Ne",
+    "<table><caption>Table 19: Efficacy (MMR ",
+    "<table><caption>Table 20: Response in Ch",
+    "<table><caption>Table 21: Effect of Imat",
+    "<table><caption>Table 22: Response in MD",
+    "<table><caption>Table 23: Response in AS",
+    "<table><caption>Table 24: Response in HE",
+    "<table><caption>Table 25: Response in DF",
+    "<table><caption>Table 26: Overall Surviv"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Eac"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "PRINCIPAL DISPLAY PANEL Bottle Label – 1",
+    "PRINCIPAL DISPLAY PANEL Bottle Label – 1",
+    "PRINCIPAL DISPLAY PANEL Aluminum Foil La",
+    "PRINCIPAL DISPLAY PANEL Carton Label – 1",
+    "PRINCIPAL DISPLAY PANEL Bottle Label – 4",
+    "PRINCIPAL DISPLAY PANEL Bottle Label – 4",
+    "PRINCIPAL DISPLAY PANEL Aluminum Foil La",
+    "PRINCIPAL DISPLAY PANEL PRINCIPAL DISPLA"
+   ],
+   "set_id": "82eb01e0-8685-4f06-8a72-7663e8ded38f",
+   "id": "a41dbedd-ee4e-401c-b446-a435929ff903",
+   "effective_time": "20241204",
+   "version": "35",
+   "openfda": {
+    "application_number": [
+     "ANDA212135"
+    ],
+    "brand_name": [
+     "imatinib mesylate"
+    ],
+    "generic_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "manufacturer_name": [
+     "Qilu Pharmaceutical Co., Ltd."
+    ],
+    "product_ndc": [
+     "67184-0532",
+     "67184-0533"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879"
+    ],
+    "spl_id": [
+     "a41dbedd-ee4e-401c-b446-a435929ff903"
+    ],
+    "spl_set_id": [
+     "82eb01e0-8685-4f06-8a72-7663e8ded38f"
+    ],
+    "package_ndc": [
+     "67184-0532-1",
+     "67184-0532-2",
+     "67184-0532-3",
+     "67184-0533-1",
+     "67184-0533-2",
+     "67184-0533-3"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "upc": [
+     "0367184053322",
+     "0367184053223"
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Imatinib Mesylate imatinib SILICON DIOXI"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imatinib mesylat"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION Adults with "
+   ],
+   "dosage_and_administration_table": [
+    "<table width=\"100%\"><caption>Table 1: Do"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS Imatinib Me"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None. ( 4 )"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Edema and sev"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table width=\"100%\"><caption>Table 2: Ad",
+    "<table width=\"100%\"><caption>Table 3: Mo",
+    "<table width=\"100%\"><caption>Table 4: Ad",
+    "<table width=\"100%\"><caption>Table 5: La",
+    "<table width=\"100%\"><caption>Table 6: Pe",
+    "<table width=\"100%\"><caption>Table 7: La",
+    "<table width=\"100%\"><caption>Table 8: Ad",
+    "<table width=\"100%\"><caption>Table 9: Ad",
+    "<table width=\"100%\"><caption>Table 10: A",
+    "<table width=\"100%\"><caption>Table 11: L",
+    "<table width=\"100%\"><caption>Table 12: N",
+    "<table width=\"100%\"><caption>Table 13: L",
+    "<table width=\"100%\"><caption>Table 14: A",
+    "<table width=\"100%\"><caption>Table 15: A"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS CYP3A4 inducers may ",
+    "Drug Interactions Clinical Studies Agent"
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table width=\"100%\"><caption>Table 16: L",
+    "<table width=\"100%\"><caption>Table 17: R"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "risks": [
+    "Risk Summary Imatinib mesylate tablets c",
+    "Risk Summary Imatinib and its active met"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table width=\"100%\"><caption>Table 18: R",
+    "<table width=\"100%\"><caption>Table 19: E",
+    "<table width=\"100%\"><caption>Table 20: R",
+    "<table width=\"100%\"><caption>Table 21: E",
+    "<table width=\"100%\"><caption>Table 22: R",
+    "<table width=\"100%\"><caption>Table 23: R",
+    "<table width=\"100%\"><caption>Table 24: R",
+    "<table width=\"100%\"><caption>Table 25: R",
+    "<table width=\"100%\" styleCode=\"Noautorul"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Ima"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "PRINCIPAL DISPLAY PANEL – 100 mg NDC 514",
+    "PRINCIPAL DISPLAY PANEL – 400 mg NDC 514"
+   ],
+   "set_id": "9131b2ce-752d-3a30-e053-2a95a90adaab",
+   "id": "54672a4f-8094-f02d-e063-6394a90a436c",
+   "effective_time": "20260616",
+   "version": "8",
+   "openfda": {
+    "application_number": [
+     "ANDA204644"
+    ],
+    "brand_name": [
+     "Imatinib Mesylate"
+    ],
+    "generic_name": [
+     "IMATINIB"
+    ],
+    "manufacturer_name": [
+     "Golden State Medical Supply, Inc."
+    ],
+    "product_ndc": [
+     "51407-269",
+     "51407-270"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879"
+    ],
+    "spl_id": [
+     "54672a4f-8094-f02d-e063-6394a90a436c"
+    ],
+    "spl_set_id": [
+     "9131b2ce-752d-3a30-e053-2a95a90adaab"
+    ],
+    "package_ndc": [
+     "51407-269-90",
+     "51407-270-30"
+    ],
+    "original_packager_product_ndc": [
+     "0378-2245",
+     "0378-2246"
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "imatinib mesylate imatinib mesylate SILI"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imatinib mesylat"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION Adults with "
+   ],
+   "dosage_and_administration_table": [
+    "<table><caption>Table 1: Dose Adjustment"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS 100 mg film"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None. ( 4 )"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Edema and sev"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table><caption>Table 2: Adverse Reactio",
+    "<table><caption>Table 3: Most Frequently",
+    "<table><caption>Table 4: Adverse Reactio",
+    "<table><caption>Table 5: Laboratory Abno",
+    "<table><caption>Table 6: Percent Inciden",
+    "<table><caption>Table 7: Laboratory Abno",
+    "<table><caption>Table 8: Adverse Reactio",
+    "<table><caption>Table 9: Adverse Reactio",
+    "<table><caption>Table 10: Adverse Reacti",
+    "<table><caption>Table 11: Laboratory Abn",
+    "<table><caption>Table 12: Number (%) of ",
+    "<table><caption>Table 13: Laboratory Abn",
+    "<table><caption>Table 14: Adverse Reacti",
+    "<table><caption>Table 15: Adverse Reacti"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS CYP3A4 inducers may "
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table><caption>Table 16: Liver Function",
+    "<table><caption>Table 17: Renal Function"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table><caption>Table 18: Response in Ne",
+    "<table><caption>Table 19: Efficacy (MMR ",
+    "<table><caption>Table 20: Response in Ch",
+    "<table><caption>Table 21: Effect of Imat",
+    "<table><caption>Table 22: Response in MD",
+    "<table><caption>Table 23: Response in AS",
+    "<table><caption>Table 24: Response in HE",
+    "<table><caption>Table 25: Response in DF",
+    "<table><caption>Table 26: Overall Surviv"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Eac"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "PRINCIPAL DISPLAY PANEL – 100 mg NDC 728",
+    "PRINCIPAL DISPLAY PANEL – 400 mg NDC 728"
+   ],
+   "set_id": "9de8d8b9-cf88-4960-82b7-89e5ceb7720e",
+   "id": "05dbf49e-73b7-3190-e063-6394a90a1a64",
+   "effective_time": "20230921",
+   "version": "2",
+   "openfda": {
+    "application_number": [
+     "ANDA212135"
+    ],
+    "brand_name": [
+     "imatinib mesylate"
+    ],
+    "generic_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "manufacturer_name": [
+     "Archis Pharma LLC"
+    ],
+    "product_ndc": [
+     "72819-185",
+     "72819-186"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879"
+    ],
+    "spl_id": [
+     "05dbf49e-73b7-3190-e063-6394a90a1a64"
+    ],
+    "spl_set_id": [
+     "9de8d8b9-cf88-4960-82b7-89e5ceb7720e"
+    ],
+    "package_ndc": [
+     "72819-185-09",
+     "72819-186-03"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "upc": [
+     "0372819185095",
+     "0372819186030"
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "IMATINIB MESYLATE IMATINIB MESYLATE SILI"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imatinib mesylat"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION • Adults wit"
+   ],
+   "dosage_and_administration_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS Imatinib me"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None. ( 4 )"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS • Edema and s"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS • CYP3A4 inducers ma"
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Ima"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "PACKAGE LABEL.PRINCIPAL DISPLAY PANEL Im"
+   ],
+   "set_id": "9fc5ec7b-98c4-4b1a-890c-be1343177dbd",
+   "id": "55b02662-941b-be69-e063-6294a90aeafd",
+   "effective_time": "20260703",
+   "version": "1",
+   "openfda": {
+    "application_number": [
+     "ANDA212975"
+    ],
+    "brand_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "generic_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "manufacturer_name": [
+     "Civica Script LLC"
+    ],
+    "product_ndc": [
+     "82249-020",
+     "82249-021"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879"
+    ],
+    "spl_id": [
+     "55b02662-941b-be69-e063-6294a90aeafd"
+    ],
+    "spl_set_id": [
+     "9fc5ec7b-98c4-4b1a-890c-be1343177dbd"
+    ],
+    "package_ndc": [
+     "82249-020-90",
+     "82249-021-30"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "upc": [
+     "0382249020903"
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Imatinib Mesylate imatinib IMATINIB MESY"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imatinib mesylat"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION • Adults wit"
+   ],
+   "dosage_and_administration_table": [
+    "<table width=\"100%\"><caption>Table 1: Do"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS Imatinib Me"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None. ( 4 )"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS • Edema and s"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table width=\"100%\"><caption>Table 2: Ad",
+    "<table width=\"100%\"><caption>Table 3: Mo",
+    "<table width=\"100%\"><caption>Table 4: Ad",
+    "<table width=\"100%\"><caption>Table 5: La",
+    "<table width=\"100%\"><caption>Table 6: Pe",
+    "<table width=\"100%\"><caption>Table 7: La",
+    "<table width=\"100%\"><caption>Table 8: Ad",
+    "<table width=\"100%\"><caption>Table 9: Ad",
+    "<table width=\"100%\"><caption>Table 10: A",
+    "<table width=\"100%\"><caption>Table 11: L",
+    "<table width=\"100%\"><caption>Table 12: N",
+    "<table width=\"100%\"><caption>Table 13: L",
+    "<table width=\"100%\"><caption>Table 14: A",
+    "<table width=\"100%\"><caption>Table 15: A"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS • CYP3A4 inducers ma",
+    "Drug Interactions Clinical Studies Agent"
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table width=\"100%\"><caption>Table 16: L",
+    "<table width=\"100%\"><caption>Table 17: R"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "risks": [
+    "Risk Summary Imatinib mesylate tablets c",
+    "Risk Summary Imatinib and its active met"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table width=\"100%\"><caption>Table 18: R",
+    "<table width=\"100%\"><caption>Table 19: E",
+    "<table width=\"100%\"><caption>Table 20: R",
+    "<table width=\"100%\"><caption>Table 21: E",
+    "<table width=\"100%\"><caption>Table 22: R",
+    "<table width=\"100%\"><caption>Table 23: R",
+    "<table width=\"100%\"><caption>Table 24: R",
+    "<table width=\"100%\"><caption>Table 25: R",
+    "<table styleCode=\"Noautorules\" width=\"10"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Ima"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "PRINCIPAL DISPLAY PANEL – 100 mg NDC 037",
+    "PRINCIPAL DISPLAY PANEL – 400 mg NDC 037"
+   ],
+   "set_id": "a1787fad-3612-43e1-98fa-ce62361e0b3c",
+   "id": "fc5effad-71a0-4882-b026-5b73b2c3c526",
+   "effective_time": "20260715",
+   "version": "17",
+   "openfda": {
+    "application_number": [
+     "ANDA204644"
+    ],
+    "brand_name": [
+     "Imatinib Mesylate"
+    ],
+    "generic_name": [
+     "IMATINIB"
+    ],
+    "manufacturer_name": [
+     "Mylan Pharmaceuticals Inc."
+    ],
+    "product_ndc": [
+     "0378-2245",
+     "0378-2246"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879"
+    ],
+    "spl_id": [
+     "fc5effad-71a0-4882-b026-5b73b2c3c526"
+    ],
+    "spl_set_id": [
+     "a1787fad-3612-43e1-98fa-ce62361e0b3c"
+    ],
+    "package_ndc": [
+     "0378-2245-77",
+     "0378-2246-93"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Imatinib Mesylate Imatinib Mesylate IMAT"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imatinib mesylat"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION Adults with "
+   ],
+   "dosage_and_administration_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS 100 mg film"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None. (4)"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Edema and sev"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS CYP3A4 inducers may "
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "labor_and_delivery": [
+    "8.2 Lactation Risk Summary Imatinib and "
+   ],
+   "nursing_mothers": [
+    "8.3 Females and Males of Reproductive Po"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Ima"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "PACKAGE LABEL-PRINCIPAL DISPLAY PANEL - ",
+    "PACKAGE LABEL-PRINCIPAL DISPLAY PANEL - ",
+    "PACKAGE LABEL-PRINCIPAL DISPLAY PANEL - "
+   ],
+   "set_id": "a4e409f7-20b4-4c80-8a6a-f95995ffad78",
+   "id": "d00eefc8-50ef-494f-bcae-5b19329a9c7b",
+   "effective_time": "20260728",
+   "version": "8",
+   "openfda": {
+    "application_number": [
+     "ANDA212773"
+    ],
+    "brand_name": [
+     "Imatinib Mesylate"
+    ],
+    "generic_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "manufacturer_name": [
+     "Aurobindo Pharma Limited"
+    ],
+    "product_ndc": [
+     "59651-240",
+     "59651-241"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879"
+    ],
+    "spl_id": [
+     "d00eefc8-50ef-494f-bcae-5b19329a9c7b"
+    ],
+    "spl_set_id": [
+     "a4e409f7-20b4-4c80-8a6a-f95995ffad78"
+    ],
+    "package_ndc": [
+     "59651-240-90",
+     "59651-241-30",
+     "59651-241-03"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "upc": [
+     "0359651240908",
+     "0359651241301"
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Imatinib Mesylate Imatinib Mesylate IMAT"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imatinib mesylat"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION Adults with "
+   ],
+   "dosage_and_administration_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS 100 mg film"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None. (4)"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Edema and sev"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS CYP3A4 inducers may "
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "labor_and_delivery": [
+    "8.2 Lactation Risk Summary Imatinib and "
+   ],
+   "nursing_mothers": [
+    "8.3 Females and Males of Reproductive Po"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Ima"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "PACKAGE LABEL-PRINCIPAL DISPLAY PANEL - ",
+    "PACKAGE LABEL-PRINCIPAL DISPLAY PANEL - "
+   ],
+   "set_id": "a819a954-41c9-4d49-a74e-c8c4b338b22a",
+   "id": "8d48cd1c-474c-49f9-8e70-aa7525bb1087",
+   "effective_time": "20260827",
+   "version": "3",
+   "openfda": {
+    "application_number": [
+     "ANDA212773"
+    ],
+    "brand_name": [
+     "Imatinib Mesylate"
+    ],
+    "generic_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "manufacturer_name": [
+     "QUALLENT PHARMACEUTICALS HEALTH LLC"
+    ],
+    "product_ndc": [
+     "82009-086",
+     "82009-087"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879"
+    ],
+    "spl_id": [
+     "8d48cd1c-474c-49f9-8e70-aa7525bb1087"
+    ],
+    "spl_set_id": [
+     "a819a954-41c9-4d49-a74e-c8c4b338b22a"
+    ],
+    "package_ndc": [
+     "82009-086-90",
+     "82009-087-30"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "imatinib mesylate imatinib mesylate MICR"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imatinib mesylat"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION Adults with "
+   ],
+   "dosage_and_administration_table": [
+    "<table cellpadding=\"0pt\" cellspacing=\"0p"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS 100 mg film"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None. ( 4 )"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS · Edema and s"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table ID=\"_RefID0EWLAG\" cellpadding=\"0p",
+    "<table ID=\"_RefID0EWNBG\" cellpadding=\"0p",
+    "<table ID=\"_RefID0EJWAI\" cellpadding=\"0p",
+    "<table ID=\"_RefID0ENRCI\" cellpadding=\"0p",
+    "<table ID=\"_RefID0EI4CI\" cellpadding=\"0p",
+    "<table ID=\"_RefID0EPKDI\" cellpadding=\"0p",
+    "<table cellpadding=\"0pt\" cellspacing=\"0p",
+    "<table ID=\"_RefID0EATAK\" cellpadding=\"0p",
+    "<table ID=\"_RefID0EUXAK\" cellpadding=\"0p",
+    "<table ID=\"_RefID0EI6AK\" cellpadding=\"0p",
+    "<table cellpadding=\"0pt\" cellspacing=\"0p",
+    "<table cellpadding=\"0pt\" cellspacing=\"0p",
+    "<table cellpadding=\"0pt\" cellspacing=\"0p",
+    "<table cellpadding=\"0pt\" cellspacing=\"0p"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS CYP3A4 inducers may "
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table ID=\"_RefID0EHNHK\" cellpadding=\"0p",
+    "<table ID=\"_RefID0EPSHK\" cellpadding=\"0p"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table ID=\"_RefID0EBDAM\" cellpadding=\"0p",
+    "<table ID=\"_RefID0E4LAM\" cellpadding=\"0p",
+    "<table cellpadding=\"0pt\" cellspacing=\"0p",
+    "<table ID=\"_RefID0EX6AM\" cellpadding=\"0p",
+    "<table ID=\"_RefID0EGGBM\" cellpadding=\"0p",
+    "<table ID=\"_RefID0E2LBM\" cellpadding=\"0p",
+    "<table ID=\"_RefID0E5RBM\" cellpadding=\"0p",
+    "<table ID=\"_RefID0EMXBM\" cellpadding=\"0p",
+    "<table cellpadding=\"0pt\" cellspacing=\"0p"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Eac"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "PACKAGE/ LABEL PRINCIPAL DISPLAY PANEL N",
+    "PACKAGE/LABEL PRINCIPAL DISPLAY PANEL ND"
+   ],
+   "set_id": "be5b9047-155b-59ca-e053-2995a90ad3dc",
+   "id": "05c9d227-d639-916a-e063-6294a90a66a6",
+   "effective_time": "20230921",
+   "version": "5",
+   "openfda": {
+    "application_number": [
+     "ANDA078340"
+    ],
+    "brand_name": [
+     "imatinib mesylate"
+    ],
+    "generic_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "manufacturer_name": [
+     "BluePoint Laboratories"
+    ],
+    "product_ndc": [
+     "68001-490",
+     "68001-491"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879"
+    ],
+    "spl_id": [
+     "05c9d227-d639-916a-e063-6294a90a66a6"
+    ],
+    "spl_set_id": [
+     "be5b9047-155b-59ca-e053-2995a90ad3dc"
+    ],
+    "package_ndc": [
+     "68001-490-05",
+     "68001-491-04"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "upc": [
+     "0368001490054",
+     "0368001491044"
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "IMATINIB MESYLATE IMATINIB MESYLATE SILI"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imatinib mesylat"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION • Adults wit"
+   ],
+   "dosage_and_administration_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS Imatinib me"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None. ( 4 )"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS • Edema and s"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS • CYP3A4 inducers ma"
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Ima"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "PACKAGE LABEL.PRINCIPAL DISPLAY PANEL Im"
+   ],
+   "set_id": "e97f0238-b9da-46af-83a3-0826e39893e8",
+   "id": "4467e670-2d3a-9832-e063-6394a90a569b",
+   "effective_time": "20251125",
+   "version": "2",
+   "openfda": {
+    "application_number": [
+     "ANDA212975"
+    ],
+    "brand_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "generic_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "manufacturer_name": [
+     "Camber Pharmaceuticals, Inc."
+    ],
+    "product_ndc": [
+     "31722-296",
+     "31722-297"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879"
+    ],
+    "spl_id": [
+     "4467e670-2d3a-9832-e063-6394a90a569b"
+    ],
+    "spl_set_id": [
+     "e97f0238-b9da-46af-83a3-0826e39893e8"
+    ],
+    "package_ndc": [
+     "31722-296-90",
+     "31722-297-30"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "upc": [
+     "0331722296908",
+     "0331722297301"
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Imatinib Mesylate imatinib SILICON DIOXI"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Imatinib mesylat"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION Adults with "
+   ],
+   "dosage_and_administration_table": [
+    "<table ID=\"_RefID0EOKAE\" width=\"100%\"><c"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS Imatinib Me"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS None. None. ( 4 )"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Edema and sev"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table ID=\"_RefID0E2GAG\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EICBG\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EXCAI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0ENTBI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EC4BI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EFHCI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EOXCI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EBLDI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EAQDI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EXVDI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EJ2DI\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EG2AK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0E1GBK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0ERQCK\" width=\"100%\"><c"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS CYP3A4 inducers may ",
+    "Drug Interactions Agents Inducing CYP3A "
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS 8.1 Pregna"
+   ],
+   "use_in_specific_populations_table": [
+    "<table ID=\"_RefID0EKREK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0ECWEK\" width=\"100%\"><c"
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Imatinib mesy"
+   ],
+   "risks": [
+    "Risk Summary Imatinib mesylate tablets c",
+    "Risk Summary Imatinib and its active met"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use The safety and effecti"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use In the CML clinical st"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Experience with doses grea"
+   ],
+   "description": [
+    "11 DESCRIPTION Imatinib is a small molec"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Imatinib mesyla"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics The pharmacokineti"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "animal_pharmacology_and_or_toxicology": [
+    "13.2 Animal Toxicology and/or Pharmacolo"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Chronic Myeloid"
+   ],
+   "clinical_studies_table": [
+    "<table ID=\"_RefID0EXFFK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EQNFK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0E3UFK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EM6FK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0E1EGK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EMKGK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0E3PGK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0E3UGK\" width=\"100%\"><c",
+    "<table ID=\"_RefID0EMYGK\" width=\"100%\"><c"
+   ],
+   "references": [
+    "15 REFERENCES OSHA Hazardous Drugs. OSHA"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Ima"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Dosing"
+   ],
+   "package_label_principal_display_panel": [
+    "PRINCIPAL DISPLAY PANEL – 100 mg NDC 484",
+    "PRINCIPAL DISPLAY PANEL – 400 mg NDC 484"
+   ],
+   "set_id": "f4acacbd-13f8-4a46-b615-b639a17f331f",
+   "id": "4fa8a009-9b1c-3138-e063-6294a90a7320",
+   "effective_time": "20260417",
+   "version": "2",
+   "openfda": {
+    "application_number": [
+     "ANDA204644"
+    ],
+    "brand_name": [
+     "Imatinib Mesylate"
+    ],
+    "generic_name": [
+     "IMATINIB"
+    ],
+    "manufacturer_name": [
+     "Safecor Health, LLC"
+    ],
+    "product_ndc": [
+     "48433-049",
+     "48433-050"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IMATINIB MESYLATE"
+    ],
+    "rxcui": [
+     "403878",
+     "403879"
+    ],
+    "spl_id": [
+     "4fa8a009-9b1c-3138-e063-6294a90a7320"
+    ],
+    "spl_set_id": [
+     "f4acacbd-13f8-4a46-b615-b639a17f331f"
+    ],
+    "package_ndc": [
+     "48433-049-01",
+     "48433-049-03",
+     "48433-050-01",
+     "48433-050-03"
+    ],
+    "original_packager_product_ndc": [
+     "0378-2245",
+     "0378-2246"
+    ],
+    "unii": [
+     "8A1O1M485B"
+    ]
+   }
+  }
+ ]
+}

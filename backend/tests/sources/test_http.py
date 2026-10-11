@@ -89,6 +89,18 @@ def test_returns_the_response_and_sends_the_user_agent(make_client) -> None:
     assert handler.requests[0].headers["user-agent"] == USER_AGENT
 
 
+def test_headers_are_sent_but_left_out_of_the_cache_key(make_client) -> None:
+    sending = Recorder(ok(b'{"v": 1}'))
+    make_client(sending).get(PUBCHEM, headers={"X-Api-Key": "first"})
+    handler = Recorder()
+
+    response = make_client(handler).get(PUBCHEM, headers={"X-Api-Key": "second"})
+
+    assert sending.requests[0].headers["x-api-key"] == "first"
+    assert response.json() == {"v": 1}
+    assert handler.requests == []
+
+
 def test_spaces_requests_to_the_same_source(make_client, clock: FakeClock) -> None:
     client = make_client(Recorder(ok(), ok(), ok()))
 
