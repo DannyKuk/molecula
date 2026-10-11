@@ -25,7 +25,7 @@ drugs:
     aliases: [Voltaren]
     hero: true
   - name: naproxen
-    aliases: [Aleve, Naprosyn]
+    aliases: [Aleve, Naprosyn, Miranax]
     hero: true
   - name: methotrexate
     aliases: [Trexall]
@@ -84,13 +84,13 @@ drugs:
   - name: cetirizine
     aliases: [Zyrtec]
   - name: omeprazole
-    aliases: [Prilosec]
+    aliases: [Omeprazol, Prilosec]
 
   # Commonly prescribed
   - name: levothyroxine
-    aliases: [Synthroid, Euthyrox, L-thyroxine]
+    aliases: [Levothyroxin, Synthroid, Euthyrox, L-thyroxine]
   - name: amlodipine
-    aliases: [Norvasc]
+    aliases: [Amlodipin, Norvasc]
   - name: metoprolol
     aliases: [Lopressor, Toprol-XL, Beloc]
   - name: albuterol
@@ -116,7 +116,7 @@ drugs:
   - name: furosemide
     aliases: [Lasix, frusemide]
   - name: pantoprazole
-    aliases: [Protonix, Pantozol]
+    aliases: [Pantoprazol, Protonix, Pantozol]
   - name: trazodone
     aliases: [Desyrel]
   - name: fluticasone
@@ -268,6 +268,17 @@ drugs:
     aliases: [Tivicay]
   - name: tenofovir disoproxil
     aliases: [Viread]
+  - name: ramipril
+    aliases: [Altace, Delix]
+  - name: bisoprolol
+    aliases: [Zebeta, Concor]
+  - name: torsemide
+    aliases: [torasemide, Torasemid, Demadex, Torem]
+  - name: tapentadol
+    aliases: [Nucynta, Palexia]
+  - name: metamizole
+    aliases: [Metamizol, dipyrone, Novalgin, Novaminsulfon]
+    note: not approved in the US, so openFDA has no label; molecule data only
 
   # Common OTC
   - name: loratadine
