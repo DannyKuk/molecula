@@ -15,6 +15,21 @@ Early development. [`docs/data-plan.md`](docs/data-plan.md) describes the verifi
 - **Data:** a local store built from PubChem, ChEMBL, RCSB PDB and openFDA, served through its own API and an MCP server. External APIs are only called on a cache miss.
 - **Runs in Docker:** `docker compose up --build`
 
+## Running it
+
+```
+cp .env.example .env              # fill in what you need; every key is optional for now
+docker compose up --build         # backend on http://localhost:8000/health
+```
+
+Backend development needs [uv](https://docs.astral.sh/uv/):
+
+```
+cd backend
+uv sync
+uv run ruff check . && uv run ruff format --check . && uv run pytest
+```
+
 ## Layout
 
 ```
