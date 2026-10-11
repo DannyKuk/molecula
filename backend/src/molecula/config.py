@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     llm_model: str | None = None
     local_llm_base_url: str | None = None
     local_llm_model: str | None = None
+    llm_temperature: float = 0.2
+    llm_timeout_seconds: float = 60.0
+    llm_max_retries: int = 2
     embedding_model: str = "local"
     openfda_api_key: SecretStr | None = None
     offline: bool = False
