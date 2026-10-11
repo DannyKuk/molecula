@@ -43,7 +43,7 @@ Known limits, and how the app handles them:
 | ChEMBL | drug → mechanism → target → UniProt, gene names | `/chembl/api/data/mechanism.json?parent_molecule_chembl_id={id}`, then `/target/{tid}.json` | mechanisms hang on the salt form (imatinib mesylate CHEMBL1642), so filter by **`parent_molecule_chembl_id`**; querying the parent's own ID returns nothing |
 | RCSB: ligand code | InChIKey → PDB ligand code | search API, `service: "text_chem"`, attribute `rcsb_chem_comp_descriptor.InChIKey`, `return_type: "mol_definition"` | returns exactly STI, CFF, AIN, TYL. `service: "text"` returns unrelated codes |
 | RCSB: stereo fallback | SMILES → candidates whose InChIKey connectivity block matches | `service: "chemical"`, `match_type: "graph-relaxed-stereo"`, then `data.rcsb.org/rest/v1/core/chemcomp/{code}` | ibuprofen → IBP, IZP; donepezil → E20; warfarin → RWF, SWF |
-| RCSB: complex | entries with the ligand **and** the target | AND of `rcsb_nonpolymer_entity_container_identifiers.nonpolymer_comp_id` and `rcsb_entity_source_organism.rcsb_gene_name.value` | match the **gene name**, not the UniProt accession: many reference structures are non-human (COX from sheep and mouse, 1IEP is mouse ABL) |
+| RCSB: complex | entries with the ligand **and** the target | entries containing the ligand (`rcsb_nonpolymer_entity_container_identifiers.nonpolymer_comp_id`), then one GraphQL request (`data.rcsb.org/graphql`, `entries(entry_ids: …)`) for title, resolution and, per protein entity, organism, chains and gene names; keep the entries with an entity whose depositor gene name or UniProt primary gene name is a target gene | match the **gene name**, not the UniProt accession: many reference structures are non-human (COX from sheep and mouse, 1IEP is mouse ABL). Gene names match ignoring case (mouse `Abl1`). The search-side AND with `rcsb_entity_source_organism.rcsb_gene_name.value` misses entries whose depositor left the gene empty: STI AND ABL1 returns 11 entries without 1IEP or 3MSS (checked 2026-10-11), and UniProt gene names are not searchable (HTTP 400). UniProt synonyms are left out because they can name another protein (COX2 is also a synonym of MT-CO2) |
 | openFDA | label text for the knowledge base | `/drug/label.json` per drug in scope | 262,895 labels, 1.77 GB zipped. The scope list keeps the corpus small, so no bulk download |
 | RDKit | 3D fallback (ETKDG + MMFF), bond orders for PDB ligands | local | only where PubChem has no data |
 
@@ -87,7 +87,7 @@ Displayed properties come from PubChem (citable). RDKit's Crippen logP and accep
 
 1. InChIKey → ChEMBL parent ID → mechanisms → target, action type, UniProt accessions, gene names.
 2. InChIKey → PDB ligand code(s): exact first, connectivity fallback second.
-3. RCSB AND query (ligand code + target gene names) → candidate entries.
+3. Entries with the ligand code, kept when a protein entity comes from a target gene (depositor or UniProt primary gene name) → candidate entries.
 4. Rank by resolution (`rcsb_entry_info.resolution_combined`); prefer human proteins.
 5. A person reviews the candidates and writes the chosen entry to `data/hero_set.yaml`: `pdb, ligand_code, chain, target, organism, note`.
 
