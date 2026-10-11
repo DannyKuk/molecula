@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from molecula.config import Settings
 
@@ -17,6 +18,7 @@ ENV_KEYS = [
     "OFFLINE",
     "DATA_DIR",
     "CORS_ORIGINS",
+    "NAME_SUGGESTION_CUTOFF",
 ]
 
 
@@ -85,6 +87,17 @@ def test_copied_env_example_loads_with_empty_keys(tmp_path: Path) -> None:
     )
     assert settings.embedding_model == "local"
     assert settings.offline is False
+    assert settings.name_suggestion_cutoff == 0.8
+
+
+@pytest.mark.parametrize("raw", ["-0.1", "1.5"])
+def test_name_suggestion_cutoff_outside_0_to_1_is_rejected(
+    raw: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("NAME_SUGGESTION_CUTOFF", raw)
+
+    with pytest.raises(ValidationError, match="name_suggestion_cutoff"):
+        Settings(_env_file=None)
 
 
 def test_missing_env_file_uses_defaults(tmp_path: Path) -> None:

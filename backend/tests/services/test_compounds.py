@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from molecula.schemas.compounds import SupportedDrug
+from molecula.schemas.compounds import Suggestion, SupportedDrug
 from molecula.services import compounds
 from molecula.services.compounds import CompoundService, name_candidates
 from molecula.store.compounds import CompoundRecord, CompoundStore, ConformerSource, Synonym
@@ -14,6 +14,28 @@ from molecula.store.structures import ConformerFiles
 
 FETCHED_AT = datetime(2026, 10, 11, tzinfo=UTC)
 SDF = "5291\n  stored conformer\n$$$$\n"
+SUGGESTION_CUTOFF = 0.8
+# Copied from the built store (2026-10-12). Citalopram, hydroxyzine and hydralazine aren't in it.
+SCOPE = [
+    (3672, "ibuprofen", ["Advil", "Motrin", "Nurofen", "Ibuflam"]),
+    (1983, "acetaminophen", ["paracetamol", "Tylenol", "Panadol", "ben-u-ron"]),
+    (5291, "imatinib", ["Gleevec", "Glivec"]),
+    (2678, "cetirizine", ["Zyrtec"]),
+    (33613, "amoxicillin", ["Amoxil"]),
+    (2244, "aspirin", ["acetylsalicylic acid", "ASA", "ASS"]),
+    (4091, "metformin", ["Glucophage"]),
+    (60823, "atorvastatin", ["Lipitor", "Sortis"]),
+    (2662, "celecoxib", ["Celebrex"]),
+    (27447, "cephalexin", ["cefalexin", "Keflex"]),
+    (146570, "escitalopram", ["Lexapro", "Cipralex"]),
+    (3652, "hydroxychloroquine", ["Plaquenil"]),
+    (5754, "hydrocortisone", []),
+    (5819, "levothyroxine", ["Levothyroxin", "Synthroid", "Euthyrox", "L-thyroxine"]),
+    (4594, "omeprazole", ["Omeprazol", "Prilosec"]),
+    (9568614, "esomeprazole", ["Nexium"]),
+    (4679, "pantoprazole", ["Pantoprazol", "Protonix", "Pantozol"]),
+    (3883, "lansoprazole", ["Prevacid"]),
+]
 
 
 def record(cid: int, name: str, conformer_source: ConformerSource | None = "pubchem"):
@@ -67,7 +89,25 @@ def conformers(tmp_path: Path) -> ConformerFiles:
 
 @pytest.fixture
 def service(store: CompoundStore, conformers: ConformerFiles) -> CompoundService:
-    return CompoundService(store, conformers)
+    return CompoundService(store, conformers, suggestion_cutoff=SUGGESTION_CUTOFF)
+
+
+@pytest.fixture
+def scope_store(conn: sqlite3.Connection) -> CompoundStore:
+    """The built store's scope names and aliases of the drugs near the misspellings tested here."""
+    store = CompoundStore(conn)
+    for cid, name, aliases in SCOPE:
+        store.save(
+            record(cid, name),
+            [Synonym(name, "name"), *(Synonym(alias, "alias") for alias in aliases)],
+            FETCHED_AT,
+        )
+    return store
+
+
+@pytest.fixture
+def scope_service(scope_store: CompoundStore, conformers: ConformerFiles) -> CompoundService:
+    return CompoundService(scope_store, conformers, suggestion_cutoff=SUGGESTION_CUTOFF)
 
 
 @pytest.mark.parametrize("name", ["Ibuflam", "ibuflam", "IBUFLAM", "  Ibuflam "])
@@ -79,6 +119,7 @@ def test_alias_resolves_in_any_case(service: CompoundService, name: str) -> None
     assert resolution.compound.name == "ibuprofen"
     assert (resolution.matched_alias, resolution.match_kind) == ("Ibuflam", "alias")
     assert resolution.query == name.strip()
+    assert resolution.suggestions == []
 
 
 def test_pubchem_synonym_resolves(service: CompoundService) -> None:
@@ -116,6 +157,79 @@ def test_name_outside_the_store_is_not_supported(service: CompoundService, name:
     assert resolution.status == "not_supported"
     assert resolution.compound is None
     assert resolution.matched_alias is None
+    assert resolution.suggestions == []
+
+
+@pytest.mark.parametrize(
+    ("name", "suggestion"),
+    [
+        ("ibuprofin", Suggestion(alias="ibuprofen", cid=3672, name="ibuprofen")),
+        ("paracetamoll", Suggestion(alias="paracetamol", cid=1983, name="acetaminophen")),
+        ("Gleevek", Suggestion(alias="Gleevec", cid=5291, name="imatinib")),
+        ("ZYRTEK", Suggestion(alias="Zyrtec", cid=2678, name="cetirizine")),
+        ("amoxicilin", Suggestion(alias="amoxicillin", cid=33613, name="amoxicillin")),
+        ("asprin", Suggestion(alias="aspirin", cid=2244, name="aspirin")),
+        ("metformine", Suggestion(alias="metformin", cid=4091, name="metformin")),
+        ("atorvastatine", Suggestion(alias="atorvastatin", cid=60823, name="atorvastatin")),
+        ("metformine hydrochloride", Suggestion(alias="metformin", cid=4091, name="metformin")),
+    ],
+)
+def test_misspelled_name_or_brand_suggests_the_supported_spelling(
+    scope_service: CompoundService, name: str, suggestion: Suggestion
+) -> None:
+    resolution = scope_service.resolve(name)
+
+    assert resolution.suggestions == [suggestion]
+
+
+def test_suggestion_never_changes_the_status(scope_service: CompoundService) -> None:
+    resolution = scope_service.resolve("ibuprofin")
+
+    assert resolution.status == "not_supported"
+    assert (resolution.compound, resolution.matched_alias, resolution.match_kind) == (
+        None,
+        None,
+        None,
+    )
+    assert [suggestion.name for suggestion in resolution.suggestions] == ["ibuprofen"]
+
+
+@pytest.mark.parametrize("name", ["Celexa", "hydroxizine", "xyz"])
+def test_look_alike_or_unrelated_name_gets_no_suggestion(
+    scope_service: CompoundService, name: str
+) -> None:
+    resolution = scope_service.resolve(name)
+
+    assert resolution.status == "not_supported"
+    assert resolution.suggestions == []
+
+
+def test_at_most_three_suggestions_best_first(
+    scope_store: CompoundStore, conformers: ConformerFiles
+) -> None:
+    # At 0.6 pantoprazole and lansoprazole are close enough too, but rank below these three.
+    service = CompoundService(scope_store, conformers, suggestion_cutoff=0.6)
+
+    resolution = service.resolve("omeprazoe")
+
+    assert [suggestion.alias for suggestion in resolution.suggestions] == [
+        "omeprazole",
+        "Omeprazol",
+        "esomeprazole",
+    ]
+
+
+def test_cutoff_setting_decides_how_close_a_suggestion_must_be(
+    scope_store: CompoundStore, conformers: ConformerFiles
+) -> None:
+    strict = CompoundService(scope_store, conformers, suggestion_cutoff=0.9)
+
+    assert strict.resolve("Gleevek").suggestions == []
+
+
+def test_pubchem_synonyms_are_never_suggested(service: CompoundService) -> None:
+    # "Glamox" is imatinib's PubChem synonym in the store fixture, close to "Glamix".
+    assert service.resolve("Glamix").suggestions == []
 
 
 def test_scope_name_wins_over_a_pubchem_synonym_of_another_compound(

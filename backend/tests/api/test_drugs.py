@@ -29,9 +29,8 @@ class FakeCompoundService:
 
     def resolve(self, name: str) -> Resolution:
         self.resolved.append(name)
-        return (
-            examples.FOUND if name == "Gleevec" else Resolution(query=name, status="not_supported")
-        )
+        known = {"Gleevec": examples.FOUND, "Gleevek": examples.NOT_SUPPORTED}
+        return known.get(name, Resolution(query=name, status="not_supported"))
 
     def get_compound(self, cid: int) -> Compound | None:
         return self.compounds.get(cid)
@@ -113,7 +112,17 @@ def test_resolve_answers_an_unknown_name_with_not_supported(
 
     assert response.status_code == 200
     assert response.json()["status"] == "not_supported"
+    assert response.json()["suggestions"] == []
     assert service.resolved == [name]
+
+
+def test_resolve_returns_the_suggestions_of_an_unsupported_name(client: TestClient) -> None:
+    response = client.get("/drugs/resolve", params={"name": "Gleevek"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert (body["status"], body["compound"]) == ("not_supported", None)
+    assert body["suggestions"] == [{"alias": "Gleevec", "cid": 5291, "name": "imatinib"}]
 
 
 @pytest.mark.parametrize(

@@ -1,8 +1,11 @@
-from molecula.schemas.compounds import Compound, Resolution, Structure, SupportedDrug
+from difflib import get_close_matches
+
+from molecula.schemas.compounds import Compound, Resolution, Structure, Suggestion, SupportedDrug
 from molecula.store.compounds import CompoundRecord, CompoundStore
 from molecula.store.structures import ConformerFiles
 
 PUBCHEM_COMPOUND_URL = "https://pubchem.ncbi.nlm.nih.gov/compound/{cid}"
+MAX_SUGGESTIONS = 3
 
 # Prescriptions and openFDA name the salt or hydrate ("imatinib mesylate"), the store holds the
 # parent compound. Ester words like "acetate" are left out: medroxyprogesterone acetate is a
@@ -59,14 +62,22 @@ SALT_WORDS = frozenset(
 class CompoundService:
     """Drug names to compounds from the local store. Molecula supports exactly what is stored."""
 
-    def __init__(self, store: CompoundStore, conformers: ConformerFiles) -> None:
+    def __init__(
+        self, store: CompoundStore, conformers: ConformerFiles, *, suggestion_cutoff: float
+    ) -> None:
         self._store = store
         self._conformers = conformers
+        self._suggestion_cutoff = suggestion_cutoff
 
     def resolve(self, name: str) -> Resolution:
-        """The supported drug a name, brand, alias or salt name refers to, ignoring case."""
+        """The supported drug a name, brand, alias or salt name refers to, ignoring case.
+
+        An unsupported name gets the closest scope names and aliases as suggestions, never as
+        the answer: look-alike drug names (Celexa, Celebrex) make a silent correction unsafe.
+        """
         query = " ".join(name.split())
-        for candidate in name_candidates(query):
+        candidates = name_candidates(query)
+        for candidate in candidates:
             if match := self._store.find(candidate):
                 return Resolution(
                     query=query,
@@ -75,7 +86,33 @@ class CompoundService:
                     matched_alias=match.synonym.alias,
                     match_kind=match.synonym.kind,
                 )
-        return Resolution(query=query, status="not_supported")
+        # The last candidate is the name without salt words, so "imatinb mesylate" finds imatinib.
+        suggestions = self._suggest(candidates[-1]) if candidates else []
+        return Resolution(query=query, status="not_supported", suggestions=suggestions)
+
+    def _suggest(self, name: str) -> list[Suggestion]:
+        """Up to three scope names and aliases close to the name, best first."""
+        spellings = self._scope_spellings()
+        matches = get_close_matches(
+            name.casefold(), list(spellings), n=MAX_SUGGESTIONS, cutoff=self._suggestion_cutoff
+        )
+        return [spellings[match] for match in matches]
+
+    def _scope_spellings(self) -> dict[str, Suggestion]:
+        """Every scope name and alias by its casefolded spelling; a scope name wins a clash."""
+        records = self._store.all()
+        aliases = self._store.scope_aliases()
+        spellings: dict[str, Suggestion] = {}
+        for record in records:
+            spellings[record.name.casefold()] = Suggestion(
+                alias=record.name, cid=record.cid, name=record.name
+            )
+        for record in records:
+            for alias in aliases.get(record.cid, []):
+                spellings.setdefault(
+                    alias.casefold(), Suggestion(alias=alias, cid=record.cid, name=record.name)
+                )
+        return spellings
 
     def get_compound(self, cid: int) -> Compound | None:
         record = self._store.get(cid)

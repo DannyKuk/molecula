@@ -1,6 +1,6 @@
 """Response examples for the OpenAPI docs, built from the response models so they can't drift."""
 
-from molecula.schemas.compounds import Compound, Resolution, SupportedDrug
+from molecula.schemas.compounds import Compound, Resolution, Suggestion, SupportedDrug
 from molecula.schemas.targets import DrugTargets, Target
 
 IMATINIB = Compound(
@@ -36,7 +36,11 @@ FOUND = Resolution(
     matched_alias="Gleevec",
     match_kind="alias",
 )
-NOT_SUPPORTED = Resolution(query="Vicodin", status="not_supported")
+NOT_SUPPORTED = Resolution(
+    query="Gleevek",
+    status="not_supported",
+    suggestions=[Suggestion(alias="Gleevec", cid=5291, name="imatinib")],
+)
 
 IMATINIB_TARGETS = DrugTargets(
     cid=5291,
