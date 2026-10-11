@@ -1,6 +1,10 @@
 """RCSB responses recorded from the live API, served by what each request asks for.
 
 Recorded on 2026-10-11, except the S-warfarin (SWF) search and entries, recorded on 2026-10-12.
+The GraphQL entries (STI, TYL, SWF) were recorded again on 2026-10-12 when the query started to
+ask for each source organism's taxonomy lineage. The raltegravir (RLT) and dolutegravir (DLU)
+searches and entries were recorded on 2026-10-12: RLT is bound only to foamy virus, STLV-1,
+influenza and transposase proteins, no HIV-1 integrase; DLU to foamy virus, SIV and HIV-1 integrase.
 
 Search and GraphQL requests are POSTs to one URL, so they are told apart by their JSON body:
 `describe` turns a request into a short readable key. The ibuprofen InChIKey search answered
@@ -16,11 +20,17 @@ FIXTURES = Path(__file__).parent / "fixtures" / "rcsb"
 IMATINIB_INCHIKEY = "KTUFNOKKBVMGRW-UHFFFAOYSA-N"
 IBUPROFEN_INCHIKEY = "HEFNNWSXXWATRW-UHFFFAOYSA-N"
 ACETAMINOPHEN_INCHIKEY = "RZVAJINKPMORJF-UHFFFAOYSA-N"
+RALTEGRAVIR_INCHIKEY = "CZFFBEXEKNGXKS-UHFFFAOYSA-N"
+DOLUTEGRAVIR_INCHIKEY = "RHWKPHLQXYSBKR-BMIGLBTASA-N"
 IBUPROFEN_SMILES = "CC(C)CC1=CC=C(C=C1)C(C)C(=O)O"
-STI_ENTRIES = sorted(
-    hit["identifier"]
-    for hit in json.loads((FIXTURES / "search_entries_STI.json").read_bytes())["result_set"]
-)
+
+
+def recorded_entries(code: str) -> list[str]:
+    hits = json.loads((FIXTURES / f"search_entries_{code}.json").read_bytes())["result_set"]
+    return sorted(hit["identifier"] for hit in hits)
+
+
+STI_ENTRIES = recorded_entries("STI")
 
 INCHIKEY_SEARCH = (
     "search text_chem rcsb_chem_comp_descriptor.InChIKey exact_match {} -> mol_definition"
@@ -33,6 +43,8 @@ RELAXED_STEREO_SEARCH = "search chemical SMILES graph-relaxed-stereo {} -> mol_d
 STI_ENTRY_DETAILS = f"graphql entries {','.join(STI_ENTRIES)}"
 TYL_ENTRY_DETAILS = "graphql entries 1TYL,1TYM,2DPZ,2OCU,3PY4,4A9J,4A9K,4CUT,4YJI,5PBE"
 SWF_ENTRY_DETAILS = "graphql entries 10QV,1HA2,1OG5,6WV3,6WV4,6WVB"
+RLT_ENTRY_DETAILS = f"graphql entries {','.join(recorded_entries('RLT'))}"
+DLU_ENTRY_DETAILS = f"graphql entries {','.join(recorded_entries('DLU'))}"
 
 RECORDED: dict[str, tuple[int, str | None]] = {
     INCHIKEY_SEARCH.format(IMATINIB_INCHIKEY): (200, "search_inchikey_imatinib.json"),
@@ -50,6 +62,12 @@ RECORDED: dict[str, tuple[int, str | None]] = {
     TYL_ENTRY_DETAILS: (200, "graphql_entries_TYL.json"),
     LIGAND_SEARCH.format("SWF"): (200, "search_entries_SWF.json"),
     SWF_ENTRY_DETAILS: (200, "graphql_entries_SWF.json"),
+    INCHIKEY_SEARCH.format(RALTEGRAVIR_INCHIKEY): (200, "search_inchikey_raltegravir.json"),
+    LIGAND_SEARCH.format("RLT"): (200, "search_entries_RLT.json"),
+    RLT_ENTRY_DETAILS: (200, "graphql_entries_RLT.json"),
+    INCHIKEY_SEARCH.format(DOLUTEGRAVIR_INCHIKEY): (200, "search_inchikey_dolutegravir.json"),
+    LIGAND_SEARCH.format("DLU"): (200, "search_entries_DLU.json"),
+    DLU_ENTRY_DETAILS: (200, "graphql_entries_DLU.json"),
 }
 
 

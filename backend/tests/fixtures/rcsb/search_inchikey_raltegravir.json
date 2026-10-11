@@ -1,0 +1,9 @@
+{
+  "query_id" : "a9b2b85d-df99-41a0-a2d4-66542ba08f90",
+  "result_type" : "mol_definition",
+  "total_count" : 1,
+  "result_set" : [ {
+    "identifier" : "RLT",
+    "score" : 1.0
+  } ]
+}

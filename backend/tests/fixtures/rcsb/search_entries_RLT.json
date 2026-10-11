@@ -1,0 +1,27 @@
+{
+  "query_id" : "3bd89b3f-bc2a-444e-9ad8-8a50dc1fe7f8",
+  "result_type" : "entry",
+  "total_count" : 7,
+  "result_set" : [ {
+    "identifier" : "3L2V",
+    "score" : 1.0
+  }, {
+    "identifier" : "3OYA",
+    "score" : 1.0
+  }, {
+    "identifier" : "4MDA",
+    "score" : 1.0
+  }, {
+    "identifier" : "4MDB",
+    "score" : 1.0
+  }, {
+    "identifier" : "7LW6",
+    "score" : 1.0
+  }, {
+    "identifier" : "7M0N",
+    "score" : 1.0
+  }, {
+    "identifier" : "7OUG",
+    "score" : 1.0
+  } ]
+}
