@@ -58,8 +58,22 @@ class SupportedDrug(BaseModel):
     has_3d: bool
 
 
+class Suggestion(BaseModel):
+    """A supported name close to an unsupported one: the scope name or alias, and its drug."""
+
+    model_config = ConfigDict(frozen=True)
+
+    alias: str
+    cid: int
+    name: str
+
+
 class Resolution(BaseModel):
-    """Which supported drug a name refers to. `not_supported` means it isn't in the local data."""
+    """Which supported drug a name refers to. `not_supported` means it isn't in the local data.
+
+    A `not_supported` name can carry the closest supported names, best first. They are only
+    offered: resolving one of them is a separate request.
+    """
 
     model_config = ConfigDict(frozen=True)
 
@@ -68,6 +82,7 @@ class Resolution(BaseModel):
     compound: Compound | None = None
     matched_alias: str | None = None
     match_kind: Literal["name", "alias", "pubchem"] | None = None
+    suggestions: list[Suggestion] = []
 
 
 class Structure(BaseModel):

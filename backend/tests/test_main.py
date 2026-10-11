@@ -81,3 +81,23 @@ def test_routes_serve_the_built_store(settings: Settings) -> None:
     assert resolution["compound"]["cid"] == 5291
     assert structure.text == SDF
     assert targets == {"cid": 5291, "targets": []}
+
+
+@pytest.mark.parametrize(("cutoff", "suggested"), [(0.8, ["Gleevec"]), (0.9, [])])
+def test_name_suggestion_cutoff_comes_from_the_settings(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch, cutoff: float, suggested: list[str]
+) -> None:
+    monkeypatch.setattr(settings, "name_suggestion_cutoff", cutoff)
+    conn = connect(settings.db_path)
+    CompoundStore(conn).save(
+        IMATINIB,
+        [Synonym("imatinib", "name"), Synonym("Gleevec", "alias")],
+        datetime(2026, 10, 11, tzinfo=UTC),
+    )
+    conn.close()
+
+    with TestClient(app) as client:
+        resolution = client.get("/drugs/resolve", params={"name": "Gleevek"}).json()
+
+    assert resolution["status"] == "not_supported"
+    assert [suggestion["alias"] for suggestion in resolution["suggestions"]] == suggested

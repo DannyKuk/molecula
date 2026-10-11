@@ -1,7 +1,8 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Annotated
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # backend/src/molecula/config.py -> the repo root, where .env and data/ live in a local checkout.
@@ -30,6 +31,7 @@ class Settings(BaseSettings):
     offline: bool = False
     data_dir: Path = REPO_ROOT / "data"
     cors_origins: list[str] = ["http://localhost:3000"]
+    name_suggestion_cutoff: Annotated[float, Field(ge=0.0, le=1.0)] = 0.8
 
     @property
     def build_dir(self) -> Path:

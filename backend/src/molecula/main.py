@@ -36,7 +36,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     conn = open_store(settings)
     compounds = CompoundStore(conn)
-    app.state.compound_service = CompoundService(compounds, ConformerFiles(settings.conformers_dir))
+    app.state.compound_service = CompoundService(
+        compounds,
+        ConformerFiles(settings.conformers_dir),
+        suggestion_cutoff=settings.name_suggestion_cutoff,
+    )
     app.state.target_service = TargetService(TargetStore(conn), compounds)
     yield
     conn.close()
