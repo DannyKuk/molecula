@@ -9,6 +9,9 @@ ENV_KEYS = [
     "LLM_MODEL",
     "LOCAL_LLM_BASE_URL",
     "LOCAL_LLM_MODEL",
+    "LLM_TEMPERATURE",
+    "LLM_TIMEOUT_SECONDS",
+    "LLM_MAX_RETRIES",
     "EMBEDDING_MODEL",
     "OPENFDA_API_KEY",
     "OFFLINE",
@@ -75,6 +78,11 @@ def test_copied_env_example_loads_with_empty_keys(tmp_path: Path) -> None:
 
     assert settings.openrouter_api_key is None
     assert settings.local_llm_base_url is None
+    assert (settings.llm_temperature, settings.llm_timeout_seconds, settings.llm_max_retries) == (
+        0.2,
+        60.0,
+        2,
+    )
     assert settings.embedding_model == "local"
     assert settings.offline is False
 
