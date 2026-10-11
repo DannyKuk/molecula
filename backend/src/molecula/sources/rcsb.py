@@ -49,15 +49,35 @@ class ChemComp(BaseModel):
     descriptor: ChemCompDescriptor | None = Field(None, alias="rcsb_chem_comp_descriptor")
 
 
+class Source(BaseModel):
+    """One source organism of an entity, with the depositor's gene names for its part."""
+
+    model_config = ConfigDict(frozen=True)
+
+    organism: str | None = None
+    taxonomy_id: int | None = None
+    genes: list[str] = []
+
+
 class Entity(BaseModel):
-    """A polymer entity: one protein (or nucleic acid) chain type in an entry."""
+    """A polymer entity: one protein (or nucleic acid) chain type in an entry.
+
+    A fusion construct has one source per part: 6WV3 is GFP, human VKORC1 and GFP again.
+    """
 
     model_config = ConfigDict(frozen=True)
 
     chains: list[str]
-    organism: str | None
-    taxonomy_id: int | None
+    sources: list[Source]
     genes: list[str]
+
+    def source_for(self, upper_gene_names: set[str]) -> Source:
+        """The first source whose depositor gene names include one of the genes.
+
+        When no source names them (the match came from UniProt alone), the first source stands in.
+        """
+        carrying = (source for source in self.sources if has_gene(source.genes, upper_gene_names))
+        return next(carrying, self.sources[0] if self.sources else Source())
 
 
 class Entry(BaseModel):
@@ -70,7 +90,7 @@ class Entry(BaseModel):
 
 
 class ComplexCandidate(BaseModel):
-    """An entry with the ligand bound, described by the entity that carries the target gene."""
+    """An entry with the ligand bound: the chains and source organism that carry the target gene."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -90,6 +110,13 @@ class SourceOrganism(BaseModel):
     scientific_name: str | None = None
     ncbi_taxonomy_id: int | None = None
     rcsb_gene_name: OptionalList[GeneName] = []
+
+    def to_source(self) -> Source:
+        return Source(
+            organism=self.scientific_name,
+            taxonomy_id=self.ncbi_taxonomy_id,
+            genes=[gene.value for gene in self.rcsb_gene_name],
+        )
 
 
 class UniProtName(BaseModel):
@@ -119,11 +146,9 @@ class PolymerEntity(BaseModel):
     uniprots: OptionalList[UniProt] = []
 
     def to_entity(self) -> Entity:
-        organism = self.organisms[0] if self.organisms else SourceOrganism()
         return Entity(
             chains=self.identifiers.auth_asym_ids,
-            organism=organism.scientific_name,
-            taxonomy_id=organism.ncbi_taxonomy_id,
+            sources=[organism.to_source() for organism in self.organisms],
             genes=self.gene_names(),
         )
 
@@ -256,7 +281,7 @@ class RcsbClient:
         wanted = {name.upper() for name in gene_names}
         entry_ids = self.entries_with_ligand(ligand_code, refresh=refresh)
         return [
-            candidate(entry, target)
+            candidate(entry, target, target.source_for(wanted))
             for entry in self.entries(entry_ids, refresh=refresh)
             if (target := entity_with_gene(entry, wanted))
         ]
@@ -282,23 +307,23 @@ def connectivity_block(inchikey: str) -> str:
     return inchikey[:CONNECTIVITY_BLOCK]
 
 
+def has_gene(genes: list[str], upper_gene_names: set[str]) -> bool:
+    return any(gene.upper() in upper_gene_names for gene in genes)
+
+
 def entity_with_gene(entry: Entry, upper_gene_names: set[str]) -> Entity | None:
     return next(
-        (
-            entity
-            for entity in entry.entities
-            if any(gene.upper() in upper_gene_names for gene in entity.genes)
-        ),
+        (entity for entity in entry.entities if has_gene(entity.genes, upper_gene_names)),
         None,
     )
 
 
-def candidate(entry: Entry, target: Entity) -> ComplexCandidate:
+def candidate(entry: Entry, target: Entity, source: Source) -> ComplexCandidate:
     return ComplexCandidate(
         pdb_id=entry.pdb_id,
         title=entry.title,
         resolution=entry.resolution,
-        organism=target.organism,
-        taxonomy_id=target.taxonomy_id,
+        organism=source.organism,
+        taxonomy_id=source.taxonomy_id,
         chains=target.chains,
     )

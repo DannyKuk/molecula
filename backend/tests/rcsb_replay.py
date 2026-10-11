@@ -1,4 +1,6 @@
-"""RCSB responses recorded from the live API on 2026-10-11, served by what each request asks for.
+"""RCSB responses recorded from the live API, served by what each request asks for.
+
+Recorded on 2026-10-11, except the S-warfarin (SWF) search and entries, recorded on 2026-10-12.
 
 Search and GraphQL requests are POSTs to one URL, so they are told apart by their JSON body:
 `describe` turns a request into a short readable key. The ibuprofen InChIKey search answered
@@ -30,6 +32,7 @@ LIGAND_SEARCH = (
 RELAXED_STEREO_SEARCH = "search chemical SMILES graph-relaxed-stereo {} -> mol_definition"
 STI_ENTRY_DETAILS = f"graphql entries {','.join(STI_ENTRIES)}"
 TYL_ENTRY_DETAILS = "graphql entries 1TYL,1TYM,2DPZ,2OCU,3PY4,4A9J,4A9K,4CUT,4YJI,5PBE"
+SWF_ENTRY_DETAILS = "graphql entries 10QV,1HA2,1OG5,6WV3,6WV4,6WVB"
 
 RECORDED: dict[str, tuple[int, str | None]] = {
     INCHIKEY_SEARCH.format(IMATINIB_INCHIKEY): (200, "search_inchikey_imatinib.json"),
@@ -45,6 +48,8 @@ RECORDED: dict[str, tuple[int, str | None]] = {
     INCHIKEY_SEARCH.format(ACETAMINOPHEN_INCHIKEY): (200, "search_inchikey_acetaminophen.json"),
     LIGAND_SEARCH.format("TYL"): (200, "search_entries_TYL.json"),
     TYL_ENTRY_DETAILS: (200, "graphql_entries_TYL.json"),
+    LIGAND_SEARCH.format("SWF"): (200, "search_entries_SWF.json"),
+    SWF_ENTRY_DETAILS: (200, "graphql_entries_SWF.json"),
 }
 
 
