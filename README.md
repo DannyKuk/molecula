@@ -12,7 +12,7 @@ Early development. [`docs/data-plan.md`](docs/data-plan.md) describes the verifi
 
 - **Backend:** Python, FastAPI, LangChain; LLMs via OpenRouter or a local model (Ollama / LM Studio)
 - **Frontend:** Next.js
-- **Data:** a local store built from PubChem, ChEMBL, RCSB PDB and openFDA, served through its own API and an MCP server. External APIs are only called on a cache miss.
+- **Data:** a local store built from PubChem, ChEMBL, RCSB PDB and openFDA, served through its own API and an MCP server. The app answers only from this store, so the supported drugs are a known list.
 - **Runs in Docker:** `docker compose up --build`
 
 ## Running it

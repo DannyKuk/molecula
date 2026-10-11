@@ -49,22 +49,21 @@ Known limits, and how the app handles them:
 
 ---
 
-## 4. Architecture: local store first
+## 4. Architecture: answers come from the local store
 
 ```
            build time (python -m molecula.ingest …)                       run time
  PubChem ─┐                                                     ┌─ FastAPI ──> Next.js
  ChEMBL  ─┼─> ingest steps ──> data/build/molecula.db (SQLite)──┤
  RCSB    ─┤                    data/build/structures/           └─ MCP server ──> LangChain agent
- openFDA ─┘                    data/build/index/ (vectors + BM25)        │
-                                                                         └─ cache miss → source client
-                                                                            (rate-limited) → write-through
+ openFDA ─┘                    data/build/index/ (vectors + BM25)
 ```
 
 - **One service layer** (`backend/src/molecula/services/`). FastAPI routes, agent tools and the MCP server are thin wrappers around the same functions.
-- **Lookup order:** local store → source client (rate-limited, retries on 429/503) → result stored with `source` and `fetched_at`.
-- **Live fallback only for cheap, safe data:** name resolution, properties, 3D conformers. Complexes outside the reviewed hero set are never fetched live, because an unreviewed complex can be scientifically wrong (ibuprofen bound to albumin is not its mechanism).
-- **`OFFLINE=1`** never calls a source. Evals always run this way.
+- **The store is the supported set.** Services read only the store; a drug that isn't in it is answered as "not supported", and the UI lists what is. Sources are called only by the ingest steps (including the label update, §5.6), through the rate-limited client with retries on 429/503, and every stored row records `source` and `fetched_at`.
+- **No live fallback** (decided in #30). For a drug outside the scope a live lookup would only bring properties and 3D, with no label, no targets and no reviewed complex. It can also answer about the wrong drug: PubChem maps "Vicodin" (hydrocodone + acetaminophen) to acetaminophen's CID (checked 2026-10-11). Complexes outside the reviewed hero set would be risky too, because an unreviewed complex can be scientifically wrong (ibuprofen bound to albumin is not its mechanism).
+- **Salt and brand names** resolve through the stored synonyms (scope name, scope aliases, top PubChem synonyms) and, failing that, the name without salt and hydrate words ("imatinib mesylate" → imatinib).
+- **`OFFLINE=1`** stops the ingest steps from calling a source. Evals always run this way.
 
 ---
 

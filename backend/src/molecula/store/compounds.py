@@ -38,6 +38,12 @@ class Synonym:
     kind: SynonymKind
 
 
+@dataclass(frozen=True)
+class SynonymMatch:
+    compound: CompoundRecord
+    synonym: Synonym
+
+
 COLUMNS = [field.name for field in fields(CompoundRecord)]
 
 
@@ -54,6 +60,34 @@ class CompoundStore:
                 f"SELECT {', '.join(COLUMNS)} FROM compound WHERE cid = ?", (cid,)
             ).fetchone()
         return CompoundRecord(*row) if row else None
+
+    def all(self) -> list[CompoundRecord]:
+        """Every stored compound, by name."""
+        with self._lock:
+            rows = self._conn.execute(
+                f"SELECT {', '.join(COLUMNS)} FROM compound ORDER BY name"
+            ).fetchall()
+        return [CompoundRecord(*row) for row in rows]
+
+    def find(self, alias: str) -> SynonymMatch | None:
+        """The compound an alias names, ignoring case.
+
+        An alias can name several compounds (a PubChem synonym of one drug that is another's scope
+        name); the scope name wins over a scope alias, which wins over a PubChem synonym.
+        """
+        compound_columns = ", ".join(f"compound.{column}" for column in COLUMNS)
+        with self._lock:
+            row = self._conn.execute(
+                f"SELECT {compound_columns}, synonym.alias, synonym.kind"
+                " FROM synonym JOIN compound USING (cid) WHERE synonym.alias = ?"
+                " ORDER BY CASE synonym.kind WHEN 'name' THEN 0 WHEN 'alias' THEN 1 ELSE 2 END,"
+                " synonym.rowid LIMIT 1",
+                (alias,),
+            ).fetchone()
+        if row is None:
+            return None
+        *compound, synonym_alias, kind = row
+        return SynonymMatch(CompoundRecord(*compound), Synonym(synonym_alias, kind))
 
     def synonyms(self, cid: int) -> list[Synonym]:
         with self._lock:

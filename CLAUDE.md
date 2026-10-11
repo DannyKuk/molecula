@@ -16,7 +16,7 @@ backend/
     main.py        FastAPI app
     config.py      settings from the environment (pydantic-settings)
     api/           HTTP routes only: validate, call a service, return a schema
-    services/      domain logic (compounds, targets, complexes, labels): local store first, source on a miss
+    services/      domain logic (compounds, targets, complexes, labels) over the local store
     sources/       one client per external API (PubChem, ChEMBL, RCSB, openFDA): HTTP, rate limit, retries
     store/         SQLite access and the vector / BM25 index
     ingest/        build steps that fill the store: python -m molecula.ingest <step>
@@ -89,7 +89,7 @@ Use subagents when work is independent and the result can be checked:
 
 ## Data rules
 
-- **Local first.** The app reads from the store. Source clients are only called on a cache miss, through the rate limiter, and never when `OFFLINE=1`. Evals always run with `OFFLINE=1`.
+- **The store is the supported set.** The app answers only from the store; a drug that isn't in it is "not supported". Source clients are called only by the ingest steps (including the label update), through the rate limiter, and never when `OFFLINE=1`. Evals always run with `OFFLINE=1`.
 - **Verify before building on data.** A new source, query or hero complex gets a data-check issue first. `docs/data-plan.md` marks what's verified.
 - **Hero complexes show the therapeutic target**, not a transport protein. Each entry in `data/hero_set.yaml` records the PDB ID, ligand code, chain and target.
 - Displayed properties come from PubChem; RDKit only fills what PubChem lacks.
