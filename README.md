@@ -8,6 +8,16 @@ A medicines chatbot that answers with real 3D molecular structures. Ask "How doe
 
 Early development. [`docs/data-plan.md`](docs/data-plan.md) describes the verified data sources and the pipeline.
 
+## Contents
+
+| Doc | What's in it |
+|---|---|
+| [Architecture](docs/architecture.md) | The pieces and what's built, one question from start to end, the ingest steps, the key design choices |
+| [Data plan](docs/data-plan.md) | Every source and query, verified live, and what each ingest step stores |
+| [Local store](docs/decisions/local-store.md) | Why the app answers only from a store built ahead of time, with no live fallback |
+| [Name resolution](docs/decisions/name-resolution.md) | How brands, salt names and typos find a supported drug, and why suggestions are never applied on their own |
+| [Data check](docs/spikes/data-check/report.md) | The first live check of names, properties, complexes and labels |
+
 ## Stack
 
 - **Backend:** Python, FastAPI, LangChain; LLMs via OpenRouter or a local model (Ollama / LM Studio)
