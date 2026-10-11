@@ -19,7 +19,9 @@ class Scope(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    drugs: list[ScopeEntry]
+    # A complete compounds run deletes every stored drug that isn't listed, so an empty list
+    # would wipe the store.
+    drugs: list[ScopeEntry] = Field(min_length=1)
 
     @model_validator(mode="after")
     def names_and_aliases_are_unambiguous(self) -> Self:
