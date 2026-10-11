@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from molecula.store.compounds import CompoundRecord, CompoundStore, Synonym
+from molecula.store.compounds import CompoundRecord, CompoundStore, Synonym, SynonymMatch
 
 FIRST_FETCH = datetime(2026, 10, 11, tzinfo=UTC)
 LATER_FETCH = datetime(2026, 11, 1, tzinfo=UTC)
@@ -101,3 +101,34 @@ def test_a_name_moving_to_another_cid_replaces_the_old_compound(store: CompoundS
     assert store.get(2519) is None
     assert store.synonyms(2519) == []
     assert store.get(99) is not None
+
+
+def test_find_matches_an_alias_ignoring_case(store: CompoundStore) -> None:
+    store.save(
+        CAFFEINE, [Synonym("caffeine", "name"), Synonym("Guaranine", "pubchem")], FIRST_FETCH
+    )
+
+    match = store.find("GUARANINE")
+
+    assert match == SynonymMatch(CAFFEINE, Synonym("Guaranine", "pubchem"))
+
+
+def test_find_prefers_a_scope_name_over_another_compounds_synonym(store: CompoundStore) -> None:
+    store.save(CAFFEINE, [Synonym("caffeine", "name"), Synonym("theine", "pubchem")], FIRST_FETCH)
+    theine = replace(CAFFEINE, cid=99, name="theine")
+    store.save(theine, [Synonym("theine", "name")], FIRST_FETCH)
+
+    match = store.find("theine")
+
+    assert match == SynonymMatch(theine, Synonym("theine", "name"))
+
+
+def test_find_unknown_alias_gives_none(store: CompoundStore) -> None:
+    assert store.find("caffeine") is None
+
+
+def test_all_lists_compounds_by_name(store: CompoundStore) -> None:
+    store.save(replace(CAFFEINE, cid=99, name="Theine"), [], FIRST_FETCH)
+    store.save(CAFFEINE, [], FIRST_FETCH)
+
+    assert [compound.name for compound in store.all()] == ["caffeine", "Theine"]
