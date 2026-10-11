@@ -130,7 +130,7 @@ Candidates from the first full run (2026-10-11; best first, organism given when 
 | zanamivir | neuraminidase | 23 influenza entries, best 6HCX (1.3 Å) | 11 entries |
 | ritonavir | HIV-1 protease | 3NDX, 3NDW, 4EYR, 4NJV, 1N49, 2B60 | — |
 | | CYP3A | 3NXU, 5VCE, 5VC0, 5VEU, 38FV | 3NXU |
-| warfarin | VKORC1 | 6WV3, 6WV4 (human VKOR, but listed as *Aequorea victoria* because the construct is a GFP fusion) | 6WV3 |
+| warfarin | VKORC1 | 6WV3, 6WV4 (human VKOR in a GFP fusion; the organism comes from the source that carries the gene, #68) | 6WV3 |
 | tamoxifen (OHT) | ESR1 | none: prodrug, hand entry | 4Q50 |
 | sildenafil | PDE5A | 1TBF, 1UDT, 2H42, 3JWQ, 10OZ (cow) | throttled |
 | raltegravir | retroviral integrase | 3OYA (foamy virus), 7OUG (STLV-1), 3L2V (foamy virus) | throttled |
