@@ -33,6 +33,10 @@ class Settings(BaseSettings):
         return self.data_dir / "build"
 
     @property
+    def scope_path(self) -> Path:
+        return self.data_dir / "scope.yaml"
+
+    @property
     def db_path(self) -> Path:
         return self.build_dir / "molecula.db"
 
