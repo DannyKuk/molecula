@@ -40,3 +40,7 @@ class HttpCache:
                     datetime.now(UTC).isoformat(),
                 ),
             )
+
+    def delete(self, key: str) -> None:
+        with self._lock, self._conn:
+            self._conn.execute("DELETE FROM http_cache WHERE key = ?", (key,))

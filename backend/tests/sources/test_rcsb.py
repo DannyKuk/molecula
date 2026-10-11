@@ -174,3 +174,26 @@ def test_graphql_errors_raise_source_format_error(rcsb) -> None:
 
     with pytest.raises(SourceFormatError):
         rcsb(handler).entries(STI_ENTRIES)
+
+
+def test_graphql_errors_are_not_served_from_the_cache_on_the_next_call(rcsb) -> None:
+    errors = httpx2.Response(200, json={"errors": [{"message": "Validation error"}]})
+    handler = Replay({STI_ENTRY_DETAILS: errors})
+    client = rcsb(handler)
+    with pytest.raises(SourceFormatError):
+        client.entries(STI_ENTRIES)
+
+    entries = client.entries(STI_ENTRIES)
+
+    assert sorted(e.pdb_id for e in entries) == STI_ENTRIES
+    assert len(handler.requests) == 2
+
+
+def test_graphql_entries_that_parse_are_served_from_the_cache(rcsb) -> None:
+    rcsb().entries(STI_ENTRIES)
+    handler = Replay()
+
+    entries = rcsb(handler, offline=True).entries(STI_ENTRIES)
+
+    assert sorted(e.pdb_id for e in entries) == STI_ENTRIES
+    assert handler.requests == []
