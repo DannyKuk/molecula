@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     def db_path(self) -> Path:
         return self.build_dir / "molecula.db"
 
+    @property
+    def conformers_dir(self) -> Path:
+        return self.build_dir / "structures" / "compounds"
+
 
 @lru_cache
 def get_settings() -> Settings:

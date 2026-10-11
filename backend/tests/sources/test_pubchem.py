@@ -1,79 +1,10 @@
-"""PubChem client tests on responses recorded from the live API on 2026-10-11.
-
-`cid_5291_properties_handmade_isomeric_smiles.json` is the recorded imatinib response with the
-`SMILES` key renamed to its old name; PubChem no longer returns `IsomericSMILES`.
-"""
-
-from collections.abc import Callable, Iterator
-from pathlib import Path
+"""PubChem client tests on recorded responses (see `tests/pubchem_replay.py`)."""
 
 import httpx2
 import pytest
 
 from molecula.sources.errors import SourceFormatError, SourceNotFound
-from molecula.sources.http import SourceClient
-from molecula.sources.pubchem import PubChemClient
-from molecula.store.db import connect
-from molecula.store.http_cache import HttpCache
-
-FIXTURES = Path(__file__).parents[1] / "fixtures" / "pubchem"
-PUG_PATH = "/rest/pug"
-PROPERTIES = (
-    "SMILES,InChIKey,MolecularFormula,MolecularWeight,XLogP,TPSA,"
-    "HBondDonorCount,HBondAcceptorCount,RotatableBondCount,HeavyAtomCount"
-)
-
-RECORDED = {
-    "/compound/name/Gleevec/cids/JSON": (200, "name_gleevec_cids.json"),
-    "/compound/name/Tylenol/cids/JSON": (200, "name_tylenol_cids.json"),
-    "/compound/name/insulin/cids/JSON": (200, "name_insulin_cids.json"),
-    "/compound/name/notadrugxyz/cids/JSON": (404, "name_unknown_cids.json"),
-    "/compound/cid/123596/cids/JSON?cids_type=parent": (200, "cid_123596_parent.json"),
-    f"/compound/cid/5291/property/{PROPERTIES}/JSON": (200, "cid_5291_properties.json"),
-    "/compound/cid/5291/SDF?record_type=3d": (200, "cid_5291_3d.sdf"),
-    "/compound/cid/5291/synonyms/JSON": (200, "cid_5291_synonyms.json"),
-    "/compound/cid/70678557/SDF?record_type=3d": (404, "cid_70678557_3d.sdf"),
-}
-
-
-class Replay:
-    """A MockTransport handler serving the recorded responses by path and query.
-
-    `overrides` answer a path once (e.g. a 503 before the recorded response).
-    """
-
-    def __init__(self, overrides: dict[str, httpx2.Response] | None = None) -> None:
-        self._overrides = dict(overrides or {})
-        self.requests: list[httpx2.Request] = []
-
-    def __call__(self, request: httpx2.Request) -> httpx2.Response:
-        self.requests.append(request)
-        key = request.url.raw_path.decode().removeprefix(PUG_PATH)
-        if key in self._overrides:
-            return self._overrides.pop(key)
-        status, fixture = RECORDED[key]
-        return httpx2.Response(status, content=(FIXTURES / fixture).read_bytes())
-
-
-@pytest.fixture
-def cache(tmp_path: Path) -> Iterator[HttpCache]:
-    conn = connect(tmp_path / "molecula.db")
-    yield HttpCache(conn)
-    conn.close()
-
-
-@pytest.fixture
-def pubchem(cache: HttpCache) -> Callable[..., PubChemClient]:
-    def make(handler: Replay | None = None) -> PubChemClient:
-        http = SourceClient(
-            cache,
-            offline=False,
-            transport=httpx2.MockTransport(handler or Replay()),
-            sleep=lambda _: None,
-        )
-        return PubChemClient(http)
-
-    return make
+from pubchem_replay import FIXTURES, PROPERTIES, Replay
 
 
 def test_salt_brand_resolves_to_its_parent(pubchem) -> None:

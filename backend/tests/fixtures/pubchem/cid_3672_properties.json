@@ -1,0 +1,19 @@
+{
+  "PropertyTable": {
+    "Properties": [
+      {
+        "CID": 3672,
+        "MolecularFormula": "C13H18O2",
+        "MolecularWeight": "206.28",
+        "SMILES": "CC(C)CC1=CC=C(C=C1)C(C)C(=O)O",
+        "InChIKey": "HEFNNWSXXWATRW-UHFFFAOYSA-N",
+        "XLogP": 3.5,
+        "TPSA": 37.3,
+        "HBondDonorCount": 1,
+        "HBondAcceptorCount": 2,
+        "RotatableBondCount": 4,
+        "HeavyAtomCount": 15
+      }
+    ]
+  }
+}
