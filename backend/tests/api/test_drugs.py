@@ -5,14 +5,16 @@ import pytest
 from fastapi.testclient import TestClient
 
 from molecula.api import examples
-from molecula.api.dependencies import compound_service
+from molecula.api.dependencies import compound_service, target_service
 from molecula.main import app
 from molecula.schemas.compounds import Compound, Resolution, Structure, SupportedDrug
+from molecula.schemas.targets import DrugTargets
 
 SEMAGLUTIDE = examples.IMATINIB.model_copy(
     update={"cid": 56843331, "name": "semaglutide", "has_3d": False, "conformer_source": None}
 )
 SDF = "5291\n  stored conformer\n$$$$\n"
+FLUTICASONE_CID = 5311101
 
 
 class FakeCompoundService:
@@ -38,6 +40,21 @@ class FakeCompoundService:
         return Structure(cid=cid, sdf=SDF, conformer_source="pubchem") if cid == 5291 else None
 
 
+class FakeTargetService:
+    """Knows imatinib (with targets) and fluticasone (without); records the CIDs it was asked."""
+
+    def __init__(self) -> None:
+        self.drugs = {
+            5291: examples.IMATINIB_TARGETS,
+            FLUTICASONE_CID: DrugTargets(cid=FLUTICASONE_CID, targets=[]),
+        }
+        self.asked: list[int] = []
+
+    def get_targets(self, cid: int) -> DrugTargets | None:
+        self.asked.append(cid)
+        return self.drugs.get(cid)
+
+
 @pytest.fixture
 def service() -> Iterator[FakeCompoundService]:
     fake = FakeCompoundService()
@@ -47,7 +64,14 @@ def service() -> Iterator[FakeCompoundService]:
 
 
 @pytest.fixture
-def client(service: FakeCompoundService) -> TestClient:
+def targets(service: FakeCompoundService) -> FakeTargetService:
+    fake = FakeTargetService()
+    app.dependency_overrides[target_service] = lambda: fake
+    return fake
+
+
+@pytest.fixture
+def client(service: FakeCompoundService, targets: FakeTargetService) -> TestClient:
     return TestClient(app)
 
 
@@ -170,6 +194,48 @@ def test_structure_rejects_an_invalid_cid(client: TestClient) -> None:
     assert messages == ["Input should be greater than 0"]
 
 
+def test_targets_lists_each_target_with_its_mechanism_and_chembl_link(client: TestClient) -> None:
+    response = client.get("/drugs/5291/targets")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body == examples.IMATINIB_TARGETS.model_dump()
+    abl1 = body["targets"][0]
+    assert (abl1["gene_symbols"], abl1["action_type"]) == (["ABL1"], "INHIBITOR")
+    assert abl1["source_url"] == "https://www.ebi.ac.uk/chembl/explore/target/CHEMBL1862"
+
+
+def test_targets_of_a_supported_drug_without_targets_is_an_empty_list(client: TestClient) -> None:
+    response = client.get(f"/drugs/{FLUTICASONE_CID}/targets")
+
+    assert response.status_code == 200
+    assert response.json() == {"cid": FLUTICASONE_CID, "targets": []}
+
+
+def test_targets_of_an_unsupported_cid_is_404(client: TestClient) -> None:
+    response = client.get("/drugs/1/targets")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "CID 1 is not a supported drug."}
+
+
+@pytest.mark.parametrize(
+    ("cid", "message"),
+    [
+        ("0", "Input should be greater than 0"),
+        ("imatinib", "Input should be a valid integer"),
+        ("1" * 30, "Input should be less than or equal to"),
+    ],
+)
+def test_targets_rejects_an_invalid_cid(
+    client: TestClient, targets: FakeTargetService, cid: str, message: str
+) -> None:
+    messages = validation_messages(client.get(f"/drugs/{cid}/targets"))
+
+    assert any(message in text for text in messages)
+    assert targets.asked == []
+
+
 @pytest.mark.parametrize(
     ("path", "media_type"),
     [
@@ -177,6 +243,7 @@ def test_structure_rejects_an_invalid_cid(client: TestClient) -> None:
         ("/drugs/resolve", "application/json"),
         ("/drugs/{cid}", "application/json"),
         ("/drugs/{cid}/structure", "chemical/x-mdl-sdfile"),
+        ("/drugs/{cid}/targets", "application/json"),
     ],
 )
 def test_openapi_lists_every_route_with_an_example(path: str, media_type: str) -> None:

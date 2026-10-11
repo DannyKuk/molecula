@@ -10,9 +10,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from molecula.api import drugs, health
 from molecula.config import Settings, get_settings
 from molecula.services.compounds import CompoundService
+from molecula.services.targets import TargetService
 from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
 from molecula.store.structures import ConformerFiles
+from molecula.store.targets import TargetStore
 
 logger = logging.getLogger(__name__)
 
@@ -33,9 +35,9 @@ def open_store(settings: Settings) -> sqlite3.Connection:
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     conn = open_store(settings)
-    app.state.compound_service = CompoundService(
-        CompoundStore(conn), ConformerFiles(settings.conformers_dir)
-    )
+    compounds = CompoundStore(conn)
+    app.state.compound_service = CompoundService(compounds, ConformerFiles(settings.conformers_dir))
+    app.state.target_service = TargetService(TargetStore(conn), compounds)
     yield
     conn.close()
 
