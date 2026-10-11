@@ -170,7 +170,59 @@ Consequences:
 - `*_table` HTML fields are dropped; the plain-text versions are kept.
 - Chunks: split by section, then recursively to ~500 tokens with 50 overlap. Metadata: `{cid, substance, brand, product_type, section_group, set_id, effective_time, url}`.
 
-**Corpus estimate:** a canonical Rx label is 40–170k characters (measured), an OTC label 3–5k. For 120 drugs that is ~8–10M characters ≈ 2–2.5M tokens ≈ 4–5k chunks. Local embeddings handle this on a CPU in minutes.
+**Corpus estimate:** a canonical Rx label is 40–170k characters (measured), an OTC label 3–5k. For 120 drugs that is ~8–10M characters ≈ 2–2.5M tokens ≈ 4–5k chunks. Local embeddings handle this on a CPU in minutes. The first full run measured less (below).
+
+**How `ingest labels` works.** It runs after `ingest compounds`, for every compound in the store.
+
+1. **Search name:** the compound's name, which `data/scope.yaml` keeps as the US generic ("acetaminophen", with "paracetamol" as an alias). Aliases are not searched: they are brands or non-US names, and openFDA's `generic_name` holds neither. A 404 means the drug has no US label.
+2. **Single ingredient of this drug:** a label counts when it has exactly one `substance_name` and that substance, without salt and hydrate words (the list in `services/compounds.py`), is the compound ("IMATINIB MESYLATE" → imatinib). The phrase search also returns combinations and other drugs, so this filter runs on the whole result. When a product type has no such label, another form of the drug counts: a substance that starts with the compound's name ("FLUTICASONE PROPIONATE").
+3. **Most common route:** of those labels, only the ones on the route most of them share are kept, so the canonical label is the drug's usual form (ibuprofen Rx: 233 oral labels, 4 intravenous). A label's `openfda.route` list counts as one value, sorted ("INTRAMUSCULAR,INTRAVENOUS"). Equally common routes go by name; a label without a route counts as a route of its own that loses a tie. In the first run no candidate lacked a route and no two routes tied.
+4. **Canonical label**, per product type (`HUMAN PRESCRIPTION DRUG` → `rx`, `HUMAN OTC DRUG` → `otc`): has `mechanism_of_action`, then the brand's own label, then the latest `effective_time`, then the most kept sections, then the lowest `set_id`. **The brand's own label** is one filed under an NDA or BLA (`openfda.application_number`; generics are ANDA, OTC monograph products `M…`, e.g. M013) whose `brand_name` differs from its `generic_name`. The name check leaves out authorized generics and biosimilars, which are filed the same way (on 2026-10-12, 1 of 234 single-ingredient ibuprofen Rx labels and 2 of 22 imatinib labels qualified).
+5. **Sections:** only those in the table below are stored; several strings of one section are joined with a blank line.
+
+| `section_group` | Label sections |
+|---|---|
+| `pharmacology` | `mechanism_of_action`, `clinical_pharmacology`, `pharmacodynamics` |
+| `indications` | `indications_and_usage` |
+| `dosing` | `dosage_and_administration` (`sensitive = 1`) |
+| `warnings` | `boxed_warning`, `warnings_and_cautions`, `warnings`, `precautions` (older Rx labels) |
+| `contraindications` | `contraindications` |
+| `interactions` | `drug_interactions` |
+| `adverse_reactions` | `adverse_reactions` |
+| `otc_consumer` | `do_not_use`, `stop_use`, `ask_doctor`, `ask_doctor_or_pharmacist`, `when_using`, `purpose`, `active_ingredient` |
+
+Tables (schema version 4):
+
+- `label(set_id, cid, substance, brand, product_type, effective_time, url, source, fetched_at)`, one row per (`cid`, `product_type`); `product_type` is `rx` or `otc`, `substance` the label's own (often a salt), `url` the DailyMed page `https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid={set_id}`.
+- `label_section(set_id, section, section_group, text, sensitive)`.
+- `source_disclaimer(source, text, fetched_at)`: openFDA's `meta.disclaimer`, stored once for the UI.
+
+A pruned compound takes its labels and sections with it (`ON DELETE CASCADE`). A drug that fails is reported and skipped; the run stops when openFDA stops answering. Re-running is served from the HTTP cache and leaves the rows untouched.
+
+**First full run (2026-10-12, with an API key):** 134 compounds, 361 requests, 4 min 24 s. Later runs, including the one with the route rule, made no request and took 5 s.
+
+- **129 compounds have an Rx label, 27 an OTC label.** OTC only: aspirin, dextromethorphan, fexofenadine, pseudoephedrine. **No US label: metamizole** (not approved in the US; 404).
+- **5,662,726 characters** in 1,404 sections: Rx 5,588,740 (941 to 108,933 per label, mean 43k), OTC 73,986 (499 to 5,742). By group: warnings 1.59M, pharmacology 1.42M, adverse reactions 1.17M, dosing 0.68M, interactions 0.49M, indications 0.21M, contraindications 0.08M, OTC consumer 0.02M. No `overdosage` or `*_table` section is stored. That is a bit over half the estimate above, because many canonical labels are short PLR labels and most drugs have no OTC label.
+- **The HTTP cache is large.** The 361 openFDA pages are 1.97 GB of response bodies; the store grew from 3.0 MB to 1.98 GB. Only the ~5.7 MB of kept sections is needed after the run.
+- **Another form used:** fluticasone (propionate Rx, furoate OTC). Escitalopram oxalate matches directly since "oxalate" joined the salt words.
+- **Route first changed 23 of 156 picks.** Without it the mechanism and brand rules picked niche products: ibuprofen → Caldolor (IV, the only single-ingredient ibuprofen Rx label with a mechanism section), dexamethasone → Ozurdex (implant), cetirizine → Zerviate (eye drops), clotrimazole → Clotic (ear drops). Now these are oral or topical, and the other changes go the same way (Aloprim → oral allopurinol, Gablofen → oral baclofen, Nexterone → oral amiodarone). Ibuprofen's oral pick has no `mechanism_of_action`; its mechanism is in `clinical_pharmacology`.
+- **The usual route isn't always the familiar one.** Acetaminophen's single-ingredient Rx labels are all injections; hydrocortisone's most common Rx route is topical (Proctozone-HC); naloxone's is injection. A few Rx labels are OTC Drug Facts filed as prescription: guaifenesin (941 characters), loratadine (944), diphenhydramine (6,628).
+
+Canonical labels (Rx / OTC, with route; generic labels are named by their brand field):
+
+| Drug | Rx | OTC |
+|---|---|---|
+| acetaminophen | Acetaminophen (intravenous) | Tylenol 8 HR Arthritis Pain (oral) |
+| aspirin | — | Low Dose Aspirin (oral) |
+| atorvastatin | Lipitor (oral) | — |
+| cetirizine | Cetirizine Hydrochloride (oral) | Zyrtec Allergy (oral) |
+| clotrimazole | Clotrimazole (topical) | Clotrimazole (topical) |
+| dexamethasone | Hemady (oral) | Seacall Dexamethasone Ointment (topical) |
+| ibuprofen | Ibuprofen tablets (oral) | Advil Menstrual Pain (oral) |
+| imatinib | Gleevec (oral) | — |
+| metamizole | — | — |
+
+The run logs the chosen labels of every drug with their `set_id` and size. Why labels are chosen this way: [decisions/drug-labels.md](decisions/drug-labels.md).
 
 ### 5.6 Updates (`ingest update`)
 

@@ -88,6 +88,38 @@ CREATE TABLE complex_candidate (
     FOREIGN KEY (cid, ligand_code) REFERENCES ligand_code (cid, code) ON DELETE CASCADE
 );
 """,
+    4: """
+CREATE TABLE label (
+    set_id TEXT PRIMARY KEY,
+    cid INTEGER NOT NULL REFERENCES compound (cid) ON DELETE CASCADE,
+    substance TEXT NOT NULL,
+    brand TEXT,
+    product_type TEXT NOT NULL CHECK (product_type IN ('rx', 'otc')),
+    effective_time TEXT NOT NULL,
+    url TEXT NOT NULL,
+    source TEXT NOT NULL,
+    fetched_at TEXT NOT NULL,
+    UNIQUE (cid, product_type)
+);
+
+CREATE TABLE label_section (
+    set_id TEXT NOT NULL REFERENCES label (set_id) ON DELETE CASCADE,
+    section TEXT NOT NULL,
+    section_group TEXT NOT NULL CHECK (section_group IN (
+        'pharmacology', 'indications', 'dosing', 'warnings', 'contraindications',
+        'interactions', 'adverse_reactions', 'otc_consumer'
+    )),
+    text TEXT NOT NULL,
+    sensitive INTEGER NOT NULL,
+    PRIMARY KEY (set_id, section)
+);
+
+CREATE TABLE source_disclaimer (
+    source TEXT PRIMARY KEY,
+    text TEXT NOT NULL,
+    fetched_at TEXT NOT NULL
+);
+""",
 }
 SCHEMA_VERSION = max(MIGRATIONS)
 

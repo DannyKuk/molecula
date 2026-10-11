@@ -22,6 +22,8 @@ class OpenFdaFields(BaseModel):
     brand_name: list[str] = []
     substance_name: list[str] = []
     product_type: list[str] = []
+    route: list[str] = []
+    application_number: list[str] = []
 
 
 class Label(BaseModel):
@@ -50,12 +52,20 @@ class ResultsMeta(BaseModel):
 
 
 class Meta(BaseModel):
+    disclaimer: str | None = None
     results: ResultsMeta
 
 
 class LabelPage(BaseModel):
     meta: Meta
     labels: list[Label] = Field(alias="results")
+
+
+class LabelSearch(BaseModel):
+    """The labels a search found and openFDA's disclaimer, which is shown wherever they are."""
+
+    labels: list[Label]
+    disclaimer: str | None
 
 
 class OpenFdaClient:
@@ -78,8 +88,13 @@ class OpenFdaClient:
         Combination products are included ("acetaminophen" also finds hydrocodone bitartrate and
         acetaminophen). Raises SourceNotFound when openFDA has no label for the name.
         """
+        return self.search(generic_name, refresh=refresh).labels
+
+    def search(self, generic_name: str, *, refresh: bool = False) -> LabelSearch:
+        """`labels` together with the disclaimer openFDA sends along with them."""
         search = f'openfda.generic_name:"{generic_name}"'
         labels: list[Label] = []
+        disclaimer = None
         while True:
             # Sorting on a unique field keeps the pages from overlapping or skipping labels.
             params = {
@@ -93,8 +108,9 @@ class OpenFdaClient:
             )
             page = parse(response, LabelPage)
             labels += page.labels
+            disclaimer = disclaimer or page.meta.disclaimer
             if not page.labels or len(labels) >= page.meta.results.total:
-                return labels
+                return LabelSearch(labels=labels, disclaimer=disclaimer)
 
     def _headers(self) -> dict[str, str]:
         if self._api_key is None:

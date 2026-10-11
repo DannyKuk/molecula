@@ -1,0 +1,1074 @@
+{
+ "meta": {
+  "disclaimer": "Do not rely on openFDA to make decisions regarding medical care. While we make every effort to ensure that data is accurate, you should assume all results are unvalidated. We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+  "terms": "https://open.fda.gov/terms/",
+  "license": "https://open.fda.gov/license/",
+  "last_updated": "2026-10-09",
+  "results": {
+   "skip": 0,
+   "limit": 100,
+   "total": 8
+  }
+ },
+ "results": [
+  {
+   "spl_product_data_elements": [
+    "APADAZ Benzhydrocodone and Acetaminophen"
+   ],
+   "boxed_warning": [
+    "WARNING: SERIOUS AND LIFE-THREATENING RI"
+   ],
+   "recent_major_changes": [
+    "Boxed Warning 12/2023 Indications and Us"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE APADAZ is indica"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION APADAZ shoul"
+   ],
+   "dosage_and_administration_table": [
+    "<table width=\"100%\"><caption>Table 1. Co"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS Immediate-r"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS APADAZ is contraindi"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Opioid-Induce"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS Table 2. Clinically "
+   ],
+   "drug_interactions_table": [
+    "<table width=\"100%\"><caption>Table 2. Cl"
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS Pregnancy "
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Use of opioid"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use Safety and effectivene"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use Elderly patients (aged"
+   ],
+   "drug_abuse_and_dependence": [
+    "9 DRUG ABUSE AND DEPENDENCE 9.1 Controll"
+   ],
+   "drug_abuse_and_dependence_table": [
+    "<table width=\"100%\"><caption> Table 3: S"
+   ],
+   "controlled_substance": [
+    "9.1 Controlled Substance APADAZ contains"
+   ],
+   "abuse": [
+    "9.2 Abuse APADAZ contains benzhydrocodon"
+   ],
+   "abuse_table": [
+    "<table width=\"100%\"><caption> Table 3: S"
+   ],
+   "dependence": [
+    "9.3 Dependence Both tolerance and physic"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Clinical Presentation Hydr"
+   ],
+   "description": [
+    "11 DESCRIPTION APADAZ (benzhydrocodone a"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "clinical_pharmacology_table": [
+    "<table width=\"100%\"><caption>Table 4. PK"
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action Benzhydrocodone"
+   ],
+   "pharmacodynamics": [
+    "12.2 Pharmacodynamics Hydrocodone Effect"
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics APADAZ has met the"
+   ],
+   "pharmacokinetics_table": [
+    "<table width=\"100%\"><caption>Table 4. PK"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING APA"
+   ],
+   "information_for_patients": [
+    "17 PATIENT COUNSELING INFORMATION Advise"
+   ],
+   "spl_medguide": [
+    "Medication Guide APADAZ\u00ae (ap\u2019 ah daz) (b"
+   ],
+   "spl_medguide_table": [
+    "<table width=\"100%\"><tbody><tr><td style"
+   ],
+   "package_label_principal_display_panel": [
+    "PRINCIPAL DISPLAY PANEL - NDC 70040-0145",
+    "PRINCIPAL DISPLAY PANEL - NDC 70040-0167",
+    "PRINCIPAL DISPLAY PANEL - NDC 70040-0189"
+   ],
+   "set_id": "0590d4e5-7107-4015-a6a8-deac14265aa2",
+   "id": "29a56d99-ac58-69d0-e063-6394a90a32a0",
+   "effective_time": "20250107",
+   "version": "5",
+   "openfda": {
+    "application_number": [
+     "NDA208653"
+    ],
+    "brand_name": [
+     "APADAZ"
+    ],
+    "generic_name": [
+     "BENZHYDROCODONE AND ACETAMINOPHEN"
+    ],
+    "manufacturer_name": [
+     "Zevra Therapeutics, Inc."
+    ],
+    "product_ndc": [
+     "70040-0145",
+     "70040-0189",
+     "70040-0167"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "BENZHYDROCODONE HYDROCHLORIDE",
+     "ACETAMINOPHEN"
+    ],
+    "rxcui": [
+     "2001364",
+     "2118728",
+     "2118730",
+     "2118732",
+     "2118734",
+     "2001358"
+    ],
+    "spl_id": [
+     "29a56d99-ac58-69d0-e063-6394a90a32a0"
+    ],
+    "spl_set_id": [
+     "0590d4e5-7107-4015-a6a8-deac14265aa2"
+    ],
+    "package_ndc": [
+     "70040-0189-1",
+     "70040-0167-1",
+     "70040-0145-1"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "unii": [
+     "I894QAU7FJ",
+     "362O9ITL9D"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Acetaminophen Acetaminophen SODIUM PHOSP"
+   ],
+   "boxed_warning": [
+    "WARNING: RISK OF MEDICATION ERRORS AND H"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Acetaminophen in"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION Acetaminophe"
+   ],
+   "dosage_and_administration_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS Acetaminoph"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS Acetaminophen is con"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Administratio"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS Substances that indu"
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS Pediatric "
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Published epi"
+   ],
+   "labor_and_delivery": [
+    "8.2 Lactation Risk Summary There is no i"
+   ],
+   "nursing_mothers": [
+    "8.3 Females and Males of Reproductive Po"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use Treatment of Acute Pai"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use Of the total number of"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Signs and Symptoms In acut"
+   ],
+   "description": [
+    "11 DESCRIPTION Acetaminophen is a non-sa"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "clinical_pharmacology_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action The precise mec"
+   ],
+   "pharmacodynamics": [
+    "12.2 Pharmacodynamics Acetaminophen has "
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics Distribution The p"
+   ],
+   "pharmacokinetics_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Adult Acute Pai"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Ace"
+   ],
+   "package_label_principal_display_panel": [
+    "PACKAGE LABEL.PRINCIPAL DISPLAY PANEL A "
+   ],
+   "set_id": "1c8fef8f-2ff5-4bea-bccb-90c2c8544c21",
+   "id": "5021de23-989f-852e-e063-6394a90ac8ce",
+   "effective_time": "20260423",
+   "version": "3",
+   "openfda": {
+    "application_number": [
+     "ANDA216617"
+    ],
+    "brand_name": [
+     "Acetaminophen"
+    ],
+    "generic_name": [
+     "ACETAMINOPHEN"
+    ],
+    "manufacturer_name": [
+     "Camber Pharmaceuticals, Inc."
+    ],
+    "product_ndc": [
+     "31722-205"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "INTRAVENOUS"
+    ],
+    "substance_name": [
+     "ACETAMINOPHEN"
+    ],
+    "rxcui": [
+     "483017"
+    ],
+    "spl_id": [
+     "5021de23-989f-852e-e063-6394a90ac8ce"
+    ],
+    "spl_set_id": [
+     "1c8fef8f-2ff5-4bea-bccb-90c2c8544c21"
+    ],
+    "package_ndc": [
+     "31722-205-31",
+     "31722-205-24",
+     "31722-205-10"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "unii": [
+     "362O9ITL9D"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Feverall Jr. Strength Acetaminophen ACET"
+   ],
+   "spl_unclassified_section": [
+    "Drug Facts",
+    "Dist. by: Ohm Laboratories, Inc. New Bru"
+   ],
+   "active_ingredient": [
+    "Active ingredient (in each rectal suppos"
+   ],
+   "purpose": [
+    "Purposes Pain reliever/fever reducer"
+   ],
+   "indications_and_usage": [
+    "Uses temporarily reduces fever relieves "
+   ],
+   "warnings": [
+    "Warnings Liver warning This product cont"
+   ],
+   "do_not_use": [
+    "Do not use in children under 6 years if "
+   ],
+   "ask_doctor": [
+    "Ask a doctor before use if you have live"
+   ],
+   "stop_use": [
+    "Stop use and ask a doctor if fever lasts"
+   ],
+   "keep_out_of_reach_of_children": [
+    "If pregnant or breast-feeding, ask a hea"
+   ],
+   "dosage_and_administration": [
+    "Directions do not use more than directed"
+   ],
+   "dosage_and_administration_table": [
+    "<table width=\"50%\"><caption>Dosing Chart"
+   ],
+   "storage_and_handling": [
+    "Other information store at 2\u00b0-27\u00b0C (35\u00b0-"
+   ],
+   "inactive_ingredient": [
+    "Inactive ingredients glycerol monosteara"
+   ],
+   "questions": [
+    "Questions? call 1-866-923-4914"
+   ],
+   "package_label_principal_display_panel": [
+    "PRINCIPAL DISPLAY PANEL - 325 mg Supposi"
+   ],
+   "set_id": "3561bbc3-53b0-4857-8b71-39e165ed95ce",
+   "id": "5a99e46d-4983-579f-e063-6394a90a40db",
+   "effective_time": "20260903",
+   "version": "8",
+   "openfda": {
+    "application_number": [
+     "NDA018337"
+    ],
+    "brand_name": [
+     "Feverall Jr. Strength"
+    ],
+    "generic_name": [
+     "ACETAMINOPHEN"
+    ],
+    "manufacturer_name": [
+     "Sun Pharmaceutical Industries, Inc."
+    ],
+    "product_ndc": [
+     "51672-2116"
+    ],
+    "product_type": [
+     "HUMAN OTC DRUG"
+    ],
+    "route": [
+     "RECTAL"
+    ],
+    "substance_name": [
+     "ACETAMINOPHEN"
+    ],
+    "rxcui": [
+     "198437",
+     "209361"
+    ],
+    "spl_id": [
+     "5a99e46d-4983-579f-e063-6394a90a40db"
+    ],
+    "spl_set_id": [
+     "3561bbc3-53b0-4857-8b71-39e165ed95ce"
+    ],
+    "package_ndc": [
+     "51672-2116-0",
+     "51672-2116-2",
+     "51672-2116-4"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "unii": [
+     "362O9ITL9D"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Tylenol 8 HR Arthritis Pain Acetaminophe"
+   ],
+   "spl_unclassified_section": [
+    "Drug Facts"
+   ],
+   "active_ingredient": [
+    "Active ingredient (in each caplet) Aceta"
+   ],
+   "purpose": [
+    "Purpose Pain reliever/fever reducer"
+   ],
+   "indications_and_usage": [
+    "Uses temporarily relieves minor aches an"
+   ],
+   "warnings": [
+    "Warnings Liver warning This product cont"
+   ],
+   "do_not_use": [
+    "Do not use with any other drug containin"
+   ],
+   "ask_doctor": [
+    "Ask a doctor before use if you have live"
+   ],
+   "ask_doctor_or_pharmacist": [
+    "Ask a doctor or pharmacist before use if"
+   ],
+   "stop_use": [
+    "Stop use and ask a doctor if pain gets w"
+   ],
+   "pregnancy_or_breast_feeding": [
+    "If pregnant or breast-feeding, ask a hea"
+   ],
+   "keep_out_of_reach_of_children": [
+    "Keep out of reach of children."
+   ],
+   "dosage_and_administration": [
+    "Directions do not take more than directe"
+   ],
+   "dosage_and_administration_table": [
+    "<table width=\"50%\" styleCode=\"Noautorule"
+   ],
+   "storage_and_handling": [
+    "Other information store between 20-25\u00b0C "
+   ],
+   "inactive_ingredient": [
+    "Inactive ingredients carnauba wax, hydro"
+   ],
+   "questions": [
+    "Questions or comments? call 1-877-895-36"
+   ],
+   "package_label_principal_display_panel": [
+    "PRINCIPAL DISPLAY PANEL NDC 50580-783-32"
+   ],
+   "set_id": "3af22fc8-e4e0-4863-8696-6bc1257047cb",
+   "id": "26c62e88-08c4-1113-e063-6394a90ac1f8",
+   "effective_time": "20241113",
+   "version": "16",
+   "openfda": {
+    "application_number": [
+     "NDA019872"
+    ],
+    "brand_name": [
+     "Tylenol 8 HR Arthritis Pain"
+    ],
+    "generic_name": [
+     "ACETAMINOPHEN"
+    ],
+    "manufacturer_name": [
+     "Kenvue Brands LLC"
+    ],
+    "product_ndc": [
+     "50580-783"
+    ],
+    "product_type": [
+     "HUMAN OTC DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "ACETAMINOPHEN"
+    ],
+    "rxcui": [
+     "1148399",
+     "1243440"
+    ],
+    "spl_id": [
+     "26c62e88-08c4-1113-e063-6394a90ac1f8"
+    ],
+    "spl_set_id": [
+     "3af22fc8-e4e0-4863-8696-6bc1257047cb"
+    ],
+    "package_ndc": [
+     "50580-783-10",
+     "50580-783-24",
+     "50580-783-25",
+     "50580-783-29",
+     "50580-783-30",
+     "50580-783-32",
+     "50580-783-31",
+     "50580-783-51"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "upc": [
+     "0300450838216"
+    ],
+    "unii": [
+     "362O9ITL9D"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Acetaminophen Acetaminophen ACETAMINOPHE"
+   ],
+   "boxed_warning": [
+    "WARNING: Risk of Medication Errors and H"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE Acetaminophen In"
+   ],
+   "dosage_and_administration": [
+    "2 DOSAGE AND ADMINISTRATION Acetaminophe"
+   ],
+   "dosage_and_administration_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b",
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "dosage_forms_and_strengths": [
+    "3 DOSAGE FORMS AND STRENGTHS Acetaminoph"
+   ],
+   "contraindications": [
+    "4 CONTRAINDICATIONS Acetaminophen is con"
+   ],
+   "warnings_and_cautions": [
+    "5 WARNINGS AND PRECAUTIONS Administratio"
+   ],
+   "adverse_reactions": [
+    "6 ADVERSE REACTIONS The following seriou"
+   ],
+   "adverse_reactions_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "drug_interactions": [
+    "7 DRUG INTERACTIONS Substances that indu"
+   ],
+   "use_in_specific_populations": [
+    "8 USE IN SPECIFIC POPULATIONS Pediatric "
+   ],
+   "pregnancy": [
+    "8.1 Pregnancy Risk Summary Published epi"
+   ],
+   "labor_and_delivery": [
+    "8.2 Lactation Risk Summary There is no i"
+   ],
+   "nursing_mothers": [
+    "8.3 Females and Males of Reproductive Po"
+   ],
+   "pediatric_use": [
+    "8.4 Pediatric Use Treatment of Acute Pai"
+   ],
+   "geriatric_use": [
+    "8.5 Geriatric Use Of the total number of"
+   ],
+   "overdosage": [
+    "10 OVERDOSAGE Signs and Symptoms In acut"
+   ],
+   "description": [
+    "11 DESCRIPTION Acetaminophen USP is a no"
+   ],
+   "clinical_pharmacology": [
+    "12 CLINICAL PHARMACOLOGY 12.1 Mechanism "
+   ],
+   "clinical_pharmacology_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "mechanism_of_action": [
+    "12.1 Mechanism of Action The precise mec"
+   ],
+   "pharmacodynamics": [
+    "12.2 Pharmacodynamics Acetaminophen has "
+   ],
+   "pharmacokinetics": [
+    "12.3 Pharmacokinetics Distribution The p"
+   ],
+   "pharmacokinetics_table": [
+    "<table cellspacing=\"0\" cellpadding=\"0\" b"
+   ],
+   "nonclinical_toxicology": [
+    "13 NONCLINICAL TOXICOLOGY 13.1 Carcinoge"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "13.1 Carcinogenesis, Mutagenesis, Impair"
+   ],
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Adult Acute Pai"
+   ],
+   "how_supplied": [
+    "16 HOW SUPPLIED/STORAGE AND HANDLING Ace"
+   ],
+   "package_label_principal_display_panel": [
+    "DRUG: Acetaminophen GENERIC: Acetaminoph"
+   ],
+   "set_id": "464e404a-1957-44a2-a53a-f2a9d3c15bde",
+   "id": "5a215cc6-263d-1d08-e063-6294a90a4ab5",
+   "effective_time": "20260828",
+   "version": "4",
+   "openfda": {
+    "application_number": [
+     "ANDA210969"
+    ],
+    "brand_name": [
+     "Acetaminophen"
+    ],
+    "generic_name": [
+     "ACETAMINOPHEN"
+    ],
+    "manufacturer_name": [
+     "REMEDYREPACK INC."
+    ],
+    "product_ndc": [
+     "70518-4184"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "INTRAVENOUS"
+    ],
+    "substance_name": [
+     "ACETAMINOPHEN"
+    ],
+    "rxcui": [
+     "483017"
+    ],
+    "spl_id": [
+     "5a215cc6-263d-1d08-e063-6294a90a4ab5"
+    ],
+    "spl_set_id": [
+     "464e404a-1957-44a2-a53a-f2a9d3c15bde"
+    ],
+    "package_ndc": [
+     "70518-4184-1",
+     "70518-4184-0",
+     "70518-4184-3",
+     "70518-4184-2"
+    ],
+    "original_packager_product_ndc": [
+     "55150-307"
+    ],
+    "unii": [
+     "362O9ITL9D"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "ADVIL DUAL ACTION WITH ACETAMINOPHEN Ibu"
+   ],
+   "active_ingredient": [
+    "Active ingredients (in each caplet) Acet"
+   ],
+   "purpose": [
+    "Purposes Pain reliever Pain reliever"
+   ],
+   "indications_and_usage": [
+    "Uses temporarily relieves minor aches an"
+   ],
+   "warnings": [
+    "Warnings Acetaminophen liver damage warn"
+   ],
+   "do_not_use": [
+    "Do not use with any other drug containin"
+   ],
+   "ask_doctor": [
+    "Ask a doctor before use if you have live"
+   ],
+   "ask_doctor_or_pharmacist": [
+    "Ask a doctor or pharmacist before use if"
+   ],
+   "when_using": [
+    "When using this product take with food o"
+   ],
+   "stop_use": [
+    "Stop use and ask a doctor if you experie"
+   ],
+   "pregnancy_or_breast_feeding": [
+    "If pregnant or breast-feeding, ask a hea"
+   ],
+   "keep_out_of_reach_of_children": [
+    "Keep out of reach of children. In case o"
+   ],
+   "dosage_and_administration": [
+    "Directions do not take more than directe"
+   ],
+   "dosage_and_administration_table": [
+    "<table width=\"58.46%\"><col width=\"28%\"/>"
+   ],
+   "storage_and_handling": [
+    "Other information read all warnings and "
+   ],
+   "inactive_ingredient": [
+    "Inactive ingredients carnauba wax, collo"
+   ],
+   "questions": [
+    "Questions or comments? call weekdays 9 A"
+   ],
+   "package_label_principal_display_panel": [
+    "PRINCIPAL DISPLAY PANEL 1886-1 1886-6"
+   ],
+   "set_id": "55cd65fc-91bf-4979-e063-6294a90ab9b7",
+   "id": "55cd6613-74f5-3d01-e063-6294a90a6cca",
+   "effective_time": "20260704",
+   "version": "1",
+   "openfda": {
+    "application_number": [
+     "NDA211733"
+    ],
+    "brand_name": [
+     "ADVIL DUAL ACTION WITH ACETAMINOPHEN"
+    ],
+    "generic_name": [
+     "IBUPROFEN, ACETAMINOPHEN"
+    ],
+    "manufacturer_name": [
+     "Select Consumer Group"
+    ],
+    "product_ndc": [
+     "85237-1886"
+    ],
+    "product_type": [
+     "HUMAN OTC DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IBUPROFEN",
+     "ACETAMINOPHEN"
+    ],
+    "rxcui": [
+     "2387532"
+    ],
+    "spl_id": [
+     "55cd6613-74f5-3d01-e063-6294a90a6cca"
+    ],
+    "spl_set_id": [
+     "55cd65fc-91bf-4979-e063-6294a90ab9b7"
+    ],
+    "package_ndc": [
+     "85237-1886-0",
+     "85237-1886-1",
+     "85237-1886-2",
+     "85237-1886-7",
+     "85237-1886-4",
+     "85237-1886-6"
+    ],
+    "original_packager_product_ndc": [
+     "0573-0147"
+    ],
+    "upc": [
+     "0655708018866",
+     "0655708118863"
+    ],
+    "nui": [
+     "N0000000160",
+     "M0001335",
+     "N0000175722"
+    ],
+    "pharm_class_moa": [
+     "Cyclooxygenase Inhibitors [MoA]"
+    ],
+    "pharm_class_cs": [
+     "Anti-Inflammatory Agents, Non-Steroidal [CS]"
+    ],
+    "pharm_class_epc": [
+     "Nonsteroidal Anti-inflammatory Drug [EPC]"
+    ],
+    "unii": [
+     "WK2XYI10QM",
+     "362O9ITL9D"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "childrens fever reducer and pain relieve"
+   ],
+   "active_ingredient": [
+    "Active ingredient (in each 5 mL) Acetami"
+   ],
+   "purpose": [
+    "Purpose Pain reliever/fever reducer"
+   ],
+   "indications_and_usage": [
+    "Uses temporarily: \u2022 reduces fever \u2022 reli"
+   ],
+   "warnings": [
+    "Warnings Liver warning: This product con"
+   ],
+   "do_not_use": [
+    "Do not use \u2022 with any other drug contain"
+   ],
+   "ask_doctor": [
+    "Ask a doctor before use if your child ha"
+   ],
+   "ask_doctor_or_pharmacist": [
+    "Ask a doctor or pharmacist before use if"
+   ],
+   "when_using": [
+    "When using this product do not exceed re"
+   ],
+   "stop_use": [
+    "Stop use and ask a doctor if \u2022 pain gets"
+   ],
+   "keep_out_of_reach_of_children": [
+    "Keep out of reach of children. Overdose "
+   ],
+   "dosage_and_administration": [
+    "Directions \u2022 this product does not conta"
+   ],
+   "dosage_and_administration_table": [
+    "<table width=\"100%\"><col width=\"31%\"/><c"
+   ],
+   "storage_and_handling": [
+    "Other information \u2022 each 5 mL contains :"
+   ],
+   "inactive_ingredient": [
+    "Inactive ingredients anhydrous citric ac"
+   ],
+   "questions": [
+    "Questions or comments? 1-800-719-9260"
+   ],
+   "package_label_principal_display_panel": [
+    "Package/Label Principal Display Panel Co"
+   ],
+   "set_id": "7f445de3-30cf-4bd8-892d-05979cd399e7",
+   "id": "175e357c-20e6-4a17-89aa-a7a5a8241d74",
+   "effective_time": "20260909",
+   "version": "4",
+   "openfda": {
+    "application_number": [
+     "M013"
+    ],
+    "brand_name": [
+     "childrens fever reducer and pain reliever"
+    ],
+    "generic_name": [
+     "ACETAMINOPHEN"
+    ],
+    "manufacturer_name": [
+     "Rite Aid Corporation"
+    ],
+    "product_ndc": [
+     "11822-0959"
+    ],
+    "product_type": [
+     "HUMAN OTC DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "ACETAMINOPHEN"
+    ],
+    "rxcui": [
+     "307668"
+    ],
+    "spl_id": [
+     "175e357c-20e6-4a17-89aa-a7a5a8241d74"
+    ],
+    "spl_set_id": [
+     "7f445de3-30cf-4bd8-892d-05979cd399e7"
+    ],
+    "package_ndc": [
+     "11822-0959-1"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "unii": [
+     "362O9ITL9D"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "HYDROCODONE BITARTRATE AND ACETAMINOPHEN"
+   ],
+   "boxed_warning": [
+    "WARNING: SERIOUS AND LIFE-THREATENING RI"
+   ],
+   "description": [
+    "DESCRIPTION Hydrocodone bitartrate and a"
+   ],
+   "description_table": [
+    "<table width=\"100%\"><colgroup><col width"
+   ],
+   "clinical_pharmacology": [
+    "CLINICAL PHARMACOLOGY . Mechanism of Act"
+   ],
+   "mechanism_of_action": [
+    "Mechanism of Action Hydrocodone is a sem"
+   ],
+   "pharmacodynamics": [
+    "Pharmacodynamics Effects on the Central "
+   ],
+   "pharmacokinetics": [
+    "Pharmacokinetics The behavior of the ind"
+   ],
+   "indications_and_usage": [
+    "INDICATIONS AND USAGE Hydrocodone bitart"
+   ],
+   "contraindications": [
+    "CONTRAINDICATIONS Hydrocodone bitartrate"
+   ],
+   "warnings": [
+    "WARNINGS . Risk of Accidental Overdose a",
+    "Opioid-Induced Hyperalgesia and Allodyni"
+   ],
+   "precautions": [
+    "PRECAUTIONS . Risks of Driving and Opera"
+   ],
+   "information_for_patients": [
+    "Information for Patients/Caregivers Advi"
+   ],
+   "laboratory_tests": [
+    "Laboratory Tests In patients with severe"
+   ],
+   "drug_interactions": [
+    "Drug Interactions Inhibitors of CYP3A4 a"
+   ],
+   "drug_and_or_laboratory_test_interactions": [
+    "Drug/Laboratory Test Interactions Acetam"
+   ],
+   "carcinogenesis_and_mutagenesis_and_impairment_of_fertility": [
+    "Carcinogenesis, Mutagenesis, Impairment "
+   ],
+   "pregnancy": [
+    "Pregnancy Teratogenic Effects There are "
+   ],
+   "labor_and_delivery": [
+    "Labor or Delivery Opioids cross the plac"
+   ],
+   "nursing_mothers": [
+    "Nursing Mothers Hydrocodone is present i"
+   ],
+   "pediatric_use": [
+    "Pediatric Use The safety and effectivene"
+   ],
+   "geriatric_use": [
+    "Geriatric Use Elderly patients (aged 65 "
+   ],
+   "adverse_reactions": [
+    "ADVERSE REACTIONS The following adverse "
+   ],
+   "drug_abuse_and_dependence": [
+    "DRUG ABUSE AND DEPENDENCE . Controlled S"
+   ],
+   "controlled_substance": [
+    "Controlled Substance Hydrocodone bitartr"
+   ],
+   "abuse": [
+    "Abuse Hydrocodone bitartrate and acetami"
+   ],
+   "dependence": [
+    "Dependence Both tolerance and physical d"
+   ],
+   "overdosage": [
+    "OVERDOSAGE Following an acute overdosage"
+   ],
+   "dosage_and_administration": [
+    "DOSAGE AND ADMINISTRATION . Important Do"
+   ],
+   "dosage_and_administration_table": [
+    "<table width=\"100%\"><colgroup><col width"
+   ],
+   "how_supplied": [
+    "HOW SUPPLIED Hydrocodone bitartrate and "
+   ],
+   "spl_medguide": [
+    "MEDICATION GUIDE Hydrocodone Bitartrate "
+   ],
+   "package_label_principal_display_panel": [
+    "HBA Oral Solution 10 mg/300 mg per 15 mL"
+   ],
+   "set_id": "995a6cc7-8b72-4d35-b3b4-8c5752438fb7",
+   "id": "57aeae78-a9f1-b224-e063-6394a90a4830",
+   "effective_time": "20260728",
+   "version": "4",
+   "openfda": {
+    "application_number": [
+     "ANDA040881"
+    ],
+    "brand_name": [
+     "HYDROCODONE BITARTRATE AND ACETAMINOPHEN"
+    ],
+    "generic_name": [
+     "HYDROCODONE BITARTRATE AND ACETAMINOPHEN"
+    ],
+    "manufacturer_name": [
+     "Hikma Pharmaceuticals USA Inc."
+    ],
+    "product_ndc": [
+     "0054-0843"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "HYDROCODONE BITARTRATE",
+     "ACETAMINOPHEN"
+    ],
+    "rxcui": [
+     "1044427"
+    ],
+    "spl_id": [
+     "57aeae78-a9f1-b224-e063-6394a90a4830"
+    ],
+    "spl_set_id": [
+     "995a6cc7-8b72-4d35-b3b4-8c5752438fb7"
+    ],
+    "package_ndc": [
+     "0054-0843-63"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "unii": [
+     "NO70W886KK",
+     "362O9ITL9D"
+    ]
+   }
+  }
+ ]
+}

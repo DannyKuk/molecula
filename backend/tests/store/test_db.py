@@ -77,3 +77,18 @@ def test_upgrades_a_version_2_store_and_keeps_the_compounds(tmp_path: Path) -> N
     assert conn.execute("SELECT count(*) FROM compound").fetchone()[0] == 1
     tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
     assert {"target", "ligand_code", "complex_candidate"} <= tables
+
+
+def test_upgrades_a_version_3_store_and_adds_the_label_tables(tmp_path: Path) -> None:
+    path = tmp_path / "molecula.db"
+    old = sqlite3.connect(path)
+    old.executescript(MIGRATIONS[1] + MIGRATIONS[2] + MIGRATIONS[3])
+    old.execute("PRAGMA user_version = 3")
+    old.commit()
+    old.close()
+
+    conn = connect(path)
+
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
+    tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    assert {"label", "label_section", "source_disclaimer"} <= tables
