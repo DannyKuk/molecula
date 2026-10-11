@@ -1,0 +1,12 @@
+{
+  "query_id" : "0aa05092-7033-48f2-bdb6-fc6a9decdce1",
+  "result_type" : "mol_definition",
+  "total_count" : 2,
+  "result_set" : [ {
+    "identifier" : "IBP",
+    "score" : 1.0
+  }, {
+    "identifier" : "IZP",
+    "score" : 1.0
+  } ]
+}
