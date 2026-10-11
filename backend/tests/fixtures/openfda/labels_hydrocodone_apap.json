@@ -1,0 +1,625 @@
+{
+ "meta": {
+  "disclaimer": "Do not rely on openFDA to make decisions regarding medical care. While we make every effort to ensure that data is accurate, you should assume all results are unvalidated. We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+  "terms": "https://open.fda.gov/terms/",
+  "license": "https://open.fda.gov/license/",
+  "last_updated": "2026-10-09",
+  "results": {
+   "skip": 0,
+   "limit": 100,
+   "total": 6
+  }
+ },
+ "results": [
+  {
+   "spl_product_data_elements": [
+    "Hydrocodone/APAP Hydrocodone/APAP CROSCA"
+   ],
+   "boxed_warning": [
+    "WARNING: SERIOUS AND LIFE-THREATENING RI"
+   ],
+   "description": [
+    "Hydrocodone Bitartrate and Acetaminophen"
+   ],
+   "clinical_pharmacology": [
+    "Mechanism of Action Hydrocodone is full "
+   ],
+   "indications_and_usage": [
+    "Hydrocodone Bitartrate and Acetaminophen"
+   ],
+   "contraindications": [
+    "Hydrocodone Bitartrate and Acetaminophen"
+   ],
+   "warnings": [
+    "Addiction, Abuse, and Misuse Hydrocodone"
+   ],
+   "precautions": [
+    "Information for Patients Advise the pati"
+   ],
+   "adverse_reactions": [
+    "The following adverse reactions have bee"
+   ],
+   "drug_abuse_and_dependence": [
+    "Controlled Substance Hydrocodone Bitartr"
+   ],
+   "overdosage": [
+    "Following an acute overdosage, toxicity "
+   ],
+   "dosage_and_administration": [
+    "Important Dosage and Administration Inst"
+   ],
+   "how_supplied": [
+    "Hydrocodone Bitartrate and Acetaminophen"
+   ],
+   "storage_and_handling": [
+    "Store at 20° to 25°C (68° to 77°F) [see "
+   ],
+   "spl_medguide": [
+    "Medication Guide Hydrocodone Bitartrate "
+   ],
+   "package_label_principal_display_panel": [
+    "72189-650-30",
+    "72189-650-60"
+   ],
+   "set_id": "446e9f78-4034-5bb4-e063-6394a90ac739",
+   "id": "4a187412-bf1e-07d8-e063-6394a90a1c8f",
+   "effective_time": "20260205",
+   "version": "2",
+   "openfda": {
+    "application_number": [
+     "ANDA210211"
+    ],
+    "brand_name": [
+     "Hydrocodone/APAP"
+    ],
+    "generic_name": [
+     "HYDROCODONE/APAP"
+    ],
+    "manufacturer_name": [
+     "Direct_Rx"
+    ],
+    "product_ndc": [
+     "72189-650"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "HYDROCODONE BITARTRATE",
+     "ACETAMINOPHEN"
+    ],
+    "rxcui": [
+     "856999"
+    ],
+    "spl_id": [
+     "4a187412-bf1e-07d8-e063-6394a90a1c8f"
+    ],
+    "spl_set_id": [
+     "446e9f78-4034-5bb4-e063-6394a90ac739"
+    ],
+    "package_ndc": [
+     "72189-650-30",
+     "72189-650-60"
+    ],
+    "original_packager_product_ndc": [
+     "71930-021"
+    ],
+    "unii": [
+     "NO70W886KK",
+     "362O9ITL9D"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Hydrocodone/APAP Hydrocodone/APAP HYDROC"
+   ],
+   "boxed_warning": [
+    "WARNING: SERIOUS AND LIFE-THREATENING RI"
+   ],
+   "description": [
+    "Hydrocodone Bitartrate and Acetaminophen"
+   ],
+   "clinical_pharmacology": [
+    "Mechanism of Action Hydrocodone is full "
+   ],
+   "indications_and_usage": [
+    "Hydrocodone Bitartrate and Acetaminophen"
+   ],
+   "contraindications": [
+    "Hydrocodone Bitartrate and Acetaminophen"
+   ],
+   "warnings": [
+    "Addiction, Abuse, and Misuse Hydrocodone"
+   ],
+   "precautions": [
+    "Information for Patients Advise the pati"
+   ],
+   "adverse_reactions": [
+    "The following adverse reactions have bee"
+   ],
+   "drug_abuse_and_dependence": [
+    "Controlled Substance Hydrocodone Bitartr"
+   ],
+   "overdosage": [
+    "Following an acute overdosage, toxicity "
+   ],
+   "dosage_and_administration": [
+    "Important Dosage and Administration Inst"
+   ],
+   "how_supplied": [
+    "Hydrocodone Bitartrate and Acetaminophen"
+   ],
+   "storage_and_handling": [
+    "Store at 20° to 25°C (68° to 77°F) [see "
+   ],
+   "spl_medguide": [
+    "Medication Guide Hydrocodone Bitartrate "
+   ],
+   "package_label_principal_display_panel": [
+    "72189-649-30",
+    "72189-649-20",
+    "72189-649-60"
+   ],
+   "set_id": "446f01f0-2853-d104-e063-6394a90ae351",
+   "id": "4a188f02-629f-25cf-e063-6394a90a5766",
+   "effective_time": "20260205",
+   "version": "3",
+   "openfda": {
+    "application_number": [
+     "ANDA210211"
+    ],
+    "brand_name": [
+     "Hydrocodone/APAP"
+    ],
+    "generic_name": [
+     "HYDROCODONE/APAP"
+    ],
+    "manufacturer_name": [
+     "Direct_Rx"
+    ],
+    "product_ndc": [
+     "72189-649"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "HYDROCODONE BITARTRATE",
+     "ACETAMINOPHEN"
+    ],
+    "rxcui": [
+     "857002"
+    ],
+    "spl_id": [
+     "4a188f02-629f-25cf-e063-6394a90a5766"
+    ],
+    "spl_set_id": [
+     "446f01f0-2853-d104-e063-6394a90ae351"
+    ],
+    "package_ndc": [
+     "72189-649-30",
+     "72189-649-20",
+     "72189-649-60"
+    ],
+    "original_packager_product_ndc": [
+     "71930-019"
+    ],
+    "unii": [
+     "NO70W886KK",
+     "362O9ITL9D"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Hydrocodone APAP Hydrocodone APAP STARCH"
+   ],
+   "description": [
+    "Hydrocodone bitartrate and acetaminophen"
+   ],
+   "clinical_pharmacology": [
+    "Mechanism of Action Hydrocodone is a ful"
+   ],
+   "indications_and_usage": [
+    "Hydrocodone bitartrate and acetaminophen"
+   ],
+   "contraindications": [
+    "Hydrocodone bitartrate and acetaminophen"
+   ],
+   "warnings": [
+    "Addiction, Abuse, and Misuse Hydrocodone"
+   ],
+   "precautions": [
+    "Risks of Driving and Operating Machinery"
+   ],
+   "adverse_reactions": [
+    "The following adverse reactions have bee"
+   ],
+   "drug_abuse_and_dependence": [
+    "Controlled Substance Hydrocodone bitartr"
+   ],
+   "overdosage": [
+    "Following an acute overdosage, toxicity "
+   ],
+   "dosage_and_administration": [
+    "Important Dosage and Administration Inst"
+   ],
+   "how_supplied": [
+    "Hydrocodone Bitartrate and Acetaminophen"
+   ],
+   "spl_medguide": [
+    "MEDICATION GUIDE Hydrocodone Bitartrate "
+   ],
+   "package_label_principal_display_panel": [
+    "72189-0352-90",
+    "72189-352-60",
+    "72189-352-30",
+    "72189-352-72"
+   ],
+   "set_id": "deaa53c1-81ed-7497-e053-2995a90a07cc",
+   "id": "2cc75c9b-0042-6e35-e063-6394a90adfb5",
+   "effective_time": "20250128",
+   "version": "6",
+   "openfda": {
+    "application_number": [
+     "ANDA211487"
+    ],
+    "brand_name": [
+     "Hydrocodone APAP"
+    ],
+    "generic_name": [
+     "HYDROCODONE APAP"
+    ],
+    "manufacturer_name": [
+     "Direct_Rx"
+    ],
+    "product_ndc": [
+     "72189-352"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "HYDROCODONE BITARTRATE",
+     "ACETAMINOPHEN"
+    ],
+    "rxcui": [
+     "857005"
+    ],
+    "spl_id": [
+     "2cc75c9b-0042-6e35-e063-6394a90adfb5"
+    ],
+    "spl_set_id": [
+     "deaa53c1-81ed-7497-e053-2995a90a07cc"
+    ],
+    "package_ndc": [
+     "72189-352-90",
+     "72189-352-60",
+     "72189-352-30",
+     "72189-352-72"
+    ],
+    "original_packager_product_ndc": [
+     "31722-942"
+    ],
+    "unii": [
+     "NO70W886KK",
+     "362O9ITL9D"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Norco Hydrocodone/APAP HYDROCODONE BITAR"
+   ],
+   "boxed_warning": [
+    "WARNING: ADDICTION, ABUSE, AND MISUSE; R"
+   ],
+   "description": [
+    "Hydrocodone bitartrate and acetaminophen"
+   ],
+   "clinical_pharmacology": [
+    "Mechanism of Action Hydrocodone is full "
+   ],
+   "indications_and_usage": [
+    "Hydrocodone bitartrate and acetaminophen"
+   ],
+   "contraindications": [
+    "Hydrocodone bitartrate and acetaminophen"
+   ],
+   "warnings": [
+    "Addiction, Abuse, and Misuse Hydrocodone"
+   ],
+   "precautions": [
+    "Risks of Driving and Operating Machinery"
+   ],
+   "adverse_reactions": [
+    "The following adverse reactions have bee"
+   ],
+   "drug_abuse_and_dependence": [
+    "Controlled Substance Hydrocodone bitartr"
+   ],
+   "overdosage": [
+    "Following an acute overdosage, toxicity "
+   ],
+   "dosage_and_administration": [
+    "Important Dosage and Administration Inst"
+   ],
+   "how_supplied": [
+    "Hydrocodone Bitartrate and Acetaminophen"
+   ],
+   "spl_medguide": [
+    "Medication Guide Hydrocodone Bitartrate "
+   ],
+   "package_label_principal_display_panel": [
+    "72189-399-30",
+    "72189-399-60",
+    "72189-399-90",
+    "72189-399-72"
+   ],
+   "set_id": "ee248dfd-7aa7-7dcc-e053-2995a90af19f",
+   "id": "2c4ce870-c59f-df00-e063-6394a90a9011",
+   "effective_time": "20250122",
+   "version": "3",
+   "openfda": {
+    "application_number": [
+     "ANDA040400"
+    ],
+    "brand_name": [
+     "Norco"
+    ],
+    "generic_name": [
+     "HYDROCODONE/APAP"
+    ],
+    "manufacturer_name": [
+     "Direct_Rx"
+    ],
+    "product_ndc": [
+     "72189-399"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "HYDROCODONE BITARTRATE",
+     "ACETAMINOPHEN"
+    ],
+    "spl_id": [
+     "2c4ce870-c59f-df00-e063-6394a90a9011"
+    ],
+    "spl_set_id": [
+     "ee248dfd-7aa7-7dcc-e053-2995a90af19f"
+    ],
+    "package_ndc": [
+     "72189-399-30",
+     "72189-399-60",
+     "72189-399-90",
+     "72189-399-72"
+    ],
+    "original_packager_product_ndc": [
+     "0406-0125"
+    ],
+    "unii": [
+     "NO70W886KK",
+     "362O9ITL9D"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "HYDROCODONE/APAP HYDROCODONE/APAP CROSPO"
+   ],
+   "boxed_warning": [
+    "WARNING: ADDICTION, ABUSE, AND MISUSE; R"
+   ],
+   "description": [
+    "Hydrocodone bitartrate and acetaminophen"
+   ],
+   "clinical_pharmacology": [
+    "Mechanism of Action Hydrocodone is full "
+   ],
+   "indications_and_usage": [
+    "Hydrocodone bitartrate and acetaminophen"
+   ],
+   "contraindications": [
+    "Hydrocodone bitartrate and acetaminophen"
+   ],
+   "warnings": [
+    "Addiction, Abuse, and Misuse Hydrocodone"
+   ],
+   "precautions": [
+    "Risks of Driving and Operating Machinery"
+   ],
+   "adverse_reactions": [
+    "The following adverse reactions have bee"
+   ],
+   "drug_abuse_and_dependence": [
+    "Controlled Substance Hydrocodone bitartr"
+   ],
+   "overdosage": [
+    "Following an acute overdosage, toxicity "
+   ],
+   "dosage_and_administration": [
+    "Important Dosage and Administration Inst"
+   ],
+   "how_supplied": [
+    "Hydrocodone Bitartrate and Acetaminophen"
+   ],
+   "spl_medguide": [
+    "Medication Guide Hydrocodone Bitartrate "
+   ],
+   "package_label_principal_display_panel": [
+    "72189-406-90",
+    "72189-406-30",
+    "72189-406-60"
+   ],
+   "set_id": "efe3b2eb-5c26-3783-e053-2995a90a6ba8",
+   "id": "2c4cdc9e-f775-a44a-e063-6294a90a3c96",
+   "effective_time": "20250122",
+   "version": "7",
+   "openfda": {
+    "application_number": [
+     "ANDA040405"
+    ],
+    "brand_name": [
+     "HYDROCODONE/APAP"
+    ],
+    "generic_name": [
+     "HYDROCODONE/APAP"
+    ],
+    "manufacturer_name": [
+     "Direct_Rx"
+    ],
+    "product_ndc": [
+     "72189-406"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "HYDROCODONE BITARTRATE",
+     "ACETAMINOPHEN"
+    ],
+    "rxcui": [
+     "857005"
+    ],
+    "spl_id": [
+     "2c4cdc9e-f775-a44a-e063-6294a90a3c96"
+    ],
+    "spl_set_id": [
+     "efe3b2eb-5c26-3783-e053-2995a90a6ba8"
+    ],
+    "package_ndc": [
+     "72189-406-90",
+     "72189-406-30",
+     "72189-406-60"
+    ],
+    "original_packager_product_ndc": [
+     "0406-0124"
+    ],
+    "unii": [
+     "NO70W886KK",
+     "362O9ITL9D"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Hydrocodone/APAP Hydrocodone/APAP ACETAM"
+   ],
+   "boxed_warning": [
+    "WARNING: ADDICTION, ABUSE, AND MISUSE; R"
+   ],
+   "description": [
+    "Hydrocodone bitartrate and acetaminophen"
+   ],
+   "clinical_pharmacology": [
+    "Mechanism of Action Hydrocodone is full "
+   ],
+   "indications_and_usage": [
+    "Hydrocodone bitartrate and acetaminophen"
+   ],
+   "contraindications": [
+    "Hydrocodone bitartrate and acetaminophen"
+   ],
+   "warnings": [
+    "Addiction, Abuse, and Misuse Hydrocodone"
+   ],
+   "precautions": [
+    "Risks of Driving and Operating Machinery"
+   ],
+   "adverse_reactions": [
+    "The following adverse reactions have bee"
+   ],
+   "drug_abuse_and_dependence": [
+    "Controlled Substance Hydrocodone bitartr"
+   ],
+   "overdosage": [
+    "Following an acute overdosage, toxicity "
+   ],
+   "dosage_and_administration": [
+    "Important Dosage and Administration Inst"
+   ],
+   "how_supplied": [
+    "Hydrocodone Bitartrate and Acetaminophen"
+   ],
+   "spl_medguide": [
+    "Medication Guide Hydrocodone Bitartrate "
+   ],
+   "package_label_principal_display_panel": [
+    "72189-407-60",
+    "72189-407-90",
+    "72189-407-30",
+    "72189-407-72"
+   ],
+   "set_id": "f0e66441-668a-7ab8-e053-2995a90aba4f",
+   "id": "2c4cf13b-5454-0aa9-e063-6394a90ac235",
+   "effective_time": "20250122",
+   "version": "8",
+   "openfda": {
+    "application_number": [
+     "ANDA040409"
+    ],
+    "brand_name": [
+     "Hydrocodone/APAP"
+    ],
+    "generic_name": [
+     "HYDROCODONE/APAP"
+    ],
+    "manufacturer_name": [
+     "Direct_Rx"
+    ],
+    "product_ndc": [
+     "72189-407"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "ACETAMINOPHEN",
+     "HYDROCODONE BITARTRATE"
+    ],
+    "rxcui": [
+     "857002"
+    ],
+    "spl_id": [
+     "2c4cf13b-5454-0aa9-e063-6394a90ac235"
+    ],
+    "spl_set_id": [
+     "f0e66441-668a-7ab8-e053-2995a90aba4f"
+    ],
+    "package_ndc": [
+     "72189-407-60",
+     "72189-407-90",
+     "72189-407-30",
+     "72189-407-72"
+    ],
+    "original_packager_product_ndc": [
+     "0406-0123"
+    ],
+    "unii": [
+     "362O9ITL9D",
+     "NO70W886KK"
+    ]
+   }
+  }
+ ]
+}

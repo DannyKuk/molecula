@@ -90,9 +90,17 @@ class SourceClient:
         )
 
     def get(
-        self, url: str, *, params: dict[str, str] | None = None, refresh: bool = False
+        self,
+        url: str,
+        *,
+        params: dict[str, str] | None = None,
+        headers: dict[str, str] | None = None,
+        refresh: bool = False,
     ) -> httpx2.Response:
-        return self._send(self._http.build_request("GET", url, params=params), refresh)
+        """GET through the cache. `headers` are sent but not part of the cache key, stored URL or
+        log lines, so they suit credentials, never anything that changes the answer."""
+        request = self._http.build_request("GET", url, params=params, headers=headers)
+        return self._send(request, refresh)
 
     def post_json(
         self, url: str, payload: dict[str, Any], *, refresh: bool = False
