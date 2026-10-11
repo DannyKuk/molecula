@@ -1,4 +1,5 @@
 import logging
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
@@ -32,12 +33,14 @@ SECTION_GROUPS: dict[str, SectionGroup] = {
     "boxed_warning": "warnings",
     "warnings_and_cautions": "warnings",
     "warnings": "warnings",
+    "precautions": "warnings",
     "contraindications": "contraindications",
     "drug_interactions": "interactions",
     "adverse_reactions": "adverse_reactions",
     "do_not_use": "otc_consumer",
     "stop_use": "otc_consumer",
     "ask_doctor": "otc_consumer",
+    "ask_doctor_or_pharmacist": "otc_consumer",
     "when_using": "otc_consumer",
     "purpose": "otc_consumer",
     "active_ingredient": "otc_consumer",
@@ -123,8 +126,26 @@ def canonical_labels(name: str, labels: list[Label]) -> tuple[LabelRecord, ...]:
         parents = [label for label in single if substance_parent(label) == parent]
         forms = [label for label in single if substance_parent(label).startswith(f"{parent} ")]
         if candidates := parents or forms:
-            canonical.append(to_record(min(candidates, key=preference), product_type))
+            on_route = most_common_route(candidates)
+            canonical.append(to_record(min(on_route, key=preference), product_type))
     return tuple(canonical)
+
+
+def route(label: Label) -> str:
+    """The label's routes as one value, e.g. "INTRAMUSCULAR,INTRAVENOUS"; empty without any."""
+    return ",".join(sorted(label.openfda.route))
+
+
+def most_common_route(labels: list[Label]) -> list[Label]:
+    """The labels on the route most of them share, so the canonical label is the drug's usual
+    form (ibuprofen tablets, not the IV injection that happens to have a mechanism section).
+
+    Equally common routes go by name; labels without a route form a group of their own, which
+    loses a tie.
+    """
+    counts = Counter(route(label) for label in labels)
+    usual = min(counts, key=lambda value: (-counts[value], value == "", value))
+    return [label for label in labels if route(label) == usual]
 
 
 def substance_parent(label: Label) -> str:

@@ -43,6 +43,7 @@ SALT_WORDS = frozenset(
         "mesylate",
         "monohydrate",
         "nitrate",
+        "oxalate",
         "pamoate",
         "phosphate",
         "potassium",

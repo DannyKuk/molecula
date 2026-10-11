@@ -80,6 +80,15 @@ def test_application_number_tells_the_brand_from_a_generic(openfda) -> None:
     assert all(label.openfda.application_number[0].startswith("ANDA") for label in generics)
 
 
+def test_route_is_parsed(openfda) -> None:
+    routes = {
+        label.openfda.brand_name[0]: label.openfda.route for label in openfda().labels("ibuprofen")
+    }
+
+    assert routes["Caldolor"] == ["INTRAVENOUS"]
+    assert routes["Advil Menstrual Pain"] == ["ORAL"]
+
+
 def test_combination_product_lists_both_substances(openfda) -> None:
     labels = openfda().labels("hydrocodone apap")
 

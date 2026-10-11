@@ -64,6 +64,7 @@ def label(
     effective_time: str = "20250101",
     application: str = "ANDA000001",
     brand: str | None = None,
+    route: tuple[str, ...] = ("ORAL",),
     sections: tuple[str, ...] = ("indications_and_usage",),
 ) -> Label:
     generic = " AND ".join(substances)
@@ -76,6 +77,7 @@ def label(
             substance_name=substances,
             product_type=[product_type],
             application_number=[application],
+            route=list(route),
         ),
         sections={section: [f"{section} text"] for section in sections},
     )
@@ -156,6 +158,38 @@ def test_then_the_most_kept_sections_win() -> None:
     ]
 
     assert chosen("caffeine", labels) == ["kept"]
+
+
+def test_the_usual_route_comes_before_a_mechanism_section() -> None:
+    labels = [
+        label("injection", ["IBUPROFEN"], route=("INTRAVENOUS",), sections=MECHANISM),
+        label("tablet-1", ["IBUPROFEN"]),
+        label("tablet-2", ["IBUPROFEN"], effective_time="20200101"),
+    ]
+
+    assert chosen("ibuprofen", labels) == ["tablet-1"]
+
+
+def test_routes_count_as_one_value_in_any_order() -> None:
+    labels = [
+        label("oral", ["DEXAMETHASONE"], sections=MECHANISM),
+        label("im-iv", ["DEXAMETHASONE"], route=("INTRAMUSCULAR", "INTRAVENOUS")),
+        label("iv-im", ["DEXAMETHASONE"], route=("INTRAVENOUS", "INTRAMUSCULAR")),
+        label("im", ["DEXAMETHASONE"], route=("INTRAMUSCULAR",)),
+    ]
+
+    assert chosen("dexamethasone", labels) == ["im-iv"]
+
+
+def test_equally_common_routes_go_by_name_and_no_route_loses() -> None:
+    labels = [
+        label("topical", ["CLOTRIMAZOLE"], route=("TOPICAL",)),
+        label("oral", ["CLOTRIMAZOLE"], route=("ORAL",)),
+        label("none", ["CLOTRIMAZOLE"], route=(), sections=MECHANISM),
+    ]
+
+    assert chosen("clotrimazole", labels) == ["oral"]
+    assert chosen("clotrimazole", [labels[2]]) == ["none"]
 
 
 def test_a_full_tie_goes_to_the_first_set_id() -> None:
@@ -262,12 +296,13 @@ def test_combination_products_are_excluded(ingest, store: LabelStore) -> None:
     ingest([ACETAMINOPHEN])
 
     # Apadaz (benzhydrocodone + acetaminophen) has a mechanism section and is a brand label, so
-    # it would be chosen if combinations counted. So would Advil Dual Action among OTC labels.
+    # it would be chosen if combinations counted. Combinations are oral and single-ingredient
+    # acetaminophen Rx labels are injections, so they would also have made oral the usual route.
     rx, otc = store.get(1983)
     assert (rx.set_id, rx.brand) == ("464e404a-1957-44a2-a53a-f2a9d3c15bde", "Acetaminophen")
     assert (otc.set_id, otc.brand) == (
-        "3561bbc3-53b0-4857-8b71-39e165ed95ce",
-        "Feverall Jr. Strength",
+        "3af22fc8-e4e0-4863-8696-6bc1257047cb",
+        "Tylenol 8 HR Arthritis Pain",
     )
     assert {rx.substance, otc.substance} == {"ACETAMINOPHEN"}
 
@@ -287,13 +322,27 @@ def test_ibuprofen_mechanism_is_found_in_clinical_pharmacology(openfda) -> None:
     assert "prostaglandin synthetase inhibition" in pharmacology.text
 
 
-def test_ibuprofen_rx_label_with_a_mechanism_section_wins(ingest, store: LabelStore) -> None:
+def test_ibuprofen_rx_pick_is_oral_although_only_the_iv_label_has_a_mechanism_section(
+    ingest, store: LabelStore
+) -> None:
     ingest([IBUPROFEN])
 
     rx, _ = store.get(3672)
-    # Caldolor, the injection, is the only single-ingredient ibuprofen Rx label with one.
-    assert (rx.brand, rx.set_id) == ("Caldolor", "1eaa7790-f1a1-4f51-b10a-cbbaf033f684")
-    assert "mechanism_of_action" in {section.section for section in rx.sections}
+    # Three oral labels against Caldolor, the injection, which alone has `mechanism_of_action`.
+    # Of the oral ones (none filed as a brand) the newest wins.
+    assert (rx.brand, rx.set_id) == ("Ibuprofen", "2144eff0-d7ab-486d-b116-a4ff3ae2afe2")
+    sections = {section.section: section for section in rx.sections}
+    assert "mechanism_of_action" not in sections
+    assert "prostaglandin synthetase inhibition" in sections["clinical_pharmacology"].text
+
+
+def test_older_rx_precautions_map_to_warnings(ingest, store: LabelStore) -> None:
+    ingest([IBUPROFEN])
+
+    rx, _ = store.get(3672)
+    groups = {section.section: section.section_group for section in rx.sections}
+    assert groups["precautions"] == "warnings"
+    assert groups["warnings"] == "warnings"
 
 
 def test_otc_drug_facts_sections_map_to_otc_consumer(ingest, store: LabelStore) -> None:
@@ -307,6 +356,7 @@ def test_otc_drug_facts_sections_map_to_otc_consumer(ingest, store: LabelStore) 
         "purpose",
         "do_not_use",
         "ask_doctor",
+        "ask_doctor_or_pharmacist",
         "when_using",
         "stop_use",
     }

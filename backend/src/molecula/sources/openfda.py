@@ -22,6 +22,7 @@ class OpenFdaFields(BaseModel):
     brand_name: list[str] = []
     substance_name: list[str] = []
     product_type: list[str] = []
+    route: list[str] = []
     application_number: list[str] = []
 
 

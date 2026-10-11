@@ -317,6 +317,7 @@ def test_list_drugs_has_the_scope_aliases_and_no_pubchem_synonyms(
     [
         ("imatinib", ["imatinib"]),
         ("imatinib mesylate", ["imatinib mesylate", "imatinib"]),
+        ("ESCITALOPRAM OXALATE", ["ESCITALOPRAM OXALATE", "ESCITALOPRAM"]),
         ("Doxycycline Hyclate", ["Doxycycline Hyclate", "Doxycycline"]),
         ("sodium chloride", ["sodium chloride"]),
         ("medroxyprogesterone acetate", ["medroxyprogesterone acetate"]),

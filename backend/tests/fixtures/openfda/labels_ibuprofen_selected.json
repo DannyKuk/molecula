@@ -7,10 +7,155 @@
   "results": {
    "skip": 0,
    "limit": 100,
-   "total": 6
+   "total": 8
   }
  },
  "results": [
+  {
+   "spl_product_data_elements": [
+    "Ibuprofen Ibuprofen IBUPROFEN IBUPROFEN "
+   ],
+   "boxed_warning": [
+    "Cardiovascular Thrombotic Events Nonster"
+   ],
+   "description": [
+    "DESCRIPTION Ibuprofen tablets, USP conta"
+   ],
+   "clinical_pharmacology": [
+    "CLINICAL PHARMACOLOGY Ibuprofen tablets "
+   ],
+   "pharmacodynamics": [
+    "Pharmacodynamics In a healthy volunteer "
+   ],
+   "pharmacokinetics": [
+    "Pharmacokinetics The ibuprofen in Ibupro"
+   ],
+   "indications_and_usage": [
+    "INDICATIONS AND USAGE Carefully consider"
+   ],
+   "contraindications": [
+    "CONTRAINDICATIONS Ibuprofen tablets are "
+   ],
+   "warnings": [
+    "WARNINGS CARDIOVASCULAR EFFECTS Cardiova"
+   ],
+   "precautions": [
+    "PRECAUTIONS General Ibuprofen tablets ca"
+   ],
+   "general_precautions": [
+    "General Ibuprofen tablets cannot be expe"
+   ],
+   "information_for_patients": [
+    "Information for Patients Patients should"
+   ],
+   "laboratory_tests": [
+    "Laboratory Tests Because serious GI trac"
+   ],
+   "drug_interactions": [
+    "Drug Interactions ACE-inhibitors: Report"
+   ],
+   "pregnancy": [
+    "Pregnancy Risk Summary Use of NSAIDs, in"
+   ],
+   "labor_and_delivery": [
+    "Labor and Delivery In rat studies with N"
+   ],
+   "nursing_mothers": [
+    "Nursing Mothers It is not known whether "
+   ],
+   "pediatric_use": [
+    "Pediatric Use Safety and effectiveness o"
+   ],
+   "geriatric_use": [
+    "Geriatric Use As with any NSAIDs, cautio"
+   ],
+   "adverse_reactions": [
+    "ADVERSE REACTIONS The most frequent type"
+   ],
+   "adverse_reactions_table": [
+    "<table width=\"100%\"><tbody><tr><td style"
+   ],
+   "overdosage": [
+    "OVERDOSAGE Approximately 1\u00bd hours after "
+   ],
+   "dosage_and_administration": [
+    "DOSAGE AND ADMINISTRATION Carefully cons"
+   ],
+   "how_supplied": [
+    "HOW SUPPLIED Ibuprofen tablets, USP are "
+   ],
+   "spl_medguide": [
+    "Medication Guide for Nonsteroidal Anti-I"
+   ],
+   "package_label_principal_display_panel": [
+    "PRINCIPAL DISPLAY PANEL - 400 mg Ibuprof"
+   ],
+   "set_id": "0fa4cd66-66ad-4ec9-b38c-6b5840df39df",
+   "id": "5a81a678-a6d3-fa4f-e063-6394a90aded5",
+   "effective_time": "20260902",
+   "version": "22",
+   "openfda": {
+    "application_number": [
+     "ANDA202413"
+    ],
+    "brand_name": [
+     "Ibuprofen"
+    ],
+    "generic_name": [
+     "IBUPROFEN"
+    ],
+    "manufacturer_name": [
+     "PD-Rx Pharmaceuticals, Inc."
+    ],
+    "product_ndc": [
+     "72789-590"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IBUPROFEN"
+    ],
+    "rxcui": [
+     "197805"
+    ],
+    "spl_id": [
+     "5a81a678-a6d3-fa4f-e063-6394a90aded5"
+    ],
+    "spl_set_id": [
+     "0fa4cd66-66ad-4ec9-b38c-6b5840df39df"
+    ],
+    "package_ndc": [
+     "72789-590-30"
+    ],
+    "original_packager_product_ndc": [
+     "11788-008"
+    ],
+    "upc": [
+     "0372789590301"
+    ],
+    "nui": [
+     "N0000000160",
+     "M0001335",
+     "N0000175722"
+    ],
+    "pharm_class_moa": [
+     "Cyclooxygenase Inhibitors [MoA]"
+    ],
+    "pharm_class_cs": [
+     "Anti-Inflammatory Agents, Non-Steroidal [CS]"
+    ],
+    "pharm_class_epc": [
+     "Nonsteroidal Anti-inflammatory Drug [EPC]"
+    ],
+    "unii": [
+     "WK2XYI10QM"
+    ]
+   }
+  },
   {
    "spl_product_data_elements": [
     "Caldolor ibuprofen ibuprofen ibuprofen w"
@@ -505,6 +650,121 @@
     "unii": [
      "WK2XYI10QM",
      "5QZO15J2Z8"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "Ibuprofen Ibuprofen IBUPROFEN IBUPROFEN "
+   ],
+   "boxed_warning": [
+    "BOXED WARNING Cardiovascular Thrombolic "
+   ],
+   "description": [
+    "Ibuprofen tablets contain the active ing"
+   ],
+   "clinical_pharmacology": [
+    "Ibuprofen tablets contain ibuprofen whic"
+   ],
+   "indications_and_usage": [
+    "Carefully consider the potential benefit"
+   ],
+   "contraindications": [
+    "Ibuprofen tablets are contraindicated in"
+   ],
+   "warnings": [
+    "CARDIOVASCULAR EFFECTS Cardiovascular Th"
+   ],
+   "precautions": [
+    "General Ibuprofen tablets cannot be expe"
+   ],
+   "adverse_reactions": [
+    "The most frequent type of adverse reacti"
+   ],
+   "overdosage": [
+    "Approximately 1\u00bd hours after the reporte"
+   ],
+   "dosage_and_administration": [
+    "Carefully consider the potential benefit"
+   ],
+   "how_supplied": [
+    "Ibuprofen tablets are available in the f"
+   ],
+   "storage_and_handling": [
+    "Store at 20\u00b0 to 25\u00b0C (68\u00b0 to 77\u00b0F) [See "
+   ],
+   "spl_medguide": [
+    "Medication Guide for Nonsteroidal Anti-i"
+   ],
+   "package_label_principal_display_panel": [
+    "72189-643-30",
+    "72189-643-21",
+    "72189-643-60",
+    "- 72189-643-90"
+   ],
+   "set_id": "40071818-5bf0-095b-e063-6294a90ad58a",
+   "id": "5aac01ac-d104-e6ba-e063-6394a90a8369",
+   "effective_time": "20260904",
+   "version": "4",
+   "openfda": {
+    "application_number": [
+     "ANDA078329"
+    ],
+    "brand_name": [
+     "Ibuprofen"
+    ],
+    "generic_name": [
+     "IBUPROFEN"
+    ],
+    "manufacturer_name": [
+     "Direct_Rx"
+    ],
+    "product_ndc": [
+     "72189-643"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "IBUPROFEN"
+    ],
+    "rxcui": [
+     "197806"
+    ],
+    "spl_id": [
+     "5aac01ac-d104-e6ba-e063-6394a90a8369"
+    ],
+    "spl_set_id": [
+     "40071818-5bf0-095b-e063-6294a90ad58a"
+    ],
+    "package_ndc": [
+     "72189-643-30",
+     "72189-643-21",
+     "72189-643-60",
+     "72189-643-90"
+    ],
+    "original_packager_product_ndc": [
+     "64380-808"
+    ],
+    "nui": [
+     "N0000000160",
+     "M0001335",
+     "N0000175722"
+    ],
+    "pharm_class_moa": [
+     "Cyclooxygenase Inhibitors [MoA]"
+    ],
+    "pharm_class_cs": [
+     "Anti-Inflammatory Agents, Non-Steroidal [CS]"
+    ],
+    "pharm_class_epc": [
+     "Nonsteroidal Anti-inflammatory Drug [EPC]"
+    ],
+    "unii": [
+     "WK2XYI10QM"
     ]
    }
   },

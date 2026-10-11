@@ -14,14 +14,15 @@ Two searches were recorded on 2026-10-12 (with an API key, which changes nothing
 and cut down to a few chosen labels each, with `meta.results` set to match; the labels themselves
 are trimmed like the others:
 
-- ibuprofen (1147 labels): Caldolor (the only single-ingredient Rx label with a
-  `mechanism_of_action` section), an older ibuprofen tablet label whose `clinical_pharmacology`
-  keeps its first 250 characters, which hold the mechanism sentence, an ibuprofen + famotidine
-  label, Advil Menstrual Pain (ibuprofen sodium, OTC), a store-brand OTC label and Advil Dual
-  Action (ibuprofen + acetaminophen, OTC).
+- ibuprofen (1147 labels): Caldolor (intravenous, the only single-ingredient Rx label with a
+  `mechanism_of_action` section), three oral ibuprofen tablet labels (the newest keeps the first
+  250 characters of `clinical_pharmacology`, which hold the mechanism sentence), an ibuprofen +
+  famotidine label, Advil Menstrual Pain (ibuprofen sodium, OTC), a store-brand OTC label and
+  Advil Dual Action (ibuprofen + acetaminophen, OTC).
 - acetaminophen (3284 labels): two generic Rx injection labels, Apadaz (benzhydrocodone +
-  acetaminophen, a brand label with a mechanism section), a hydrocodone + acetaminophen label,
-  Feverall and Tylenol 8 HR (OTC), and Advil Dual Action.
+  acetaminophen, an oral brand label with a mechanism section), an oral hydrocodone +
+  acetaminophen label, Feverall (rectal, OTC), Tylenol 8 HR and a store-brand children's label
+  (oral, OTC), and Advil Dual Action.
 """
 
 from pathlib import Path

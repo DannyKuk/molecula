@@ -7,7 +7,7 @@
   "results": {
    "skip": 0,
    "limit": 100,
-   "total": 7
+   "total": 8
   }
  },
  "results": [
@@ -813,6 +813,107 @@
     ],
     "unii": [
      "WK2XYI10QM",
+     "362O9ITL9D"
+    ]
+   }
+  },
+  {
+   "spl_product_data_elements": [
+    "childrens fever reducer and pain relieve"
+   ],
+   "active_ingredient": [
+    "Active ingredient (in each 5 mL) Acetami"
+   ],
+   "purpose": [
+    "Purpose Pain reliever/fever reducer"
+   ],
+   "indications_and_usage": [
+    "Uses temporarily: \u2022 reduces fever \u2022 reli"
+   ],
+   "warnings": [
+    "Warnings Liver warning: This product con"
+   ],
+   "do_not_use": [
+    "Do not use \u2022 with any other drug contain"
+   ],
+   "ask_doctor": [
+    "Ask a doctor before use if your child ha"
+   ],
+   "ask_doctor_or_pharmacist": [
+    "Ask a doctor or pharmacist before use if"
+   ],
+   "when_using": [
+    "When using this product do not exceed re"
+   ],
+   "stop_use": [
+    "Stop use and ask a doctor if \u2022 pain gets"
+   ],
+   "keep_out_of_reach_of_children": [
+    "Keep out of reach of children. Overdose "
+   ],
+   "dosage_and_administration": [
+    "Directions \u2022 this product does not conta"
+   ],
+   "dosage_and_administration_table": [
+    "<table width=\"100%\"><col width=\"31%\"/><c"
+   ],
+   "storage_and_handling": [
+    "Other information \u2022 each 5 mL contains :"
+   ],
+   "inactive_ingredient": [
+    "Inactive ingredients anhydrous citric ac"
+   ],
+   "questions": [
+    "Questions or comments? 1-800-719-9260"
+   ],
+   "package_label_principal_display_panel": [
+    "Package/Label Principal Display Panel Co"
+   ],
+   "set_id": "7f445de3-30cf-4bd8-892d-05979cd399e7",
+   "id": "175e357c-20e6-4a17-89aa-a7a5a8241d74",
+   "effective_time": "20260909",
+   "version": "4",
+   "openfda": {
+    "application_number": [
+     "M013"
+    ],
+    "brand_name": [
+     "childrens fever reducer and pain reliever"
+    ],
+    "generic_name": [
+     "ACETAMINOPHEN"
+    ],
+    "manufacturer_name": [
+     "Rite Aid Corporation"
+    ],
+    "product_ndc": [
+     "11822-0959"
+    ],
+    "product_type": [
+     "HUMAN OTC DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "ACETAMINOPHEN"
+    ],
+    "rxcui": [
+     "307668"
+    ],
+    "spl_id": [
+     "175e357c-20e6-4a17-89aa-a7a5a8241d74"
+    ],
+    "spl_set_id": [
+     "7f445de3-30cf-4bd8-892d-05979cd399e7"
+    ],
+    "package_ndc": [
+     "11822-0959-1"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "unii": [
      "362O9ITL9D"
     ]
    }
