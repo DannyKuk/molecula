@@ -89,6 +89,17 @@ class CompoundStore:
         *compound, synonym_alias, kind = row
         return SynonymMatch(CompoundRecord(*compound), Synonym(synonym_alias, kind))
 
+    def scope_aliases(self) -> dict[int, list[str]]:
+        """The scope aliases of every compound that has any, in scope order. No PubChem synonyms."""
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT cid, alias FROM synonym WHERE kind = 'alias' ORDER BY rowid"
+            ).fetchall()
+        aliases: dict[int, list[str]] = {}
+        for cid, alias in rows:
+            aliases.setdefault(cid, []).append(alias)
+        return aliases
+
     def synonyms(self, cid: int) -> list[Synonym]:
         with self._lock:
             rows = self._conn.execute(

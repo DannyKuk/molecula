@@ -127,6 +127,22 @@ def test_find_unknown_alias_gives_none(store: CompoundStore) -> None:
     assert store.find("caffeine") is None
 
 
+def test_scope_aliases_leave_out_names_and_pubchem_synonyms(store: CompoundStore) -> None:
+    store.save(
+        CAFFEINE,
+        [
+            Synonym("caffeine", "name"),
+            Synonym("Koffein", "alias"),
+            Synonym("Guaranine", "pubchem"),
+            Synonym("Coffein", "alias"),
+        ],
+        FIRST_FETCH,
+    )
+    store.save(replace(CAFFEINE, cid=99, name="theine"), [Synonym("theine", "name")], FIRST_FETCH)
+
+    assert store.scope_aliases() == {2519: ["Koffein", "Coffein"]}
+
+
 def test_all_lists_compounds_by_name(store: CompoundStore) -> None:
     store.save(replace(CAFFEINE, cid=99, name="Theine"), [], FIRST_FETCH)
     store.save(CAFFEINE, [], FIRST_FETCH)
