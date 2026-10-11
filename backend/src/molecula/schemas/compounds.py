@@ -1,7 +1,6 @@
 from typing import Annotated, Literal
 
-from annotated_types import Gt, Le
-from pydantic import AfterValidator, BaseModel, ConfigDict, StringConstraints
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints
 
 type ConformerSource = Literal["pubchem", "rdkit"]
 
@@ -22,7 +21,7 @@ def check_drug_name(name: str) -> str:
 DrugName = Annotated[
     str, StringConstraints(min_length=1, max_length=100), AfterValidator(check_drug_name)
 ]
-Cid = Annotated[int, Gt(0), Le(MAX_CID)]
+Cid = Annotated[int, Field(gt=0, le=MAX_CID)]
 
 
 class Compound(BaseModel):
