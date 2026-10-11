@@ -1,0 +1,9 @@
+{
+  "query_id" : "0bc3d587-ae11-45c7-af92-c12a01d4b96f",
+  "result_type" : "mol_definition",
+  "total_count" : 1,
+  "result_set" : [ {
+    "identifier" : "STI",
+    "score" : 1.0
+  } ]
+}
