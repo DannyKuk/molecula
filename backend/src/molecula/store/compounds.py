@@ -1,4 +1,5 @@
 import sqlite3
+from collections.abc import Collection
 from dataclasses import astuple, dataclass, fields
 from datetime import datetime
 from threading import Lock
@@ -128,6 +129,19 @@ class CompoundStore:
                     "INSERT INTO synonym (alias, cid, kind) VALUES (?, ?, ?)",
                     [(synonym.alias, compound.cid, synonym.kind) for synonym in wanted],
                 )
+
+    def prune(self, keep: Collection[int]) -> list[CompoundRecord]:
+        """Delete every compound whose CID isn't in `keep`, with the rows that reference it.
+
+        Returns the deleted compounds, by name.
+        """
+        removed = [compound for compound in self.all() if compound.cid not in keep]
+        if removed:
+            with self._lock, self._conn:
+                self._conn.executemany(
+                    "DELETE FROM compound WHERE cid = ?", [(compound.cid,) for compound in removed]
+                )
+        return removed
 
     def _upsert(self, compound: CompoundRecord, fetched_at: datetime) -> None:
         columns = [*COLUMNS, "has_3d", "fetched_at"]

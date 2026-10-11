@@ -1,3 +1,4 @@
+import logging
 import sqlite3
 from collections.abc import Callable
 from pathlib import Path
@@ -6,7 +7,7 @@ import httpx2
 import pytest
 
 from molecula.config import Settings
-from molecula.ingest.compounds import SYNONYM_LIMIT, ingest_compounds, run
+from molecula.ingest.compounds import SYNONYM_LIMIT, ingest_compounds, log_summary, run
 from molecula.ingest.scope import Scope
 from molecula.sources.pubchem import PubChemClient
 from molecula.store.compounds import CompoundStore, Synonym
@@ -188,6 +189,72 @@ def test_offline_run_on_an_empty_store_fails_without_requests(
 
     assert exit_code == 1
     assert "OFFLINE=1, not requesting" in caplog.text
+
+
+def test_a_drug_removed_from_the_scope_is_pruned(ingest, store, conformers) -> None:
+    ingest(scope({"name": "caffeine"}, {"name": "ibuprofen", "aliases": ["Advil"]}))
+    assert conformers.read(3672) is not None
+
+    report = ingest(scope({"name": "caffeine"}))
+
+    assert [compound.name for compound in report.pruned] == ["ibuprofen"]
+    assert report.pruned_conformers == [3672]
+    assert store.get(3672) is None
+    assert store.find("Advil") is None
+    assert conformers.read(3672) is None
+    assert store.get(2519) is not None
+    assert conformers.read(2519) is not None
+
+
+def test_a_run_with_a_failure_prunes_nothing(ingest, store, conformers) -> None:
+    ingest(scope({"name": "caffeine"}, {"name": "ibuprofen"}))
+    conformers.write(99, "orphan\n")
+
+    report = ingest(scope({"name": "notadrugxyz"}, {"name": "caffeine"}))
+
+    assert list(report.failures) == ["notadrugxyz"]
+    assert (report.pruned, report.pruned_conformers) == ([], [])
+    assert store.get(3672) is not None
+    assert conformers.read(3672) is not None
+    assert conformers.read(99) is not None
+
+
+def test_a_stopped_run_prunes_nothing(ingest, store) -> None:
+    ingest(scope({"name": "caffeine"}, {"name": "ibuprofen"}))
+
+    report = ingest(
+        scope({"name": "imatinib"}, {"name": "caffeine"}), lambda request: httpx2.Response(429)
+    )
+
+    assert report.not_attempted == ["caffeine"]
+    assert report.pruned == []
+    assert store.get(3672) is not None
+
+
+def test_an_orphaned_conformer_file_is_removed(ingest, conformers) -> None:
+    conformers.write(99, "orphan\n")
+
+    report = ingest(scope({"name": "caffeine"}))
+
+    assert report.pruned == []
+    assert report.pruned_conformers == [99]
+    assert conformers.read(99) is None
+    assert conformers.read(2519) is not None
+
+
+def test_summary_lists_what_was_pruned(
+    ingest, conformers, caplog: pytest.LogCaptureFixture
+) -> None:
+    ingest(scope({"name": "caffeine"}, {"name": "ibuprofen"}))
+    conformers.write(99, "orphan\n")
+    report = ingest(scope({"name": "caffeine"}))
+    caplog.set_level(logging.INFO)
+
+    log_summary(report)
+
+    assert "pruned 1 compounds that left the scope" in caplog.text
+    assert "pruned: ibuprofen (CID 3672)" in caplog.text
+    assert "removed 2 conformer files: 99.sdf, 3672.sdf" in caplog.text
 
 
 def dump(conn: sqlite3.Connection) -> list[tuple[object, ...]]:

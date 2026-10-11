@@ -63,6 +63,11 @@ def test_repeating_a_drugs_own_name_as_alias_is_allowed() -> None:
     assert scope({"name": "aspirin", "aliases": ["Aspirin"]}).drugs[0].aliases == ["Aspirin"]
 
 
+def test_an_empty_scope_fails() -> None:
+    with pytest.raises(ValidationError, match="at least 1 item"):
+        scope()
+
+
 @pytest.mark.parametrize("entry", [{"name": ""}, {"name": "x", "brand": "y"}, {"aliases": ["y"]}])
 def test_malformed_entries_fail(entry: dict[str, object]) -> None:
     with pytest.raises(ValidationError):

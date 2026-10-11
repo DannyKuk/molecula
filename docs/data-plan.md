@@ -75,7 +75,7 @@ Known limits, and how the app handles them:
 
 ### 5.2 Compounds (`ingest compounds`)
 
-name → CID → parent CID → properties, InChIKey, SMILES → 3D SDF (RDKit fallback) → top 30 synonyms for the name layer and for BM25. Peptides such as insulin and semaglutide are marked "no small-molecule 3D". `compound.name` is the scope name; PubChem's title is sometimes a systematic name (glimepiride, doxycycline).
+name → CID → parent CID → properties, InChIKey, SMILES → 3D SDF (RDKit fallback) → top 30 synonyms for the name layer and for BM25. Peptides such as insulin and semaglutide are marked "no small-molecule 3D". `compound.name` is the scope name; PubChem's title is sometimes a systematic name (glimepiride, doxycycline). Only a complete run (no failures, nothing left unattempted) prunes: it deletes the compounds it didn't store, with their synonyms, targets and conformer files, and any conformer file without a compound, and lists them in its summary.
 
 When PubChem has no conformer, RDKit generates one (ETKDG with a fixed seed, then MMFF) for molecules up to 100 heavy atoms. PubChem skips flexible small molecules too, e.g. ritonavir (50 heavy atoms, 18 rotatable bonds). Larger molecules get `has_3d = false`. Conformers are written to `data/build/structures/compounds/{cid}.sdf`.
 

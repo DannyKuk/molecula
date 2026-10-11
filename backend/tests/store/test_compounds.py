@@ -148,3 +148,27 @@ def test_all_lists_compounds_by_name(store: CompoundStore) -> None:
     store.save(CAFFEINE, [], FIRST_FETCH)
 
     assert [compound.name for compound in store.all()] == ["caffeine", "Theine"]
+
+
+def test_prune_deletes_the_compounds_not_kept_with_their_synonyms(store: CompoundStore) -> None:
+    theine = replace(CAFFEINE, cid=99, name="theine")
+    store.save(CAFFEINE, [Synonym("caffeine", "name")], FIRST_FETCH)
+    store.save(theine, [Synonym("theine", "name")], FIRST_FETCH)
+
+    removed = store.prune({2519})
+
+    assert removed == [theine]
+    assert store.get(99) is None
+    assert store.synonyms(99) == []
+    assert store.get(2519) == CAFFEINE
+    assert store.synonyms(2519) == [Synonym("caffeine", "name")]
+
+
+def test_prune_keeping_every_compound_changes_nothing(
+    store: CompoundStore, conn: sqlite3.Connection
+) -> None:
+    store.save(CAFFEINE, [], FIRST_FETCH)
+    changes = conn.total_changes
+
+    assert store.prune({2519, 99}) == []
+    assert conn.total_changes == changes
