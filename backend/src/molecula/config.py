@@ -32,6 +32,10 @@ class Settings(BaseSettings):
         """Where the ingest steps write the built store (SQLite, structures, index)."""
         return self.data_dir / "build"
 
+    @property
+    def db_path(self) -> Path:
+        return self.build_dir / "molecula.db"
+
 
 @lru_cache
 def get_settings() -> Settings:

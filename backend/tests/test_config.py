@@ -41,6 +41,7 @@ def test_reads_values_from_env_file(tmp_path: Path) -> None:
     assert settings.llm_model == "some/model"
     assert settings.offline is True
     assert settings.build_dir == Path("/srv/data/build")
+    assert settings.db_path == Path("/srv/data/build/molecula.db")
 
 
 @pytest.mark.parametrize(("raw", "expected"), [("1", True), ("0", False), ("true", True)])
