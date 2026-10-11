@@ -1,10 +1,9 @@
 from typing import Any
 
-import httpx2
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 
-from molecula.sources.errors import SourceFormatError
 from molecula.sources.http import SourceClient
+from molecula.sources.parsing import parse
 
 LABELS = "https://api.fda.gov/drug/label.json"
 PAGE_SIZE = 100
@@ -101,10 +100,3 @@ class OpenFdaClient:
         if self._api_key is None:
             return {}
         return {API_KEY_HEADER: self._api_key.get_secret_value()}
-
-
-def parse[M: BaseModel](response: httpx2.Response, model: type[M]) -> M:
-    try:
-        return model.model_validate_json(response.content)
-    except ValidationError as error:
-        raise SourceFormatError(f"{response.request.url}: unexpected response shape") from error
