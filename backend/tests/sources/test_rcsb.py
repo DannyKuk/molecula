@@ -14,6 +14,7 @@ from rcsb_replay import (
     IBUPROFEN_SMILES,
     IMATINIB_INCHIKEY,
     INCHIKEY_SEARCH,
+    RLT_ENTRY_DETAILS,
     STI_ENTRIES,
     STI_ENTRY_DETAILS,
     SWF_ENTRY_DETAILS,
@@ -176,6 +177,72 @@ def test_first_organism_stands_in_when_no_source_names_the_gene(rcsb) -> None:
     [wv3] = rcsb(handler).complexes("SWF", ["VKORC1"])
 
     assert (wv3.organism, wv3.taxonomy_id) == ("Aequorea victoria", 6100)
+
+
+def test_a_viral_gene_name_alone_matches_other_viruses(rcsb) -> None:
+    complexes = rcsb().complexes("RLT", ["pol"])
+
+    assert [(c.pdb_id, c.organism) for c in complexes] == [
+        ("3L2V", "Human spumaretrovirus"),
+        ("3OYA", "Human spumaretrovirus"),
+        ("7OUG", "Simian T-lymphotropic virus 1"),
+    ]
+
+
+def test_raltegravir_has_no_hiv1_integrase_entry(rcsb) -> None:
+    assert rcsb().complexes("RLT", ["pol"], taxon="Human immunodeficiency virus 1") == []
+
+
+def test_taxon_keeps_hiv1_and_drops_foamy_virus_and_siv(rcsb) -> None:
+    complexes = rcsb().complexes("DLU", ["pol"], taxon="Human immunodeficiency virus 1")
+
+    assert [(c.pdb_id, c.taxonomy_id) for c in complexes] == [
+        ("6VDK", 11676),
+        ("8W09", 11676),
+        ("8W2R", 11676),
+        ("8W34", 11676),
+    ]
+    assert len(rcsb().complexes("DLU", ["pol"])) == 8
+
+
+def test_taxon_matches_a_species_above_the_strain_ignoring_case(rcsb) -> None:
+    # Both entries name an influenza A strain; the species is higher up in their lineage.
+    complexes = rcsb().complexes("RLT", ["PA"], taxon="influenza A virus")
+
+    assert [(c.pdb_id, c.organism) for c in complexes] == [
+        ("7LW6", "Influenza A virus (A/Luxembourg/43/2009(H1N1))"),
+        ("7M0N", "Influenza A virus (A/ruddy turnstone/New Jersey/Sg-00524/2008(H4N6))"),
+    ]
+
+
+def test_source_without_a_lineage_belongs_to_no_taxon(rcsb) -> None:
+    entries = {
+        "data": {
+            "entries": [
+                {
+                    "rcsb_id": "3OYA",
+                    "polymer_entities": [
+                        {
+                            "rcsb_polymer_entity_container_identifiers": {"auth_asym_ids": ["A"]},
+                            "rcsb_entity_source_organism": [
+                                {"scientific_name": "Human immunodeficiency virus 1"}
+                            ],
+                            "uniprots": [
+                                {
+                                    "rcsb_uniprot_protein": {
+                                        "gene": [{"name": [{"value": "pol", "type": "PRIMARY"}]}]
+                                    }
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ]
+        }
+    }
+    handler = Replay({RLT_ENTRY_DETAILS: httpx2.Response(200, json=entries)})
+
+    assert rcsb(handler).complexes("RLT", ["pol"], taxon="Human immunodeficiency virus 1") == []
 
 
 def test_complexes_take_one_search_and_one_graphql_request(rcsb) -> None:

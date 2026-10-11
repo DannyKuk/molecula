@@ -18,7 +18,9 @@ ENTRY_DETAILS = """query ($ids: [String!]!) {
     rcsb_entry_info { resolution_combined }
     polymer_entities {
       rcsb_polymer_entity_container_identifiers { auth_asym_ids }
-      rcsb_entity_source_organism { scientific_name ncbi_taxonomy_id rcsb_gene_name { value } }
+      rcsb_entity_source_organism {
+        scientific_name ncbi_taxonomy_id rcsb_gene_name { value } taxonomy_lineage { name }
+      }
       uniprots { rcsb_uniprot_protein { gene { name { value type } } } }
     }
   }
@@ -50,13 +52,21 @@ class ChemComp(BaseModel):
 
 
 class Source(BaseModel):
-    """One source organism of an entity, with the depositor's gene names for its part."""
+    """One source organism of an entity, with the depositor's gene names for its part.
+
+    `lineage` holds the NCBI taxonomy names from the root down to the organism, synonyms included.
+    """
 
     model_config = ConfigDict(frozen=True)
 
     organism: str | None = None
     taxonomy_id: int | None = None
     genes: list[str] = []
+    lineage: list[str] = []
+
+    def belongs_to(self, taxon: str) -> bool:
+        """Whether `taxon` is one of the lineage names, ignoring case."""
+        return taxon.casefold() in {name.casefold() for name in self.lineage}
 
 
 class Entity(BaseModel):
@@ -106,16 +116,22 @@ class GeneName(BaseModel):
     value: str
 
 
+class TaxonName(BaseModel):
+    name: str
+
+
 class SourceOrganism(BaseModel):
     scientific_name: str | None = None
     ncbi_taxonomy_id: int | None = None
     rcsb_gene_name: OptionalList[GeneName] = []
+    taxonomy_lineage: OptionalList[TaxonName] = []
 
     def to_source(self) -> Source:
         return Source(
             organism=self.scientific_name,
             taxonomy_id=self.ncbi_taxonomy_id,
             genes=[gene.value for gene in self.rcsb_gene_name],
+            lineage=[taxon.name for taxon in self.taxonomy_lineage],
         )
 
 
@@ -270,20 +286,28 @@ class RcsbClient:
         return entries
 
     def complexes(
-        self, ligand_code: str, gene_names: list[str], *, refresh: bool = False
+        self,
+        ligand_code: str,
+        gene_names: list[str],
+        *,
+        taxon: str | None = None,
+        refresh: bool = False,
     ) -> list[ComplexCandidate]:
         """Entries with the ligand and a polymer entity from one of the genes, in any organism.
 
         Gene names match case-insensitively (human ABL1, mouse Abl1). They are matched here rather
         than in the search because the only searchable gene field is the depositor's, which many
         entries leave empty (1IEP), while UniProt's gene names are only in the data API.
+
+        With a `taxon`, the source that carries the gene must have it in its lineage: viral gene
+        names such as `pol` are shared by HIV-1 and foamy virus.
         """
         wanted = {name.upper() for name in gene_names}
         entry_ids = self.entries_with_ligand(ligand_code, refresh=refresh)
         return [
             candidate(entry, target, target.source_for(wanted))
             for entry in self.entries(entry_ids, refresh=refresh)
-            if (target := entity_with_gene(entry, wanted))
+            if (target := entity_with_gene(entry, wanted, taxon))
         ]
 
     def _search(self, query: dict[str, Any], return_type: str, refresh: bool) -> list[str]:
@@ -311,9 +335,16 @@ def has_gene(genes: list[str], upper_gene_names: set[str]) -> bool:
     return any(gene.upper() in upper_gene_names for gene in genes)
 
 
-def entity_with_gene(entry: Entry, upper_gene_names: set[str]) -> Entity | None:
+def entity_with_gene(
+    entry: Entry, upper_gene_names: set[str], taxon: str | None = None
+) -> Entity | None:
     return next(
-        (entity for entity in entry.entities if has_gene(entity.genes, upper_gene_names)),
+        (
+            entity
+            for entity in entry.entities
+            if has_gene(entity.genes, upper_gene_names)
+            and (taxon is None or entity.source_for(upper_gene_names).belongs_to(taxon))
+        ),
         None,
     )
 

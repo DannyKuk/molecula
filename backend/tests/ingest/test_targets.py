@@ -18,6 +18,7 @@ from molecula.ingest.targets import (
     pick_molecule,
     run,
     unique_by_target,
+    virus_species,
 )
 from molecula.ingest.targets_report import render
 from molecula.sources.chembl import ChemblClient
@@ -51,6 +52,8 @@ def compound(cid: int, name: str, inchikey: str, smiles: str = "C") -> CompoundR
 
 IMATINIB = compound(5291, "imatinib", chembl_replay.IMATINIB)
 ACETAMINOPHEN = compound(1983, "acetaminophen", chembl_replay.ACETAMINOPHEN)
+RALTEGRAVIR = compound(54671008, "raltegravir", chembl_replay.RALTEGRAVIR)
+DOLUTEGRAVIR = compound(54726191, "dolutegravir", chembl_replay.DOLUTEGRAVIR)
 
 
 class Sources:
@@ -74,7 +77,7 @@ class Sources:
 @pytest.fixture
 def store(conn: sqlite3.Connection) -> TargetStore:
     compounds = CompoundStore(conn)
-    for record in (IMATINIB, ACETAMINOPHEN):
+    for record in (IMATINIB, ACETAMINOPHEN, RALTEGRAVIR, DOLUTEGRAVIR):
         compounds.save(record, [], datetime(2026, 10, 11, tzinfo=UTC))
     return TargetStore(conn)
 
@@ -150,6 +153,50 @@ def test_target_without_entries_has_no_candidates(ingest, store: TargetStore) ->
     assert not [c for c in candidates if c.target_chembl_id == "CHEMBL1913"]
     kit = [c.pdb_id for c in candidates if c.target_chembl_id == "CHEMBL1936"]
     assert kit == ["1T46", "8S16"]
+
+
+def test_raltegravir_has_hiv1_integrase_but_no_candidate(ingest, store: TargetStore) -> None:
+    # Every RLT entry with a `pol` protein is foamy virus or STLV-1 integrase.
+    ingest([RALTEGRAVIR])
+
+    drug = store.get(54671008)
+    [integrase] = drug.targets
+    assert (integrase.target_chembl_id, integrase.organism, integrase.gene_symbols) == (
+        "CHEMBL3471",
+        "Human immunodeficiency virus 1",
+        ("pol",),
+    )
+    assert drug.ligand_codes == (LigandCode("RLT", "inchikey"),)
+    assert drug.candidates == ()
+
+
+def test_viral_target_keeps_only_entries_of_its_virus(ingest, store: TargetStore) -> None:
+    ingest([DOLUTEGRAVIR])
+
+    candidates = store.get(54726191).candidates
+    assert [(c.pdb_id, c.organism, c.resolution) for c in candidates] == [
+        ("8W34", "Human immunodeficiency virus 1", 2.83),
+        ("8W09", "Human immunodeficiency virus 1", 3.2),
+        ("8W2R", "Human immunodeficiency virus 1", 3.23),
+        ("6VDK", "Human immunodeficiency virus 1", 4.5),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("organism", "species"),
+    [
+        ("Human immunodeficiency virus 1", "Human immunodeficiency virus 1"),
+        ("Influenza A virus (A/Puerto Rico/8/1934(H1N1))", "Influenza A virus"),
+        ("Influenza B virus (strain B/Lee/1940)", "Influenza B virus"),
+        ("Homo sapiens", None),
+        ("Bacteria", None),
+        (None, None),
+    ],
+)
+def test_only_viral_targets_are_held_to_their_species(
+    organism: str | None, species: str | None
+) -> None:
+    assert virus_species(organism) == species
 
 
 def test_molecule_only_drug_is_stored_without_candidates(ingest, store: TargetStore) -> None:

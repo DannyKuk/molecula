@@ -1,0 +1,9 @@
+{
+  "query_id" : "8c8cf744-d579-4c18-92ea-3a3dfbbcd9e0",
+  "result_type" : "mol_definition",
+  "total_count" : 1,
+  "result_set" : [ {
+    "identifier" : "DLU",
+    "score" : 1.0
+  } ]
+}

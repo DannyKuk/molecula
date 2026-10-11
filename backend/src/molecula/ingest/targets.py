@@ -167,10 +167,11 @@ def candidates_for(
     """Entries with one of the ligand codes bound to a protein of the target, best first."""
     if not target.gene_symbols:
         return []
+    species = virus_species(target.organism)
     found = [
         (code.code, complex_)
         for code in codes
-        for complex_ in rcsb.complexes(code.code, list(target.gene_symbols))
+        for complex_ in rcsb.complexes(code.code, list(target.gene_symbols), taxon=species)
     ]
     found.sort(key=lambda pair: (rank_key(pair[1]), pair[0]))
     return [
@@ -187,6 +188,19 @@ def candidates_for(
         )
         for rank, (code, complex_) in enumerate(found, start=1)
     ]
+
+
+def virus_species(organism: str | None) -> str | None:
+    """The species a viral target's complexes must come from; None for any other target.
+
+    Cellular targets match across species (mouse ABL1 in 1IEP), but viral gene names are generic:
+    HIV-1 integrase and foamy virus integrase are both `pol`. ChEMBL names a strain after its
+    species, "Influenza A virus (A/Puerto Rico/8/1934(H1N1))", and the species is what counts,
+    since the neuraminidase structures come from many strains.
+    """
+    if organism is None or "virus" not in organism.casefold():
+        return None
+    return organism.split(" (", 1)[0]
 
 
 def rank_key(complex_: ComplexCandidate) -> tuple[bool, bool, float, str]:

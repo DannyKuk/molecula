@@ -11,7 +11,8 @@ SHOWN_GENES = 6
 INTRO = (
     "Written by `python -m molecula.ingest targets`. For each drug: the ChEMBL molecule, its "
     "targets, its PDB ligand codes and the entries showing a ligand bound to a protein of the "
-    "target, human first, then by resolution. "
+    "target (for a viral target, a protein of the same virus species), human first, then by "
+    "resolution. "
     "The hero set is chosen from these by hand (`docs/data-plan.md` §5.3)."
 )
 

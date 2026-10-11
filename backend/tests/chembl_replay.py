@@ -13,6 +13,9 @@ The InChIKeys are PubChem's, as the compounds ingest stores them:
 
 Fluticasone (CHEMBL1201396) has no mechanism of its own; ChEMBL lists them on its esters.
 
+Raltegravir (CHEMBL254316) and dolutegravir (CHEMBL1229211), recorded on 2026-10-12, both act on
+HIV-1 integrase (CHEMBL3471), whose only gene symbol is the generic `pol`.
+
 No mechanism list in scope is longer than ChEMBL's default page of 20, so the paging test serves
 acetazolamide's mechanisms recorded with `limit=5` (`mechanism_CHEMBL20_limit5_page*.json`) in
 place of the default page. Both files are unedited; the second one is served at the `next` path
@@ -32,6 +35,8 @@ DOXYCYCLINE = "SGKRLCUYIXIAHR-AKNGSSGZSA-N"
 ACETAMINOPHEN = "RZVAJINKPMORJF-UHFFFAOYSA-N"
 GLIMEPIRIDE = "WIGIZIANZCJQQY-UHFFFAOYSA-N"
 FLUTICASONE = "MGNNYOODZCAHBA-GQKYHHCASA-N"
+RALTEGRAVIR = "CZFFBEXEKNGXKS-UHFFFAOYSA-N"
+DOLUTEGRAVIR = "RHWKPHLQXYSBKR-BMIGLBTASA-N"
 
 
 def by_inchikey(inchikey: str) -> str:
@@ -65,12 +70,16 @@ RECORDED = {
     by_inchikey(FLUTICASONE): (200, "molecule_inchikey_fluticasone.json"),
     by_connectivity(FLUTICASONE): (200, "molecule_connectivity_fluticasone.json"),
     by_name("fluticasone"): (200, "molecule_name_fluticasone.json"),
+    by_inchikey(RALTEGRAVIR): (200, "molecule_inchikey_raltegravir.json"),
+    by_inchikey(DOLUTEGRAVIR): (200, "molecule_inchikey_dolutegravir.json"),
     mechanisms_of("CHEMBL941"): (200, "mechanism_CHEMBL941.json"),
     mechanisms_of("CHEMBL112"): (200, "mechanism_CHEMBL112.json"),
     mechanisms_of("CHEMBL1433"): (200, "mechanism_CHEMBL1433.json"),
     mechanisms_of("CHEMBL1481"): (200, "mechanism_CHEMBL1481.json"),
     mechanisms_of("CHEMBL511142"): (200, "mechanism_CHEMBL511142.json"),
     mechanisms_of("CHEMBL1201396"): (200, "mechanism_CHEMBL1201396.json"),
+    mechanisms_of("CHEMBL254316"): (200, "mechanism_CHEMBL254316.json"),
+    mechanisms_of("CHEMBL1229211"): (200, "mechanism_CHEMBL1229211.json"),
     "/mechanism.json?limit=5&offset=5&parent_molecule_chembl_id=CHEMBL20": (
         200,
         "mechanism_CHEMBL20_limit5_page2.json",
@@ -82,6 +91,7 @@ RECORDED = {
     "/target/CHEMBL4794.json": (200, "target_CHEMBL4794.json"),
     "/target/CHEMBL2096618.json": (200, "target_CHEMBL2096618.json"),
     "/target/CHEMBL2094253.json": (200, "target_CHEMBL2094253.json"),
+    "/target/CHEMBL3471.json": (200, "target_CHEMBL3471.json"),
 }
 
 
