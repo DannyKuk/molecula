@@ -9,6 +9,7 @@ def connect(path: Path) -> sqlite3.Connection:
     path.parent.mkdir(parents=True, exist_ok=True)
     # FastAPI runs sync routes in a thread pool, so the connection is shared across threads.
     conn = sqlite3.connect(path, check_same_thread=False)
+    conn.execute("PRAGMA foreign_keys = ON")
     try:
         ensure_schema(conn)
     except SchemaVersionError:

@@ -39,7 +39,7 @@ Known limits, and how the app handles them:
 
 | Source | Use | Query | Notes |
 |---|---|---|---|
-| PubChem PUG REST | name → CID, parent compound, properties, 3D SDF, synonyms | `/compound/name/{name}/cids/JSON`, `/compound/cid/{cid}/cids/JSON?cids_type=parent`, `/compound/cid/{cid}/property/…/JSON`, `/compound/cid/{cid}/SDF?record_type=3d` | throttles with HTTP 503; ≤ 4 req/s with backoff. The property is `SMILES` (formerly `IsomericSMILES`) |
+| PubChem PUG REST | name → CID, parent compound, properties, 3D SDF, synonyms | `/compound/name/{name}/cids/JSON`, `/compound/cid/{cid}/cids/JSON?cids_type=parent`, `/compound/cid/{cid}/property/…/JSON`, `/compound/cid/{cid}/SDF?record_type=3d` | throttles with HTTP 503; ≤ 4 req/s with backoff. NCBI's edge also blocks an IP with HTTP 429 for several minutes; on 2026-10-11 that hit at about 1.2 req/s after ~230 requests, so ingest steps stop on a block and resume from the cache. The property is `SMILES` (formerly `IsomericSMILES`) |
 | ChEMBL | drug → mechanism → target → UniProt, gene names | `/chembl/api/data/mechanism.json?parent_molecule_chembl_id={id}`, then `/target/{tid}.json` | mechanisms hang on the salt form (imatinib mesylate CHEMBL1642), so filter by **`parent_molecule_chembl_id`**; querying the parent's own ID returns nothing |
 | RCSB: ligand code | InChIKey → PDB ligand code | search API, `service: "text_chem"`, attribute `rcsb_chem_comp_descriptor.InChIKey`, `return_type: "mol_definition"` | returns exactly STI, CFF, AIN, TYL. `service: "text"` returns unrelated codes |
 | RCSB: stereo fallback | SMILES → candidates whose InChIKey connectivity block matches | `service: "chemical"`, `match_type: "graph-relaxed-stereo"`, then `data.rcsb.org/rest/v1/core/chemcomp/{code}` | ibuprofen → IBP, IZP; donepezil → E20; warfarin → RWF, SWF |
@@ -76,9 +76,11 @@ Known limits, and how the app handles them:
 
 ### 5.2 Compounds (`ingest compounds`)
 
-name → CID → parent CID → properties, InChIKey, SMILES → 3D SDF (RDKit fallback) → top synonyms for the name layer and for BM25. Peptides such as insulin and semaglutide are marked "no small-molecule 3D".
+name → CID → parent CID → properties, InChIKey, SMILES → 3D SDF (RDKit fallback) → top 30 synonyms for the name layer and for BM25. Peptides such as insulin and semaglutide are marked "no small-molecule 3D". `compound.name` is the scope name; PubChem's title is sometimes a systematic name (glimepiride, doxycycline).
 
-Tables: `compound(cid, name, inchikey, smiles, formula, mw, xlogp, tpsa, hbd, hba, rotb, heavy_atoms, has_3d, source, fetched_at)`, `synonym(alias, cid, kind)`.
+When PubChem has no conformer, RDKit generates one (ETKDG with a fixed seed, then MMFF) for molecules up to 100 heavy atoms. PubChem skips flexible small molecules too, e.g. ritonavir (50 heavy atoms, 18 rotatable bonds). Larger molecules get `has_3d = false`. Conformers are written to `data/build/structures/compounds/{cid}.sdf`.
+
+Tables: `compound(cid, name, inchikey, smiles, formula, mw, xlogp, tpsa, hbd, hba, rotb, heavy_atoms, has_3d, conformer_source, source, fetched_at)`, `synonym(alias, cid, kind)` with `kind` one of `name`, `alias` (from the scope) or `pubchem`.
 
 Displayed properties come from PubChem (citable). RDKit's Crippen logP and acceptor counts differ by design (imatinib: Crippen 4.59 vs XLogP3 3.5).
 

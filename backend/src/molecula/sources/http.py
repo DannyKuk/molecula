@@ -61,7 +61,7 @@ class RateLimiter:
 class SourceClient:
     """The one HTTP client every source uses: rate limits, retries, OFFLINE and the cache.
 
-    Successful responses are cached in the store and served from there on the next call,
+    Successful responses and 404s are cached in the store and served from there on the next call,
     also when offline. `refresh=True` skips the cache and overwrites the entry.
     """
 
@@ -105,18 +105,21 @@ class SourceClient:
     def _send(self, request: httpx2.Request, refresh: bool) -> httpx2.Response:
         key = cache_key(request)
         if not refresh and (cached := self._cache.get(key)):
-            return to_response(cached, request)
+            return checked(to_response(cached, request))
         if self._offline:
             raise OfflineError(f"OFFLINE=1, not requesting {request.url}")
         response = self._send_with_retries(request)
-        self._cache.put(
-            key,
-            str(request.url),
-            CachedResponse(
-                response.status_code, response.headers.get("content-type"), response.content
-            ),
-        )
-        return response
+        # A 404 is an answer too (an unknown name, no 3D conformer), so it is cached and stays
+        # available offline; other failures are not.
+        if response.is_success or response.status_code == 404:
+            self._cache.put(
+                key,
+                str(request.url),
+                CachedResponse(
+                    response.status_code, response.headers.get("content-type"), response.content
+                ),
+            )
+        return checked(response)
 
     def _send_with_retries(self, request: httpx2.Request) -> httpx2.Response:
         limiter = self._limiter_for(request.url.host)
@@ -128,7 +131,7 @@ class SourceClient:
                 failure, wait = type(error).__name__, backoff(attempt)
             else:
                 if response.status_code not in RETRY_STATUSES:
-                    return checked(response)
+                    return response
                 failure = f"HTTP {response.status_code}"
                 wait = retry_after(response)
                 if wait is None:

@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from molecula.store.db import connect
-from molecula.store.schema import SCHEMA_VERSION, SchemaVersionError
+from molecula.store.schema import MIGRATIONS, SCHEMA_VERSION, SchemaVersionError
 
 
 def test_first_open_creates_file_and_schema(tmp_path: Path) -> None:
@@ -40,3 +40,20 @@ def test_refuses_a_newer_schema(tmp_path: Path, stored_version: int) -> None:
 
     with pytest.raises(SchemaVersionError, match=str(stored_version)):
         connect(path)
+
+
+def test_upgrades_a_version_1_store_and_keeps_the_cache(tmp_path: Path) -> None:
+    path = tmp_path / "molecula.db"
+    old = sqlite3.connect(path)
+    old.executescript(MIGRATIONS[1])
+    old.execute("INSERT INTO http_cache VALUES ('k', 'https://x', 200, NULL, x'00', '2026-01-01')")
+    old.execute("PRAGMA user_version = 1")
+    old.commit()
+    old.close()
+
+    conn = connect(path)
+
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
+    assert conn.execute("SELECT count(*) FROM http_cache").fetchone()[0] == 1
+    tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    assert {"compound", "synonym"} <= tables

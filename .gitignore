@@ -32,9 +32,10 @@ __pycache__/
 .coverage
 htmlcov/
 
-# Raw API responses and caches; the ingest steps regenerate them
+# Raw API responses, caches and the built store; the ingest steps regenerate them
 data/raw/
 data/cache/
+data/build/
 *.log
 
 # Local models and vector stores pulled at runtime
