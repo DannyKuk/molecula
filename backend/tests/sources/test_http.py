@@ -219,9 +219,27 @@ def test_refresh_forces_a_request_and_updates_the_cache(make_client) -> None:
     assert make_client(Recorder()).get(PUBCHEM).json() == {"v": 2}
 
 
-def test_failed_responses_are_not_cached(make_client) -> None:
+def test_not_found_is_cached_and_raised_again_offline(make_client) -> None:
     with pytest.raises(SourceNotFound):
         make_client(Recorder(httpx2.Response(404))).get(PUBCHEM)
+    handler = Recorder()
+
+    with pytest.raises(SourceNotFound):
+        make_client(handler, offline=True).get(PUBCHEM)
+
+    assert handler.requests == []
+
+
+def test_refresh_asks_again_after_a_cached_not_found(make_client) -> None:
+    with pytest.raises(SourceNotFound):
+        make_client(Recorder(httpx2.Response(404))).get(PUBCHEM)
+
+    assert make_client(Recorder(ok())).get(PUBCHEM, refresh=True).json() == {"ok": True}
+
+
+def test_other_failures_are_not_cached(make_client) -> None:
+    with pytest.raises(SourceResponseError):
+        make_client(Recorder(httpx2.Response(400))).get(PUBCHEM)
     handler = Recorder(ok())
 
     make_client(handler).get(PUBCHEM)

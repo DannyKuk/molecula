@@ -142,6 +142,15 @@ def test_a_mixture_without_a_single_parent_is_a_failure(ingest, store) -> None:
     assert store.get(2519) is None
 
 
+def test_two_names_for_one_compound_keep_the_first(ingest, store) -> None:
+    report = ingest(scope({"name": "imatinib"}, {"name": "Gleevec"}))
+
+    assert report.failures == {"Gleevec": "CID 5291 is already stored as imatinib"}
+    imatinib = store.get(5291)
+    assert imatinib is not None
+    assert imatinib.name == "imatinib"
+
+
 def test_run_stops_when_pubchem_stops_answering(pubchem, store, conformers) -> None:
     requests: list[httpx2.Request] = []
 

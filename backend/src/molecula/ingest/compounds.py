@@ -1,5 +1,6 @@
 import logging
 from collections import Counter
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
@@ -22,8 +23,16 @@ SYNONYM_LIMIT = 30
 MAX_EMBED_HEAVY_ATOMS = 100
 
 
-class AmbiguousParent(Exception):
+class IngestError(Exception):
+    """A scope drug that can't be stored as one compound of its own."""
+
+
+class AmbiguousParent(IngestError):
     """A name whose compound has no single parent, such as a mixture of two drugs."""
+
+
+class DuplicateCompound(IngestError):
+    """Two scope names for the same parent compound; storing both would rename the first."""
 
 
 @dataclass
@@ -42,22 +51,33 @@ def ingest_compounds(
     answering, the run stops too: more requests would only prolong a block.
     """
     report = IngestReport()
+    claimed: dict[int, str] = {}
     for position, entry in enumerate(scope.drugs):
         try:
-            report.stored.append(ingest_entry(entry, pubchem, store, conformers))
-        except (SourceError, AmbiguousParent) as error:
+            compound = ingest_entry(entry, pubchem, store, conformers, claimed)
+        except (SourceError, IngestError) as error:
             logger.warning("%s: %s", entry.name, error)
             report.failures[entry.name] = str(error)
             if isinstance(error, SourceUnavailable):
                 report.not_attempted = [drug.name for drug in scope.drugs[position + 1 :]]
                 break
+        else:
+            claimed[compound.cid] = compound.name
+            report.stored.append(compound)
     return report
 
 
 def ingest_entry(
-    entry: ScopeEntry, pubchem: PubChemClient, store: CompoundStore, conformers: ConformerFiles
+    entry: ScopeEntry,
+    pubchem: PubChemClient,
+    store: CompoundStore,
+    conformers: ConformerFiles,
+    claimed: Mapping[int, str],
 ) -> CompoundRecord:
+    """Fetch and store one scope drug. `claimed` maps CIDs already stored in this run to names."""
     cid = parent_cid(pubchem, entry.name)
+    if cid in claimed:
+        raise DuplicateCompound(f"CID {cid} is already stored as {claimed[cid]}")
     properties = pubchem.properties(cid)
     sdf, conformer_source = conformer(pubchem, properties)
     compound = to_record(entry.name, properties, conformer_source)
