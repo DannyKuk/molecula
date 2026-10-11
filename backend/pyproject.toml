@@ -5,13 +5,13 @@ description = "Medicines chatbot backend: RAG over FDA drug labels, chemistry to
 requires-python = ">=3.14,<3.15"
 dependencies = [
     "fastapi>=0.115",
+    "httpx2>=2.13.1",
     "pydantic-settings>=2.6",
     "uvicorn[standard]>=0.32",
 ]
 
 [dependency-groups]
 dev = [
-    "httpx2>=2.13.1",
     "pytest>=8.3",
     "ruff>=0.8",
 ]
