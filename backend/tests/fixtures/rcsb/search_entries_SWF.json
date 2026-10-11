@@ -1,0 +1,24 @@
+{
+  "query_id" : "2e8a589c-c5ed-4bf1-afb6-2399568b93b2",
+  "result_type" : "entry",
+  "total_count" : 6,
+  "result_set" : [ {
+    "identifier" : "10QV",
+    "score" : 1.0
+  }, {
+    "identifier" : "1HA2",
+    "score" : 1.0
+  }, {
+    "identifier" : "1OG5",
+    "score" : 1.0
+  }, {
+    "identifier" : "6WV3",
+    "score" : 1.0
+  }, {
+    "identifier" : "6WV4",
+    "score" : 1.0
+  }, {
+    "identifier" : "6WVB",
+    "score" : 1.0
+  } ]
+}

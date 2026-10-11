@@ -16,6 +16,7 @@ from rcsb_replay import (
     INCHIKEY_SEARCH,
     STI_ENTRIES,
     STI_ENTRY_DETAILS,
+    SWF_ENTRY_DETAILS,
     Replay,
 )
 
@@ -131,6 +132,50 @@ def test_complexes_keep_only_entries_with_the_target_gene(rcsb) -> None:
         ("1T46", "Homo sapiens"),
         ("8S16", "Homo sapiens"),
     ]
+
+
+def test_fusion_takes_the_organism_of_the_part_with_the_gene(rcsb) -> None:
+    # 6WV3 and 6WV4 fuse human VKORC1 to GFP, whose organism is listed first.
+    complexes = rcsb().complexes("SWF", ["VKORC1"])
+
+    assert [(c.pdb_id, c.organism, c.taxonomy_id) for c in complexes] == [
+        ("6WV3", "Homo sapiens", 9606),
+        ("6WV4", "Homo sapiens", 9606),
+    ]
+
+
+def test_fusion_of_three_organisms_takes_the_one_with_the_gene(rcsb) -> None:
+    # 6WVB: a phage protein, pufferfish VKORC1L1 and GFP.
+    [wvb] = rcsb().complexes("SWF", ["VKORC1L1"])
+
+    assert (wvb.pdb_id, wvb.organism, wvb.taxonomy_id) == ("6WVB", "Takifugu rubripes", 31033)
+
+
+def test_single_organism_entity_keeps_its_organism_with_a_uniprot_only_gene(rcsb) -> None:
+    complexes = rcsb().complexes("SWF", ["CYP2C9"])
+
+    assert [(c.pdb_id, c.organism, c.taxonomy_id) for c in complexes] == [
+        ("1OG5", "HOMO SAPIENS", 9606)
+    ]
+
+
+def test_first_organism_stands_in_when_no_source_names_the_gene(rcsb) -> None:
+    fusion = {
+        "rcsb_polymer_entity_container_identifiers": {"auth_asym_ids": ["A"]},
+        "rcsb_entity_source_organism": [
+            {"scientific_name": "Aequorea victoria", "ncbi_taxonomy_id": 6100},
+            {"scientific_name": "Homo sapiens", "ncbi_taxonomy_id": 9606},
+        ],
+        "uniprots": [
+            {"rcsb_uniprot_protein": {"gene": [{"name": [{"value": "VKORC1", "type": "PRIMARY"}]}]}}
+        ],
+    }
+    entries = {"data": {"entries": [{"rcsb_id": "6WV3", "polymer_entities": [fusion]}]}}
+    handler = Replay({SWF_ENTRY_DETAILS: httpx2.Response(200, json=entries)})
+
+    [wv3] = rcsb(handler).complexes("SWF", ["VKORC1"])
+
+    assert (wv3.organism, wv3.taxonomy_id) == ("Aequorea victoria", 6100)
 
 
 def test_complexes_take_one_search_and_one_graphql_request(rcsb) -> None:
