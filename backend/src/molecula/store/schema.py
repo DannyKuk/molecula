@@ -42,6 +42,52 @@ CREATE TABLE synonym (
 
 CREATE INDEX synonym_cid ON synonym (cid);
 """,
+    3: """
+CREATE TABLE target (
+    cid INTEGER NOT NULL REFERENCES compound (cid) ON DELETE CASCADE,
+    target_chembl_id TEXT NOT NULL,
+    molecule_chembl_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    target_type TEXT NOT NULL,
+    organism TEXT,
+    mechanism TEXT NOT NULL,
+    action_type TEXT,
+    accessions TEXT NOT NULL,
+    gene_symbols TEXT NOT NULL,
+    source TEXT NOT NULL,
+    fetched_at TEXT NOT NULL,
+    PRIMARY KEY (cid, target_chembl_id)
+);
+
+CREATE TABLE ligand_code (
+    cid INTEGER NOT NULL REFERENCES compound (cid) ON DELETE CASCADE,
+    code TEXT NOT NULL,
+    matched_on TEXT NOT NULL CHECK (matched_on IN ('inchikey', 'connectivity')),
+    source TEXT NOT NULL,
+    fetched_at TEXT NOT NULL,
+    PRIMARY KEY (cid, code)
+);
+
+CREATE TABLE complex_candidate (
+    cid INTEGER NOT NULL,
+    target_chembl_id TEXT NOT NULL,
+    rank INTEGER NOT NULL,
+    pdb_id TEXT NOT NULL,
+    ligand_code TEXT NOT NULL,
+    title TEXT,
+    resolution REAL,
+    organism TEXT,
+    taxonomy_id INTEGER,
+    chains TEXT NOT NULL,
+    source TEXT NOT NULL,
+    fetched_at TEXT NOT NULL,
+    PRIMARY KEY (cid, target_chembl_id, rank),
+    UNIQUE (cid, target_chembl_id, pdb_id, ligand_code),
+    FOREIGN KEY (cid, target_chembl_id) REFERENCES target (cid, target_chembl_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (cid, ligand_code) REFERENCES ligand_code (cid, code) ON DELETE CASCADE
+);
+""",
 }
 SCHEMA_VERSION = max(MIGRATIONS)
 

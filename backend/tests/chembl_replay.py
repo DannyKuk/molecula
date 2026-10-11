@@ -7,6 +7,10 @@ The InChIKeys are PubChem's, as the compounds ingest stores them:
 - doxycycline `SGKRLCUYIXIAHR-AKNGSSGZSA-N` matches neither way: ChEMBL draws a different
   tautomer, so even the connectivity block differs.
 
+- doxycycline is found by name: `pref_name__iexact` gives CHEMBL1200699, whose parent is CHEMBL1433.
+- glimepiride's exact match is an unnamed record without mechanisms; GLIMEPIRIDE (CHEMBL1481)
+  only turns up through the connectivity block.
+
 Fluticasone (CHEMBL1201396) has no mechanism of its own; ChEMBL lists them on its esters.
 
 No mechanism list in scope is longer than ChEMBL's default page of 20, so the paging test serves
@@ -25,6 +29,9 @@ ONLY = "only=molecule_chembl_id%2Cpref_name%2Cmolecule_hierarchy"
 IMATINIB = "KTUFNOKKBVMGRW-UHFFFAOYSA-N"
 BUPRENORPHINE = "RMRJXGBAOAMLHD-IHFGGWKQSA-N"
 DOXYCYCLINE = "SGKRLCUYIXIAHR-AKNGSSGZSA-N"
+ACETAMINOPHEN = "RZVAJINKPMORJF-UHFFFAOYSA-N"
+GLIMEPIRIDE = "WIGIZIANZCJQQY-UHFFFAOYSA-N"
+FLUTICASONE = "MGNNYOODZCAHBA-GQKYHHCASA-N"
 
 
 def by_inchikey(inchikey: str) -> str:
@@ -34,6 +41,10 @@ def by_inchikey(inchikey: str) -> str:
 def by_connectivity(inchikey: str) -> str:
     block = inchikey[:14]
     return f"/molecule.json?molecule_structures__standard_inchi_key__startswith={block}&{ONLY}"
+
+
+def by_name(name: str) -> str:
+    return f"/molecule.json?pref_name__iexact={name}&{ONLY}"
 
 
 def mechanisms_of(parent: str) -> str:
@@ -46,13 +57,29 @@ RECORDED = {
     by_connectivity(BUPRENORPHINE): (200, "molecule_connectivity_buprenorphine.json"),
     by_inchikey(DOXYCYCLINE): (200, "molecule_inchikey_doxycycline.json"),
     by_connectivity(DOXYCYCLINE): (200, "molecule_connectivity_doxycycline.json"),
+    by_name("doxycycline"): (200, "molecule_name_doxycycline.json"),
+    by_name("notadrugxyz"): (200, "molecule_name_notadrugxyz.json"),
+    by_inchikey(ACETAMINOPHEN): (200, "molecule_inchikey_acetaminophen.json"),
+    by_inchikey(GLIMEPIRIDE): (200, "molecule_inchikey_glimepiride.json"),
+    by_connectivity(GLIMEPIRIDE): (200, "molecule_connectivity_glimepiride.json"),
+    by_inchikey(FLUTICASONE): (200, "molecule_inchikey_fluticasone.json"),
+    by_connectivity(FLUTICASONE): (200, "molecule_connectivity_fluticasone.json"),
+    by_name("fluticasone"): (200, "molecule_name_fluticasone.json"),
     mechanisms_of("CHEMBL941"): (200, "mechanism_CHEMBL941.json"),
+    mechanisms_of("CHEMBL112"): (200, "mechanism_CHEMBL112.json"),
+    mechanisms_of("CHEMBL1433"): (200, "mechanism_CHEMBL1433.json"),
+    mechanisms_of("CHEMBL1481"): (200, "mechanism_CHEMBL1481.json"),
+    mechanisms_of("CHEMBL511142"): (200, "mechanism_CHEMBL511142.json"),
     mechanisms_of("CHEMBL1201396"): (200, "mechanism_CHEMBL1201396.json"),
     "/mechanism.json?limit=5&offset=5&parent_molecule_chembl_id=CHEMBL20": (
         200,
         "mechanism_CHEMBL20_limit5_page2.json",
     ),
     "/target/CHEMBL1862.json": (200, "target_CHEMBL1862.json"),
+    "/target/CHEMBL1913.json": (200, "target_CHEMBL1913.json"),
+    "/target/CHEMBL1936.json": (200, "target_CHEMBL1936.json"),
+    "/target/CHEMBL2243.json": (200, "target_CHEMBL2243.json"),
+    "/target/CHEMBL4794.json": (200, "target_CHEMBL4794.json"),
     "/target/CHEMBL2096618.json": (200, "target_CHEMBL2096618.json"),
     "/target/CHEMBL2094253.json": (200, "target_CHEMBL2094253.json"),
 }

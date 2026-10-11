@@ -1,0 +1,9 @@
+{
+  "query_id" : "c05a9a42-0ca1-4cdd-9105-deb5a99d7326",
+  "result_type" : "mol_definition",
+  "total_count" : 1,
+  "result_set" : [ {
+    "identifier" : "TYL",
+    "score" : 1.0
+  } ]
+}

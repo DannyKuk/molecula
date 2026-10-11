@@ -14,7 +14,7 @@ from chembl_replay import (
     mechanisms_of,
 )
 from molecula.sources.chembl import ChemblClient
-from molecula.sources.errors import SourceFormatError, SourceNotFound
+from molecula.sources.errors import SourceFormatError
 from molecula.sources.http import SourceClient
 from molecula.store.http_cache import HttpCache
 
@@ -36,10 +36,8 @@ def chembl(cache: HttpCache) -> Callable[..., ChemblClient]:
 
 
 def test_inchikey_finds_the_parent_molecule(chembl) -> None:
-    match = chembl().molecules_for_inchikey(IMATINIB)
+    [imatinib] = chembl().molecules_for_inchikey(IMATINIB)
 
-    assert match.matched_on == "inchikey"
-    [imatinib] = match.molecules
     assert (imatinib.chembl_id, imatinib.pref_name) == ("CHEMBL941", "IMATINIB")
     assert imatinib.parent_chembl_id == "CHEMBL941"
 
@@ -92,28 +90,34 @@ def test_drug_without_mechanism_returns_an_empty_list(chembl) -> None:
 
 
 def test_stereo_mismatch_is_found_through_the_connectivity_block(chembl) -> None:
-    handler = Replay()
+    client = chembl()
 
-    match = chembl(handler).molecules_for_inchikey(BUPRENORPHINE)
-
-    assert match.matched_on == "connectivity"
-    assert len(match.molecules) == 5
-    named = [m for m in match.molecules if m.pref_name]
+    assert client.molecules_for_inchikey(BUPRENORPHINE) == []
+    molecules = client.molecules_for_connectivity(BUPRENORPHINE)
+    assert len(molecules) == 5
+    named = [m for m in molecules if m.pref_name]
     assert [(m.chembl_id, m.pref_name) for m in named] == [("CHEMBL511142", "BUPRENORPHINE")]
-    assert len(handler.requests) == 2
 
 
 def test_molecule_without_hierarchy_is_its_own_parent(chembl) -> None:
-    molecules = chembl().molecules_for_inchikey(BUPRENORPHINE).molecules
+    molecules = chembl().molecules_for_connectivity(BUPRENORPHINE)
 
     unprocessed = next(m for m in molecules if m.chembl_id == "CHEMBL1907075")
     assert unprocessed.hierarchy is None
     assert unprocessed.parent_chembl_id == "CHEMBL1907075"
 
 
-def test_unknown_inchikey_raises_source_not_found(chembl) -> None:
-    with pytest.raises(SourceNotFound):
-        chembl().molecules_for_inchikey(DOXYCYCLINE)
+def test_another_tautomer_matches_neither_key_but_the_name(chembl) -> None:
+    client = chembl()
+
+    assert client.molecules_for_inchikey(DOXYCYCLINE) == []
+    assert client.molecules_for_connectivity(DOXYCYCLINE) == []
+    [doxycycline] = client.molecules_named("doxycycline")
+    assert (doxycycline.chembl_id, doxycycline.parent_chembl_id) == ("CHEMBL1200699", "CHEMBL1433")
+
+
+def test_unknown_name_returns_an_empty_list(chembl) -> None:
+    assert chembl().molecules_named("notadrugxyz") == []
 
 
 def test_mechanisms_over_two_pages_come_back_complete(chembl) -> None:

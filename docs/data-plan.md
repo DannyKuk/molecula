@@ -85,40 +85,58 @@ Displayed properties come from PubChem (citable). RDKit's Crippen logP and accep
 
 ### 5.3 Targets and complexes (`ingest targets`)
 
-1. InChIKey → ChEMBL parent ID → mechanisms → target, action type, UniProt accessions, gene names.
-2. InChIKey → PDB ligand code(s): exact first, connectivity fallback second.
-3. Entries with the ligand code, kept when a protein entity comes from a target gene (depositor or UniProt primary gene name) → candidate entries.
-4. Rank by resolution (`rcsb_entry_info.resolution_combined`); prefer human proteins.
-5. A person reviews the candidates and writes the chosen entry to `data/hero_set.yaml`: `pdb, ligand_code, chain, target, organism, note`.
+Runs after `ingest compounds`, for every compound in the store.
+
+1. InChIKey → ChEMBL molecule → parent ID → mechanisms → targets with UniProt accessions and gene symbols. The molecule is looked up by exact InChIKey, then by connectivity block, then by `pref_name`; the next lookup is tried while none of the named molecules has mechanisms. Unnamed records are never picked. This matters for glimepiride (the exact match is an unnamed record), tramadol (the exact match is "(R,R)-TRAMADOL" without mechanisms; the racemate TRAMADOL has them), doxycycline (ChEMBL draws another tautomer, so only the name finds it) and minoxidil, semaglutide and insulin glargine (found by name). Mechanisms are de-duplicated by target, since ChEMBL repeats them across records and salts (ibuprofen, acetazolamide).
+2. InChIKey → PDB ligand code(s): exact first; connectivity fallback (stereo-relaxed SMILES search, kept when the ligand's InChIKey shares the connectivity block) only when there is no exact match.
+3. For each target and ligand code: entries with the ligand, kept when a protein entity comes from one of the target's genes (depositor or UniProt primary gene name, any organism) → candidate entries with the target's chains.
+4. Rank per target: human proteins first, then resolution (`rcsb_entry_info.resolution_combined`), entries without one last.
+5. A person reviews the candidates in `data/build/complex_candidates.md` and writes the chosen entry to `data/hero_set.yaml`: `pdb, ligand_code, chain, target, organism, note`.
+
+Tables (schema version 3), each row with `source` and `fetched_at`:
+
+- `target(cid, target_chembl_id, molecule_chembl_id, name, target_type, organism, mechanism, action_type, accessions, gene_symbols)`. `molecule_chembl_id` is the record that carries the mechanism (often a salt); `accessions` and `gene_symbols` are JSON arrays.
+- `ligand_code(cid, code, matched_on)` with `matched_on` either `inchikey` or `connectivity`.
+- `complex_candidate(cid, target_chembl_id, rank, pdb_id, ligand_code, title, resolution, organism, taxonomy_id, chains)`; `chains` is a JSON array.
+
+A drug that fails is reported and skipped; the run stops when a source stops answering. Re-running is served from the HTTP cache and leaves the rows untouched.
 
 **Prodrugs** are bound in their active form, which the automatic search can't find: oseltamivir → G39 (oseltamivir carboxylate), tamoxifen → OHT (4-hydroxytamoxifen), aspirin → salicylate plus an acetylated serine. These are entered in `hero_set.yaml` by hand.
 
-Candidates found automatically (each still needs review; full output in `docs/spikes/data-check/hero_scan.json`):
+**Gene names cross species.** The match is on gene name in any organism, so mouse ABL1 (1IEP) and sheep COX-1 count. Viral gene names are generic: HIV-1 protease and integrase are both `pol`, so raltegravir's candidates are foamy virus and STLV-1 integrase, not HIV-1. Check the organism before choosing.
 
-| Drug | Target | Candidate entries |
-|---|---|---|
-| imatinib | ABL1 (mouse) | 1IEP (checked: contacts match the literature), 2HYY |
-| dasatinib | ABL1 | 2GQG |
-| caffeine | adenosine A2A receptor | 3RFM, 5MZP |
-| atorvastatin | HMG-CoA reductase | 1HWK |
-| ibuprofen | COX-2 (mouse) | 4PH9 |
-| celecoxib | COX-2 | 3LN1 |
-| diclofenac | COX-2 | 3N8Y |
-| naproxen | COX-2 | 3NT1 |
-| methotrexate | DHFR | 1U72, 1DLS |
-| donepezil | acetylcholinesterase | 4EY7 |
-| gefitinib | EGFR | 4WKQ |
-| erlotinib | EGFR | 1M17 |
-| sitagliptin | DPP-4 | 1X70 |
-| lisinopril | ACE | 1O86 |
-| acetazolamide | carbonic anhydrase II | many; pick the best resolution |
-| oseltamivir (G39) | neuraminidase | 17 entries |
-| zanamivir | neuraminidase | 11 entries |
-| ritonavir | HIV protease, CYP3A4 | 3NXU (CYP3A4) |
-| warfarin | VKORC1 | 6WV3 |
-| tamoxifen (OHT) | ESR1 | 4Q50 |
+Candidates from the first full run (2026-10-11; best first, organism given when not human; each still needs review):
 
-Molecule-only by design: paracetamol, metformin, cetirizine, omeprazole. Sildenafil and raltegravir hit a PubChem throttle during the scan and need a re-run (VIA / 1UDT exists).
+| Drug | Target | Candidate entries | Spike table |
+|---|---|---|---|
+| imatinib | ABL1 | 3PYY, 6NPV, 6NPE, 7N9G, 6NPU, 2HYY, then 7 mouse incl. 1IEP (checked: contacts match the literature) | 1IEP, 2HYY |
+| | KIT | 1T46, 8S16 | — |
+| dasatinib | ABL1 | 7N9G, 2GQG, 4XEY | 2GQG |
+| | EPHA2; SRC family | 5I9Y; 3G5D (chicken), 2ZVA (mouse), 3QLG (chicken) | — |
+| caffeine | adenosine receptors | 5MZP, 3RFM (both A2A) | 3RFM, 5MZP |
+| atorvastatin | HMG-CoA reductase | 1HWK, 8PKN | 1HWK |
+| ibuprofen | COX | 4PH9 (mouse), 8ET0 (mouse), 1EQG (sheep), 4RS0 (mouse) | 4PH9 |
+| celecoxib | COX-2 | 3LN1 (mouse), 5JW1 (mouse) | 3LN1 |
+| diclofenac | COX | 3N8Y (sheep), 1PXX (mouse) | 3N8Y |
+| naproxen | COX | 3NT1 (mouse) | 3NT1 |
+| methotrexate | DHFR | 3EIG, 1U72, 1DLS, 3IX9 (S. pneumoniae), 1U70 (mouse) | 1U72, 1DLS |
+| donepezil | acetylcholinesterase | 6O4W, 4EY7, 7E3H, 1EVE (Torpedo) | 4EY7 |
+| gefitinib | EGFR | 4I22, 4WKQ, 3UG2, 2ITZ, 2ITO, 2ITY | 4WKQ |
+| erlotinib | EGFR | 1M17, 4HJO | 1M17 |
+| sitagliptin | DPP-4 | 1X70, 4FFW (rat) | 1X70 |
+| lisinopril | ACE | 1O86, 2C6N | 1O86 |
+| acetazolamide | carbonic anhydrases | CA2: 14, best 3HS4 (1.1 Å); CA1: 1AZM, 3W6H; CA12: 1JD0; CA4: 5JN8 | many |
+| oseltamivir (G39) | neuraminidase | none: prodrug, hand entry | 17 entries |
+| zanamivir | neuraminidase | 23 influenza entries, best 6HCX (1.3 Å) | 11 entries |
+| ritonavir | HIV-1 protease | 3NDX, 3NDW, 4EYR, 4NJV, 1N49, 2B60 | — |
+| | CYP3A | 3NXU, 5VCE, 5VC0, 5VEU, 38FV | 3NXU |
+| warfarin | VKORC1 | 6WV3, 6WV4 (human VKOR, but listed as *Aequorea victoria* because the construct is a GFP fusion) | 6WV3 |
+| tamoxifen (OHT) | ESR1 | none: prodrug, hand entry | 4Q50 |
+| sildenafil | PDE5A | 1TBF, 1UDT, 2H42, 3JWQ, 10OZ (cow) | throttled |
+| raltegravir | retroviral integrase | 3OYA (foamy virus), 7OUG (STLV-1), 3L2V (foamy virus) | throttled |
+| metformin | mitochondrial complex I | 6 pig respirasome or complex I entries, best 8ZSQ (2.86 Å) | molecule-only |
+
+Molecule-only (no candidate): paracetamol, cetirizine, omeprazole. Of the 134 compounds, 132 have targets (not fluticasone, whose mechanisms ChEMBL lists on its esters, nor guaifenesin, whose only mechanism is "Unknown" without a target) and 70 have candidates.
 
 ### 5.4 Complex processing (`ingest complexes`)
 

@@ -13,6 +13,7 @@ import httpx2
 FIXTURES = Path(__file__).parent / "fixtures" / "rcsb"
 IMATINIB_INCHIKEY = "KTUFNOKKBVMGRW-UHFFFAOYSA-N"
 IBUPROFEN_INCHIKEY = "HEFNNWSXXWATRW-UHFFFAOYSA-N"
+ACETAMINOPHEN_INCHIKEY = "RZVAJINKPMORJF-UHFFFAOYSA-N"
 IBUPROFEN_SMILES = "CC(C)CC1=CC=C(C=C1)C(C)C(=O)O"
 STI_ENTRIES = sorted(
     hit["identifier"]
@@ -28,6 +29,7 @@ LIGAND_SEARCH = (
 )
 RELAXED_STEREO_SEARCH = "search chemical SMILES graph-relaxed-stereo {} -> mol_definition"
 STI_ENTRY_DETAILS = f"graphql entries {','.join(STI_ENTRIES)}"
+TYL_ENTRY_DETAILS = "graphql entries 1TYL,1TYM,2DPZ,2OCU,3PY4,4A9J,4A9K,4CUT,4YJI,5PBE"
 
 RECORDED: dict[str, tuple[int, str | None]] = {
     INCHIKEY_SEARCH.format(IMATINIB_INCHIKEY): (200, "search_inchikey_imatinib.json"),
@@ -40,6 +42,9 @@ RECORDED: dict[str, tuple[int, str | None]] = {
     "GET /rest/v1/core/chemcomp/IZP": (200, "chemcomp_IZP.json"),
     LIGAND_SEARCH.format("STI"): (200, "search_entries_STI.json"),
     STI_ENTRY_DETAILS: (200, "graphql_entries_STI.json"),
+    INCHIKEY_SEARCH.format(ACETAMINOPHEN_INCHIKEY): (200, "search_inchikey_acetaminophen.json"),
+    LIGAND_SEARCH.format("TYL"): (200, "search_entries_TYL.json"),
+    TYL_ENTRY_DETAILS: (200, "graphql_entries_TYL.json"),
 }
 
 

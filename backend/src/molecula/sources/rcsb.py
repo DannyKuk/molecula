@@ -1,11 +1,10 @@
 from typing import Annotated, Any
 from urllib.parse import quote
 
-import httpx2
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
-from molecula.sources.errors import SourceFormatError
 from molecula.sources.http import SourceClient
+from molecula.sources.parsing import parse
 
 SEARCH = "https://search.rcsb.org/rcsbsearch/v2/query"
 CHEM_COMP = "https://data.rcsb.org/rest/v1/core/chemcomp"
@@ -303,10 +302,3 @@ def candidate(entry: Entry, target: Entity) -> ComplexCandidate:
         taxonomy_id=target.taxonomy_id,
         chains=target.chains,
     )
-
-
-def parse[M: BaseModel](response: httpx2.Response, model: type[M]) -> M:
-    try:
-        return model.model_validate_json(response.content)
-    except ValidationError as error:
-        raise SourceFormatError(f"{response.request.url}: unexpected response shape") from error

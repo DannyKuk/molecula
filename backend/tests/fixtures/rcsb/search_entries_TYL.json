@@ -1,0 +1,36 @@
+{
+  "query_id" : "45786d8c-d460-4ba3-8935-9b76839e2d73",
+  "result_type" : "entry",
+  "total_count" : 10,
+  "result_set" : [ {
+    "identifier" : "1TYL",
+    "score" : 1.0
+  }, {
+    "identifier" : "1TYM",
+    "score" : 1.0
+  }, {
+    "identifier" : "2DPZ",
+    "score" : 1.0
+  }, {
+    "identifier" : "2OCU",
+    "score" : 1.0
+  }, {
+    "identifier" : "3PY4",
+    "score" : 1.0
+  }, {
+    "identifier" : "4A9J",
+    "score" : 1.0
+  }, {
+    "identifier" : "4A9K",
+    "score" : 1.0
+  }, {
+    "identifier" : "4CUT",
+    "score" : 1.0
+  }, {
+    "identifier" : "4YJI",
+    "score" : 1.0
+  }, {
+    "identifier" : "5PBE",
+    "score" : 1.0
+  } ]
+}
