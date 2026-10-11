@@ -1,8 +1,27 @@
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints
 
 type ConformerSource = Literal["pubchem", "rdkit"]
+
+DRUG_NAME_PUNCTUATION = " -,()'+."
+# SQLite's largest integer; a larger CID can't be looked up at all.
+MAX_CID = 2**63 - 1
+
+
+def check_drug_name(name: str) -> str:
+    """Letters of any script (German "Acetylsalicylsäure"), digits, space and `-,()'+.`."""
+    if not all(char.isalnum() or char in DRUG_NAME_PUNCTUATION for char in name):
+        raise ValueError(
+            "name may contain only letters, digits, spaces and the characters - , ( ) ' + ."
+        )
+    return name
+
+
+DrugName = Annotated[
+    str, StringConstraints(min_length=1, max_length=100), AfterValidator(check_drug_name)
+]
+Cid = Annotated[int, Field(gt=0, le=MAX_CID)]
 
 
 class Compound(BaseModel):
@@ -26,6 +45,17 @@ class Compound(BaseModel):
     conformer_source: ConformerSource | None
     source: str
     source_url: str
+
+
+class SupportedDrug(BaseModel):
+    """A drug in the list of supported drugs: its scope name and aliases, no PubChem synonyms."""
+
+    model_config = ConfigDict(frozen=True)
+
+    cid: int
+    name: str
+    aliases: list[str]
+    has_3d: bool
 
 
 class Resolution(BaseModel):

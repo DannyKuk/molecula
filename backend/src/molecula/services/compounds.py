@@ -1,4 +1,4 @@
-from molecula.schemas.compounds import Compound, Resolution, Structure
+from molecula.schemas.compounds import Compound, Resolution, Structure, SupportedDrug
 from molecula.store.compounds import CompoundRecord, CompoundStore
 from molecula.store.structures import ConformerFiles
 
@@ -94,6 +94,19 @@ class CompoundService:
     def list_compounds(self) -> list[Compound]:
         """Every supported drug, by name."""
         return [to_compound(record) for record in self._store.all()]
+
+    def list_drugs(self) -> list[SupportedDrug]:
+        """Every supported drug by name, with the scope aliases it can be found by."""
+        aliases = self._store.scope_aliases()
+        return [
+            SupportedDrug(
+                cid=record.cid,
+                name=record.name,
+                aliases=aliases.get(record.cid, []),
+                has_3d=record.has_3d,
+            )
+            for record in self._store.all()
+        ]
 
 
 def name_candidates(query: str) -> list[str]:

@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from molecula.schemas.compounds import SupportedDrug
 from molecula.services import compounds
 from molecula.services.compounds import CompoundService, name_candidates
 from molecula.store.compounds import CompoundRecord, CompoundStore, ConformerSource, Synonym
@@ -181,6 +182,20 @@ def test_list_compounds_returns_every_stored_compound_by_name(service: CompoundS
     names = [compound.name for compound in service.list_compounds()]
 
     assert names == ["atorvastatin", "ibuprofen", "imatinib", "metformin", "semaglutide"]
+
+
+def test_list_drugs_has_the_scope_aliases_and_no_pubchem_synonyms(
+    service: CompoundService,
+) -> None:
+    drugs = {drug.name: drug for drug in service.list_drugs()}
+
+    assert list(drugs) == ["atorvastatin", "ibuprofen", "imatinib", "metformin", "semaglutide"]
+    assert drugs["imatinib"] == SupportedDrug(
+        cid=5291, name="imatinib", aliases=["Gleevec"], has_3d=True
+    )
+    assert drugs["ibuprofen"].aliases == ["Ibuflam", "Advil"]
+    assert drugs["metformin"].aliases == []
+    assert drugs["semaglutide"].has_3d is False
 
 
 @pytest.mark.parametrize(
