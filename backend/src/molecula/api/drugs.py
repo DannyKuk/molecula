@@ -3,9 +3,10 @@ from typing import Annotated, Any
 from fastapi import APIRouter, HTTPException, Path, Query, Response
 
 from molecula.api import examples
-from molecula.api.dependencies import CompoundServiceDep
+from molecula.api.dependencies import CompoundServiceDep, TargetServiceDep
 from molecula.schemas.compounds import Cid, Compound, DrugName, Resolution, SupportedDrug
 from molecula.schemas.errors import ErrorDetail
+from molecula.schemas.targets import DrugTargets
 
 SDF_MEDIA_TYPE = "chemical/x-mdl-sdfile"
 
@@ -108,3 +109,16 @@ def get_drug_structure(cid: CidParam, service: CompoundServiceDep) -> SdfRespons
     if structure is None:
         raise HTTPException(status_code=404, detail=f"{compound.name} has no 3D structure.")
     return SdfResponse(content=structure.sdf)
+
+
+@router.get(
+    "/{cid}/targets",
+    responses={200: json_example(examples.IMATINIB_TARGETS.model_dump()), **NOT_SUPPORTED_RESPONSE},
+)
+def get_drug_targets(cid: CidParam, service: TargetServiceDep) -> DrugTargets:
+    """The targets the drug acts on, with ChEMBL's mechanism for each. A supported drug that
+    ChEMBL lists no mechanism for has an empty list."""
+    targets = service.get_targets(cid)
+    if targets is None:
+        raise not_supported(cid)
+    return targets

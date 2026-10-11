@@ -54,8 +54,10 @@ def test_app_starts_without_a_store_and_supports_no_drug(settings: Settings) -> 
         assert client.get("/health").status_code == 200
         assert client.get("/drugs").json() == []
         resolution = client.get("/drugs/resolve", params={"name": "imatinib"}).json()
+        targets = client.get("/drugs/5291/targets")
 
     assert resolution["status"] == "not_supported"
+    assert targets.status_code == 404
     assert not settings.db_path.exists()
 
 
@@ -73,7 +75,9 @@ def test_routes_serve_the_built_store(settings: Settings) -> None:
         drugs = client.get("/drugs").json()
         resolution = client.get("/drugs/resolve", params={"name": "imatinib mesylate"}).json()
         structure = client.get("/drugs/5291/structure")
+        targets = client.get("/drugs/5291/targets").json()
 
     assert drugs == [{"cid": 5291, "name": "imatinib", "aliases": ["Gleevec"], "has_3d": True}]
     assert resolution["compound"]["cid"] == 5291
     assert structure.text == SDF
+    assert targets == {"cid": 5291, "targets": []}
