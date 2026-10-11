@@ -36,3 +36,19 @@ def test_remove_deletes_the_file_and_tolerates_a_missing_one(tmp_path: Path) -> 
     files.remove(2519)
 
     assert files.read(2519) is None
+
+
+def test_prune_deletes_the_conformers_not_kept(tmp_path: Path) -> None:
+    files = ConformerFiles(tmp_path)
+    for cid in (3672, 2519, 5291):
+        files.write(cid, SDF)
+    (tmp_path / "notes.txt").write_text("not a conformer", encoding="utf-8")
+
+    removed = files.prune({5291})
+
+    assert removed == [2519, 3672]
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["5291.sdf", "notes.txt"]
+
+
+def test_prune_without_a_conformer_folder_removes_nothing(tmp_path: Path) -> None:
+    assert ConformerFiles(tmp_path / "missing").prune(set()) == []

@@ -1,3 +1,4 @@
+from collections.abc import Collection
 from pathlib import Path
 
 
@@ -27,3 +28,11 @@ class ConformerFiles:
 
     def remove(self, cid: int) -> None:
         self.path(cid).unlink(missing_ok=True)
+
+    def prune(self, keep: Collection[int]) -> list[int]:
+        """Delete every conformer whose CID isn't in `keep` and return the deleted CIDs in order."""
+        stored = (int(path.stem) for path in self._directory.glob("*.sdf") if path.stem.isdigit())
+        removed = sorted(cid for cid in stored if cid not in keep)
+        for cid in removed:
+            self.remove(cid)
+        return removed

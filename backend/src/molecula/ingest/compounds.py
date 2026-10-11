@@ -40,6 +40,12 @@ class IngestReport:
     stored: list[CompoundRecord] = field(default_factory=list)
     failures: dict[str, str] = field(default_factory=dict)
     not_attempted: list[str] = field(default_factory=list)
+    pruned: list[CompoundRecord] = field(default_factory=list)
+    pruned_conformers: list[int] = field(default_factory=list)
+
+    @property
+    def complete(self) -> bool:
+        return not (self.failures or self.not_attempted)
 
 
 def ingest_compounds(
@@ -49,6 +55,9 @@ def ingest_compounds(
 
     A drug that fails is reported and skipped; the others are still stored. When PubChem stops
     answering, the run stops too: more requests would only prolong a block.
+
+    Only a complete run prunes: compounds it didn't store have left the scope, and are deleted
+    with their synonyms, targets and conformer files. A conformer file without a compound goes too.
     """
     report = IngestReport()
     claimed: dict[int, str] = {}
@@ -64,6 +73,9 @@ def ingest_compounds(
         else:
             claimed[compound.cid] = compound.name
             report.stored.append(compound)
+    if report.complete:
+        report.pruned = store.prune(claimed)
+        report.pruned_conformers = conformers.prune(claimed)
     return report
 
 
@@ -157,7 +169,7 @@ def run(settings: Settings) -> int:
         http.close()
         conn.close()
     log_summary(report)
-    return 1 if report.failures or report.not_attempted else 0
+    return 0 if report.complete else 1
 
 
 def log_summary(report: IngestReport) -> None:
@@ -177,6 +189,16 @@ def log_summary(report: IngestReport) -> None:
                 compound.cid,
                 compound.conformer_source or "nowhere",
             )
+    if report.pruned:
+        logger.info("pruned %d compounds that left the scope", len(report.pruned))
+    for compound in report.pruned:
+        logger.info("  pruned: %s (CID %d)", compound.name, compound.cid)
+    if report.pruned_conformers:
+        logger.info(
+            "removed %d conformer files: %s",
+            len(report.pruned_conformers),
+            ", ".join(f"{cid}.sdf" for cid in report.pruned_conformers),
+        )
     for name, reason in report.failures.items():
         logger.error("  failed: %s: %s", name, reason)
     if report.not_attempted:
