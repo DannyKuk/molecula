@@ -16,6 +16,8 @@ Early development. [`docs/data-plan.md`](docs/data-plan.md) describes the verifi
 | [Data plan](docs/data-plan.md) | Every source and query, verified live, and what each ingest step stores |
 | [Local store](docs/decisions/local-store.md) | Why the app answers only from a store built ahead of time, with no live fallback |
 | [Name resolution](docs/decisions/name-resolution.md) | How brands, salt names and typos find a supported drug, and why suggestions are never applied on their own |
+| [Complex candidates](docs/decisions/complex-candidates.md) | How the PDB entries showing a drug bound to its target are found and ranked, and why viral targets need their own species |
+| [Drug labels](docs/decisions/drug-labels.md) | Which openFDA label each drug's answers come from, and which sections are never stored |
 | [Data check](docs/spikes/data-check/report.md) | The first live check of names, properties, complexes and labels |
 
 ## Stack

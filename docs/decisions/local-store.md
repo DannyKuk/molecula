@@ -75,7 +75,7 @@ The answer has to:
 - **The data is as old as the build.** Labels are the only data that changes; the update step that re-indexes changed labels is planned (#25).
 - **No snapshot yet** (#35). Until it exists, a fresh clone has to run the ingest, which needs PubChem and can hit NCBI's block.
 - **A snapshot has no cache.** Re-running an ingest from it fetches everything again (~670 PubChem requests for the compounds) and can drift from the published data (#35).
-- **The label pages are large.** How to keep the cache small for the full labels run is open in #63.
+- **The label pages are large.** The full labels run (#63) cached 1.97 GB of openFDA pages for 5.7 MB of stored label text: 361 requests the first time, 0 on a re-run. Only rebuilds need the cache; the planned snapshot (#35) leaves it out.
 - **Remote MCP tools** for compounds outside the scope are a planned option (#45): off by default, never with `OFFLINE=1`, and the local tools stay first.
 
 ## Reproduce
