@@ -36,6 +36,7 @@ BACKOFF_SECONDS = 1.0
 MAX_WAIT_SECONDS = 60.0
 TIMEOUT = httpx2.Timeout(30.0, connect=10.0)
 USER_AGENT = f"molecula/{version('molecula')} (+https://github.com/DannyKuk/molecula)"
+DISCARD = "molecula.discard_from_cache"
 
 
 class RateLimiter:
@@ -62,7 +63,8 @@ class SourceClient:
     """The one HTTP client every source uses: rate limits, retries, OFFLINE and the cache.
 
     Successful responses and 404s are cached in the store and served from there on the next call,
-    also when offline. `refresh=True` skips the cache and overwrites the entry.
+    also when offline. `refresh=True` skips the cache and overwrites the entry. A body that turns
+    out unusable is dropped from the cache with `discard_cached`, except offline.
     """
 
     def __init__(
@@ -113,7 +115,7 @@ class SourceClient:
     def _send(self, request: httpx2.Request, refresh: bool) -> httpx2.Response:
         key = cache_key(request)
         if not refresh and (cached := self._cache.get(key)):
-            return checked(to_response(cached, request))
+            return checked(self._discardable(to_response(cached, request), key))
         if self._offline:
             raise OfflineError(f"OFFLINE=1, not requesting {request.url}")
         response = self._send_with_retries(request)
@@ -127,7 +129,15 @@ class SourceClient:
                     response.status_code, response.headers.get("content-type"), response.content
                 ),
             )
+            self._discardable(response, key)
         return checked(response)
+
+    def _discardable(self, response: httpx2.Response, key: str) -> httpx2.Response:
+        # Offline the cache is all there is: an entry that fails to parse stays, and keeps
+        # failing the same way, rather than turning into an OfflineError on the next call.
+        if not self._offline:
+            response.extensions[DISCARD] = lambda: self._cache.delete(key)
+        return response
 
     def _send_with_retries(self, request: httpx2.Request) -> httpx2.Response:
         limiter = self._limiter_for(request.url.host)
@@ -160,6 +170,15 @@ def cache_key(request: httpx2.Request) -> str:
     digest = hashlib.sha256(f"{request.method} {request.url}\n".encode())
     digest.update(request.content)
     return digest.hexdigest()
+
+
+def discard_cached(response: httpx2.Response) -> None:
+    """Drops the cache entry `response` came from or went into, so the next call asks again.
+
+    For a body that turns out unusable: an RCSB GraphQL error, for one, arrives as HTTP 200.
+    """
+    if discard := response.extensions.get(DISCARD):
+        discard()
 
 
 def to_response(cached: CachedResponse, request: httpx2.Request) -> httpx2.Response:

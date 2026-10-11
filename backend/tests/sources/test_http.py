@@ -3,14 +3,17 @@ from pathlib import Path
 
 import httpx2
 import pytest
+from pydantic import BaseModel
 
 from molecula.sources.errors import (
     OfflineError,
+    SourceFormatError,
     SourceNotFound,
     SourceResponseError,
     SourceUnavailable,
 )
 from molecula.sources.http import MAX_ATTEMPTS, USER_AGENT, SourceClient
+from molecula.sources.parsing import parse
 from molecula.store.db import connect
 from molecula.store.http_cache import HttpCache
 
@@ -48,6 +51,10 @@ class Recorder:
         if isinstance(response, Exception):
             raise response
         return response
+
+
+class Compound(BaseModel):
+    cid: int
 
 
 def ok(body: bytes = b'{"ok": true}') -> httpx2.Response:
@@ -267,3 +274,39 @@ def test_posts_with_different_bodies_are_cached_apart(make_client) -> None:
 
     assert response.json() == ["CFF"]
     assert len(handler.requests) == 1
+
+
+def test_a_body_that_fails_to_parse_is_asked_for_again(make_client) -> None:
+    with pytest.raises(SourceFormatError):
+        parse(make_client(Recorder(ok(b'{"error": "busy"}'))).get(PUBCHEM), Compound)
+    handler = Recorder(ok(b'{"cid": 5291}'))
+
+    assert parse(make_client(handler).get(PUBCHEM), Compound).cid == 5291
+    assert len(handler.requests) == 1
+
+
+def test_a_cached_body_that_fails_to_parse_is_dropped(make_client) -> None:
+    make_client(Recorder(ok(b'{"error": "busy"}'))).get(PUBCHEM)
+    with pytest.raises(SourceFormatError):
+        parse(make_client(Recorder()).get(PUBCHEM), Compound)
+    handler = Recorder(ok(b'{"cid": 5291}'))
+
+    assert parse(make_client(handler).get(PUBCHEM), Compound).cid == 5291
+    assert len(handler.requests) == 1
+
+
+def test_a_body_that_parses_stays_cached(make_client) -> None:
+    parse(make_client(Recorder(ok(b'{"cid": 5291}'))).get(PUBCHEM), Compound)
+    handler = Recorder()
+
+    assert parse(make_client(handler).get(PUBCHEM), Compound).cid == 5291
+    assert handler.requests == []
+
+
+def test_offline_a_cached_body_that_fails_to_parse_keeps_failing_to_parse(make_client) -> None:
+    make_client(Recorder(ok(b'{"error": "busy"}'))).get(PUBCHEM)
+    offline = make_client(Recorder(), offline=True)
+
+    for _ in range(2):
+        with pytest.raises(SourceFormatError):
+            parse(offline.get(PUBCHEM), Compound)
