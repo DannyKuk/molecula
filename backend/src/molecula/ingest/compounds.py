@@ -81,17 +81,24 @@ def ingest_entry(
     properties = pubchem.properties(cid)
     sdf, conformer_source = conformer(pubchem, properties)
     compound = to_record(entry.name, properties, conformer_source)
-    synonyms = [
-        Synonym(entry.name, "name"),
-        *(Synonym(alias, "alias") for alias in entry.aliases),
-        *(Synonym(alias, "pubchem") for alias in pubchem.synonyms(cid)[:SYNONYM_LIMIT]),
-    ]
+    store.save(compound, synonyms(entry, pubchem.synonyms(cid)), fetched_at=datetime.now(UTC))
     if sdf is None:
         conformers.remove(cid)
     else:
         conformers.write(cid, sdf)
-    store.save(compound, synonyms, fetched_at=datetime.now(UTC))
     return compound
+
+
+def synonyms(entry: ScopeEntry, pubchem_synonyms: list[str]) -> list[Synonym]:
+    """The scope name and aliases, then the top PubChem synonyms that aren't among them."""
+    scope_terms = [entry.name, *entry.aliases]
+    taken = {term.casefold() for term in scope_terms}
+    extra = [alias for alias in pubchem_synonyms if alias.casefold() not in taken]
+    return [
+        Synonym(entry.name, "name"),
+        *(Synonym(alias, "alias") for alias in entry.aliases),
+        *(Synonym(alias, "pubchem") for alias in extra[:SYNONYM_LIMIT]),
+    ]
 
 
 def parent_cid(pubchem: PubChemClient, name: str) -> int:
@@ -106,6 +113,7 @@ def parent_cid(pubchem: PubChemClient, name: str) -> int:
 def conformer(
     pubchem: PubChemClient, properties: CompoundProperties
 ) -> tuple[str | None, ConformerSource | None]:
+    """The conformer SDF and where it came from: PubChem, else RDKit, else (None, None)."""
     if sdf := pubchem.conformer_sdf(properties.cid):
         return sdf, "pubchem"
     if properties.heavy_atoms > MAX_EMBED_HEAVY_ATOMS:

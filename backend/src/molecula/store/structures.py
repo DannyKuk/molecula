@@ -7,6 +7,10 @@ class ConformerFiles:
     def __init__(self, directory: Path) -> None:
         self._directory = directory
 
+    @property
+    def directory(self) -> Path:
+        return self._directory
+
     def path(self, cid: int) -> Path:
         return self._directory / f"{cid}.sdf"
 

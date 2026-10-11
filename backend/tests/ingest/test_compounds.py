@@ -57,7 +57,7 @@ def test_stores_one_drug_end_to_end(ingest, store, conformers) -> None:
         Synonym("Glivec", "alias"),
     ]
     assert all(synonym.kind == "pubchem" for synonym in synonyms[3:])
-    assert len(synonyms) <= 3 + SYNONYM_LIMIT
+    assert len(synonyms) == 3 + SYNONYM_LIMIT
 
 
 @pytest.mark.parametrize(
@@ -104,6 +104,19 @@ def test_peptide_is_stored_without_3d(ingest, store, conformers) -> None:
     assert conformers.read(56843331) is None
 
 
+def test_molecule_rdkit_cannot_embed_is_stored_without_3d(
+    ingest, store, conformers, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("molecula.ingest.compounds.embed_conformer", lambda cid, smiles: None)
+
+    ingest(scope({"name": "ritonavir"}))
+
+    ritonavir = store.get(392622)
+    assert ritonavir is not None
+    assert ritonavir.has_3d is False
+    assert conformers.read(392622) is None
+
+
 def test_rerun_is_served_from_the_cache_and_changes_nothing(
     ingest, conn: sqlite3.Connection, conformers
 ) -> None:
@@ -112,7 +125,7 @@ def test_rerun_is_served_from_the_cache_and_changes_nothing(
     )
     ingest(drugs)
     rows_before = dump(conn)
-    files_before = {path: path.stat().st_mtime_ns for path in conformers.path(0).parent.iterdir()}
+    files_before = {path: path.stat().st_mtime_ns for path in conformers.directory.iterdir()}
     changes_before = conn.total_changes
 
     second_run = Replay()
