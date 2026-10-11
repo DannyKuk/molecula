@@ -49,7 +49,7 @@ Dependencies point one way: `api`, `tools`, `mcp` → `services` → `sources`, 
 - Run `uv run pytest` in `backend/`. Every service, source client, tool, chunker, guard rule and route gets tests.
 - **Tests never touch the network.** Source clients are tested against recorded responses in `tests/fixtures/`; LLM calls use fake models. Real-model checks belong in `evals/`.
 - Test the behaviour and the edge cases (salt → parent, unknown name, 503 retry, empty retrieval, prompt injection in retrieved text), not the implementation.
-- Frontend: `npm run lint` and `npm run build` must pass; component tests where there is logic.
+- Frontend: `npm run format:check`, `npm run lint`, `npm test` and `npm run build` must pass; component tests where there is logic.
 
 ## Code style
 
