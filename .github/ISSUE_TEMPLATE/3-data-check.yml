@@ -1,0 +1,54 @@
+name: Data check
+description: Verify a data source, query, label selection or hero complex before building on it.
+labels: ["data-verify"]
+projects: ["DannyKuk/3"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What to verify
+      description: The query, endpoint, entry or value, with references to `docs/data-plan.md` or `data/hero_set.yaml`.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+      description: Which issue or feature depends on the answer.
+    validations:
+      required: true
+  - type: dropdown
+    id: sources
+    attributes:
+      label: Sources
+      multiple: true
+      options:
+        - PubChem
+        - ChEMBL
+        - RCSB PDB
+        - openFDA
+        - Local computation (RDKit, Biotite)
+        - Other (say which below)
+    validations:
+      required: true
+  - type: textarea
+    id: correct
+    attributes:
+      label: How we know it's right
+      description: The reference to check against (paper, UniProt entry, expected values). For a hero complex, is the protein the therapeutic target and not a transport protein?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps
+      placeholder: |
+        1. Run ...; expect ...
+        2.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Result
+      description: Fill in after the check, then update `docs/data-plan.md` or `data/hero_set.yaml`.

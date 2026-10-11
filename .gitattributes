@@ -1,0 +1,5 @@
+# LF everywhere: shell scripts and entrypoints with CRLF break inside Linux containers.
+* text=auto eol=lf
+*.cif -text
+*.sdf -text
+*.pdb -text

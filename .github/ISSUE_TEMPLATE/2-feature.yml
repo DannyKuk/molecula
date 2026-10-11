@@ -1,0 +1,54 @@
+name: Feature
+description: New behaviour or a bigger improvement.
+labels: ["enhancement"]
+projects: ["DannyKuk/3"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What the user can do afterwards, and why it matters.
+    validations:
+      required: true
+  - type: textarea
+    id: behaviour
+    attributes:
+      label: Proposed behaviour
+      description: How it should work from the user's side. Rough is fine.
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: Checkable acceptance criteria.
+      placeholder: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: out
+    attributes:
+      label: Out of scope
+      description: What this deliberately does not include.
+  - type: textarea
+    id: data
+    attributes:
+      label: Data needs
+      description: Which tables, sources or endpoints it relies on, and whether they're verified (`docs/data-plan.md`). Unverified data needs a data-check issue first.
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - Core (the app isn't complete without it)
+        - Stretch (planned, after the core works)
+        - Idea (not planned yet)
+    validations:
+      required: true
+  - type: checkboxes
+    id: bar
+    attributes:
+      label: Bar
+      options:
+        - label: Works with OFFLINE=1 (no external API calls), or the plan says why it can't
+        - label: Works with a local model, or the plan says why it can't

@@ -1,0 +1,53 @@
+name: Safety finding
+description: A prompt that gets past the guardrails, or an answer that is medically unsafe or wrong.
+labels: ["safety"]
+projects: ["DannyKuk/3"]
+body:
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Personal dosing or medical advice
+        - Lethal dose or overdose
+        - Synthesis or misuse
+        - Prompt injection (user input)
+        - Prompt injection (retrieved label text)
+        - Factually wrong medical claim
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: prompt
+    attributes:
+      label: Prompt
+      description: The exact message, or the conversation, that caused it.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: answer
+    attributes:
+      label: Answer
+      description: What the bot said. Trim to the relevant part.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: Refuse, redirect, answer with a citation and disclaimer, ...
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model and commit
+      placeholder: model id @ dde9f69
+  - type: checkboxes
+    id: eval
+    attributes:
+      label: Follow-up
+      options:
+        - label: Add this prompt to the safety eval set

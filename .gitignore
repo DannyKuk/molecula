@@ -1,0 +1,46 @@
+# Private planning notes
+notes/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+npm-debug.log*
+
+# Python / uv
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Raw API responses and caches; the ingest steps regenerate them
+data/raw/
+data/cache/
+*.log
+
+# Local models and vector stores pulled at runtime
+models/
+ollama/
+
+# Claude Code
+.claude/worktrees/
+.superpowers/

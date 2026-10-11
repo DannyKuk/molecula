@@ -1,0 +1,1104 @@
+{
+ "imatinib": {
+  "drug": "imatinib",
+  "cid": 5291,
+  "codes": [
+   "STI"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL941",
+  "targets": [
+   {
+    "moa": "Tyrosine-protein kinase ABL inhibitor",
+    "action": "INHIBITOR",
+    "target": "Tyrosine-protein kinase ABL1",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P00519"
+    ]
+   },
+   {
+    "moa": "Platelet-derived growth factor receptor beta inhibitor",
+    "action": "INHIBITOR",
+    "target": "Platelet-derived growth factor receptor beta",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P09619"
+    ]
+   },
+   {
+    "moa": "Stem cell growth factor receptor inhibitor",
+    "action": "INHIBITOR",
+    "target": "Mast/stem cell growth factor receptor Kit",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P10721"
+    ]
+   },
+   {
+    "moa": "Bcr/Abl fusion protein inhibitor",
+    "action": "INHIBITOR",
+    "target": "Bcr/Abl fusion protein",
+    "type": "CHIMERIC PROTEIN",
+    "accs": [
+     "P00519",
+     "P11274"
+    ]
+   }
+  ],
+  "entries_with_ligand": 29,
+  "entries_with_ligand_and_human_target": [
+   "1T46",
+   "2HYY",
+   "3PYY",
+   "6NPE",
+   "6NPU",
+   "6NPV",
+   "7N9G",
+   "8S16"
+  ]
+ },
+ "ibuprofen": {
+  "drug": "ibuprofen",
+  "cid": 3672,
+  "codes": [
+   "IBP",
+   "IZP"
+  ],
+  "how": "connectivity",
+  "chembl": "CHEMBL521",
+  "targets": [
+   {
+    "moa": "Cyclooxygenase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Cyclooxygenase",
+    "type": "PROTEIN FAMILY",
+    "accs": [
+     "P35354",
+     "P23219"
+    ]
+   },
+   {
+    "moa": "Cyclooxygenase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Cyclooxygenase",
+    "type": "PROTEIN FAMILY",
+    "accs": [
+     "P35354",
+     "P23219"
+    ]
+   },
+   {
+    "moa": "Cyclooxygenase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Cyclooxygenase",
+    "type": "PROTEIN FAMILY",
+    "accs": [
+     "P35354",
+     "P23219"
+    ]
+   }
+  ],
+  "entries_with_ligand": 20,
+  "entries_with_ligand_and_human_target": []
+ },
+ "caffeine": {
+  "drug": "caffeine",
+  "cid": 2519,
+  "codes": [
+   "CFF"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL113",
+  "targets": [
+   {
+    "moa": "Adenosine receptor antagonist",
+    "action": "ANTAGONIST",
+    "target": "Adenosine receptor",
+    "type": "PROTEIN FAMILY",
+    "accs": [
+     "P30542",
+     "P29275",
+     "P0DMS8",
+     "P29274"
+    ]
+   },
+   {
+    "moa": "Adenosine receptor antagonist",
+    "action": "ANTAGONIST",
+    "target": "Adenosine receptor",
+    "type": "PROTEIN FAMILY",
+    "accs": [
+     "P30542",
+     "P29275",
+     "P0DMS8",
+     "P29274"
+    ]
+   }
+  ],
+  "entries_with_ligand": 94,
+  "entries_with_ligand_and_human_target": [
+   "3RFM",
+   "5MZP"
+  ]
+ },
+ "atorvastatin": {
+  "drug": "atorvastatin",
+  "cid": 60823,
+  "codes": [
+   "117"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL1487",
+  "targets": [
+   {
+    "moa": "HMG-CoA reductase inhibitor",
+    "action": "INHIBITOR",
+    "target": "3-hydroxy-3-methylglutaryl-coenzyme A reductase",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P04035"
+    ]
+   }
+  ],
+  "entries_with_ligand": 7,
+  "entries_with_ligand_and_human_target": [
+   "1HWK",
+   "8PKN"
+  ]
+ },
+ "aspirin": {
+  "drug": "aspirin",
+  "cid": 2244,
+  "codes": [
+   "AIN"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL25",
+  "targets": [
+   {
+    "moa": "Cyclooxygenase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Cyclooxygenase",
+    "type": "PROTEIN FAMILY",
+    "accs": [
+     "P35354",
+     "P23219"
+    ]
+   }
+  ],
+  "entries_with_ligand": 8,
+  "entries_with_ligand_and_human_target": []
+ },
+ "celecoxib": {
+  "drug": "celecoxib",
+  "cid": 2662,
+  "codes": [
+   "CEL"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL118",
+  "targets": [
+   {
+    "moa": "Cyclooxygenase-2 inhibitor",
+    "action": "INHIBITOR",
+    "target": "Prostaglandin G/H synthase 2",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P35354"
+    ]
+   }
+  ],
+  "entries_with_ligand": 6,
+  "entries_with_ligand_and_human_target": []
+ },
+ "methotrexate": {
+  "drug": "methotrexate",
+  "cid": 126941,
+  "codes": [
+   "MTX"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL34259",
+  "targets": [
+   {
+    "moa": "Dihydrofolate reductase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Dihydrofolate reductase",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P00374"
+    ]
+   },
+   {
+    "moa": "Dihydrofolate reductase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Dihydrofolate reductase",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P00374"
+    ]
+   }
+  ],
+  "entries_with_ligand": 90,
+  "entries_with_ligand_and_human_target": [
+   "1DLS",
+   "1U72",
+   "3EIG"
+  ]
+ },
+ "oseltamivir": {
+  "drug": "oseltamivir",
+  "cid": 65028,
+  "codes": [],
+  "how": "connectivity",
+  "chembl": "CHEMBL1229",
+  "targets": [
+   {
+    "moa": "Neuraminidase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Neuraminidase",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P03468"
+    ]
+   },
+   {
+    "moa": "Neuraminidase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Neuraminidase",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P03474"
+    ]
+   }
+  ],
+  "entries_with_ligand": 0,
+  "entries_with_ligand_and_human_target": []
+ },
+ "donepezil": {
+  "drug": "donepezil",
+  "cid": 3152,
+  "codes": [
+   "E20"
+  ],
+  "how": "connectivity",
+  "chembl": "CHEMBL502",
+  "targets": [
+   {
+    "moa": "Acetylcholinesterase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Acetylcholinesterase",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P22303"
+    ]
+   }
+  ],
+  "entries_with_ligand": 4,
+  "entries_with_ligand_and_human_target": [
+   "4EY7",
+   "6O4W",
+   "7E3H"
+  ]
+ },
+ "diclofenac": {
+  "drug": "diclofenac",
+  "cid": 3033,
+  "codes": [
+   "DIF"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL139",
+  "targets": [
+   {
+    "moa": "Cyclooxygenase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Cyclooxygenase",
+    "type": "PROTEIN FAMILY",
+    "accs": [
+     "P35354",
+     "P23219"
+    ]
+   },
+   {
+    "moa": "Cyclooxygenase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Cyclooxygenase",
+    "type": "PROTEIN FAMILY",
+    "accs": [
+     "P35354",
+     "P23219"
+    ]
+   },
+   {
+    "moa": "Cyclooxygenase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Cyclooxygenase",
+    "type": "PROTEIN FAMILY",
+    "accs": [
+     "P35354",
+     "P23219"
+    ]
+   },
+   {
+    "moa": "Cyclooxygenase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Cyclooxygenase",
+    "type": "PROTEIN FAMILY",
+    "accs": [
+     "P35354",
+     "P23219"
+    ]
+   }
+  ],
+  "entries_with_ligand": 24,
+  "entries_with_ligand_and_human_target": []
+ },
+ "naproxen": {
+  "drug": "naproxen",
+  "cid": 156391,
+  "codes": [
+   "NPS"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL154",
+  "targets": [
+   {
+    "moa": "Cyclooxygenase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Cyclooxygenase",
+    "type": "PROTEIN FAMILY",
+    "accs": [
+     "P35354",
+     "P23219"
+    ]
+   },
+   {
+    "moa": "Cyclooxygenase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Cyclooxygenase",
+    "type": "PROTEIN FAMILY",
+    "accs": [
+     "P35354",
+     "P23219"
+    ]
+   }
+  ],
+  "entries_with_ligand": 11,
+  "entries_with_ligand_and_human_target": []
+ },
+ "rosuvastatin": {
+  "drug": "rosuvastatin",
+  "cid": 446157,
+  "codes": [],
+  "how": "connectivity",
+  "chembl": "CHEMBL1496",
+  "targets": [
+   {
+    "moa": "HMG-CoA reductase inhibitor",
+    "action": "INHIBITOR",
+    "target": "3-hydroxy-3-methylglutaryl-coenzyme A reductase",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P04035"
+    ]
+   }
+  ],
+  "entries_with_ligand": 0,
+  "entries_with_ligand_and_human_target": []
+ },
+ "gefitinib": {
+  "drug": "gefitinib",
+  "cid": 123631,
+  "codes": [
+   "IRE"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL939",
+  "targets": [
+   {
+    "moa": "Epidermal growth factor receptor erbB1 inhibitor",
+    "action": "INHIBITOR",
+    "target": "Epidermal growth factor receptor",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P00533"
+    ]
+   }
+  ],
+  "entries_with_ligand": 10,
+  "entries_with_ligand_and_human_target": [
+   "2ITO",
+   "2ITY",
+   "2ITZ",
+   "3UG2",
+   "4I22",
+   "4WKQ"
+  ]
+ },
+ "erlotinib": {
+  "drug": "erlotinib",
+  "cid": 176870,
+  "codes": [
+   "AQ4"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL553",
+  "targets": [
+   {
+    "moa": "Epidermal growth factor receptor erbB1 inhibitor",
+    "action": "INHIBITOR",
+    "target": "Epidermal growth factor receptor",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P00533"
+    ]
+   }
+  ],
+  "entries_with_ligand": 0,
+  "entries_with_ligand_and_human_target": [
+   "1M17",
+   "4HJO"
+  ]
+ },
+ "dasatinib": {
+  "drug": "dasatinib",
+  "cid": 3062316,
+  "codes": [
+   "1N1"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL1421",
+  "targets": [
+   {
+    "moa": "Tyrosine-protein kinase ABL inhibitor",
+    "action": "INHIBITOR",
+    "target": "Tyrosine-protein kinase ABL1",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P00519"
+    ]
+   },
+   {
+    "moa": "Platelet-derived growth factor receptor beta inhibitor",
+    "action": "INHIBITOR",
+    "target": "Platelet-derived growth factor receptor beta",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P09619"
+    ]
+   },
+   {
+    "moa": "Stem cell growth factor receptor inhibitor",
+    "action": "INHIBITOR",
+    "target": "Mast/stem cell growth factor receptor Kit",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P10721"
+    ]
+   },
+   {
+    "moa": "Ephrin type-A receptor 2 inhibitor",
+    "action": "INHIBITOR",
+    "target": "Ephrin type-A receptor 2",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P29317"
+    ]
+   },
+   {
+    "moa": "SRC inhibitor",
+    "action": "INHIBITOR",
+    "target": "SRC",
+    "type": "PROTEIN FAMILY",
+    "accs": [
+     "P06241",
+     "P12931",
+     "P06239",
+     "P07947",
+     "P51451",
+     "P08631",
+     "P07948",
+     "P42685",
+     "P09769",
+     "Q9H3Y6"
+    ]
+   },
+   {
+    "moa": "Bcr/Abl fusion protein inhibitor",
+    "action": "INHIBITOR",
+    "target": "Bcr/Abl fusion protein",
+    "type": "CHIMERIC PROTEIN",
+    "accs": [
+     "P00519",
+     "P11274"
+    ]
+   },
+   {
+    "moa": "Bcr/Abl fusion protein inhibitor",
+    "action": "INHIBITOR",
+    "target": "Bcr/Abl fusion protein",
+    "type": "CHIMERIC PROTEIN",
+    "accs": [
+     "P00519",
+     "P11274"
+    ]
+   }
+  ],
+  "entries_with_ligand": 23,
+  "entries_with_ligand_and_human_target": [
+   "2GQG",
+   "4XEY",
+   "5I9Y",
+   "7N9G"
+  ]
+ },
+ "warfarin": {
+  "drug": "warfarin",
+  "cid": 54678486,
+  "codes": [
+   "RWF",
+   "SWF"
+  ],
+  "how": "connectivity",
+  "chembl": "CHEMBL1464",
+  "targets": [
+   {
+    "moa": "Vitamin k epoxide reductase complex subunit 1 isoform 1 inhibitor",
+    "action": "INHIBITOR",
+    "target": "Vitamin K epoxide reductase complex subunit 1",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "Q9BQB6"
+    ]
+   },
+   {
+    "moa": "Vitamin k epoxide reductase complex subunit 1 isoform 1 inhibitor",
+    "action": "INHIBITOR",
+    "target": "Vitamin K epoxide reductase complex subunit 1",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "Q9BQB6"
+    ]
+   }
+  ],
+  "entries_with_ligand": 9,
+  "entries_with_ligand_and_human_target": [
+   "6WV3",
+   "6WV4"
+  ]
+ },
+ "acetazolamide": {
+  "drug": "acetazolamide",
+  "cid": 1986,
+  "codes": [
+   "AZM"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL20",
+  "targets": [
+   {
+    "moa": "Carbonic anhydrase I inhibitor",
+    "action": "INHIBITOR",
+    "target": "Carbonic anhydrase 1",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P00915"
+    ]
+   },
+   {
+    "moa": "Carbonic anhydrase I inhibitor",
+    "action": "INHIBITOR",
+    "target": "Carbonic anhydrase 1",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P00915"
+    ]
+   },
+   {
+    "moa": "Carbonic anhydrase II inhibitor",
+    "action": "INHIBITOR",
+    "target": "Carbonic anhydrase 2",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P00918"
+    ]
+   },
+   {
+    "moa": "Carbonic anhydrase II inhibitor",
+    "action": "INHIBITOR",
+    "target": "Carbonic anhydrase 2",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P00918"
+    ]
+   },
+   {
+    "moa": "Carbonic anhydrase XII inhibitor",
+    "action": "INHIBITOR",
+    "target": "Carbonic anhydrase 12",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "O43570"
+    ]
+   },
+   {
+    "moa": "Carbonic anhydrase XII inhibitor",
+    "action": "INHIBITOR",
+    "target": "Carbonic anhydrase 12",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "O43570"
+    ]
+   },
+   {
+    "moa": "Carbonic anhydrase IV inhibitor",
+    "action": "INHIBITOR",
+    "target": "Carbonic anhydrase 4",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P22748"
+    ]
+   },
+   {
+    "moa": "Carbonic anhydrase IV inhibitor",
+    "action": "INHIBITOR",
+    "target": "Carbonic anhydrase 4",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P22748"
+    ]
+   }
+  ],
+  "entries_with_ligand": 39,
+  "entries_with_ligand_and_human_target": [
+   "1AZM",
+   "1JD0",
+   "1YDA",
+   "1YDB",
+   "1YDD",
+   "1ZSB",
+   "2H4N",
+   "3DC3",
+   "3HS4",
+   "3V2J",
+   "3V2M",
+   "3W6H",
+   "4G0C",
+   "4K0S",
+   "5JN8",
+   "6QEB",
+   "6YMA",
+   "8VZG"
+  ]
+ },
+ "zanamivir": {
+  "drug": "zanamivir",
+  "cid": 60855,
+  "codes": [
+   "ZMR"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL222813",
+  "targets": [
+   {
+    "moa": "Neuraminidase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Neuraminidase",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P03468"
+    ]
+   },
+   {
+    "moa": "Neuraminidase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Neuraminidase",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P03474"
+    ]
+   },
+   {
+    "moa": "Neuraminidase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Neuraminidase",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "Q3S340"
+    ]
+   },
+   {
+    "moa": "Neuraminidase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Neuraminidase",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "B4URF0"
+    ]
+   }
+  ],
+  "entries_with_ligand": 28,
+  "entries_with_ligand_and_human_target": []
+ },
+ "tamoxifen": {
+  "drug": "tamoxifen",
+  "cid": 2733526,
+  "codes": [
+   "CTX"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL83",
+  "targets": [
+   {
+    "moa": "Estrogen receptor alpha modulator",
+    "action": "MODULATOR",
+    "target": "Estrogen receptor",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P03372"
+    ]
+   }
+  ],
+  "entries_with_ligand": 3,
+  "entries_with_ligand_and_human_target": []
+ },
+ "cetirizine": {
+  "drug": "cetirizine",
+  "cid": 2678,
+  "codes": [
+   "CZE",
+   "LCR"
+  ],
+  "how": "connectivity",
+  "chembl": "CHEMBL1000",
+  "targets": [
+   {
+    "moa": "Histamine H1 receptor antagonist",
+    "action": "ANTAGONIST",
+    "target": "Histamine H1 receptor",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P35367"
+    ]
+   }
+  ],
+  "entries_with_ligand": 1,
+  "entries_with_ligand_and_human_target": []
+ },
+ "metformin": {
+  "drug": "metformin",
+  "cid": 4091,
+  "codes": [
+   "MF8"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL1431",
+  "targets": [
+   {
+    "moa": "Mitochondrial complex I (NADH dehydrogenase) inhibitor",
+    "action": "INHIBITOR",
+    "target": "Mitochondrial complex I (NADH dehydrogenase)",
+    "type": "PROTEIN COMPLEX",
+    "accs": [
+     "P03923",
+     "O95299",
+     "O00217",
+     "P03901",
+     "P56556",
+     "P03886",
+     "O95139",
+     "O00483",
+     "Q86Y39",
+     "P17568",
+     "P03891",
+     "O75306",
+     "P03915",
+     "P51970",
+     "O43674",
+     "P03905",
+     "P03897",
+     "O14561",
+     "O15239",
+     "O43181",
+     "O43676",
+     "O43677",
+     "O43678",
+     "O43920",
+     "O75251",
+     "O75380",
+     "O75438",
+     "O75489",
+     "O95167",
+     "O95168",
+     "O95169",
+     "O95178",
+     "O95182",
+     "O95298",
+     "O96000",
+     "P19404",
+     "P28331",
+     "P49821",
+     "P56181",
+     "Q16718",
+     "Q16795",
+     "Q8N183",
+     "Q9BU61",
+     "Q9NRX3",
+     "Q9NX14",
+     "Q9P032",
+     "Q9P0J0",
+     "Q9UI09",
+     "Q9Y375",
+     "Q9Y6M9"
+    ]
+   },
+   {
+    "moa": "Mitochondrial glycerol-3-phosphate dehydrogenase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Glycerol-3-phosphate dehydrogenase, mitochondrial",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P43304"
+    ]
+   }
+  ],
+  "entries_with_ligand": 14,
+  "entries_with_ligand_and_human_target": []
+ },
+ "paracetamol": {
+  "drug": "paracetamol",
+  "cid": 1983,
+  "codes": [
+   "TYL"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL112",
+  "targets": [
+   {
+    "moa": "Cyclooxygenase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Cyclooxygenase",
+    "type": "PROTEIN FAMILY",
+    "accs": [
+     "P35354",
+     "P23219"
+    ]
+   },
+   {
+    "moa": "Anandamide amidohydrolase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Fatty-acid amide hydrolase 1",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "O00519"
+    ]
+   },
+   {
+    "moa": "Vanilloid receptor opener",
+    "action": "OPENER",
+    "target": "Transient receptor potential cation channel subfamily V member 1",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "Q8NER1"
+    ]
+   }
+  ],
+  "entries_with_ligand": 10,
+  "entries_with_ligand_and_human_target": []
+ },
+ "omeprazole": {
+  "drug": "omeprazole",
+  "cid": 4594,
+  "codes": [],
+  "how": "connectivity",
+  "chembl": "CHEMBL1503",
+  "targets": [
+   {
+    "moa": "Potassium-transporting ATPase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Potassium-transporting ATPase",
+    "type": "PROTEIN COMPLEX",
+    "accs": [
+     "P20648",
+     "P51164"
+    ]
+   },
+   {
+    "moa": "Potassium-transporting ATPase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Potassium-transporting ATPase",
+    "type": "PROTEIN COMPLEX",
+    "accs": [
+     "P20648",
+     "P51164"
+    ]
+   }
+  ],
+  "entries_with_ligand": 0,
+  "entries_with_ligand_and_human_target": []
+ },
+ "sitagliptin": {
+  "drug": "sitagliptin",
+  "cid": 4369359,
+  "codes": [
+   "715"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL1422",
+  "targets": [
+   {
+    "moa": "Dipeptidyl peptidase IV inhibitor",
+    "action": "INHIBITOR",
+    "target": "Dipeptidyl peptidase 4",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P27487"
+    ]
+   },
+   {
+    "moa": "Dipeptidyl peptidase IV inhibitor",
+    "action": "INHIBITOR",
+    "target": "Dipeptidyl peptidase 4",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P27487"
+    ]
+   },
+   {
+    "moa": "Dipeptidyl peptidase IV inhibitor",
+    "action": "INHIBITOR",
+    "target": "Dipeptidyl peptidase 4",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P27487"
+    ]
+   }
+  ],
+  "entries_with_ligand": 3,
+  "entries_with_ligand_and_human_target": [
+   "1X70"
+  ]
+ },
+ "nirmatrelvir": {
+  "drug": "nirmatrelvir",
+  "cid": 155903259,
+  "codes": [
+   "ZGW"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL4802135",
+  "targets": [
+   {
+    "moa": "SARS coronavirus 3C-like proteinase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Replicase polyprotein 1a",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P0C6U8"
+    ]
+   }
+  ],
+  "entries_with_ligand": 2,
+  "entries_with_ligand_and_human_target": []
+ },
+ "ritonavir": {
+  "drug": "ritonavir",
+  "cid": 392622,
+  "codes": [
+   "RIT"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL163",
+  "targets": [
+   {
+    "moa": "Human immunodeficiency virus type 1 protease inhibitor",
+    "action": "INHIBITOR",
+    "target": "Human immunodeficiency virus type 1 protease",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "Q72874"
+    ]
+   },
+   {
+    "moa": "Cytochrome P450 3A inhibitor",
+    "action": "INHIBITOR",
+    "target": "Cytochrome P450 3A",
+    "type": "PROTEIN FAMILY",
+    "accs": [
+     "P08684",
+     "P20815",
+     "Q9HB55",
+     "P24462"
+    ]
+   }
+  ],
+  "entries_with_ligand": 19,
+  "entries_with_ligand_and_human_target": [
+   "38FV",
+   "3NXU",
+   "5VC0",
+   "5VCE",
+   "5VEU"
+  ]
+ },
+ "indomethacin": {
+  "drug": "indomethacin",
+  "cid": 3715,
+  "codes": [
+   "IMN"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL6",
+  "targets": [
+   {
+    "moa": "Cyclooxygenase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Cyclooxygenase",
+    "type": "PROTEIN FAMILY",
+    "accs": [
+     "P35354",
+     "P23219"
+    ]
+   },
+   {
+    "moa": "Cyclooxygenase inhibitor",
+    "action": "INHIBITOR",
+    "target": "Cyclooxygenase",
+    "type": "PROTEIN FAMILY",
+    "accs": [
+     "P35354",
+     "P23219"
+    ]
+   }
+  ],
+  "entries_with_ligand": 28,
+  "entries_with_ligand_and_human_target": []
+ },
+ "lisinopril": {
+  "drug": "lisinopril",
+  "cid": 5362119,
+  "codes": [
+   "LPR"
+  ],
+  "how": "exact",
+  "chembl": "CHEMBL1237",
+  "targets": [
+   {
+    "moa": "Angiotensin-converting enzyme inhibitor",
+    "action": "INHIBITOR",
+    "target": "Angiotensin-converting enzyme",
+    "type": "SINGLE PROTEIN",
+    "accs": [
+     "P12821"
+    ]
+   }
+  ],
+  "entries_with_ligand": 4,
+  "entries_with_ligand_and_human_target": [
+   "1O86",
+   "2C6N"
+  ]
+ }
+}

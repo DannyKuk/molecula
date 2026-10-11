@@ -1,0 +1,30 @@
+name: Tech debt
+description: Cleanup, robustness or test work with no visible feature.
+labels: ["tech-debt"]
+projects: ["DannyKuk/3"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What
+      description: The problem, as a list if there are several small ones.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+      description: What goes wrong, or gets harder, if we leave it.
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where
+      description: Files, and the review notes or plan it came from.
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      placeholder: |
+        - [ ]

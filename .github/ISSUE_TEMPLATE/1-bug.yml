@@ -1,0 +1,88 @@
+name: Bug
+description: Something doesn't work the way it should.
+labels: ["bug"]
+projects: ["DannyKuk/3"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you saw. Include the exact error text, or the chat message and the answer.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should happen
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Ask "..."
+        2.
+        3.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Data pipeline (ingest, database)
+        - RAG and retrieval
+        - Agent and tools
+        - MCP server
+        - 3D viewer
+        - Chat UI
+        - Safety and guardrails
+        - Evals and benchmarks
+        - Docker and setup
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where
+      options:
+        - Docker (docker compose up)
+        - Local dev (uv run / npm run dev)
+        - Code only (found in review or a test)
+    validations:
+      required: true
+  - type: dropdown
+    id: model
+    attributes:
+      label: Model
+      description: Which LLM answered. Put the exact model id under Logs if it matters.
+      options:
+        - Cloud (OpenRouter)
+        - Local (Ollama / LM Studio)
+        - Not LLM-related
+  - type: dropdown
+    id: offline
+    attributes:
+      label: Was OFFLINE=1 set?
+      options:
+        - "No"
+        - "Yes"
+        - Don't know
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: The relevant backend log lines, or the tool calls shown in the chat.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: Commit
+      placeholder: dde9f69
+  - type: textarea
+    id: source
+    attributes:
+      label: Where in the code (if known)
+      placeholder: "`backend/src/molecula/...`, `docs/data-plan.md` section"
