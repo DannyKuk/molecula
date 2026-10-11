@@ -13,6 +13,7 @@ ENV_KEYS = [
     "OPENFDA_API_KEY",
     "OFFLINE",
     "DATA_DIR",
+    "CORS_ORIGINS",
 ]
 
 
@@ -51,6 +52,19 @@ def test_offline_flag_parses_to_bool(
     monkeypatch.setenv("OFFLINE", raw)
 
     assert Settings(_env_file=None).offline is expected
+
+
+def test_cors_origins_default_to_the_local_frontend_and_parse_from_json(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    assert Settings(_env_file=None).cors_origins == ["http://localhost:3000"]
+
+    monkeypatch.setenv("CORS_ORIGINS", '["https://molecula.example", "http://localhost:3001"]')
+
+    assert Settings(_env_file=None).cors_origins == [
+        "https://molecula.example",
+        "http://localhost:3001",
+    ]
 
 
 def test_copied_env_example_loads_with_empty_keys(tmp_path: Path) -> None:

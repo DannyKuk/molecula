@@ -19,7 +19,7 @@ Early development. [`docs/data-plan.md`](docs/data-plan.md) describes the verifi
 
 ```
 cp .env.example .env              # fill in what you need; every key is optional for now
-docker compose up --build         # backend on http://localhost:8000/health
+docker compose up --build         # frontend on http://localhost:3000, backend on http://localhost:8000/health
 ```
 
 Backend development needs [uv](https://docs.astral.sh/uv/):
@@ -28,6 +28,15 @@ Backend development needs [uv](https://docs.astral.sh/uv/):
 cd backend
 uv sync
 uv run ruff check . && uv run ruff format --check . && uv run pytest
+```
+
+Frontend development needs Node.js 22. The dev server expects the backend on http://localhost:8000; set `NEXT_PUBLIC_API_URL` to point it elsewhere.
+
+```
+cd frontend
+npm ci
+npm run dev                       # http://localhost:3000
+npm run format:check && npm run lint && npm test && npm run build
 ```
 
 ## Layout
