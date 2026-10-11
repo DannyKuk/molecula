@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     openfda_api_key: SecretStr | None = None
     offline: bool = False
     data_dir: Path = REPO_ROOT / "data"
+    cors_origins: list[str] = ["http://localhost:3000"]
 
     @property
     def build_dir(self) -> Path:
