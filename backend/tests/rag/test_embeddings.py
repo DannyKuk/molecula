@@ -42,7 +42,9 @@ def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "LOCAL_EMBEDDING_MODEL",
         "DISABLE_SAFETENSORS_CONVERSION",
     ]:
-        monkeypatch.delenv(key, raising=False)
+        # Set first, so monkeypatch restores the variable after a test where the loader sets it.
+        monkeypatch.setenv(key, "")
+        monkeypatch.delenv(key)
 
 
 def settings(tmp_path: Path, **values: Any) -> Settings:

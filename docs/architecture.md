@@ -103,7 +103,7 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 | `backend/evals/` | Eval runners and datasets with real models: `retrieval/` compares embedding models on `datasets/retrieval_questions.yaml` |
 | `frontend/` | Next.js app: `app/` (pages), `components/`, `lib/` (typed API client, search) |
 | `data/` | `scope.yaml`, later `hero_set.yaml`, and the built store in `build/` (gitignored) |
-| `docs/` | `architecture.md`, `data-plan.md`, `decisions/`, and `spikes/` (the scripts behind their numbers) |
+| `docs/` | `architecture.md`, `data-plan.md`, `decisions/`, `evals/` (eval reports), and `spikes/` (the scripts behind their numbers) |
 
 ## Decisions and evals
 

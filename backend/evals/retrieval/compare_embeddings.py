@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import json
 import logging
+import os
 import platform
 import statistics
 import subprocess
@@ -275,6 +276,8 @@ def load_embedder(candidate: Candidate, settings: Settings, device: Device) -> E
     import torch
     from sentence_transformers import SentenceTransformer
 
+    # As in the app's loader: no second, converted copy of weights published only as .bin.
+    os.environ.setdefault("DISABLE_SAFETENSORS_CONVERSION", "true")
     on_gpu = device == "auto" and torch.cuda.is_available()
     return LocalEmbedder(
         SentenceTransformer(

@@ -1,6 +1,6 @@
 """Score a saved comparison run again against the current answer key, embedding nothing.
 
-    OFFLINE=1 uv run python -m evals.retrieval.rescore data/build/eval/embeddings-<stamp>.json
+    OFFLINE=1 uv run python -m evals.retrieval.rescore ../data/build/eval/embeddings-<stamp>.json
 
 The run keeps every question's top chunks per model; their texts come from the store, so the
 store must hold the same chunks as when the run was made. Prints the same report as the run.
