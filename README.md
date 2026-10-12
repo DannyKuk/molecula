@@ -18,6 +18,7 @@ Early development. [`docs/data-plan.md`](docs/data-plan.md) describes the verifi
 | [Name resolution](docs/decisions/name-resolution.md) | How brands, salt names and typos find a supported drug, and why suggestions are never applied on their own |
 | [Complex candidates](docs/decisions/complex-candidates.md) | How the PDB entries showing a drug bound to its target are found and ranked, and why viral targets need their own species |
 | [Drug labels](docs/decisions/drug-labels.md) | Which openFDA label each drug's answers come from, and which sections are never stored |
+| [Embeddings](docs/decisions/embeddings.md) | Why bge-m3 embeds the labels: 14 models on 94 questions, CPU against GPU and cloud, and what a strict answer key hides |
 | [Data check](docs/spikes/data-check/report.md) | The first live check of names, properties, complexes and labels |
 
 ## Stack
