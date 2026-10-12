@@ -22,21 +22,54 @@ PRODUCT_TYPES: dict[ProductType, str] = {
     "otc": "HUMAN OTC DRUG",
 }
 # The sections the knowledge base uses, from PLR prescription labels, older prescription labels
-# and OTC Drug Facts. Everything else is left out, notably `overdosage` (it lists toxic doses)
-# and the `*_table` HTML copies of sections already kept as text.
+# and OTC Drug Facts. Left out: the preclinical sections (animal and carcinogenicity studies),
+# references, change notes, and the `*_table` HTML copies of sections already kept as text.
+# `overdosage` is kept: its symptoms, treatment and toxic amounts matter when someone has taken
+# too much, and the app runs offline.
 SECTION_GROUPS: dict[str, SectionGroup] = {
     "mechanism_of_action": "pharmacology",
     "clinical_pharmacology": "pharmacology",
     "pharmacodynamics": "pharmacology",
+    "pharmacokinetics": "pharmacology",
+    "pharmacogenomics": "pharmacology",
+    "microbiology": "pharmacology",
     "indications_and_usage": "indications",
     "dosage_and_administration": "dosing",
     "boxed_warning": "warnings",
     "warnings_and_cautions": "warnings",
     "warnings": "warnings",
     "precautions": "warnings",
+    "general_precautions": "warnings",
+    "laboratory_tests": "warnings",
     "contraindications": "contraindications",
     "drug_interactions": "interactions",
+    "drug_and_or_laboratory_test_interactions": "interactions",
     "adverse_reactions": "adverse_reactions",
+    "use_in_specific_populations": "specific_populations",
+    "pregnancy": "specific_populations",
+    "teratogenic_effects": "specific_populations",
+    "nonteratogenic_effects": "specific_populations",
+    "labor_and_delivery": "specific_populations",
+    "nursing_mothers": "specific_populations",
+    "pediatric_use": "specific_populations",
+    "geriatric_use": "specific_populations",
+    "pregnancy_or_breast_feeding": "specific_populations",
+    "information_for_patients": "patient_information",
+    "spl_medguide": "patient_information",
+    "spl_patient_package_insert": "patient_information",
+    "patient_medication_information": "patient_information",
+    "instructions_for_use": "patient_information",
+    "description": "product",
+    "dosage_forms_and_strengths": "product",
+    "how_supplied": "product",
+    "storage_and_handling": "product",
+    "inactive_ingredient": "product",
+    "drug_abuse_and_dependence": "abuse_dependence",
+    "abuse": "abuse_dependence",
+    "dependence": "abuse_dependence",
+    "controlled_substance": "abuse_dependence",
+    "clinical_studies": "clinical_studies",
+    "overdosage": "overdosage",
     "do_not_use": "otc_consumer",
     "stop_use": "otc_consumer",
     "ask_doctor": "otc_consumer",
@@ -44,8 +77,15 @@ SECTION_GROUPS: dict[str, SectionGroup] = {
     "when_using": "otc_consumer",
     "purpose": "otc_consumer",
     "active_ingredient": "otc_consumer",
+    "keep_out_of_reach_of_children": "otc_consumer",
+    "other_safety_information": "otc_consumer",
 }
-SENSITIVE_GROUPS: frozenset[SectionGroup] = frozenset({"dosing"})
+# Text that may be quoted but never turned into personal advice: doses, use in pregnancy, children
+# and older people, the patient leaflets' "how to take" passages, how a drug is misused, and
+# toxic and lethal amounts.
+SENSITIVE_GROUPS: frozenset[SectionGroup] = frozenset(
+    {"dosing", "specific_populations", "patient_information", "abuse_dependence", "overdosage"}
+)
 REFERENCE_APPLICATIONS = ("NDA", "BLA")
 
 

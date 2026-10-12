@@ -92,3 +92,44 @@ def test_upgrades_a_version_3_store_and_adds_the_label_tables(tmp_path: Path) ->
     assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
     tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
     assert {"label", "label_section", "source_disclaimer"} <= tables
+
+
+def test_upgrades_a_version_4_store_keeping_its_labels_and_allowing_the_new_groups(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "molecula.db"
+    old = sqlite3.connect(path)
+    old.executescript("".join(MIGRATIONS[version] for version in range(1, 5)))
+    old.execute(
+        "INSERT INTO compound VALUES (5291, 'imatinib', 'K', 'C', 'F', 1.0, NULL, NULL,"
+        " 0, 0, 0, 1, 0, NULL, 'pubchem', '2026-01-01')"
+    )
+    old.execute(
+        "INSERT INTO label VALUES ('gleevec', 5291, 'IMATINIB MESYLATE', 'Gleevec', 'rx',"
+        " '20260713', 'https://dailymed', 'openfda', '2026-10-12')"
+    )
+    old.executemany(
+        "INSERT INTO label_section VALUES ('gleevec', ?, ?, ?, ?)",
+        [
+            ("indications_and_usage", "indications", "Ph+ CML.", 0),
+            ("dosage", "dosing", "400 mg", 1),
+        ],
+    )
+    old.execute("PRAGMA user_version = 4")
+    old.commit()
+    old.close()
+
+    conn = connect(path)
+
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
+    assert conn.execute(
+        "SELECT section, section_group, text, sensitive FROM label_section ORDER BY rowid"
+    ).fetchall() == [
+        ("indications_and_usage", "indications", "Ph+ CML.", 0),
+        ("dosage", "dosing", "400 mg", 1),
+    ]
+    conn.execute(
+        "INSERT INTO label_section VALUES ('gleevec', 'pregnancy', 'specific_populations', 'x', 1)"
+    )
+    conn.execute("DELETE FROM label")
+    assert conn.execute("SELECT count(*) FROM label_section").fetchone()[0] == 0

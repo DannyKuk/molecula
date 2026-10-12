@@ -120,6 +120,25 @@ CREATE TABLE source_disclaimer (
     fetched_at TEXT NOT NULL
 );
 """,
+    # SQLite can't change a CHECK constraint, so label_section is rebuilt with the new groups.
+    5: """
+CREATE TABLE label_section_new (
+    set_id TEXT NOT NULL REFERENCES label (set_id) ON DELETE CASCADE,
+    section TEXT NOT NULL,
+    section_group TEXT NOT NULL CHECK (section_group IN (
+        'pharmacology', 'indications', 'dosing', 'warnings', 'contraindications',
+        'interactions', 'adverse_reactions', 'otc_consumer', 'specific_populations',
+        'patient_information', 'product', 'abuse_dependence', 'clinical_studies', 'overdosage'
+    )),
+    text TEXT NOT NULL,
+    sensitive INTEGER NOT NULL,
+    PRIMARY KEY (set_id, section)
+);
+INSERT INTO label_section_new SELECT set_id, section, section_group, text, sensitive
+    FROM label_section ORDER BY rowid;
+DROP TABLE label_section;
+ALTER TABLE label_section_new RENAME TO label_section;
+""",
 }
 SCHEMA_VERSION = max(MIGRATIONS)
 

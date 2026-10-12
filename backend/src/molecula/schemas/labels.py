@@ -13,6 +13,12 @@ type SectionGroup = Literal[
     "interactions",
     "adverse_reactions",
     "otc_consumer",
+    "specific_populations",
+    "patient_information",
+    "product",
+    "abuse_dependence",
+    "clinical_studies",
+    "overdosage",
 ]
 
 
