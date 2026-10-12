@@ -1,6 +1,8 @@
 # Questions for comparing retrieval over the label chunks (evals/retrieval/compare_embeddings.py).
 # A retrieved chunk answers a question when it belongs to the question's drug (cid) and contains
-# `evidence`, an exact passage of the label. `section_group` is the part of the label the question
+# `evidence`, the exact passage the question was written from, or one of `pooled_evidence`: the same
+# fact in other words, found by judging the chunks the compared models ranked first
+# (docs/decisions/embeddings.md). `section_group` is the part of the label the question
 # is about, for the per-group breakdown. Questions paraphrase the label on purpose, so they don't
 # favour lexical matching. origin: hand (topic chosen by hand) or sampled (written for a chunk
 # that `python -m evals.retrieval.questions sample` picked at random).
