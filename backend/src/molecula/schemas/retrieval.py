@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -15,8 +16,12 @@ class LabelQuery(BaseModel):
     product_type: ProductType | None = None
 
 
+type Widening = Literal["labels", "section_groups"]
+
+
 class DrugFilter(BaseModel):
-    """A drug the question names, as it names it, and the labels of that drug to search."""
+    """A drug the question names, as it names it, and the labels of that drug to search.
+    `narrowed` means a brand or the product type left out some of the drug's labels."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -24,6 +29,7 @@ class DrugFilter(BaseModel):
     cid: int
     generic: str
     set_ids: list[str]
+    narrowed: bool = False
 
 
 class LabelFilter(BaseModel):
@@ -75,7 +81,12 @@ class RetrievedChunk(BaseModel):
 
 class Retrieval(BaseModel):
     """The chunks a label search kept, best first, and the candidates it dropped for scoring
-    below the threshold, with the filter it searched under (None: the whole index)."""
+    below the threshold, with the filter it searched under (None: the whole index).
+
+    `widened` lists the parts of the filter given up, in order, because the search under the
+    full filter found nothing: "labels" searched every label of the named drugs (or any product
+    type), "section_groups" every section.
+    """
 
     model_config = ConfigDict(frozen=True)
 
@@ -83,3 +94,4 @@ class Retrieval(BaseModel):
     filter: LabelFilter | None
     chunks: list[RetrievedChunk]
     dropped: list[RetrievedChunk]
+    widened: list[Widening] = []

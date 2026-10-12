@@ -253,3 +253,13 @@ def test_the_prompt_names_every_section_group() -> None:
     prompt = prompts.load("rag/extract_filters")
 
     assert all(f"`{group}`" in prompt for group in SECTION_GROUPS)
+
+
+def test_a_filter_says_whether_a_drug_lost_labels_to_its_brand_or_product_type(
+    services: Services,
+) -> None:
+    filters, _ = extractor(services)
+
+    assert filters.check(LabelQuery(substances=["Voltaren"])).drugs[0].narrowed
+    assert not filters.check(LabelQuery(substances=["diclofenac"])).drugs[0].narrowed
+    assert not filters.check(LabelQuery(substances=["Advil", "ibuprofen"])).drugs[0].narrowed

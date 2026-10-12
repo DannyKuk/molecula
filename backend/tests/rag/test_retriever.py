@@ -174,3 +174,45 @@ def test_results_carry_what_a_citation_needs(index: LabelIndex) -> None:
     assert chunk.effective_time == date(2026, 7, 13)
     assert retrieval.filter == narrowed
     assert retrieval.question == "nausea"
+
+
+def test_a_full_filter_that_finds_something_is_not_widened(index: LabelIndex) -> None:
+    narrowed = label_filter([IMATINIB], section_groups=["adverse_reactions"])
+
+    assert retriever(index).retrieve("nausea", narrowed).widened == []
+
+
+def test_a_brands_label_without_the_section_widens_to_the_drugs_other_labels(
+    index: LabelIndex,
+) -> None:
+    advil = DrugFilter(
+        name="Advil", cid=3672, generic="ibuprofen", set_ids=["advil"], narrowed=True
+    )
+
+    retrieval = retriever(index).retrieve(
+        "nausea", label_filter([advil], section_groups=["adverse_reactions"])
+    )
+
+    assert [chunk.id for chunk in retrieval.chunks] == [IBUPROFEN_SIDE_EFFECTS.id]
+    assert retrieval.widened == ["labels"]
+
+
+def test_a_section_no_label_of_the_drug_has_widens_to_every_section(index: LabelIndex) -> None:
+    retrieval = retriever(index).retrieve(
+        "kinase", label_filter([IMATINIB], section_groups=["overdosage"])
+    )
+
+    assert {chunk.cid for chunk in retrieval.chunks} == {IMATINIB.cid}
+    assert retrieval.chunks[0].id == IMATINIB_MECHANISM.id
+    assert retrieval.widened == ["section_groups"]
+
+
+def test_a_product_type_without_the_section_widens_to_every_product_type(
+    index: LabelIndex,
+) -> None:
+    retrieval = retriever(index).retrieve(
+        "kinase", label_filter(product_type="otc", section_groups=["pharmacology"])
+    )
+
+    assert [chunk.id for chunk in retrieval.chunks] == [IMATINIB_MECHANISM.id]
+    assert retrieval.widened == ["labels"]

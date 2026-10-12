@@ -69,7 +69,8 @@ class FilterExtractor:
         if compound is None:
             return None
         drug_labels = self._labels.get_labels(compound.cid)
-        labels = drug_labels.labels if drug_labels else []
+        all_labels = drug_labels.labels if drug_labels else []
+        labels = all_labels
         if resolution.match_kind != "name":
             labels = narrowed(labels, lambda label: is_brand_of(name, label, compound.name))
         if product_type:
@@ -79,6 +80,7 @@ class FilterExtractor:
             cid=compound.cid,
             generic=compound.name,
             set_ids=[label.set_id for label in labels],
+            narrowed=len(labels) < len(all_labels),
         )
 
 
@@ -100,7 +102,12 @@ def is_brand_of(name: str, label: Label, generic: str) -> bool:
 
 
 def merged(first: DrugFilter, second: DrugFilter) -> DrugFilter:
-    return first.model_copy(update={"set_ids": unique([*first.set_ids, *second.set_ids])})
+    return first.model_copy(
+        update={
+            "set_ids": unique([*first.set_ids, *second.set_ids]),
+            "narrowed": first.narrowed and second.narrowed,
+        }
+    )
 
 
 def unique(items: Iterable[str]) -> list[str]:
