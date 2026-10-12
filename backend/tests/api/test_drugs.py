@@ -5,9 +5,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 from molecula.api import examples
-from molecula.api.dependencies import compound_service, target_service
+from molecula.api.dependencies import compound_service, label_service, target_service
 from molecula.main import app
 from molecula.schemas.compounds import Compound, Resolution, Structure, SupportedDrug
+from molecula.schemas.labels import DrugLabels
 from molecula.schemas.targets import DrugTargets
 
 SEMAGLUTIDE = examples.IMATINIB.model_copy(
@@ -15,6 +16,7 @@ SEMAGLUTIDE = examples.IMATINIB.model_copy(
 )
 SDF = "5291\n  stored conformer\n$$$$\n"
 FLUTICASONE_CID = 5311101
+METAMIZOLE_CID = 3111
 
 
 class FakeCompoundService:
@@ -54,6 +56,23 @@ class FakeTargetService:
         return self.drugs.get(cid)
 
 
+class FakeLabelService:
+    """Knows imatinib (with a label) and metamizole (without); records the CIDs it was asked."""
+
+    def __init__(self) -> None:
+        self.drugs = {
+            5291: examples.IMATINIB_LABELS,
+            METAMIZOLE_CID: DrugLabels(
+                cid=METAMIZOLE_CID, labels=[], disclaimer=examples.IMATINIB_LABELS.disclaimer
+            ),
+        }
+        self.asked: list[int] = []
+
+    def get_labels(self, cid: int) -> DrugLabels | None:
+        self.asked.append(cid)
+        return self.drugs.get(cid)
+
+
 @pytest.fixture
 def service() -> Iterator[FakeCompoundService]:
     fake = FakeCompoundService()
@@ -70,7 +89,16 @@ def targets(service: FakeCompoundService) -> FakeTargetService:
 
 
 @pytest.fixture
-def client(service: FakeCompoundService, targets: FakeTargetService) -> TestClient:
+def labels(service: FakeCompoundService) -> FakeLabelService:
+    fake = FakeLabelService()
+    app.dependency_overrides[label_service] = lambda: fake
+    return fake
+
+
+@pytest.fixture
+def client(
+    service: FakeCompoundService, targets: FakeTargetService, labels: FakeLabelService
+) -> TestClient:
     return TestClient(app)
 
 
@@ -245,6 +273,57 @@ def test_targets_rejects_an_invalid_cid(
     assert targets.asked == []
 
 
+def test_labels_list_each_label_with_its_sections_and_dailymed_link(client: TestClient) -> None:
+    response = client.get("/drugs/5291/labels")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body == examples.IMATINIB_LABELS.model_dump(mode="json")
+    label = body["labels"][0]
+    assert (label["product_type"], label["effective_time"]) == ("rx", "2026-07-13")
+    assert label["source_url"].startswith(
+        "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid="
+    )
+    assert {section["section_group"] for section in label["sections"]} >= {"dosing", "indications"}
+    assert body["disclaimer"]
+
+
+def test_labels_of_a_supported_drug_without_a_us_label_is_an_empty_list(
+    client: TestClient,
+) -> None:
+    response = client.get(f"/drugs/{METAMIZOLE_CID}/labels")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert (body["cid"], body["labels"]) == (METAMIZOLE_CID, [])
+    assert body["disclaimer"] == examples.IMATINIB_LABELS.disclaimer
+
+
+def test_labels_of_an_unsupported_cid_is_404(client: TestClient) -> None:
+    response = client.get("/drugs/1/labels")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "CID 1 is not a supported drug."}
+
+
+@pytest.mark.parametrize(
+    ("cid", "message"),
+    [
+        ("0", "Input should be greater than 0"),
+        ("-5", "Input should be greater than 0"),
+        ("imatinib", "Input should be a valid integer"),
+        ("1" * 30, "Input should be less than or equal to"),
+    ],
+)
+def test_labels_rejects_an_invalid_cid(
+    client: TestClient, labels: FakeLabelService, cid: str, message: str
+) -> None:
+    messages = validation_messages(client.get(f"/drugs/{cid}/labels"))
+
+    assert any(message in text for text in messages)
+    assert labels.asked == []
+
+
 @pytest.mark.parametrize(
     ("path", "media_type"),
     [
@@ -253,6 +332,7 @@ def test_targets_rejects_an_invalid_cid(
         ("/drugs/{cid}", "application/json"),
         ("/drugs/{cid}/structure", "chemical/x-mdl-sdfile"),
         ("/drugs/{cid}/targets", "application/json"),
+        ("/drugs/{cid}/labels", "application/json"),
     ],
 )
 def test_openapi_lists_every_route_with_an_example(path: str, media_type: str) -> None:

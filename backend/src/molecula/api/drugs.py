@@ -3,9 +3,10 @@ from typing import Annotated, Any
 from fastapi import APIRouter, HTTPException, Path, Query, Response
 
 from molecula.api import examples
-from molecula.api.dependencies import CompoundServiceDep, TargetServiceDep
+from molecula.api.dependencies import CompoundServiceDep, LabelServiceDep, TargetServiceDep
 from molecula.schemas.compounds import Cid, Compound, DrugName, Resolution, SupportedDrug
 from molecula.schemas.errors import ErrorDetail
+from molecula.schemas.labels import DrugLabels
 from molecula.schemas.targets import DrugTargets
 
 SDF_MEDIA_TYPE = "chemical/x-mdl-sdfile"
@@ -122,3 +123,19 @@ def get_drug_targets(cid: CidParam, service: TargetServiceDep) -> DrugTargets:
     if targets is None:
         raise not_supported(cid)
     return targets
+
+
+@router.get(
+    "/{cid}/labels",
+    responses={
+        200: json_example(examples.IMATINIB_LABELS.model_dump(mode="json")),
+        **NOT_SUPPORTED_RESPONSE,
+    },
+)
+def get_drug_labels(cid: CidParam, service: LabelServiceDep) -> DrugLabels:
+    """The drug's canonical US labels (prescription, then OTC) with their sections and the
+    openFDA disclaimer. A supported drug without a US label has an empty list."""
+    labels = service.get_labels(cid)
+    if labels is None:
+        raise not_supported(cid)
+    return labels

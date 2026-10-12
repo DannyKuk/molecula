@@ -10,9 +10,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from molecula.api import drugs, health
 from molecula.config import Settings, get_settings
 from molecula.services.compounds import CompoundService
+from molecula.services.labels import LabelService
 from molecula.services.targets import TargetService
 from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
+from molecula.store.labels import LabelStore
 from molecula.store.structures import ConformerFiles
 from molecula.store.targets import TargetStore
 
@@ -42,6 +44,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         suggestion_cutoff=settings.name_suggestion_cutoff,
     )
     app.state.target_service = TargetService(TargetStore(conn), compounds)
+    app.state.label_service = LabelService(LabelStore(conn), compounds)
     yield
     conn.close()
 
