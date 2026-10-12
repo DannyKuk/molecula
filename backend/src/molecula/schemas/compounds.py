@@ -3,6 +3,7 @@ from typing import Annotated, Literal
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints
 
 type ConformerSource = Literal["pubchem", "rdkit"]
+type MatchKind = Literal["name", "alias", "pubchem", "brand"]
 
 DRUG_NAME_PUNCTUATION = " -,()'+."
 # SQLite's largest integer; a larger CID can't be looked up at all.
@@ -93,7 +94,7 @@ class Resolution(BaseModel):
     status: Literal["found", "not_supported"]
     compound: Compound | None = None
     matched_alias: str | None = None
-    match_kind: Literal["name", "alias", "pubchem", "brand"] | None = None
+    match_kind: MatchKind | None = None
     suggestions: list[Suggestion] = []
 
 

@@ -2,7 +2,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from molecula.schemas.compounds import Compound, DrugName, Suggestion
+from molecula.schemas.compounds import Compound, DrugName, MatchKind, Suggestion
 from molecula.schemas.targets import Target
 
 MIN_COMPARED_DRUGS = 2
@@ -56,7 +56,7 @@ class ResolvedDrug(BaseModel):
     cid: int
     name: str
     matched_alias: str
-    match_kind: Literal["name", "alias", "pubchem"]
+    match_kind: MatchKind
     source: str
     source_url: str
 

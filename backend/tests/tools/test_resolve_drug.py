@@ -29,6 +29,17 @@ def test_brand_resolves_to_the_generic_with_its_pubchem_page(tool: StructuredToo
     )
 
 
+def test_label_brand_resolves_to_its_drug(tool: StructuredTool) -> None:
+    message = call_tool(tool, {"name": "Xhance"})
+
+    assert isinstance(message.artifact, ResolvedDrug)
+    assert (message.artifact.name, message.artifact.matched_alias, message.artifact.match_kind) == (
+        "fluticasone",
+        "Xhance",
+        "brand",
+    )
+
+
 def test_model_reads_the_result_as_json(tool: StructuredTool) -> None:
     message = call_tool(tool, {"name": "Gleevec"})
 
