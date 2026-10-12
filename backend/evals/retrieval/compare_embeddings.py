@@ -161,12 +161,6 @@ def evaluate(
         question_result(question, row, latency, chunks, cids == question.cid)
         for question, row, latency in zip(questions, scores, latencies, strict=True)
     ]
-    in_drug = [result.rank_in_drug for result in per_question]
-    anywhere = [result.rank_whole_index for result in per_question]
-    by_group: dict[str, list[int | None]] = defaultdict(list)
-    for question, rank in zip(questions, in_drug, strict=True):
-        by_group[question.section_group].append(rank)
-
     return Result(
         label=candidate.label,
         model=candidate.model,
@@ -178,14 +172,28 @@ def evaluate(
         index_mb=index_size_mb(chunks, documents, candidate.model),
         query_ms_p50=statistics.median(latencies),
         query_ms_p95=statistics.quantiles(latencies, n=20)[-1],
-        in_drug=summarize(in_drug),
-        whole_index=summarize(anywhere),
-        recall_at_5_by_group={group: recall(ranks, 5) for group, ranks in sorted(by_group.items())},
-        missed_in_drug=[
+        **scored(questions, per_question),
+    )
+
+
+def scored(questions: list[Question], per_question: list[QuestionResult]) -> dict[str, Any]:
+    """The Result fields that follow from the ranks, so a saved run can be scored again."""
+    in_drug = [result.rank_in_drug for result in per_question]
+    anywhere = [result.rank_whole_index for result in per_question]
+    by_group: dict[str, list[int | None]] = defaultdict(list)
+    for question, rank in zip(questions, in_drug, strict=True):
+        by_group[question.section_group].append(rank)
+    return {
+        "in_drug": summarize(in_drug),
+        "whole_index": summarize(anywhere),
+        "recall_at_5_by_group": {
+            group: recall(ranks, 5) for group, ranks in sorted(by_group.items())
+        },
+        "missed_in_drug": [
             q.id for q, rank in zip(questions, in_drug, strict=True) if rank is None or rank > 5
         ],
-        questions=per_question,
-    )
+        "questions": per_question,
+    }
 
 
 def question_result(
@@ -196,8 +204,8 @@ def question_result(
     return QuestionResult(
         id=question.id,
         query_ms=latency,
-        rank_in_drug=first_hit_rank(question, in_drug, chunks),
-        rank_whole_index=first_hit_rank(question, whole_index, chunks),
+        rank_in_drug=first_hit_rank(question, [chunks[i] for i in in_drug]),
+        rank_whole_index=first_hit_rank(question, [chunks[i] for i in whole_index]),
         top_in_drug=[Retrieved(chunks[i].id, float(scores[i])) for i in in_drug],
         top_whole_index=[Retrieved(chunks[i].id, float(scores[i])) for i in whole_index],
     )
@@ -359,10 +367,10 @@ def query_vectors(
     return np.stack(vectors).astype(np.float32), latencies
 
 
-def first_hit_rank(question: Question, ranked: list[int], chunks: list[Chunk]) -> int | None:
+def first_hit_rank(question: Question, ranked: list[Chunk]) -> int | None:
     """The 1-based rank of the first chunk that answers the question, or None."""
-    for rank, position in enumerate(ranked, start=1):
-        if is_hit(question, chunks[position]):
+    for rank, chunk in enumerate(ranked, start=1):
+        if is_hit(question, chunk):
             return rank
     return None
 
