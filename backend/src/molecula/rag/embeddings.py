@@ -3,8 +3,7 @@ from typing import TYPE_CHECKING, Any
 from langchain_core.embeddings import Embeddings
 from langchain_openai import OpenAIEmbeddings
 
-from molecula.agent.llm import OPENROUTER_ATTRIBUTION_HEADERS, OPENROUTER_BASE_URL
-from molecula.config import Settings
+from molecula.config import OPENROUTER_ATTRIBUTION_HEADERS, OPENROUTER_BASE_URL, Settings
 
 if TYPE_CHECKING:
     from sentence_transformers import SentenceTransformer

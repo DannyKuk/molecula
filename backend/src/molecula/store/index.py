@@ -46,7 +46,7 @@ class LabelIndex:
     @classmethod
     def empty(cls, path: Path) -> LabelIndex:
         """A new index in an emptied folder. Chroma keeps a deleted collection's files and its
-        SQLite file only grows, so a rebuild in place grew the index from 74.7 to 96.7 MB."""
+        SQLite file only grows, so a rebuild in place grew the index from 74.8 to 96.7 MB."""
         if path.exists():
             try:
                 shutil.rmtree(path)

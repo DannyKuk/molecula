@@ -6,8 +6,7 @@ import pytest
 from langchain_openai import OpenAIEmbeddings
 from pydantic import SecretStr
 
-from molecula.agent.llm import OPENROUTER_BASE_URL
-from molecula.config import Settings
+from molecula.config import OPENROUTER_BASE_URL, Settings
 from molecula.rag.embeddings import (
     EmbeddingConfigError,
     LocalEmbeddings,

@@ -9,6 +9,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # Inside Docker the package is installed elsewhere, so compose sets DATA_DIR and passes .env in.
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
+# Shared by the chat model (agent/llm.py) and the cloud embeddings (rag/embeddings.py).
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+OPENROUTER_ATTRIBUTION_HEADERS = {
+    "HTTP-Referer": "https://github.com/DannyKuk/molecula",
+    "X-OpenRouter-Title": "Molecula",
+}
+
 
 class Settings(BaseSettings):
     """App settings, read from the environment and the repo's `.env` (keys as in `.env.example`)."""

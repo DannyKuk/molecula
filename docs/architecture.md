@@ -61,7 +61,7 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 | `targets` | stored InChIKeys, ChEMBL, RCSB | `target`, `ligand_code`, `complex_candidate`, and `complex_candidates.md` for the hero review. 132 compounds with targets, 70 with candidate complexes | built (#55) |
 | `labels` | openFDA | one canonical Rx and one OTC label per drug, split into section groups. 133 of 134 drugs: 129 Rx and 27 OTC labels, 5.7M characters; metamizole has no US label | built (#63) |
 | `complexes` | `data/hero_set.yaml` (reviewed by hand, #6), RCSB mmCIF | one viewer-ready JSON per hero complex: CA trace, pocket, ligand, contacts | planned (#7) |
-| `index` | the stored label sections | chunks with label metadata in ChromaDB, embedded with a local model saved in `data/build/models/`; later BM25 next to it. 3,813 chunks from 156 labels, 74.7 MB | built (#87); model choice #88, BM25 #44 |
+| `index` | the stored label sections | chunks with label metadata in ChromaDB, embedded with a local model saved in `data/build/models/`; later BM25 next to it. 3,813 chunks from 156 labels, 74.8 MB | built (#87); model choice #88, BM25 #44 |
 | `export` / `fetch`, `update` | the built store; openFDA for changed labels | a release snapshot for fresh clones; re-indexed changed labels | planned (#35, #25) |
 
 ## Key design choices
