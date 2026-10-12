@@ -1,4 +1,5 @@
 import logging
+import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -196,11 +197,15 @@ def virus_species(organism: str | None) -> str | None:
     Cellular targets match across species (mouse ABL1 in 1IEP), but viral gene names are generic:
     HIV-1 integrase and foamy virus integrase are both `pol`. ChEMBL names a strain after its
     species, "Influenza A virus (A/Puerto Rico/8/1934(H1N1))", and the species is what counts,
-    since the neuraminidase structures come from many strains.
+    since the neuraminidase structures come from many strains. A type in the parentheses is part
+    of the species: "Herpes simplex virus (type 1 / strain 17)" is "Herpes simplex virus 1".
     """
     if organism is None or "virus" not in organism.casefold():
         return None
-    return organism.split(" (", 1)[0]
+    species, _, strain = organism.partition(" (")
+    if virus_type := re.match(r"type (\w+)", strain):
+        return f"{species} {virus_type.group(1)}"
+    return species
 
 
 def rank_key(complex_: ComplexCandidate) -> tuple[bool, bool, float, str]:

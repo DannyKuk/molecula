@@ -196,13 +196,40 @@ def test_raltegravir_has_no_hiv1_integrase_entry(rcsb) -> None:
 def test_taxon_keeps_hiv1_and_drops_foamy_virus_and_siv(rcsb) -> None:
     complexes = rcsb().complexes("DLU", ["pol"], taxon="Human immunodeficiency virus 1")
 
-    assert [(c.pdb_id, c.taxonomy_id) for c in complexes] == [
-        ("6VDK", 11676),
-        ("8W09", 11676),
-        ("8W2R", 11676),
-        ("8W34", 11676),
-    ]
-    assert len(rcsb().complexes("DLU", ["pol"])) == 8
+    assert {c.taxonomy_id for c in complexes} == {11676}
+    assert not {"3S3M", "3S3N", "3S3O", "6RWN"} & {c.pdb_id for c in complexes}
+    assert len(complexes) == 16
+    assert len(rcsb().complexes("DLU", ["pol"])) == 20
+
+
+def test_gag_pol_counts_as_pol(rcsb) -> None:
+    # 6U8Q names gag-pol only through UniProt, 9C9M only through the depositor.
+    complexes = rcsb().complexes("DLU", ["pol"], taxon="Human immunodeficiency virus 1")
+
+    assert {"6U8Q", "9C9M"} <= {c.pdb_id for c in complexes}
+
+
+def test_lap2_integrase_fusion_takes_the_hiv1_part(rcsb) -> None:
+    # 8FN7 to 8FNP fuse human LAP2, listed first, to HIV-1 integrase named gag-pol.
+    complexes = rcsb().complexes("DLU", ["pol"], taxon="Human immunodeficiency virus 1")
+
+    fusions = [c for c in complexes if c.pdb_id.startswith("8FN")]
+    assert len(fusions) == 10
+    assert {(c.organism, c.taxonomy_id) for c in fusions} == {
+        ("Human immunodeficiency virus 1", 11676)
+    }
+
+
+def test_gag_pol_does_not_count_as_gag(rcsb) -> None:
+    assert rcsb().complexes("DLU", ["gag"], taxon="Human immunodeficiency virus 1") == []
+
+
+def test_taxon_matches_a_numbered_species_named_in_the_lineage(rcsb) -> None:
+    # 2KI5 is HSV-1 thymidine kinase; NCBI has no species called plain "Herpes simplex virus".
+    complexes = rcsb().complexes("AC2", ["TK"], taxon="Herpes simplex virus 1")
+
+    assert [(c.pdb_id, c.organism) for c in complexes] == [("2KI5", "Human herpesvirus 1")]
+    assert rcsb().complexes("AC2", ["TK"], taxon="Herpes simplex virus") == []
 
 
 def test_taxon_matches_a_species_above_the_strain_ignoring_case(rcsb) -> None:

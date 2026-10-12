@@ -4,7 +4,10 @@ Recorded on 2026-10-11, except the S-warfarin (SWF) search and entries, recorded
 The GraphQL entries (STI, TYL, SWF) were recorded again on 2026-10-12 when the query started to
 ask for each source organism's taxonomy lineage. The raltegravir (RLT) and dolutegravir (DLU)
 searches and entries were recorded on 2026-10-12: RLT is bound only to foamy virus, STLV-1,
-influenza and transposase proteins, no HIV-1 integrase; DLU to foamy virus, SIV and HIV-1 integrase.
+influenza and transposase proteins, no HIV-1 integrase; DLU to foamy virus, SIV and HIV-1 integrase,
+the HIV-1 entries named `pol` or only `gag-pol`. The acyclovir (AC2) search and entries were
+recorded on 2026-10-12 for 2KI5, HSV-1 thymidine kinase, whose lineage names the species
+"Herpes simplex virus 1".
 
 Search and GraphQL requests are POSTs to one URL, so they are told apart by their JSON body:
 `describe` turns a request into a short readable key. The ibuprofen InChIKey search answered
@@ -45,6 +48,7 @@ TYL_ENTRY_DETAILS = "graphql entries 1TYL,1TYM,2DPZ,2OCU,3PY4,4A9J,4A9K,4CUT,4YJ
 SWF_ENTRY_DETAILS = "graphql entries 10QV,1HA2,1OG5,6WV3,6WV4,6WVB"
 RLT_ENTRY_DETAILS = f"graphql entries {','.join(recorded_entries('RLT'))}"
 DLU_ENTRY_DETAILS = f"graphql entries {','.join(recorded_entries('DLU'))}"
+AC2_ENTRY_DETAILS = f"graphql entries {','.join(recorded_entries('AC2'))}"
 
 RECORDED: dict[str, tuple[int, str | None]] = {
     INCHIKEY_SEARCH.format(IMATINIB_INCHIKEY): (200, "search_inchikey_imatinib.json"),
@@ -68,6 +72,8 @@ RECORDED: dict[str, tuple[int, str | None]] = {
     INCHIKEY_SEARCH.format(DOLUTEGRAVIR_INCHIKEY): (200, "search_inchikey_dolutegravir.json"),
     LIGAND_SEARCH.format("DLU"): (200, "search_entries_DLU.json"),
     DLU_ENTRY_DETAILS: (200, "graphql_entries_DLU.json"),
+    LIGAND_SEARCH.format("AC2"): (200, "search_entries_AC2.json"),
+    AC2_ENTRY_DETAILS: (200, "graphql_entries_AC2.json"),
 }
 
 
