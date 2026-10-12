@@ -112,12 +112,25 @@ def main() -> int:
         return 1
     logger.info("%d questions over %d chunks", len(questions), len(chunks))
 
-    results = [
-        evaluate(candidate, chunks, questions, settings, args.device) for candidate in candidates
-    ]
+    results = []
+    for candidate in candidates:
+        results.append(evaluate(candidate, chunks, questions, settings, args.device))
+        free_gpu_memory()
     print(report(results, questions))
     save(results, questions, chunks, settings, args.device)
     return 0
+
+
+def free_gpu_memory() -> None:
+    """Release the last model before the next loads. On Windows a model that no longer fits in
+    VRAM spills into shared system memory: Qwen3-8B after the smaller models ran ~25x slower."""
+    import gc
+
+    import torch
+
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 def label_chunks(settings: Settings) -> list[Chunk]:
