@@ -46,7 +46,10 @@ TOP_K = 10
 # Chunks a run keeps the text of, for showing what each model found.
 SHOWN_K = 5
 WARMUP_QUERIES = 3
-EMBED_BATCH = 16
+# Small enough that Qwen3-8B (16 GB in fp16) stays inside a 24 GB GPU with 500-token chunks;
+# 16 spilled into shared memory and slowed it down. The same for every local model, so their
+# embedding times compare.
+EMBED_BATCH = 8
 CLOUD_BATCH = 64
 
 type Device = Literal["auto", "cpu"]
@@ -82,6 +85,7 @@ class Result:
     dimensions: int
     build_device: str
     build_seconds: float
+    build_vram_peak_gb: float | None
     query_device: str
     index_mb: float
     query_ms_p50: float
@@ -147,7 +151,8 @@ def evaluate(
 ) -> Result:
     logger.info("%s: %s", candidate.label, candidate.model)
     embedder = load_embedder(candidate, settings, device)
-    documents, build_seconds, build_device = document_vectors(candidate, embedder, chunks, settings)
+    build = document_vectors(candidate, embedder, chunks, settings)
+    documents = build.vectors
     queries, latencies = query_vectors(candidate, embedder, questions)
     scores = queries @ documents.T
     cids = np.array([chunk.cid for chunk in chunks])
@@ -166,8 +171,9 @@ def evaluate(
         label=candidate.label,
         model=candidate.model,
         dimensions=documents.shape[1],
-        build_device=build_device,
-        build_seconds=build_seconds,
+        build_device=build.device,
+        build_seconds=build.seconds,
+        build_vram_peak_gb=build.vram_peak_gb,
         query_device=embedder.device,
         index_mb=index_size_mb(chunks, documents, candidate.model),
         query_ms_p50=statistics.median(latencies),
@@ -273,26 +279,69 @@ def load_embedder(candidate: Candidate, settings: Settings, device: Device) -> E
     )
 
 
+@dataclass(frozen=True)
+class Build:
+    vectors: np.ndarray
+    seconds: float
+    device: str
+    vram_peak_gb: float | None
+
+
 def document_vectors(
     candidate: Candidate, embedder: Embedder, chunks: list[Chunk], settings: Settings
-) -> tuple[np.ndarray, float, str]:
-    """The chunks' vectors, how long embedding them took and where, from the cache when the
-    model, prefix and chunks are unchanged."""
+) -> Build:
+    """The chunks' vectors with how long embedding them took, where, and the GPU memory it
+    peaked at, from the cache when the model, prefix and chunks are unchanged."""
     texts = [candidate.document_prefix + chunk.text for chunk in chunks]
     key = hashlib.sha256("\n".join([candidate.model, *texts]).encode()).hexdigest()[:16]
     cache = settings.build_dir / "eval" / "vectors" / f"{key}.npz"
     if cache.exists():
         cached = np.load(cache)
         logger.info("  document vectors from %s", cache)
-        return cached["vectors"], float(cached["seconds"]), str(cached["device"])
+        peak = float(cached["vram_peak_gb"])
+        return Build(
+            vectors=cached["vectors"],
+            seconds=float(cached["seconds"]),
+            device=str(cached["device"]),
+            vram_peak_gb=None if np.isnan(peak) else peak,
+        )
 
+    reset_vram_peak()
     started = perf_counter()
     vectors = embedder.documents(texts).astype(np.float32)
     seconds = perf_counter() - started
-    logger.info("  embedded %d chunks in %.0f s on %s", len(texts), seconds, embedder.device)
+    peak = vram_peak_gb() if embedder.device.startswith("cuda") else None
+    logger.info(
+        "  embedded %d chunks in %.0f s on %s, peak VRAM %s GB",
+        len(texts),
+        seconds,
+        embedder.device,
+        "-" if peak is None else f"{peak:.1f}",
+    )
     cache.parent.mkdir(parents=True, exist_ok=True)
-    np.savez(cache, vectors=vectors, seconds=seconds, device=embedder.device)
-    return vectors, seconds, embedder.device
+    np.savez(
+        cache,
+        vectors=vectors,
+        seconds=seconds,
+        device=embedder.device,
+        vram_peak_gb=np.nan if peak is None else peak,
+    )
+    return Build(vectors, seconds, embedder.device, peak)
+
+
+def reset_vram_peak() -> None:
+    import torch
+
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
+
+
+def vram_peak_gb() -> float:
+    """The most GPU memory PyTorch held during the build, weights included. Close to the card's
+    size means it may have spilled into shared memory, which slows it down."""
+    import torch
+
+    return torch.cuda.max_memory_reserved() / 1e9
 
 
 def query_vectors(
@@ -352,7 +401,9 @@ def report(results: list[Result], questions: list[Question]) -> str:
             f"| {r.label} | {r.dimensions} | {r.in_drug.recall_at_1:.2f} "
             f"| {r.in_drug.recall_at_5:.2f} | {r.in_drug.mrr_at_10:.3f} "
             f"| {r.whole_index.recall_at_5:.2f} | {r.whole_index.mrr_at_10:.3f} "
-            f"| {r.build_seconds:.0f} ({r.build_device}) | {r.index_mb:.1f} "
+            f"| {r.build_seconds:.0f} ({r.build_device}"
+            f"{'' if r.build_vram_peak_gb is None else f', {r.build_vram_peak_gb:.1f} GB'}) "
+            f"| {r.index_mb:.1f} "
             f"| {r.query_ms_p50:.0f} / {r.query_ms_p95:.0f} ({r.query_device}) |"
         )
     counts: dict[str, int] = defaultdict(int)
@@ -420,6 +471,7 @@ def run_details(chunks: list[Chunk], device: Device) -> dict[str, Any]:
         "chunk_tokens": CHUNK_TOKENS,
         "overlap_tokens": OVERLAP_TOKENS,
         "top_k": TOP_K,
+        "embed_batch": EMBED_BATCH,
         "device": device,
         "cpu": platform.processor(),
         "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
