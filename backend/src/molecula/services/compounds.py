@@ -1,6 +1,15 @@
+import re
 from difflib import get_close_matches
+from functools import cached_property
 
-from molecula.schemas.compounds import Compound, Resolution, Structure, Suggestion, SupportedDrug
+from molecula.schemas.compounds import (
+    Compound,
+    DrugMention,
+    Resolution,
+    Structure,
+    Suggestion,
+    SupportedDrug,
+)
 from molecula.store.compounds import CompoundRecord, CompoundStore
 from molecula.store.structures import ConformerFiles
 
@@ -114,6 +123,42 @@ class CompoundService:
                     alias.casefold(), Suggestion(alias=alias, cid=record.cid, name=record.name)
                 )
         return spellings
+
+    def find_mentions(self, text: str) -> list[DrugMention]:
+        """The supported drugs a text names by scope name or alias, in the order they appear.
+
+        Only whole words count, and a longer name wins over a name inside it ("acetylsalicylic
+        acid"). PubChem synonyms are left out: they include codes and fragments that would match
+        ordinary words.
+        """
+        spellings = self._scope_spellings()
+        mentions = []
+        for match in self._mention_pattern.finditer(text):
+            drug = spellings[match.group().casefold()]
+            mentions.append(
+                DrugMention(
+                    text=match.group(),
+                    start=match.start(),
+                    end=match.end(),
+                    cid=drug.cid,
+                    name=drug.name,
+                )
+            )
+        return mentions
+
+    @cached_property
+    def _mention_pattern(self) -> re.Pattern[str]:
+        # Abbreviations match only in capitals: "ASS" is aspirin in German, "ass" an English word.
+        spellings = sorted(
+            (suggestion.alias for suggestion in self._scope_spellings().values()),
+            key=len,
+            reverse=True,
+        )
+        alternatives = [
+            re.escape(spelling) if spelling.isupper() else f"(?i:{re.escape(spelling)})"
+            for spelling in spellings
+        ]
+        return re.compile(rf"(?<!\w)(?:{'|'.join(alternatives)})(?!\w)")
 
     def get_compound(self, cid: int) -> Compound | None:
         record = self._store.get(cid)

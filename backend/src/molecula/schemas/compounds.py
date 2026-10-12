@@ -68,6 +68,18 @@ class Suggestion(BaseModel):
     name: str
 
 
+class DrugMention(BaseModel):
+    """A supported drug named in a text: the name as written, where it stands, and the drug."""
+
+    model_config = ConfigDict(frozen=True)
+
+    text: str
+    start: int
+    end: int
+    cid: int
+    name: str
+
+
 class Resolution(BaseModel):
     """Which supported drug a name refers to. `not_supported` means it isn't in the local data.
 
