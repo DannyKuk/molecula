@@ -34,7 +34,8 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = 60.0
     llm_max_retries: int = 2
     embedding_model: str = "local"
-    local_embedding_model: str = "BAAI/bge-small-en-v1.5"
+    # Multilingual and among the best CPU-sized models in docs/decisions/embeddings.md (#88).
+    local_embedding_model: str = "BAAI/bge-m3"
     openfda_api_key: SecretStr | None = None
     offline: bool = False
     data_dir: Path = REPO_ROOT / "data"

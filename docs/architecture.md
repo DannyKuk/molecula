@@ -61,7 +61,7 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 | `targets` | stored InChIKeys, ChEMBL, RCSB | `target`, `ligand_code`, `complex_candidate`, and `complex_candidates.md` for the hero review. 132 compounds with targets, 70 with candidate complexes | built (#55) |
 | `labels` | openFDA | one canonical Rx and one OTC label per drug, split into section groups. 133 of 134 drugs: 129 Rx and 27 OTC labels, 11.2M characters; metamizole has no US label | built (#63) |
 | `complexes` | `data/hero_set.yaml` (reviewed by hand, #6), RCSB mmCIF | one viewer-ready JSON per hero complex: CA trace, pocket, ligand, contacts | planned (#7) |
-| `index` | the stored label sections | chunks with label metadata in ChromaDB, embedded with a local model saved in `data/build/models/`; later BM25 next to it. 7,012 chunks from 156 labels, 106.9 MB | built (#87); model choice #88, BM25 #44 |
+| `index` | the stored label sections | chunks with label metadata in ChromaDB, embedded with `BAAI/bge-m3` saved in `data/build/models/` (2.3 GB); later BM25 next to it. 7,012 chunks from 156 labels, 135.1 MB | built (#87, #88); BM25 #44 |
 | `export` / `fetch`, `update` | the built store; openFDA for changed labels | a release snapshot for fresh clones; re-indexed changed labels | planned (#35, #25) |
 
 ## Key design choices
@@ -78,6 +78,7 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 - **One canonical label per drug and product type**, on the drug's most common route: text-hash dedup kept 20 of 22 imatinib labels apart, and without the route rule ibuprofen got the IV label ([drug labels](decisions/drug-labels.md)). It keeps the clinical sections and, since #92, the ones users ask about most: pregnancy and other specific populations, patient leaflets, dosage forms and inactive ingredients, abuse and dependence, clinical studies. The preclinical sections are never stored. Dosing, specific populations, patient leaflets, abuse and `overdosage` are stored with `sensitive = true`: overdosage says how an overdose shows and is treated, which matters offline, and answers about it put emergency help first (#63, #92, #17, `docs/data-plan.md` §5.5).
 - **One chunking for every embedding model.** Chunks are 500 tokens of the bge tokenizer with 50 overlap, split per section, so a model comparison compares only the models and no chunk is cut off by a 512-token model (#87).
 - **Repeated label text is indexed once, within its section group.** `clinical_pharmacology` repeats `mechanism_of_action` on 111 of 115 Rx labels; that text stays only under the specific section. OTC `warnings` repeats the consumer sections, but those are another group, and retrieval filters on the group, so both stay (#87, `docs/data-plan.md` §5.5).
+- **bge-m3 embeds the labels, on the CPU.** In a comparison of 14 models on 94 questions it found the answering passage in the top 5 for 85% (bge-small: 80%), tied with the best CPU-sized models, in 37 ms per question, and it is multilingual for German questions (#46). GPU and cloud models reach 97–98%; a cloud setup with text-embedding-3-large is decided later with the chat model, after a re-ranker and hybrid search (#44) are measured. The cost is 2.3 GB of weights ([embeddings](decisions/embeddings.md), #88).
 - **The index is tied to its embedding model.** The collection records the model, and querying with another one is refused: vectors of two models don't compare, and the query would fail on the dimension or quietly find nonsense. The weights are saved in `data/build/models/`, Chroma's own default embedder (an ONNX download) is off, and so is its telemetry, so `OFFLINE=1` makes no call (#87).
 - **Interactions come from label text, with no safe/unsafe verdict.** There is no free structured interaction database: RxNav's API was shut down in January 2024 and DrugBank needs a licence (`docs/data-plan.md` §1).
 
@@ -99,10 +100,10 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 |---|---|
 | `backend/src/molecula/` | `api/` (routes), `services/`, `sources/` (one client per API plus `http.py`), `store/` (SQLite, schema, HTTP cache, files), `ingest/` (build steps), `agent/` (LLM factory), `prompts/` (loader and `.md` prompts), `schemas/` |
 | `backend/tests/` | pytest, mirroring `src/molecula/`; `fixtures/` holds recorded API responses; fake chat model in `fake_llm.py` |
-| `backend/evals/` | Eval runners and datasets with real models (planned) |
+| `backend/evals/` | Eval runners and datasets with real models: `retrieval/` compares embedding models on `datasets/retrieval_questions.yaml` |
 | `frontend/` | Next.js app: `app/` (pages), `components/`, `lib/` (typed API client, search) |
 | `data/` | `scope.yaml`, later `hero_set.yaml`, and the built store in `build/` (gitignored) |
-| `docs/` | `architecture.md`, `data-plan.md`, `decisions/`, and `spikes/` (the scripts behind their numbers) |
+| `docs/` | `architecture.md`, `data-plan.md`, `decisions/`, `evals/` (eval reports), and `spikes/` (the scripts behind their numbers) |
 
 ## Decisions and evals
 
@@ -114,3 +115,4 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 | [Name resolution](decisions/name-resolution.md) | How does a typed drug name become a supported drug? |
 | [Complex candidates](decisions/complex-candidates.md) | How are the candidate 3D complexes for a drug found and ranked? |
 | [Drug labels](decisions/drug-labels.md) | Which label text does the chatbot answer from? |
+| [Embeddings](decisions/embeddings.md) | Which embedding model finds the label passage that answers a question? |
