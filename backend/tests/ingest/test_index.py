@@ -110,7 +110,7 @@ def test_step_builds_the_index_from_the_store(
         "indications_and_usage",
         "dosage_and_administration",
     }
-    assert index.model() == "BAAI/bge-small-en-v1.5"
+    assert index.model() == "BAAI/bge-m3"
 
 
 def test_step_without_labels_fails_with_a_hint(

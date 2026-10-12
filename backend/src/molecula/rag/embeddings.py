@@ -1,3 +1,4 @@
+import os
 from typing import TYPE_CHECKING, Any
 
 from langchain_core.embeddings import Embeddings
@@ -85,6 +86,9 @@ def load_local_model(settings: Settings) -> SentenceTransformer:
     import torch
     from sentence_transformers import SentenceTransformer
 
+    # bge-m3 ships only pytorch_model.bin; without this, transformers also downloads a converted
+    # model.safetensors from a pull request "for next time": a second 2.3 GB copy of the weights.
+    os.environ.setdefault("DISABLE_SAFETENSORS_CONVERSION", "true")
     on_gpu = torch.cuda.is_available()
     model_kwargs: dict[str, Any] = {"dtype": torch.float16} if on_gpu else {}
     try:

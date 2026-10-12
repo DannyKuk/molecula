@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Any
 
@@ -34,7 +35,13 @@ class FakeSentenceTransformer:
 
 @pytest.fixture(autouse=True)
 def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    for key in ["OFFLINE", "OPENROUTER_API_KEY", "EMBEDDING_MODEL", "LOCAL_EMBEDDING_MODEL"]:
+    for key in [
+        "OFFLINE",
+        "OPENROUTER_API_KEY",
+        "EMBEDDING_MODEL",
+        "LOCAL_EMBEDDING_MODEL",
+        "DISABLE_SAFETENSORS_CONVERSION",
+    ]:
         monkeypatch.delenv(key, raising=False)
 
 
@@ -64,9 +71,17 @@ def test_local_model_is_the_default_and_loads_from_the_models_dir(
 
     assert isinstance(model, LocalEmbeddings)
     (loaded,) = fake_model
-    assert loaded.name == "BAAI/bge-small-en-v1.5"
+    assert loaded.name == "BAAI/bge-m3"
     assert loaded.options["cache_folder"] == str(current.models_dir)
     assert (loaded.options["device"], loaded.options["local_files_only"]) == ("cpu", False)
+
+
+def test_loading_never_fetches_a_second_converted_copy_of_the_weights(
+    tmp_path: Path, fake_model: list[FakeSentenceTransformer]
+) -> None:
+    get_embeddings(settings(tmp_path))
+
+    assert os.environ["DISABLE_SAFETENSORS_CONVERSION"] == "true"
 
 
 def test_offline_never_downloads_the_model(
@@ -151,10 +166,10 @@ def test_cloud_model_is_refused_offline(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("values", "model"),
     [
-        ({}, "BAAI/bge-small-en-v1.5"),
+        ({}, "BAAI/bge-m3"),
         (
-            {"local_embedding_model": "nomic-ai/nomic-embed-text-v1.5"},
-            "nomic-ai/nomic-embed-text-v1.5",
+            {"local_embedding_model": "BAAI/bge-small-en-v1.5"},
+            "BAAI/bge-small-en-v1.5",
         ),
         ({"embedding_model": "openai/text-embedding-3-small"}, "openai/text-embedding-3-small"),
     ],
