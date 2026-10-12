@@ -115,6 +115,32 @@ class LabelIndex:
             key=lambda chunk: chunk.id,
         )
 
+    def search(
+        self, vector: Sequence[float], n: int, where: dict[str, Any] | None = None
+    ) -> list[tuple[Chunk, float]]:
+        """Up to `n` chunks closest to `vector` that match the ChromaDB `where` filter, best
+        first, with their cosine similarity; empty before the first build."""
+        if not self._exists():
+            return []
+        collection = self._client.get_collection(COLLECTION, embedding_function=None)
+        found = collection.query(
+            query_embeddings=[list(vector)],
+            n_results=n,
+            where=where,
+            include=["documents", "metadatas", "distances"],
+        )
+        rows = zip(
+            found["ids"][0],
+            (found["documents"] or [[]])[0],
+            (found["metadatas"] or [[]])[0],
+            (found["distances"] or [[]])[0],
+            strict=True,
+        )
+        return [
+            (Chunk(id=id_, text=text, **from_metadata(metadata)), 1.0 - distance)
+            for id_, text, metadata, distance in rows
+        ]
+
     def _exists(self) -> bool:
         return COLLECTION in {collection.name for collection in self._client.list_collections()}
 
