@@ -39,6 +39,22 @@ class FilterExtractor:
         error = result["parsing_error"] or "the model returned no filter"
         return LabelFilter(extracted=LabelQuery(), extraction_error=str(error))
 
+    def filter_for(
+        self, question: str, *, drug: str | None = None, section: SectionGroup | None = None
+    ) -> LabelFilter:
+        """The filter for a search the agent asks for. A `drug` the agent names is searched
+        as it is, without asking the model, which saves a model call per search; otherwise the
+        filter is extracted from `question`. `section` joins the section groups either way."""
+        sections: list[str] = [section] if section else []
+        if drug is not None:
+            return self.check(LabelQuery(substances=[drug], section_groups=sections))
+        label_filter = self.extract(question)
+        if section is None or section in label_filter.section_groups:
+            return label_filter
+        return label_filter.model_copy(
+            update={"section_groups": [*label_filter.section_groups, section]}
+        )
+
     def check(self, query: LabelQuery) -> LabelFilter:
         """`query` checked against the store: drug names resolved to supported drugs and their
         labels, unknown section groups set aside."""

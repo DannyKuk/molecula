@@ -1,12 +1,15 @@
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from molecula.schemas.compounds import Compound, DrugName, MatchKind, Suggestion
+from molecula.schemas.labels import SectionGroup
+from molecula.schemas.retrieval import Retrieval, RetrievedChunk
 from molecula.schemas.targets import Target
 
 MIN_COMPARED_DRUGS = 2
 MAX_COMPARED_DRUGS = 4
+MAX_QUESTION_LENGTH = 500
 
 
 class ResolveDrugArgs(BaseModel):
@@ -21,6 +24,14 @@ class CompareDrugsArgs(BaseModel):
     drugs: Annotated[
         list[DrugName], Field(min_length=MIN_COMPARED_DRUGS, max_length=MAX_COMPARED_DRUGS)
     ]
+
+
+class SearchLabelsArgs(BaseModel):
+    question: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_QUESTION_LENGTH)
+    ]
+    drug: DrugName | None = None
+    section: SectionGroup | None = None
 
 
 class DrugNotSupported(BaseModel):
@@ -90,3 +101,35 @@ class DrugComparison(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     drugs: list[DrugProperties | DrugNotSupported]
+
+
+class LabelPassages(BaseModel):
+    """The label passages a search found, best first, each with what to cite.
+
+    `drugs` are the generic names searched, `drugs_without_label` the supported drugs that have
+    no US label, and `unsupported` the named drugs outside the store. `retrieval` is the whole
+    search (filter, widening, dropped candidates) for the retrieval trace; it is left out of the
+    JSON the model reads.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    status: Literal["found"] = "found"
+    question: str
+    drugs: list[str]
+    drugs_without_label: list[str]
+    unsupported: list[DrugNotSupported]
+    passages: list[RetrievedChunk]
+    retrieval: Retrieval = Field(exclude=True)
+
+
+class LabelDrugsNotSupported(BaseModel):
+    """A label search that named only drugs outside the store, so it searched nothing rather
+    than another drug's label. `retrieval` is left out of the JSON the model reads."""
+
+    model_config = ConfigDict(frozen=True)
+
+    status: Literal["not_supported"] = "not_supported"
+    question: str
+    drugs: list[DrugNotSupported]
+    retrieval: Retrieval = Field(exclude=True)

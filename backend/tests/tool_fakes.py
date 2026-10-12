@@ -1,11 +1,22 @@
-"""Fake compound and target services for the agent tool tests, and a tool call helper."""
+"""Fake services, filter extractor and label retriever for the agent tool tests, and a tool
+call helper."""
 
+from datetime import date
 from typing import Any
 
 from langchain_core.messages import ToolMessage
 from langchain_core.tools import BaseTool
 
 from molecula.schemas.compounds import Compound, Resolution, Suggestion
+from molecula.schemas.labels import SectionGroup
+from molecula.schemas.retrieval import (
+    DrugFilter,
+    LabelFilter,
+    LabelQuery,
+    Retrieval,
+    RetrievedChunk,
+    Widening,
+)
 from molecula.schemas.targets import DrugTargets, Target
 
 FLUTICASONE_CID = 5311101
@@ -96,6 +107,69 @@ class FakeTargetService:
     def get_targets(self, cid: int) -> DrugTargets | None:
         self.asked.append(cid)
         return self.drugs.get(cid)
+
+
+IMATINIB_SIDE_EFFECTS = RetrievedChunk(
+    id="gleevec:adverse_reactions:0",
+    text="Nausea, fluid retention and muscle cramps were the most common adverse reactions.",
+    score=0.71,
+    cid=5291,
+    substance="IMATINIB MESYLATE",
+    brand="Gleevec",
+    product_type="rx",
+    section="adverse_reactions",
+    section_group="adverse_reactions",
+    sensitive=False,
+    set_id="gleevec",
+    effective_time=date(2026, 7, 13),
+    url="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=gleevec",
+    in_section_groups=True,
+)
+IMATINIB_LOW_SCORE = IMATINIB_SIDE_EFFECTS.model_copy(
+    update={"id": "gleevec:storage:0", "text": "Store at room temperature.", "score": -0.1}
+)
+
+
+def drug_filter(name: str, compound: Compound, set_ids: list[str]) -> DrugFilter:
+    return DrugFilter(name=name, cid=compound.cid, generic=compound.name, set_ids=set_ids)
+
+
+class FakeFilterExtractor:
+    """Returns the filter set for a question (an empty one otherwise); records each request as
+    (question, drug, section)."""
+
+    def __init__(self) -> None:
+        self.filters: dict[str, LabelFilter] = {}
+        self.asked: list[tuple[str, str | None, SectionGroup | None]] = []
+
+    def filter_for(
+        self, question: str, *, drug: str | None = None, section: SectionGroup | None = None
+    ) -> LabelFilter:
+        self.asked.append((question, drug, section))
+        return self.filters.get(question, LabelFilter(extracted=LabelQuery()))
+
+
+class FakeLabelRetriever:
+    """Finds `chunks` and drops `dropped` unless the filter names drugs without labels, like
+    the real retriever; records the filters it searched under."""
+
+    def __init__(self) -> None:
+        self.chunks = [IMATINIB_SIDE_EFFECTS]
+        self.dropped = [IMATINIB_LOW_SCORE]
+        self.widened: list[Widening] = []
+        self.searched: list[LabelFilter | None] = []
+
+    def retrieve(self, question: str, label_filter: LabelFilter | None = None) -> Retrieval:
+        self.searched.append(label_filter)
+        if label_filter is not None and label_filter.names_drugs and not label_filter.set_ids:
+            return Retrieval(question=question, filter=label_filter, chunks=[], dropped=[])
+        return Retrieval(
+            question=question,
+            filter=label_filter,
+            chunks=self.chunks,
+            dropped=self.dropped,
+            widened=self.widened,
+        )
 
 
 def call_tool(tool: BaseTool, args: dict[str, Any]) -> ToolMessage:

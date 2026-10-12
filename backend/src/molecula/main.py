@@ -6,14 +6,20 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from langchain_core.language_models import BaseChatModel
 
+from molecula.agent.llm import LLMConfigError, get_chat_model
 from molecula.api import drugs, health
 from molecula.config import Settings, get_settings
+from molecula.rag.embeddings import embedding_model_id, get_embeddings
+from molecula.rag.filters import FilterExtractor
+from molecula.rag.retriever import LabelRetriever
 from molecula.services.compounds import CompoundService
 from molecula.services.labels import LabelService
 from molecula.services.targets import TargetService
 from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
+from molecula.store.index import LabelIndex
 from molecula.store.labels import LabelStore
 from molecula.store.structures import ConformerFiles
 from molecula.store.targets import TargetStore
@@ -33,6 +39,31 @@ def open_store(settings: Settings) -> sqlite3.Connection:
     return connect(Path(":memory:"))
 
 
+def open_label_index(settings: Settings) -> LabelIndex | None:
+    """The built label index, or None until it is built. A missing index folder stays
+    missing: Chroma would create it, like `connect` would create the store.
+
+    Raises IndexModelMismatch when the index was built with another embedding model than the
+    settings name, before that model is loaded.
+    """
+    if not settings.index_dir.exists():
+        logger.warning("No label index at %s yet; label search is off", settings.index_dir)
+        return None
+    index = LabelIndex(settings.index_dir)
+    index.check_model(embedding_model_id(settings))
+    return index
+
+
+def open_chat_model(settings: Settings) -> BaseChatModel | None:
+    """The chat model, or None while none is configured: until the agent runs (#16), only the
+    label search needs it, and the data routes work without it."""
+    try:
+        return get_chat_model(settings)
+    except LLMConfigError as error:
+        logger.warning("Label search is off: %s", error)
+        return None
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
@@ -45,6 +76,21 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     )
     app.state.target_service = TargetService(TargetStore(conn), compounds)
     app.state.label_service = LabelService(LabelStore(conn), compounds)
+    app.state.label_retriever = None
+    app.state.filter_extractor = None
+    index = open_label_index(settings)
+    chat_model = open_chat_model(settings) if index is not None else None
+    if index is not None and chat_model is not None:
+        app.state.label_retriever = LabelRetriever(
+            index,
+            get_embeddings(settings),
+            top_k=settings.retrieval_top_k,
+            min_score=settings.retrieval_min_score,
+            section_group_boost=settings.retrieval_section_group_boost,
+        )
+        app.state.filter_extractor = FilterExtractor(
+            chat_model, app.state.compound_service, app.state.label_service
+        )
     yield
     conn.close()
 

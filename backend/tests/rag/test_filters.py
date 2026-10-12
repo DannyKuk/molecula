@@ -294,3 +294,37 @@ def test_a_brand_from_a_label_finds_its_drug(services: Services) -> None:
     found = filters.check(LabelQuery(substances=["zipsor"]))
 
     assert found.set_ids == ["zipsor"]
+
+
+def test_a_drug_the_agent_names_is_searched_without_asking_the_model(services: Services) -> None:
+    filters, model = extractor(services)
+
+    found = filters.filter_for("What are its side effects?", drug="Gleevec", section="dosing")
+
+    assert model.received == []
+    assert [(drug.cid, drug.set_ids) for drug in found.drugs] == [(IMATINIB, ["gleevec"])]
+    assert found.section_groups == ["dosing"]
+
+
+def test_without_a_drug_the_filter_is_extracted_and_the_section_joins_its_groups(
+    services: Services,
+) -> None:
+    filters, model = extractor(
+        services, query_call(substances=["warfarin"], section_groups=["interactions"])
+    )
+
+    found = filters.filter_for("Is warfarin safe with aspirin?", section="warnings")
+
+    assert len(model.received) == 1
+    assert [drug.cid for drug in found.drugs] == [WARFARIN]
+    assert found.section_groups == ["interactions", "warnings"]
+
+
+def test_a_section_the_model_extracted_too_is_not_repeated(services: Services) -> None:
+    filters, _ = extractor(
+        services, query_call(substances=["warfarin"], section_groups=["interactions"])
+    )
+
+    found = filters.filter_for("What interacts with warfarin?", section="interactions")
+
+    assert found.section_groups == ["interactions"]

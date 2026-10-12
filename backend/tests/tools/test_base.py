@@ -11,7 +11,8 @@ from molecula.schemas.compounds import DrugName
 from molecula.schemas.tools import InvalidArguments
 from molecula.tools.base import describe_invalid_arguments
 
-ALLOWED_IMPORTS = ("molecula.services", "molecula.schemas", "molecula.tools")
+# The label search lives in rag/ and is the service for search_labels.
+ALLOWED_IMPORTS = ("molecula.services", "molecula.rag", "molecula.schemas", "molecula.tools")
 
 
 class TwoNames(BaseModel):
@@ -31,7 +32,7 @@ def test_every_problem_is_one_line_named_by_its_argument() -> None:
     ]
 
 
-def test_tools_reach_only_services_and_schemas() -> None:
+def test_tools_reach_only_services_the_label_search_and_schemas() -> None:
     for module_info in pkgutil.iter_modules(tools.__path__):
         module = import_module(f"molecula.tools.{module_info.name}")
         imports = {
