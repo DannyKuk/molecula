@@ -186,7 +186,7 @@ Consequences:
 - **Repeated text is indexed once within a section group.** Measured on 2026-10-12 over the 156 stored labels: `clinical_pharmacology` contains `mechanism_of_action` on 111 of 115 Rx labels that have both, and `pharmacodynamics` on 87 of 89; that text is cut out of `clinical_pharmacology` and kept under the specific section, and a leftover under 10 tokens (the heading) is dropped. OTC `warnings` repeats `do_not_use`, `stop_use`, `ask_doctor` and `when_using` on most Drug Facts labels, but those are another group (`otc_consumer`), so both stay: retrieval filters on the group.
 - Vectors in ChromaDB (`data/build/index/chroma/`, one collection, cosine), rebuilt from scratch in an emptied folder: Chroma keeps a deleted collection's files, and a rebuild in place grew the index from 74.8 to 96.7 MB. The collection records the embedding model, and a query with another model is refused, because vectors of two models don't compare. Model weights are saved in `data/build/models/` on the first build, so later builds and the app load them with `OFFLINE=1`.
 
-**Corpus estimate:** a canonical Rx label is 40–170k characters (measured), an OTC label 3–5k. For 120 drugs that is ~8–10M characters ≈ 2–2.5M tokens ≈ 4–5k chunks. Local embeddings handle this on a CPU in minutes. The first full run measured less (below). The first index build (2026-10-12, `bge-small-en-v1.5` on CPU): 3,813 chunks from 156 labels in 105–118 s, a 74.8 MB index, and 129 MB of model files.
+**Corpus estimate:** a canonical Rx label is 40–170k characters (measured), an OTC label 3–5k. For 120 drugs that is ~8–10M characters ≈ 2–2.5M tokens ≈ 4–5k chunks. Local embeddings handle this on a CPU in minutes. The first full run measured less (below). The first index build (2026-10-12, `bge-small-en-v1.5` on CPU): 3,813 chunks from 156 labels in 105–118 s, a 74.8 MB index, and 129 MB of model files. With the #92 sections: 6,873 chunks in 184 s and a 104.7 MB index; pharmacokinetics is indexed once, under its own name (465 chunks), and `clinical_pharmacology` keeps 107.
 
 **How `ingest labels` works.** It runs after `ingest compounds`, for every compound in the store.
 
@@ -196,18 +196,25 @@ Consequences:
 4. **Canonical label**, per product type (`HUMAN PRESCRIPTION DRUG` → `rx`, `HUMAN OTC DRUG` → `otc`): has `mechanism_of_action`, then the brand's own label, then the latest `effective_time`, then the most kept sections, then the lowest `set_id`. **The brand's own label** is one filed under an NDA or BLA (`openfda.application_number`; generics are ANDA, OTC monograph products `M…`, e.g. M013) whose `brand_name` differs from its `generic_name`. The name check leaves out authorized generics and biosimilars, which are filed the same way (on 2026-10-12, 1 of 234 single-ingredient ibuprofen Rx labels and 2 of 22 imatinib labels qualified).
 5. **Sections:** only those in the table below are stored; several strings of one section are joined with a blank line.
 
-| `section_group` | Label sections |
-|---|---|
-| `pharmacology` | `mechanism_of_action`, `clinical_pharmacology`, `pharmacodynamics` |
-| `indications` | `indications_and_usage` |
-| `dosing` | `dosage_and_administration` (`sensitive = 1`) |
-| `warnings` | `boxed_warning`, `warnings_and_cautions`, `warnings`, `precautions` (older Rx labels) |
-| `contraindications` | `contraindications` |
-| `interactions` | `drug_interactions` |
-| `adverse_reactions` | `adverse_reactions` |
-| `otc_consumer` | `do_not_use`, `stop_use`, `ask_doctor`, `ask_doctor_or_pharmacist`, `when_using`, `purpose`, `active_ingredient` |
+| `section_group` | Label sections | `sensitive` |
+|---|---|---|
+| `pharmacology` | `mechanism_of_action`, `clinical_pharmacology`, `pharmacodynamics`, `pharmacokinetics`, `pharmacogenomics`, `microbiology` | |
+| `indications` | `indications_and_usage` | |
+| `dosing` | `dosage_and_administration` | yes |
+| `warnings` | `boxed_warning`, `warnings_and_cautions`, `warnings`, `precautions`, `general_precautions`, `laboratory_tests` (the last three from older Rx labels) | |
+| `contraindications` | `contraindications` | |
+| `interactions` | `drug_interactions`, `drug_and_or_laboratory_test_interactions` | |
+| `adverse_reactions` | `adverse_reactions` | |
+| `specific_populations` | `use_in_specific_populations`, `pregnancy`, `teratogenic_effects`, `nonteratogenic_effects`, `labor_and_delivery`, `nursing_mothers`, `pediatric_use`, `geriatric_use`, OTC `pregnancy_or_breast_feeding` | yes |
+| `patient_information` | `information_for_patients`, `spl_medguide`, `spl_patient_package_insert`, `patient_medication_information`, `instructions_for_use` | yes |
+| `product` | `description`, `dosage_forms_and_strengths`, `how_supplied`, `storage_and_handling`, OTC `inactive_ingredient` | |
+| `abuse_dependence` | `drug_abuse_and_dependence`, `abuse`, `dependence`, `controlled_substance` | yes |
+| `clinical_studies` | `clinical_studies` | |
+| `otc_consumer` | `do_not_use`, `stop_use`, `ask_doctor`, `ask_doctor_or_pharmacist`, `when_using`, `purpose`, `active_ingredient`, `keep_out_of_reach_of_children`, `other_safety_information` | |
 
-Tables (schema version 4):
+Never stored: `overdosage` (toxic doses), the preclinical sections (`nonclinical_toxicology`, `carcinogenesis_and_mutagenesis_and_impairment_of_fertility`, `animal_pharmacology_and_or_toxicology`), `references`, `recent_major_changes`, `spl_unclassified_section`, OTC `questions`, and every `*_table` field. The groups after `adverse_reactions` came with #92: 5.66M → 11.10M stored characters, no canonical label changed.
+
+Tables (schema version 5; version 5 widened the `section_group` check for #92):
 
 - `label(set_id, cid, substance, brand, product_type, effective_time, url, source, fetched_at)`, one row per (`cid`, `product_type`); `product_type` is `rx` or `otc`, `substance` the label's own (often a salt), `url` the DailyMed page `https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid={set_id}`.
 - `label_section(set_id, section, section_group, text, sensitive)`.

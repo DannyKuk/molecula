@@ -14,6 +14,11 @@ type SectionGroup = Literal[
     "interactions",
     "adverse_reactions",
     "otc_consumer",
+    "specific_populations",
+    "patient_information",
+    "product",
+    "abuse_dependence",
+    "clinical_studies",
 ]
 
 LABEL_COLUMNS = ["set_id", "substance", "brand", "product_type", "effective_time", "url"]

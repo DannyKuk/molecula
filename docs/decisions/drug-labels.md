@@ -1,6 +1,6 @@
 # Drug labels
 
-> **Answer:** The chatbot answers from **one openFDA label per drug and product type** (Rx and OTC). The label must have a single ingredient that is the drug itself. Among those labels, only the ones on the **drug's most common route** are kept. From these, the pick is the one with a `mechanism_of_action` section, then the brand's own label, then the newest. Only eight groups of sections are stored. `overdosage` never is, and dosing is flagged sensitive. 133 of 134 drugs have a label (5.7M characters); metamizole has no US label.
+> **Answer:** The chatbot answers from **one openFDA label per drug and product type** (Rx and OTC). The label must have a single ingredient that is the drug itself. Among those labels, only the ones on the **drug's most common route** are kept. From these, the pick is the one with a `mechanism_of_action` section, then the brand's own label, then the newest. Thirteen groups of sections are stored, including pregnancy, patient leaflets and dosage forms (#92). `overdosage` never is, and dosing, specific populations, patient leaflets and abuse are flagged sensitive. 133 of 134 drugs have a label (11.1M characters); metamizole has no US label.
 
 ## Question
 
@@ -39,7 +39,7 @@ Full run: 129 Rx and 27 OTC labels, 5,662,726 characters, 361 requests in 4.4 mi
 - **Dedup by text doesn't work.** Generics change small details, so 20 of 22 imatinib labels are "unique".
 - **The mechanism rule alone favours odd products.** Ibuprofen's only single-ingredient Rx label with `mechanism_of_action` is the IV Caldolor. Route first changed 23 of 156 picks, nearly all to the oral or topical form. Older labels keep the mechanism in `clinical_pharmacology`, which is stored in the same `pharmacology` group.
 - **The phrase search also returns combinations.** Without the single-substance filter, acetaminophen's Rx pick would be Apadaz (benzhydrocodone + acetaminophen): it has a mechanism section and is a brand label. The oral hydrocodone + acetaminophen labels would also make oral the most common route, although every single-ingredient acetaminophen Rx label is an injection.
-- **Coverage is good, and the text is smaller than estimated.** 5.7M characters against the 8–10M estimate, because most drugs have no OTC label and many PLR labels are short.
+- **Coverage is good.** 5.7M characters with the first eight groups, 11.1M with all thirteen (#92), against the 8–10M estimate.
 
 ## Decided along the way
 
@@ -47,7 +47,8 @@ Full run: 129 Rx and 27 OTC labels, 5,662,726 characters, 361 requests in 4.4 mi
 - **Salts count as the drug**, using the salt words from `services/compounds.py` ("oxalate" was added). When a product type has no label of the drug itself, another form counts: fluticasone propionate or furoate.
 - **Brand's own label:** filed under an NDA or BLA, with a brand name that isn't the generic name. This leaves out authorized generics and biosimilars.
 - **Route:** the route list counts as one sorted value. Equally common routes go by name; no route loses a tie.
-- **Sections:** eight groups. `overdosage` and the `*_table` HTML copies are never stored. `dosage_and_administration` is stored with `sensitive = 1`. openFDA's disclaimer is stored once for the UI.
+- **Sections:** thirteen groups (eight until #92). `overdosage`, the preclinical sections, references, change notes and the `*_table` HTML copies are never stored. Dosing, the specific populations, the patient leaflets and abuse and dependence are stored with `sensitive = 1`: they may be quoted, never turned into personal advice. openFDA's disclaimer is stored once for the UI.
+- **The patient-facing sections are kept** (#92). The first section list left out pregnancy, children and older people, patient leaflets, dosage forms and inactive ingredients without a reason, although users ask about them most. Measured on the 156 canonical labels (2026-10-12): `pregnancy` is on 123 of 129 Rx labels, `pediatric_use` on 122, `information_for_patients` on 117, a medication guide on 51. Adding them took the stored text from 5.66M to 11.10M characters and changed no canonical label. The patient leaflets and `keep_out_of_reach_of_children` hold no overdose passage with an amount; the abuse sections describe abuse routes as warnings (27 sentences on crushing, snorting or injecting), as `warnings_and_cautions` already did (7 sentences).
 
 ## Limits
 

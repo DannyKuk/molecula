@@ -281,15 +281,63 @@ def test_overdosage_and_table_fields_are_never_stored(ingest, conn: sqlite3.Conn
     stored = {row[0] for row in conn.execute("SELECT DISTINCT section FROM label_section")}
     assert stored
     assert "overdosage" not in stored
+    assert not stored & {
+        "nonclinical_toxicology",
+        "carcinogenesis_and_mutagenesis_and_impairment_of_fertility",
+        "animal_pharmacology_and_or_toxicology",
+        "references",
+    }
     assert not [section for section in stored if section.endswith("_table")]
 
 
-def test_only_dosing_is_marked_sensitive(ingest, store: LabelStore) -> None:
+def test_doses_specific_populations_and_patient_information_are_sensitive(
+    ingest, store: LabelStore
+) -> None:
     ingest([IMATINIB])
 
     [gleevec] = store.get(5291)
     sensitive = {section.section for section in gleevec.sections if section.sensitive}
-    assert sensitive == {"dosage_and_administration"}
+    assert sensitive == {
+        "dosage_and_administration",
+        "use_in_specific_populations",
+        "pregnancy",
+        "pediatric_use",
+        "geriatric_use",
+        "information_for_patients",
+    }
+
+
+def test_pregnancy_patient_product_and_study_sections_are_kept(ingest, store: LabelStore) -> None:
+    ingest([IMATINIB])
+
+    [gleevec] = store.get(5291)
+    groups = {section.section: section.section_group for section in gleevec.sections}
+    assert groups["pregnancy"] == "specific_populations"
+    assert groups["use_in_specific_populations"] == "specific_populations"
+    assert groups["information_for_patients"] == "patient_information"
+    assert groups["pharmacokinetics"] == "pharmacology"
+    assert groups["clinical_studies"] == "clinical_studies"
+    assert {
+        groups["description"],
+        groups["how_supplied"],
+        groups["dosage_forms_and_strengths"],
+    } == {"product"}
+
+
+def test_medication_guide_and_abuse_sections_are_kept_and_sensitive() -> None:
+    oxycodone = label(
+        "oxycodone",
+        ["OXYCODONE HYDROCHLORIDE"],
+        sections=("spl_medguide", "drug_abuse_and_dependence", "abuse", "controlled_substance"),
+    )
+
+    sections = {section.section: section for section in kept_sections(oxycodone)}
+
+    assert sections["spl_medguide"].section_group == "patient_information"
+    assert {sections[name].section_group for name in ("drug_abuse_and_dependence", "abuse")} == {
+        "abuse_dependence"
+    }
+    assert all(section.sensitive for section in sections.values())
 
 
 def test_combination_products_are_excluded(ingest, store: LabelStore) -> None:
@@ -359,12 +407,12 @@ def test_otc_drug_facts_sections_map_to_otc_consumer(ingest, store: LabelStore) 
         "ask_doctor_or_pharmacist",
         "when_using",
         "stop_use",
+        "keep_out_of_reach_of_children",
     }
     assert groups["warnings"] == "warnings"
     assert groups["indications_and_usage"] == "indications"
     assert groups["dosage_and_administration"] == "dosing"
-    assert "keep_out_of_reach_of_children" not in groups
-    assert "inactive_ingredient" not in groups
+    assert groups["inactive_ingredient"] == "product"
 
 
 def test_drug_without_a_us_label_is_listed_and_stores_nothing(ingest, store: LabelStore) -> None:
