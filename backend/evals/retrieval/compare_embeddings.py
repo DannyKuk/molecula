@@ -15,7 +15,9 @@ import argparse
 import hashlib
 import json
 import logging
+import platform
 import statistics
+import subprocess
 import tempfile
 from collections import defaultdict
 from dataclasses import asdict, dataclass
@@ -26,11 +28,11 @@ from typing import TYPE_CHECKING, Any, Literal, Protocol
 
 import numpy as np
 from evals.retrieval.candidates import CANDIDATES, Candidate
-from evals.retrieval.dataset import Question, is_hit, load_questions, unanswerable
+from evals.retrieval.dataset import DATASET, Question, is_hit, load_questions, unanswerable
 
 from molecula.config import Settings, get_settings
 from molecula.ingest.index import stored_labels
-from molecula.rag.chunking import chunk_labels
+from molecula.rag.chunking import CHUNK_TOKENS, OVERLAP_TOKENS, chunk_labels
 from molecula.rag.embeddings import get_embeddings, load_chunk_tokenizer
 from molecula.store.index import Chunk, LabelIndex
 
@@ -41,6 +43,8 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 TOP_K = 10
+# Chunks a run keeps the text of, for showing what each model found.
+SHOWN_K = 5
 WARMUP_QUERIES = 3
 EMBED_BATCH = 16
 CLOUD_BATCH = 64
@@ -53,6 +57,22 @@ class Scores:
     recall_at_1: float
     recall_at_5: float
     mrr_at_10: float
+
+
+@dataclass(frozen=True)
+class Retrieved:
+    chunk: str
+    score: float
+
+
+@dataclass(frozen=True)
+class QuestionResult:
+    id: str
+    query_ms: float
+    rank_in_drug: int | None
+    rank_whole_index: int | None
+    top_in_drug: list[Retrieved]
+    top_whole_index: list[Retrieved]
 
 
 @dataclass(frozen=True)
@@ -70,6 +90,7 @@ class Result:
     whole_index: Scores
     recall_at_5_by_group: dict[str, float]
     missed_in_drug: list[str]
+    questions: list[QuestionResult]
 
 
 def main() -> int:
@@ -95,7 +116,7 @@ def main() -> int:
         evaluate(candidate, chunks, questions, settings, args.device) for candidate in candidates
     ]
     print(report(results, questions))
-    save(results, settings)
+    save(results, questions, chunks, settings, args.device)
     return 0
 
 
@@ -118,10 +139,12 @@ def evaluate(
     scores = queries @ documents.T
     cids = np.array([chunk.cid for chunk in chunks])
 
-    in_drug = [
-        first_hit_rank(q, s, chunks, cids == q.cid) for q, s in zip(questions, scores, strict=True)
+    per_question = [
+        question_result(question, row, latency, chunks, cids == question.cid)
+        for question, row, latency in zip(questions, scores, latencies, strict=True)
     ]
-    anywhere = [first_hit_rank(q, s, chunks, None) for q, s in zip(questions, scores, strict=True)]
+    in_drug = [result.rank_in_drug for result in per_question]
+    anywhere = [result.rank_whole_index for result in per_question]
     by_group: dict[str, list[int | None]] = defaultdict(list)
     for question, rank in zip(questions, in_drug, strict=True):
         by_group[question.section_group].append(rank)
@@ -142,7 +165,29 @@ def evaluate(
         missed_in_drug=[
             q.id for q, rank in zip(questions, in_drug, strict=True) if rank is None or rank > 5
         ],
+        questions=per_question,
     )
+
+
+def question_result(
+    question: Question, scores: np.ndarray, latency: float, chunks: list[Chunk], own: np.ndarray
+) -> QuestionResult:
+    in_drug = top_k(np.where(own, scores, -np.inf))
+    whole_index = top_k(scores)
+    return QuestionResult(
+        id=question.id,
+        query_ms=latency,
+        rank_in_drug=first_hit_rank(question, in_drug, chunks),
+        rank_whole_index=first_hit_rank(question, whole_index, chunks),
+        top_in_drug=[Retrieved(chunks[i].id, float(scores[i])) for i in in_drug],
+        top_whole_index=[Retrieved(chunks[i].id, float(scores[i])) for i in whole_index],
+    )
+
+
+def top_k(scores: np.ndarray) -> list[int]:
+    """Positions of the TOP_K best chunks; chunks scored -inf (other drugs) are left out."""
+    best = np.argsort(-scores)[:TOP_K]
+    return [int(i) for i in best if np.isfinite(scores[i])]
 
 
 class Embedder(Protocol):
@@ -252,13 +297,9 @@ def query_vectors(
     return np.stack(vectors).astype(np.float32), latencies
 
 
-def first_hit_rank(
-    question: Question, scores: np.ndarray, chunks: list[Chunk], allowed: np.ndarray | None
-) -> int | None:
-    """The 1-based rank of the first chunk that answers the question, within the top TOP_K."""
-    if allowed is not None:
-        scores = np.where(allowed, scores, -np.inf)
-    for rank, position in enumerate(np.argsort(-scores)[:TOP_K], start=1):
+def first_hit_rank(question: Question, ranked: list[int], chunks: list[Chunk]) -> int | None:
+    """The 1-based rank of the first chunk that answers the question, or None."""
+    for rank, position in enumerate(ranked, start=1):
         if is_hit(question, chunks[position]):
             return rank
     return None
@@ -320,12 +361,58 @@ def report(results: list[Result], questions: list[Question]) -> str:
     return "\n".join(lines)
 
 
-def save(results: list[Result], settings: Settings) -> None:
+def save(
+    results: list[Result],
+    questions: list[Question],
+    chunks: list[Chunk],
+    settings: Settings,
+    device: Device,
+) -> None:
+    """Everything a results page needs without re-running: the run's setup, the questions, each
+    model's ranks and top chunks per question, and the text of every chunk a model ranked in its
+    top SHOWN_K."""
+    shown = {
+        retrieved.chunk
+        for result in results
+        for question in result.questions
+        for retrieved in question.top_in_drug[:SHOWN_K] + question.top_whole_index[:SHOWN_K]
+    }
+    payload: dict[str, Any] = {
+        "run": run_details(chunks, device),
+        "questions": [question.model_dump() for question in questions],
+        "results": [asdict(result) for result in results],
+        "chunks": {
+            chunk.id: {"cid": chunk.cid, "section": chunk.section, "text": chunk.text}
+            for chunk in chunks
+            if chunk.id in shown
+        },
+    }
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     path = settings.build_dir / "eval" / f"embeddings-{stamp}.json"
-    rows: list[dict[str, Any]] = [asdict(result) for result in results]
-    path.write_text(json.dumps(rows, indent=2), encoding="utf-8")
+    path.write_text(json.dumps(payload, indent=1, ensure_ascii=False), encoding="utf-8")
     logger.info("results saved to %s", path)
+
+
+def run_details(chunks: list[Chunk], device: Device) -> dict[str, Any]:
+    import torch
+
+    commit = subprocess.run(
+        ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, check=False
+    ).stdout.strip()
+    return {
+        "date": datetime.now(UTC).isoformat(timespec="seconds"),
+        "commit": commit,
+        "dataset_sha256": hashlib.sha256(DATASET.read_bytes()).hexdigest(),
+        "chunks": len(chunks),
+        "chunk_tokens": CHUNK_TOKENS,
+        "overlap_tokens": OVERLAP_TOKENS,
+        "top_k": TOP_K,
+        "device": device,
+        "cpu": platform.processor(),
+        "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
+        "torch": torch.__version__,
+        "python": platform.python_version(),
+    }
 
 
 if __name__ == "__main__":
