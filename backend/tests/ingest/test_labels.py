@@ -275,12 +275,19 @@ def test_imatinib_gets_the_gleevec_label_and_no_otc_label(ingest, store: LabelSt
     assert groups["indications_and_usage"] == "indications"
 
 
-def test_overdosage_and_table_fields_are_never_stored(ingest, conn: sqlite3.Connection) -> None:
+def test_overdosage_is_kept_as_sensitive(ingest, store: LabelStore) -> None:
+    ingest([IMATINIB])
+
+    [gleevec] = store.get(5291)
+    overdosage = next(section for section in gleevec.sections if section.section == "overdosage")
+    assert (overdosage.section_group, overdosage.sensitive) == ("overdosage", True)
+
+
+def test_preclinical_and_table_fields_are_never_stored(ingest, conn: sqlite3.Connection) -> None:
     ingest([IMATINIB, IBUPROFEN, ACETAMINOPHEN])
 
     stored = {row[0] for row in conn.execute("SELECT DISTINCT section FROM label_section")}
     assert stored
-    assert "overdosage" not in stored
     assert not stored & {
         "nonclinical_toxicology",
         "carcinogenesis_and_mutagenesis_and_impairment_of_fertility",
@@ -290,7 +297,7 @@ def test_overdosage_and_table_fields_are_never_stored(ingest, conn: sqlite3.Conn
     assert not [section for section in stored if section.endswith("_table")]
 
 
-def test_doses_specific_populations_and_patient_information_are_sensitive(
+def test_doses_populations_patient_information_and_overdosage_are_sensitive(
     ingest, store: LabelStore
 ) -> None:
     ingest([IMATINIB])
@@ -304,6 +311,7 @@ def test_doses_specific_populations_and_patient_information_are_sensitive(
         "pediatric_use",
         "geriatric_use",
         "information_for_patients",
+        "overdosage",
     }
 
 

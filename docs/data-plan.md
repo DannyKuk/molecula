@@ -24,7 +24,7 @@ Known limits, and how the app handles them:
 | Query translation | brand / non-US name → US generic; German → English; multi-query | name layer verified (PubChem) |
 | Structured retrieval | chunk metadata `{substance, section_group, product_type, source}` with self-query filters; SQL tables for properties and targets | metadata verified in every label |
 | Agent tools | PubChem (properties, 3D), ChEMBL (mechanism → target), RCSB (complex), own contact calculation | verified |
-| Safety | openFDA disclaimer; `overdosage` not indexed; no personal dosing | design decision (§5.5) |
+| Safety | openFDA disclaimer; `overdosage` indexed as sensitive, answers put emergency help first; no personal dosing | design decision (§5.5, #92) |
 | Sources in the UI | every chunk has `set_id`, `effective_time` and a DailyMed link | verified |
 | Hybrid search | BM25 next to embeddings: drug names, "QT prolongation", "CYP3A4" need exact matches | design decision |
 | Tools as an MCP server | the data services exposed through FastMCP (§4) | design decision |
@@ -180,13 +180,13 @@ Consequences:
   - has `mechanism_of_action`, then brand / reference label, then latest `effective_time`, then most sections
 - **Mechanism text is often in `clinical_pharmacology`.** Older (non-PLR) Rx labels, ibuprofen's for example, have no `mechanism_of_action` section. Both map to `section_group = "pharmacology"`.
 - **Section groups** cover the three layouts (PLR Rx, older Rx, OTC Drug Facts): `pharmacology, indications, dosing, warnings, contraindications, interactions, adverse_reactions, otc_consumer`.
-- **Safety at index time:** `overdosage` is not indexed (it lists toxic doses). `dosing` is indexed with `sensitive=true`, so general label dosing can be cited but never turned into personal advice.
+- **Safety at index time:** `overdosage` was left out until #92 and is now indexed with `sensitive=true`: 105 of its 127 sections say how an overdose is treated (poison control, charcoal, dialysis, antidotes) and 91 how it shows, which matters offline in an emergency; 23 also state a lethal amount, so answers must put emergency help first and never hand a lethal dose to someone seeking harm (#17). `dosing` is indexed with `sensitive=true`, so general label dosing can be cited but never turned into personal advice.
 - `*_table` HTML fields are dropped; the plain-text versions are kept.
 - Chunks (`ingest index`, #87): each section on its own, then recursively to 500 tokens with 50 overlap, counted with the `BAAI/bge-small-en-v1.5` tokenizer for every embedding model, so models are compared on the same chunks and no chunk is longer than a BERT-sized model reads (512 tokens). Whitespace is collapsed. Metadata: `{cid, substance, brand, product_type, section, section_group, sensitive, set_id, effective_time, url}`; IDs `{set_id}:{section}:{n}`.
 - **Repeated text is indexed once within a section group.** Measured on 2026-10-12 over the 156 stored labels: `clinical_pharmacology` contains `mechanism_of_action` on 111 of 115 Rx labels that have both, and `pharmacodynamics` on 87 of 89; that text is cut out of `clinical_pharmacology` and kept under the specific section, and a leftover under 10 tokens (the heading) is dropped. OTC `warnings` repeats `do_not_use`, `stop_use`, `ask_doctor` and `when_using` on most Drug Facts labels, but those are another group (`otc_consumer`), so both stay: retrieval filters on the group.
 - Vectors in ChromaDB (`data/build/index/chroma/`, one collection, cosine), rebuilt from scratch in an emptied folder: Chroma keeps a deleted collection's files, and a rebuild in place grew the index from 74.8 to 96.7 MB. The collection records the embedding model, and a query with another model is refused, because vectors of two models don't compare. Model weights are saved in `data/build/models/` on the first build, so later builds and the app load them with `OFFLINE=1`.
 
-**Corpus estimate:** a canonical Rx label is 40–170k characters (measured), an OTC label 3–5k. For 120 drugs that is ~8–10M characters ≈ 2–2.5M tokens ≈ 4–5k chunks. Local embeddings handle this on a CPU in minutes. The first full run measured less (below). The first index build (2026-10-12, `bge-small-en-v1.5` on CPU): 3,813 chunks from 156 labels in 105–118 s, a 74.8 MB index, and 129 MB of model files. With the #92 sections: 6,873 chunks in 184 s and a 104.7 MB index; pharmacokinetics is indexed once, under its own name (465 chunks), and `clinical_pharmacology` keeps 107.
+**Corpus estimate:** a canonical Rx label is 40–170k characters (measured), an OTC label 3–5k. For 120 drugs that is ~8–10M characters ≈ 2–2.5M tokens ≈ 4–5k chunks. Local embeddings handle this on a CPU in minutes. The first full run measured less (below). The first index build (2026-10-12, `bge-small-en-v1.5` on CPU): 3,813 chunks from 156 labels in 105–118 s, a 74.8 MB index, and 129 MB of model files. With the #92 sections: 7,012 chunks in 182 s and a 106.9 MB index; pharmacokinetics is indexed once, under its own name (465 chunks), and `clinical_pharmacology` keeps 107.
 
 **How `ingest labels` works.** It runs after `ingest compounds`, for every compound in the store.
 
@@ -210,9 +210,10 @@ Consequences:
 | `product` | `description`, `dosage_forms_and_strengths`, `how_supplied`, `storage_and_handling`, OTC `inactive_ingredient` | |
 | `abuse_dependence` | `drug_abuse_and_dependence`, `abuse`, `dependence`, `controlled_substance` | yes |
 | `clinical_studies` | `clinical_studies` | |
+| `overdosage` | `overdosage` | yes |
 | `otc_consumer` | `do_not_use`, `stop_use`, `ask_doctor`, `ask_doctor_or_pharmacist`, `when_using`, `purpose`, `active_ingredient`, `keep_out_of_reach_of_children`, `other_safety_information` | |
 
-Never stored: `overdosage` (toxic doses), the preclinical sections (`nonclinical_toxicology`, `carcinogenesis_and_mutagenesis_and_impairment_of_fertility`, `animal_pharmacology_and_or_toxicology`), `references`, `recent_major_changes`, `spl_unclassified_section`, OTC `questions`, and every `*_table` field. The groups after `adverse_reactions` came with #92: 5.66M → 11.10M stored characters, no canonical label changed.
+Never stored: the preclinical sections (`nonclinical_toxicology`, `carcinogenesis_and_mutagenesis_and_impairment_of_fertility`, `animal_pharmacology_and_or_toxicology`), `references`, `recent_major_changes`, `spl_unclassified_section`, OTC `questions`, and every `*_table` field. The groups after `adverse_reactions` came with #92: 5.66M → 11.25M stored characters, no canonical label changed.
 
 Tables (schema version 5; version 5 widened the `section_group` check for #92):
 

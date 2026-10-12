@@ -128,7 +128,7 @@ CREATE TABLE label_section_new (
     section_group TEXT NOT NULL CHECK (section_group IN (
         'pharmacology', 'indications', 'dosing', 'warnings', 'contraindications',
         'interactions', 'adverse_reactions', 'otc_consumer', 'specific_populations',
-        'patient_information', 'product', 'abuse_dependence', 'clinical_studies'
+        'patient_information', 'product', 'abuse_dependence', 'clinical_studies', 'overdosage'
     )),
     text TEXT NOT NULL,
     sensitive INTEGER NOT NULL,

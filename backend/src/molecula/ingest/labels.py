@@ -22,9 +22,10 @@ PRODUCT_TYPES: dict[ProductType, str] = {
     "otc": "HUMAN OTC DRUG",
 }
 # The sections the knowledge base uses, from PLR prescription labels, older prescription labels
-# and OTC Drug Facts. Left out: `overdosage` (it lists toxic doses), the preclinical sections
-# (animal and carcinogenicity studies), references, change notes, and the `*_table` HTML copies
-# of sections already kept as text.
+# and OTC Drug Facts. Left out: the preclinical sections (animal and carcinogenicity studies),
+# references, change notes, and the `*_table` HTML copies of sections already kept as text.
+# `overdosage` is kept: its symptoms, treatment and toxic amounts matter when someone has taken
+# too much, and the app runs offline.
 SECTION_GROUPS: dict[str, SectionGroup] = {
     "mechanism_of_action": "pharmacology",
     "clinical_pharmacology": "pharmacology",
@@ -68,6 +69,7 @@ SECTION_GROUPS: dict[str, SectionGroup] = {
     "dependence": "abuse_dependence",
     "controlled_substance": "abuse_dependence",
     "clinical_studies": "clinical_studies",
+    "overdosage": "overdosage",
     "do_not_use": "otc_consumer",
     "stop_use": "otc_consumer",
     "ask_doctor": "otc_consumer",
@@ -79,9 +81,10 @@ SECTION_GROUPS: dict[str, SectionGroup] = {
     "other_safety_information": "otc_consumer",
 }
 # Text that may be quoted but never turned into personal advice: doses, use in pregnancy, children
-# and older people, the patient leaflets' "how to take" passages, and how a drug is misused.
+# and older people, the patient leaflets' "how to take" passages, how a drug is misused, and
+# toxic and lethal amounts.
 SENSITIVE_GROUPS: frozenset[SectionGroup] = frozenset(
-    {"dosing", "specific_populations", "patient_information", "abuse_dependence"}
+    {"dosing", "specific_populations", "patient_information", "abuse_dependence", "overdosage"}
 )
 REFERENCE_APPLICATIONS = ("NDA", "BLA")
 

@@ -18,6 +18,7 @@ type SectionGroup = Literal[
     "product",
     "abuse_dependence",
     "clinical_studies",
+    "overdosage",
 ]
 
 
