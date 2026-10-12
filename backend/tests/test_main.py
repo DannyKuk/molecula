@@ -3,12 +3,20 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from langchain_core.embeddings import Embeddings, FakeEmbeddings
+from langchain_core.language_models import BaseChatModel
 
+from fake_llm import ScriptedChatModel
 from molecula import main
+from molecula.agent.llm import LLMConfigError
 from molecula.config import Settings
 from molecula.main import app
+from molecula.rag.embeddings import embedding_model_id
+from molecula.rag.filters import FilterExtractor
+from molecula.rag.retriever import LabelRetriever
 from molecula.store.compounds import CompoundRecord, CompoundStore, Synonym
 from molecula.store.db import connect
+from molecula.store.index import Chunk, IndexModelMismatch, LabelIndex
 from molecula.store.structures import ConformerFiles
 
 IMATINIB = CompoundRecord(
@@ -28,6 +36,20 @@ IMATINIB = CompoundRecord(
     source="pubchem",
 )
 SDF = "5291\n  stored conformer\n$$$$\n"
+CHUNK = Chunk(
+    id="gleevec:adverse_reactions:0",
+    text="Nausea and fluid retention.",
+    cid=5291,
+    substance="IMATINIB MESYLATE",
+    brand="Gleevec",
+    product_type="rx",
+    section="adverse_reactions",
+    section_group="adverse_reactions",
+    sensitive=False,
+    set_id="gleevec",
+    effective_time="20260713",
+    url="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=gleevec",
+)
 
 
 @pytest.fixture
@@ -105,3 +127,76 @@ def test_name_suggestion_cutoff_comes_from_the_settings(
 
     assert resolution["status"] == "not_supported"
     assert [suggestion["alias"] for suggestion in resolution["suggestions"]] == suggested
+
+
+def build_index(settings: Settings, model: str) -> None:
+    LabelIndex(settings.index_dir).rebuild([CHUNK], [[1.0, 0.0, 0.0]], model)
+
+
+@pytest.fixture
+def loaded_models(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Fakes the embedding and chat models and records which ones startup loaded."""
+    loaded: list[str] = []
+
+    def embeddings(settings: Settings) -> Embeddings:
+        loaded.append("embeddings")
+        return FakeEmbeddings(size=3)
+
+    def chat_model(settings: Settings) -> BaseChatModel:
+        loaded.append("chat")
+        return ScriptedChatModel(script=[])
+
+    monkeypatch.setattr(main, "get_embeddings", embeddings)
+    monkeypatch.setattr(main, "get_chat_model", chat_model)
+    return loaded
+
+
+def test_without_an_index_label_search_is_off_and_no_index_folder_appears(
+    settings: Settings, loaded_models: list[str]
+) -> None:
+    with TestClient(app):
+        assert app.state.label_retriever is None
+        assert app.state.filter_extractor is None
+
+    assert loaded_models == []
+    assert not settings.index_dir.exists()
+
+
+def test_startup_builds_the_label_search_over_a_matching_index(
+    settings: Settings, loaded_models: list[str]
+) -> None:
+    build_index(settings, embedding_model_id(settings))
+
+    with TestClient(app):
+        assert isinstance(app.state.label_retriever, LabelRetriever)
+        assert isinstance(app.state.filter_extractor, FilterExtractor)
+
+    assert loaded_models == ["chat", "embeddings"]
+
+
+def test_without_a_chat_model_the_label_search_is_off_and_the_routes_still_work(
+    settings: Settings, loaded_models: list[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def unconfigured(settings: Settings) -> BaseChatModel:
+        raise LLMConfigError("No chat model is configured.")
+
+    monkeypatch.setattr(main, "get_chat_model", unconfigured)
+    build_index(settings, embedding_model_id(settings))
+
+    with TestClient(app) as client:
+        assert client.get("/drugs").status_code == 200
+        assert app.state.label_retriever is None
+        assert app.state.filter_extractor is None
+
+    assert loaded_models == []
+
+
+def test_startup_refuses_an_index_built_with_another_embedding_model(
+    settings: Settings, loaded_models: list[str]
+) -> None:
+    build_index(settings, "BAAI/bge-small-en-v1.5")
+
+    with pytest.raises(IndexModelMismatch, match=r"bge-small-en-v1.5"), TestClient(app):
+        pass
+
+    assert loaded_models == []
