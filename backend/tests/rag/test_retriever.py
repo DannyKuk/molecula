@@ -7,11 +7,13 @@ import pytest
 from langchain_core.embeddings import Embeddings
 
 from molecula.rag.retriever import LabelRetriever
+from molecula.schemas.labels import SectionGroup
 from molecula.schemas.retrieval import DrugFilter, LabelFilter, LabelQuery
 from molecula.store.index import Chunk, LabelIndex
 
 MODEL = "keyword-fake"
 VOCABULARY = ["nausea", "kinase", "bleeding", "fever", "pain"]
+BOOST = 0.15
 
 
 class KeywordEmbeddings(Embeddings):
@@ -77,7 +79,9 @@ def index(tmp_path: Path) -> LabelIndex:
 
 
 def retriever(index: LabelIndex, top_k: int = 10, min_score: float = -1.0) -> LabelRetriever:
-    return LabelRetriever(index, KeywordEmbeddings(), top_k=top_k, min_score=min_score)
+    return LabelRetriever(
+        index, KeywordEmbeddings(), top_k=top_k, min_score=min_score, section_group_boost=BOOST
+    )
 
 
 def label_filter(
@@ -98,16 +102,53 @@ def found_ids(index: LabelIndex, question: str, label_filter: LabelFilter | None
     return [chunk.id for chunk in retriever(index).retrieve(question, label_filter).chunks]
 
 
-def test_the_filter_narrows_to_the_drug_and_the_section_group(index: LabelIndex) -> None:
+def test_the_filter_narrows_to_the_drug_and_ranks_its_section_group_first(
+    index: LabelIndex,
+) -> None:
     narrowed = label_filter([IMATINIB], section_groups=["adverse_reactions"])
 
-    assert found_ids(index, "nausea", narrowed) == [IMATINIB_SIDE_EFFECTS.id]
+    assert found_ids(index, "nausea", narrowed) == [IMATINIB_SIDE_EFFECTS.id, IMATINIB_MECHANISM.id]
+
+
+@pytest.mark.parametrize(
+    ("group", "first"),
+    [("pharmacology", IMATINIB_MECHANISM), ("adverse_reactions", IMATINIB_SIDE_EFFECTS)],
+)
+def test_the_section_group_decides_between_equally_close_chunks(
+    index: LabelIndex, group: SectionGroup, first: Chunk
+) -> None:
+    retrieval = retriever(index).retrieve(
+        "nausea kinase", label_filter([IMATINIB], section_groups=[group])
+    )
+
+    assert retrieval.chunks[0].id == first.id
+    assert [chunk.in_section_groups for chunk in retrieval.chunks] == [True, False]
+    assert retrieval.chunks[0].score == pytest.approx(retrieval.chunks[1].score)
+
+
+def test_a_wrong_section_group_still_finds_the_answer_in_the_drugs_other_sections(
+    index: LabelIndex,
+) -> None:
+    wrong_group = label_filter([IMATINIB], section_groups=["adverse_reactions"])
+
+    retrieval = retriever(index).retrieve("kinase", wrong_group)
+
+    assert retrieval.chunks[0].id == IMATINIB_MECHANISM.id
+    assert not retrieval.chunks[0].in_section_groups
+
+
+def test_the_drug_filter_stays_hard_when_the_section_group_is_wrong(index: LabelIndex) -> None:
+    wrong_group = label_filter([IMATINIB], section_groups=["otc_consumer"])
+
+    retrieval = retriever(index).retrieve("pain fever bleeding", wrong_group)
+
+    assert {chunk.cid for chunk in retrieval.chunks} == {IMATINIB.cid}
 
 
 def test_two_drugs_search_the_labels_of_both(index: LabelIndex) -> None:
     narrowed = label_filter([IMATINIB, IBUPROFEN], section_groups=["adverse_reactions"])
 
-    assert found_ids(index, "nausea and bleeding", narrowed) == [
+    assert found_ids(index, "nausea and bleeding", narrowed)[:2] == [
         IBUPROFEN_SIDE_EFFECTS.id,
         IMATINIB_SIDE_EFFECTS.id,
     ]
@@ -163,6 +204,16 @@ def test_candidates_below_the_threshold_are_dropped_but_kept_for_the_trace(
     assert retrieval.dropped[0].score < 0.5 <= retrieval.chunks[0].score
 
 
+def test_the_threshold_applies_to_the_similarity_without_the_boost(index: LabelIndex) -> None:
+    grouped = label_filter([IMATINIB], section_groups=["pharmacology"])
+
+    retrieval = retriever(index, min_score=0.1).retrieve("nausea", grouped)
+
+    assert [chunk.id for chunk in retrieval.chunks] == [IMATINIB_SIDE_EFFECTS.id]
+    assert [chunk.id for chunk in retrieval.dropped] == [IMATINIB_MECHANISM.id]
+    assert retrieval.dropped[0].score + BOOST >= 0.1
+
+
 def test_results_carry_what_a_citation_needs(index: LabelIndex) -> None:
     narrowed = label_filter([IMATINIB], section_groups=["adverse_reactions"])
 
@@ -193,18 +244,34 @@ def test_a_brands_label_without_the_section_widens_to_the_drugs_other_labels(
         "nausea", label_filter([advil], section_groups=["adverse_reactions"])
     )
 
-    assert [chunk.id for chunk in retrieval.chunks] == [IBUPROFEN_SIDE_EFFECTS.id]
+    assert retrieval.chunks[0].id == IBUPROFEN_SIDE_EFFECTS.id
+    assert {chunk.cid for chunk in retrieval.chunks} == {IBUPROFEN.cid}
     assert retrieval.widened == ["labels"]
 
 
-def test_a_section_no_label_of_the_drug_has_widens_to_every_section(index: LabelIndex) -> None:
+def test_a_brands_label_stays_when_no_label_of_the_drug_has_the_section(
+    index: LabelIndex,
+) -> None:
+    advil = DrugFilter(
+        name="Advil", cid=3672, generic="ibuprofen", set_ids=["advil"], narrowed=True
+    )
+
+    retrieval = retriever(index).retrieve(
+        "fever", label_filter([advil], section_groups=["overdosage"])
+    )
+
+    assert [chunk.id for chunk in retrieval.chunks] == [IBUPROFEN_PURPOSE.id]
+    assert retrieval.widened == []
+
+
+def test_a_section_no_label_of_the_drug_has_ranks_its_other_sections(index: LabelIndex) -> None:
     retrieval = retriever(index).retrieve(
         "kinase", label_filter([IMATINIB], section_groups=["overdosage"])
     )
 
     assert {chunk.cid for chunk in retrieval.chunks} == {IMATINIB.cid}
     assert retrieval.chunks[0].id == IMATINIB_MECHANISM.id
-    assert retrieval.widened == ["section_groups"]
+    assert retrieval.widened == []
 
 
 def test_a_product_type_without_the_section_widens_to_every_product_type(
@@ -214,5 +281,5 @@ def test_a_product_type_without_the_section_widens_to_every_product_type(
         "kinase", label_filter(product_type="otc", section_groups=["pharmacology"])
     )
 
-    assert [chunk.id for chunk in retrieval.chunks] == [IMATINIB_MECHANISM.id]
+    assert retrieval.chunks[0].id == IMATINIB_MECHANISM.id
     assert retrieval.widened == ["labels"]

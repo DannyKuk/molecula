@@ -28,7 +28,13 @@ def main() -> int:
     settings = get_settings()
     index = LabelIndex(settings.index_dir)
     index.check_model(embedding_model_id(settings))
-    retriever = LabelRetriever(index, get_embeddings(settings), top_k=TOP_K, min_score=-1.0)
+    retriever = LabelRetriever(
+        index,
+        get_embeddings(settings),
+        top_k=TOP_K,
+        min_score=-1.0,
+        section_group_boost=settings.retrieval_section_group_boost,
+    )
     set_ids = labels_by_drug(index.chunks())
     questions = load_questions()
 
@@ -80,7 +86,7 @@ def gold_filter(
 
 def as_chunk(found: RetrievedChunk) -> Chunk:
     return Chunk(
-        **found.model_dump(exclude={"score", "effective_time"}),
+        **found.model_dump(exclude={"score", "effective_time", "in_section_groups"}),
         effective_time=found.effective_time.strftime("%Y%m%d"),
     )
 
