@@ -73,6 +73,11 @@ class Settings(BaseSettings):
         """Local model weights, saved when the index is built so the app runs with OFFLINE=1."""
         return self.build_dir / "models"
 
+    @property
+    def export_dir(self) -> Path:
+        """Where `ingest export` writes the store archive and its manifest for a release."""
+        return self.build_dir / "export"
+
 
 @lru_cache
 def get_settings() -> Settings:
