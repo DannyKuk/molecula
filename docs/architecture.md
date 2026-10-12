@@ -47,7 +47,7 @@ This is the planned flow. Name resolution and the data routes exist; the rest is
 | 1. Guard | The message is checked for length and content, then sorted into `ok`, personal medical advice, lethal dose, synthesis or misuse, or off-topic. Anything but `ok` gets a fixed, friendly answer. | planned (#17) |
 | 2. Resolve the drug | "Gleevec", "imatinib mesylate" or "Tylenol" becomes a stored compound, or `not_supported` with suggestions the user has to pick ([name resolution](decisions/name-resolution.md)). | built: `CompoundService.resolve`, `GET /drugs/resolve` |
 | 3. Tools | The agent looks things up instead of guessing: properties, targets and mechanism, the reviewed complex, a side-by-side comparison. Each tool wraps a service. | planned (#15); the data behind properties and targets is served |
-| 4. Search the labels | Query translation (brand → generic, German → English, rewrites), a metadata filter for drug and label section, then embedding search over chunks of the canonical labels, with BM25 next to it for exact terms like "CYP3A4". | planned (#12, #13, #14; BM25 #44); the label text is stored (#63) |
+| 4. Search the labels | Query translation (brand → generic, German → English, rewrites), a metadata filter for drug and label section, then embedding search over chunks of the canonical labels, with BM25 next to it for exact terms like "CYP3A4". | planned (#13, #14; BM25 #44); the chunks are indexed (#87) |
 | 5. Answer | Streamed over server-sent events: progress steps, tool calls and results, tokens, sources, and a retrieval trace. Label text is cited with a link to DailyMed. | planned (#16) |
 | 6. Show it | Citations and tool cards in the chat; the drug in 3D, and for hero drugs bound in its target's pocket with the hydrogen bonds marked. | planned (#19, #20, #21) |
 
@@ -61,7 +61,7 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 | `targets` | stored InChIKeys, ChEMBL, RCSB | `target`, `ligand_code`, `complex_candidate`, and `complex_candidates.md` for the hero review. 132 compounds with targets, 70 with candidate complexes | built (#55) |
 | `labels` | openFDA | one canonical Rx and one OTC label per drug, split into section groups. 133 of 134 drugs: 129 Rx and 27 OTC labels, 5.7M characters; metamizole has no US label | built (#63) |
 | `complexes` | `data/hero_set.yaml` (reviewed by hand, #6), RCSB mmCIF | one viewer-ready JSON per hero complex: CA trace, pocket, ligand, contacts | planned (#7) |
-| `index` | the stored label sections | chunks in ChromaDB, later BM25 next to it | planned (#12, #44) |
+| `index` | the stored label sections | chunks with label metadata in ChromaDB, embedded with a local model saved in `data/build/models/`; later BM25 next to it. 3,813 chunks from 156 labels, 74.7 MB | built (#87); model choice #88, BM25 #44 |
 | `export` / `fetch`, `update` | the built store; openFDA for changed labels | a release snapshot for fresh clones; re-indexed changed labels | planned (#35, #25) |
 
 ## Key design choices
@@ -76,6 +76,9 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 - **Complex candidates match the target's gene name in any species**, not the UniProt accession, because many reference structures aren't human (1IEP is mouse ABL1). A viral target is the exception: its gene names are generic (`pol` is HIV-1 and foamy virus), so the protein must come from the same virus species. Human entries rank first, then by resolution, and a person reviews the list ([complex candidates](decisions/complex-candidates.md), #61, #70, #69).
 - **Hero complexes are reviewed by hand and precomputed** (planned). Each shows the therapeutic target, not a transport protein: ibuprofen bound to albumin is not its mechanism. The ingest turns each into JSON, so the frontend never parses mmCIF. Prodrugs (oseltamivir, tamoxifen) are entered by hand in their active form (#6, #7).
 - **One canonical label per drug and product type**, on the drug's most common route: text-hash dedup kept 20 of 22 imatinib labels apart, and without the route rule ibuprofen got the IV label ([drug labels](decisions/drug-labels.md)). `overdosage` is never stored, and `dosing` is stored with `sensitive = true` (#63, `docs/data-plan.md` §5.5).
+- **One chunking for every embedding model.** Chunks are 500 tokens of the bge tokenizer with 50 overlap, split per section, so a model comparison compares only the models and no chunk is cut off by a 512-token model (#87).
+- **Repeated label text is indexed once, within its section group.** `clinical_pharmacology` repeats `mechanism_of_action` on 111 of 115 Rx labels; that text stays only under the specific section. OTC `warnings` repeats the consumer sections, but those are another group, and retrieval filters on the group, so both stay (#87, `docs/data-plan.md` §5.5).
+- **The index is tied to its embedding model.** The collection records the model, and querying with another one is refused: vectors of two models don't compare, and the query would fail on the dimension or quietly find nonsense. The weights are saved in `data/build/models/`, Chroma's own default embedder (an ONNX download) is off, and so is its telemetry, so `OFFLINE=1` makes no call (#87).
 - **Interactions come from label text, with no safe/unsafe verdict.** There is no free structured interaction database: RxNav's API was shut down in January 2024 and DrugBank needs a licence (`docs/data-plan.md` §1).
 
 **Code**

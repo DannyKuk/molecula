@@ -4,12 +4,13 @@ import sys
 from collections.abc import Callable
 
 from molecula.config import Settings, get_settings
-from molecula.ingest import compounds, labels, targets
+from molecula.ingest import compounds, index, labels, targets
 
 STEPS: dict[str, Callable[[Settings], int]] = {
     "compounds": compounds.run,
     "targets": targets.run,
     "labels": labels.run,
+    "index": index.run,
 }
 
 

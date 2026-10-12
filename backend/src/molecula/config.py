@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = 60.0
     llm_max_retries: int = 2
     embedding_model: str = "local"
+    local_embedding_model: str = "BAAI/bge-small-en-v1.5"
     openfda_api_key: SecretStr | None = None
     offline: bool = False
     data_dir: Path = REPO_ROOT / "data"
@@ -49,6 +50,15 @@ class Settings(BaseSettings):
     @property
     def conformers_dir(self) -> Path:
         return self.build_dir / "structures" / "compounds"
+
+    @property
+    def index_dir(self) -> Path:
+        return self.build_dir / "index" / "chroma"
+
+    @property
+    def models_dir(self) -> Path:
+        """Local model weights, saved when the index is built so the app runs with OFFLINE=1."""
+        return self.build_dir / "models"
 
 
 @lru_cache
