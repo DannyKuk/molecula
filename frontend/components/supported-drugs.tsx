@@ -1,9 +1,12 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
-import type { Drug } from "@/lib/api";
-import { filterDrugs } from "@/lib/drug-search";
+import { type Drug, type Resolution, resolveDrug, type Suggestion } from "@/lib/api";
+import { filterDrugs, namesToOffer } from "@/lib/drug-search";
+
+/** How long typing has to pause before a name the list doesn't match is sent to the backend. */
+const RESOLVE_DELAY_MS = 300;
 
 type SupportedDrugsProps = {
   drugs: Drug[];
@@ -15,6 +18,9 @@ export function SupportedDrugs({ drugs, onAsk }: SupportedDrugsProps) {
   const searchId = useId();
   const listId = useId();
   const matches = filterDrugs(drugs, query);
+  const searched = query.trim();
+  const resolution = useResolution(matches.length === 0 ? searched : "");
+  const offered = resolution ? namesToOffer(resolution) : [];
 
   return (
     <section className="flex flex-col gap-4">
@@ -35,8 +41,11 @@ export function SupportedDrugs({ drugs, onAsk }: SupportedDrugsProps) {
         />
       </div>
       <p role="status" className="text-sm text-zinc-600 dark:text-zinc-400">
-        {resultSummary(query, matches.length, drugs.length)}
+        {resultSummary(query, matches.length, drugs.length, resolution?.status === "found")}
       </p>
+      {offered.length > 0 && (
+        <SuggestionLine suggestions={offered} onPick={(suggestion) => setQuery(suggestion.name)} />
+      )}
       <ul id={listId} className="grid gap-2 sm:grid-cols-2">
         {matches.map((drug) => (
           <li key={drug.cid}>
@@ -46,6 +55,59 @@ export function SupportedDrugs({ drugs, onAsk }: SupportedDrugsProps) {
       </ul>
     </section>
   );
+}
+
+/** The backend's resolution of a name once typing has paused; null before that, or on failure. */
+function useResolution(name: string): Resolution | null {
+  const [resolved, setResolved] = useState<{ name: string; resolution: Resolution } | null>(null);
+
+  useEffect(() => {
+    if (!name) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      resolveDrug(name, controller.signal)
+        .then((resolution) => setResolved({ name, resolution }))
+        // A failed lookup leaves the plain "not supported" message.
+        .catch(() => {});
+    }, RESOLVE_DELAY_MS);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [name]);
+
+  return name && resolved?.name === name ? resolved.resolution : null;
+}
+
+function SuggestionLine({
+  suggestions,
+  onPick,
+}: {
+  suggestions: Suggestion[];
+  onPick: (suggestion: Suggestion) => void;
+}) {
+  return (
+    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      Did you mean{" "}
+      {suggestions.map((suggestion, index) => (
+        <span key={suggestion.alias}>
+          {index > 0 && " or "}
+          <button
+            type="button"
+            onClick={() => onPick(suggestion)}
+            className="font-medium text-zinc-900 underline underline-offset-4 hover:text-zinc-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:text-zinc-100 dark:hover:text-zinc-300"
+          >
+            {suggestionLabel(suggestion)}
+          </button>
+        </span>
+      ))}
+      ?
+    </p>
+  );
+}
+
+function suggestionLabel({ alias, name }: Suggestion): string {
+  return alias === name ? name : `${alias} (${name})`;
 }
 
 function DrugButton({ drug, onAsk }: { drug: Drug; onAsk: (question: string) => void }) {
@@ -90,10 +152,18 @@ function questionAbout(drug: Drug): string {
   return `How does ${drug.name} work?`;
 }
 
-function resultSummary(query: string, matchCount: number, total: number): string {
+function resultSummary(
+  query: string,
+  matchCount: number,
+  total: number,
+  foundUnderAnotherName: boolean,
+): string {
   const searched = query.trim();
   const supported = `${total} supported ${total === 1 ? "drug" : "drugs"}`;
   if (!searched) return `${supported}. Pick one to ask how it works.`;
+  if (matchCount === 0 && foundUnderAnotherName) {
+    return `“${searched}” is supported under another name.`;
+  }
   if (matchCount === 0) {
     return `“${searched}” is not supported. Molecula answers only about its ${supported}.`;
   }
