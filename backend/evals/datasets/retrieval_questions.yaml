@@ -1,232 +1,758 @@
-# Questions for comparing retrieval over the label sections (recall@5, MRR).
-# One entry per question. answers: every label section that contains the answer (checked in the
-# store on 2026-10-12). evidence: an exact substring of every listed section that shows the answer
-# is there. The questions paraphrase the label on purpose, so they don't favour lexical matching.
+# Questions for comparing retrieval over the label chunks (evals/retrieval/compare_embeddings.py).
+# A retrieved chunk answers a question when it belongs to the question's drug (cid) and contains
+# `evidence`, an exact passage of the label. `section_group` is the part of the label the question
+# is about, for the per-group breakdown. Questions paraphrase the label on purpose, so they don't
+# favour lexical matching. origin: hand (topic chosen by hand) or sampled (written for a chunk
+# that `python -m evals.retrieval.questions sample` picked at random).
 
 - id: imatinib-mechanism
-  question: How does Gleevec work against leukemia?
+  question: "How does Gleevec work against leukemia?"
   cid: 5291
   drug: imatinib
   section_group: pharmacology
-  answers:
-    - {set_id: 211ef2da-2868-4a77-8055-1cb2cd78e24b, section: mechanism_of_action}
-    - {set_id: 211ef2da-2868-4a77-8055-1cb2cd78e24b, section: clinical_pharmacology}
   evidence: "protein-tyrosine kinase inhibitor that inhibits the BCR-ABL tyrosine kinase"
+  origin: hand
 
 - id: ibuprofen-mechanism
-  question: Why does ibuprofen bring down pain and fever?
+  question: "Why does ibuprofen bring down pain and fever?"
   cid: 3672
   drug: ibuprofen
   section_group: pharmacology
-  answers:
-    - {set_id: 2144eff0-d7ab-486d-b116-a4ff3ae2afe2, section: clinical_pharmacology}
   evidence: "may be related to prostaglandin synthetase inhibition"
+  origin: hand
 
 - id: omeprazole-mechanism
-  question: How does omeprazole lower the amount of acid the stomach makes?
+  question: "How does omeprazole lower the amount of acid the stomach makes?"
   cid: 4594
   drug: omeprazole
   section_group: pharmacology
-  answers:
-    - {set_id: b6761f84-53ac-4745-a8c8-1e5427d7e179, section: mechanism_of_action}
-    - {set_id: b6761f84-53ac-4745-a8c8-1e5427d7e179, section: clinical_pharmacology}
   evidence: "it blocks the final step of acid production"
+  origin: hand
 
 - id: finasteride-indication
-  question: What condition is Proscar prescribed for in men?
+  question: "What condition is Proscar prescribed for in men?"
   cid: 57363
   drug: finasteride
   section_group: indications
-  answers:
-    - {set_id: 6f988153-fc74-4ca4-b29a-111f750c4a4b, section: indications_and_usage}
   evidence: "symptomatic benign prostatic hyperplasia (BPH) in men with an enlarged prostate"
+  origin: hand
 
 - id: apixaban-indication
-  question: What does apixaban protect against in people with an irregular heartbeat?
+  question: "What does apixaban protect against in people with an irregular heartbeat?"
   cid: 10182969
   drug: apixaban
   section_group: indications
-  answers:
-    - {set_id: a454cd24-0c6d-46e8-b1e4-197388606175, section: indications_and_usage}
-    - {set_id: a454cd24-0c6d-46e8-b1e4-197388606175, section: dosage_and_administration}
   evidence: "risk of stroke and systemic embolism"
+  origin: hand
 
 - id: dextromethorphan-indication
-  question: Can Delsym be used for a cough that comes with a cold?
+  question: "Can Delsym be used for a cough that comes with a cold?"
   cid: 5360696
   drug: dextromethorphan
   section_group: indications
-  answers:
-    - {set_id: e3e1d126-76c2-4776-8ce0-449625b7e6ba, section: indications_and_usage}
   evidence: "temporarily relieves cough due to minor throat and bronchial irritation as may occur with the common cold"
+  origin: hand
 
 - id: atorvastatin-starting-dose
-  question: What starting dose of atorvastatin does the label recommend for adults?
+  question: "What starting dose of atorvastatin does the label recommend for adults?"
   cid: 60823
   drug: atorvastatin
   section_group: dosing
-  answers:
-    - {set_id: a60cc18b-0631-4cf0-b021-9f52224ece65, section: dosage_and_administration}
   evidence: "The recommended starting dosage of LIPITOR is 10 mg to 20 mg once daily"
+  origin: hand
 
 - id: cetirizine-daily-limit
-  question: According to the Zyrtec package, how many tablets can an adult take in one day?
+  question: "According to the Zyrtec package, how many tablets can an adult take in one day?"
   cid: 2678
   drug: cetirizine
   section_group: dosing
-  answers:
-    - {set_id: 568960cf-2c8f-f1b0-e063-6294a90aebc7, section: dosage_and_administration}
   evidence: "do not take more than one 10 mg tablet in 24 hours"
+  origin: hand
 
 - id: escitalopram-depression-dose
-  question: Which dose of escitalopram does the label recommend for adults with depression?
+  question: "Which dose of escitalopram does the label recommend for adults with depression?"
   cid: 146570
   drug: escitalopram
   section_group: dosing
-  answers:
-    - {set_id: 13bb8267-1cab-43e5-acae-55a4d957630a, section: dosage_and_administration}
   evidence: "Initial: 10 mg once daily Recommended: 10 mg once daily"
+  origin: hand
 
 - id: clopidogrel-omeprazole
-  question: Should clopidogrel be combined with omeprazole for heartburn?
+  question: "Should clopidogrel be combined with omeprazole for heartburn?"
   cid: 60606
   drug: clopidogrel
   section_group: interactions
-  answers:
-    - {set_id: de8b0b67-eb25-4684-83b5-7ad785314227, section: drug_interactions}
-    - {set_id: de8b0b67-eb25-4684-83b5-7ad785314227, section: warnings_and_cautions}
   evidence: "omeprazole or esomeprazole"
+  origin: hand
 
 - id: simvastatin-cyp3a4
-  question: Which kinds of medicines must never be taken with simvastatin because of the risk of muscle breakdown?
+  question: "Which kinds of medicines must never be taken with simvastatin because of the risk of muscle breakdown?"
   cid: 54454
   drug: simvastatin
   section_group: interactions
-  answers:
-    - {set_id: 8f55d5de-5a4f-4a39-8c84-c53976dd6af9, section: drug_interactions}
-    - {set_id: 8f55d5de-5a4f-4a39-8c84-c53976dd6af9, section: contraindications}
-    - {set_id: 8f55d5de-5a4f-4a39-8c84-c53976dd6af9, section: warnings_and_cautions}
   evidence: "strong CYP3A4 inhibitors"
+  origin: hand
 
 - id: ciprofloxacin-tizanidine
-  question: Can ciprofloxacin be given to someone who takes the muscle relaxant tizanidine?
+  question: "Can ciprofloxacin be given to someone who takes the muscle relaxant tizanidine?"
   cid: 2764
   drug: ciprofloxacin
   section_group: interactions
-  answers:
-    - {set_id: 888dc7f9-ad9c-4c00-8d50-8ddfd9bd27c0, section: contraindications}
-    - {set_id: 888dc7f9-ad9c-4c00-8d50-8ddfd9bd27c0, section: drug_interactions}
-    - {set_id: 888dc7f9-ad9c-4c00-8d50-8ddfd9bd27c0, section: warnings_and_cautions}
-    - {set_id: 888dc7f9-ad9c-4c00-8d50-8ddfd9bd27c0, section: clinical_pharmacology}
   evidence: "tizanidine"
+  origin: hand
 
 - id: acetaminophen-warfarin
-  question: Does Tylenol interact with blood thinners?
+  question: "Does Tylenol interact with blood thinners?"
   cid: 1983
   drug: acetaminophen
   section_group: interactions
-  answers:
-    - {set_id: 3af22fc8-e4e0-4863-8696-6bc1257047cb, section: ask_doctor_or_pharmacist}
-    - {set_id: 3af22fc8-e4e0-4863-8696-6bc1257047cb, section: warnings}
-    - {set_id: 464e404a-1957-44a2-a53a-f2a9d3c15bde, section: drug_interactions}
   evidence: "warfarin"
+  origin: hand
 
 - id: ciprofloxacin-tendons
-  question: Can ciprofloxacin hurt your tendons?
+  question: "Can ciprofloxacin hurt your tendons?"
   cid: 2764
   drug: ciprofloxacin
   section_group: warnings
-  answers:
-    - {set_id: 888dc7f9-ad9c-4c00-8d50-8ddfd9bd27c0, section: boxed_warning}
-    - {set_id: 888dc7f9-ad9c-4c00-8d50-8ddfd9bd27c0, section: warnings_and_cautions}
-    - {set_id: 888dc7f9-ad9c-4c00-8d50-8ddfd9bd27c0, section: adverse_reactions}
   evidence: "Tendinitis and"
+  origin: hand
 
 - id: montelukast-mood
-  question: Can Singulair cause mood or behaviour changes?
+  question: "Can Singulair cause mood or behaviour changes?"
   cid: 5281040
   drug: montelukast
   section_group: warnings
-  answers:
-    - {set_id: 482dcc92-b47f-4ea6-854a-f5ac2aea7842, section: boxed_warning}
-    - {set_id: 482dcc92-b47f-4ea6-854a-f5ac2aea7842, section: warnings_and_cautions}
-    - {set_id: 482dcc92-b47f-4ea6-854a-f5ac2aea7842, section: adverse_reactions}
   evidence: "agitation, aggress"
+  origin: hand
 
 - id: ibuprofen-stomach-bleeding-signs
-  question: What signs of stomach bleeding does the Advil label tell you to watch for?
+  question: "What signs of stomach bleeding does the Advil label tell you to watch for?"
   cid: 3672
   drug: ibuprofen
   section_group: warnings
-  answers:
-    - {set_id: ae1625f4-ef32-4d4f-bf54-c44085843e41, section: stop_use}
-    - {set_id: ae1625f4-ef32-4d4f-bf54-c44085843e41, section: warnings}
   evidence: "feel faint vomit blood have bloody or black stools"
+  origin: hand
 
 - id: metformin-kidneys
-  question: Can metformin be used by people with severe kidney disease?
+  question: "Can metformin be used by people with severe kidney disease?"
   cid: 4091
   drug: metformin
   section_group: contraindications
-  answers:
-    - {set_id: 05d4df4b-dfe8-4828-b423-a3d4f2c4114a, section: contraindications}
-    - {set_id: 05d4df4b-dfe8-4828-b423-a3d4f2c4114a, section: warnings_and_cautions}
-    - {set_id: 05d4df4b-dfe8-4828-b423-a3d4f2c4114a, section: dosage_and_administration}
   evidence: "30 mL/min"
+  origin: hand
 
 - id: lisinopril-angioedema
-  question: Is lisinopril safe for someone whose face and lips swelled up on another ACE inhibitor?
+  question: "Is lisinopril safe for someone whose face and lips swelled up on another ACE inhibitor?"
   cid: 5362119
   drug: lisinopril
   section_group: contraindications
-  answers:
-    - {set_id: 9f6e4e57-a489-4b36-b093-b93865d3717c, section: contraindications}
-    - {set_id: 9f6e4e57-a489-4b36-b093-b93865d3717c, section: warnings_and_cautions}
   evidence: "history of angioedema"
+  origin: hand
 
 - id: warfarin-pregnancy
-  question: Can warfarin be used during pregnancy?
+  question: "Can warfarin be used during pregnancy?"
   cid: 54678486
   drug: warfarin
   section_group: contraindications
-  answers:
-    - {set_id: 7c4deb97-9966-4c8e-9ba6-bb260b71e130, section: contraindications}
-    - {set_id: 7c4deb97-9966-4c8e-9ba6-bb260b71e130, section: warnings_and_cautions}
   evidence: "mechanical heart valves"
+  origin: hand
 
 - id: pseudoephedrine-antidepressants
-  question: Which antidepressants should not be combined with a pseudoephedrine decongestant?
+  question: "Which antidepressants should not be combined with a pseudoephedrine decongestant?"
   cid: 7028
   drug: pseudoephedrine
   section_group: otc_consumer
-  answers:
-    - {set_id: 1fdb1ba5-4072-4baf-9e30-f01d57bf6d82, section: do_not_use}
-    - {set_id: 1fdb1ba5-4072-4baf-9e30-f01d57bf6d82, section: warnings}
   evidence: "prescription monoamine oxidase inhibitor (MAOI)"
+  origin: hand
 
 - id: imatinib-common-side-effects
-  question: What side effects do people most often get on imatinib?
+  question: "What side effects do people most often get on imatinib?"
   cid: 5291
   drug: imatinib
   section_group: adverse_reactions
-  answers:
-    - {set_id: 211ef2da-2868-4a77-8055-1cb2cd78e24b, section: adverse_reactions}
   evidence: "edema, nausea, vomiting, muscle cramps, musculoskeletal pain, diarrhea, rash, fatigue, and abdominal pain"
+  origin: hand
 
 - id: atorvastatin-common-side-effects
-  question: What are the most common side effects of Lipitor?
+  question: "What are the most common side effects of Lipitor?"
   cid: 60823
   drug: atorvastatin
   section_group: adverse_reactions
-  answers:
-    - {set_id: a60cc18b-0631-4cf0-b021-9f52224ece65, section: adverse_reactions}
   evidence: "nasopharyngitis, arthralgia, diarrhea, pain in extremity, and urinary tract infection"
+  origin: hand
 
 - id: metformin-stomach-side-effects
-  question: Which stomach and gut problems are common with metformin?
+  question: "Which stomach and gut problems are common with metformin?"
   cid: 4091
   drug: metformin
   section_group: adverse_reactions
-  answers:
-    - {set_id: 05d4df4b-dfe8-4828-b423-a3d4f2c4114a, section: adverse_reactions}
   evidence: "diarrhea, nausea/vomiting, flatulence"
+  origin: hand
+
+- id: bupropion-abuse-dependence
+  question: "Is it dangerous to snort crushed bupropion tablets?"
+  cid: 444
+  drug: bupropion
+  section_group: abuse_dependence
+  evidence: "Seizures and/or cases of death have been reported when bupropion has been administered intranasally or by parenteral injection"
+  origin: sampled
+
+- id: nicotine-abuse-dependence
+  question: "How many people felt hooked on the Nicotrol nasal spray in the studies?"
+  cid: 89594
+  drug: nicotine
+  section_group: abuse_dependence
+  evidence: "Feelings of dependency on the spray were reported by 32% of active spray users"
+  origin: sampled
+
+- id: methylphenidate-abuse-dependence
+  question: "What does misusing methylphenidate do to the body?"
+  cid: 4158
+  drug: methylphenidate
+  section_group: abuse_dependence
+  evidence: "Misuse and abuse of methylphenidate may cause increased heart rate, respiratory rate, or blood pressure"
+  origin: sampled
+
+- id: tramadol-abuse-dependence
+  question: "What can happen if someone injects tramadol extended-release capsules?"
+  cid: 33741
+  drug: tramadol
+  section_group: abuse_dependence
+  evidence: "With parental abuse, the inactive ingredients in Tramadol Hydrochloride Extended-Release Capsules can result in local tissue necrosis, infection"
+  origin: sampled
+
+- id: zolpidem-abuse-dependence
+  question: "How does a high dose of Ambien compare to Valium in abuse studies?"
+  cid: 5732
+  drug: zolpidem
+  section_group: abuse_dependence
+  evidence: "zolpidem tartrate 40 mg were similar, but not identical, to diazepam 20 mg"
+  origin: sampled
+
+- id: oxycodone-abuse-dependence
+  question: "Why shouldn't OxyContin tablets be crushed or chewed?"
+  cid: 5284603
+  drug: oxycodone
+  section_group: abuse_dependence
+  evidence: "Taking cut, broken, chewed, crushed, or dissolved OXYCONTIN enhances drug release and increases the risk of overdose and death"
+  origin: sampled
+
+- id: morphine-abuse-dependence
+  question: "Who is most likely to get addicted to MS Contin?"
+  cid: 5288826
+  drug: morphine
+  section_group: abuse_dependence
+  evidence: "Patients at high risk of MS CONTIN abuse include those with a history of prolonged use of any opioid"
+  origin: sampled
+
+- id: anastrozole-adverse-reactions
+  question: "Is nausea more common with Arimidex or with tamoxifen?"
+  cid: 2187
+  drug: anastrozole
+  section_group: adverse_reactions
+  evidence: "Nausea 94 (19) 106 (21)"
+  origin: sampled
+
+- id: semaglutide-adverse-reactions
+  question: "Does Ozempic raise your heart rate?"
+  cid: 56843331
+  drug: semaglutide
+  section_group: adverse_reactions
+  evidence: "OZEMPIC 0.5 mg and 1 mg resulted in a mean increase in heart rate of 2 to 3 beats per minute"
+  origin: sampled
+
+- id: tamoxifen-adverse-reactions
+  question: "How common are hot flashes on tamoxifen?"
+  cid: 2733526
+  drug: tamoxifen
+  section_group: adverse_reactions
+  evidence: "tamoxifen showed a higher incidence of hot flashes (19% vs. 8% for placebo)"
+  origin: sampled
+
+- id: omeprazole-clinical-studies
+  question: "Did omeprazole help children with reflux in the studies?"
+  cid: 4594
+  drug: omeprazole
+  section_group: clinical_studies
+  evidence: "after 3 months of treatment, 33% of the children had no overall symptoms"
+  origin: sampled
+
+- id: dapagliflozin-clinical-studies
+  question: "Was dapagliflozin tested together with insulin?"
+  cid: 9887712
+  drug: dapagliflozin
+  section_group: clinical_studies
+  evidence: "randomized in a 24-week, placebo-controlled trial to evaluate dapagliflozin as add-on therapy to insulin"
+  origin: sampled
+
+- id: apixaban-clinical-studies
+  question: "Which drug was Eliquis compared against in the big stroke prevention trial?"
+  cid: 10182969
+  drug: apixaban
+  section_group: clinical_studies
+  evidence: "comparing the effects of ELIQUIS and warfarin on the risk of stroke"
+  origin: sampled
+
+- id: sumatriptan-clinical-studies
+  question: "How many people taking Imitrex had their migraine ease within two hours?"
+  cid: 5358
+  drug: sumatriptan
+  section_group: clinical_studies
+  evidence: "Percentage of Patients with Headache Response (Mild or No Headache) 2 and 4 Hours following Treatment"
+  origin: sampled
+
+- id: famotidine-clinical-studies
+  question: "Does famotidine heal damage to the esophagus from acid reflux?"
+  cid: 5702160
+  drug: famotidine
+  section_group: clinical_studies
+  evidence: "showed a significantly greater percentage of healing of erosive esophagitis for famotidine 40 mg twice daily at Weeks 6 and 12"
+  origin: sampled
+
+- id: risperidone-clinical-studies
+  question: "Was Risperdal studied in children with autism?"
+  cid: 5073
+  drug: risperidone
+  section_group: clinical_studies
+  evidence: "placebo-controlled trial in children with autistic disorder (n=55), aged 5 to 12 years"
+  origin: sampled
+
+- id: clopidogrel-contraindications
+  question: "Who should not take Plavix?"
+  cid: 60606
+  drug: clopidogrel
+  section_group: contraindications
+  evidence: "Plavix is contraindicated in patients with active pathological bleeding such as peptic ulcer or intracranial hemorrhage"
+  origin: sampled
+
+- id: acetazolamide-contraindications
+  question: "Can someone with a sulfa allergy take acetazolamide?"
+  cid: 1986
+  drug: acetazolamide
+  section_group: contraindications
+  evidence: "cross sensitivity between acetazolamide, sulfonamides and other sulfonamide derivatives is possible"
+  origin: sampled
+
+- id: atorvastatin-contraindications
+  question: "Can I take Lipitor if I have serious liver disease?"
+  cid: 60823
+  drug: atorvastatin
+  section_group: contraindications
+  evidence: "Acute liver failure or decompensated cirrhosis"
+  origin: sampled
+
+- id: finasteride-contraindications
+  question: "Why must pregnant women avoid finasteride?"
+  cid: 57363
+  drug: finasteride
+  section_group: contraindications
+  evidence: "finasteride may cause abnormalities of the external genitalia of a male fetus"
+  origin: sampled
+
+- id: naproxen-dosing
+  question: "How many Aleve caplets can I take in a day?"
+  cid: 156391
+  drug: naproxen
+  section_group: dosing
+  evidence: "do not exceed 3 caplets in a 24-hour period"
+  origin: sampled
+
+- id: doxycycline-dosing
+  question: "What is the usual adult dose of Doryx MPC?"
+  cid: 54671203
+  drug: doxycycline
+  section_group: dosing
+  evidence: "240 mg on the first day of treatment (administered 120 mg every 12 hours) followed by a maintenance dose of 120 mg daily"
+  origin: sampled
+
+- id: imatinib-dosing
+  question: "When should Gleevec be paused because of low blood counts?"
+  cid: 5291
+  drug: imatinib
+  section_group: dosing
+  evidence: "Stop Gleevec until ANC greater than or equal to 1.5 x 10 9 /L and platelets greater than or equal to 75 x 10 9 /L"
+  origin: sampled
+
+- id: lamotrigine-dosing
+  question: "What is the usual lamotrigine dose when it is the only epilepsy medicine?"
+  cid: 3878
+  drug: lamotrigine
+  section_group: dosing
+  evidence: "The recommended maintenance dose of SUBVENITE as monotherapy is 500 mg/day given in 2 divided doses"
+  origin: sampled
+
+- id: ciprofloxacin-indications
+  question: "Is Cipro used to treat plague?"
+  cid: 2764
+  drug: ciprofloxacin
+  section_group: indications
+  evidence: "CIPRO is indicated for treatment of plague"
+  origin: sampled
+
+- id: omeprazole-indications
+  question: "Can babies be given Prilosec?"
+  cid: 4594
+  drug: omeprazole
+  section_group: indications
+  evidence: "short-term treatment (up to 6 weeks) of EE due to acid-mediated GERD in pediatric patients 1 month to less than 1 year of age"
+  origin: sampled
+
+- id: donepezil-indications
+  question: "Does Aricept work for severe Alzheimer's too, or only mild cases?"
+  cid: 3152
+  drug: donepezil
+  section_group: indications
+  evidence: "Efficacy has been demonstrated in patients with mild, moderate, and severe Alzheimer"
+  origin: sampled
+
+- id: sumatriptan-indications
+  question: "Can Imitrex be taken every day to prevent migraines?"
+  cid: 5358
+  drug: sumatriptan
+  section_group: indications
+  evidence: "IMITREX is not indicated for the prevention of migraine attacks"
+  origin: sampled
+
+- id: carvedilol-interactions
+  question: "Does Coreg affect blood sugar in people on insulin?"
+  cid: 2585
+  drug: carvedilol
+  section_group: interactions
+  evidence: "regular monitoring of blood glucose is recommended"
+  origin: sampled
+
+- id: phenytoin-interactions
+  question: "Why does Dilantin interact with so many other drugs?"
+  cid: 1775
+  drug: phenytoin
+  section_group: interactions
+  evidence: "Multiple drug interactions because of extensive plasma protein binding, saturable metabolism and potent induction of hepatic enzymes"
+  origin: sampled
+
+- id: dasatinib-interactions
+  question: "Can I take antacids with dasatinib?"
+  cid: 3062316
+  drug: dasatinib
+  section_group: interactions
+  evidence: "administer the antacid at least 2 hours prior to or 2 hours after the dose of PHYRAGO"
+  origin: sampled
+
+- id: diclofenac-otc-consumer
+  question: "Can teenagers use Voltaren arthritis gel?"
+  cid: 3033
+  drug: diclofenac
+  section_group: otc_consumer
+  evidence: "It is not known if this drug works or is safe in children under age 18 years."
+  origin: sampled
+
+- id: naproxen-otc-consumer
+  question: "When should I stop taking Aleve and see a doctor about my stomach?"
+  cid: 156391
+  drug: naproxen
+  section_group: otc_consumer
+  evidence: "vomit blood have bloody or black stools"
+  origin: sampled
+
+- id: valacyclovir-overdosage
+  question: "What happens to the kidneys in a Valtrex overdose?"
+  cid: 135398742
+  drug: valacyclovir
+  section_group: overdosage
+  evidence: "Precipitation of acyclovir in renal tubules may occur"
+  origin: sampled
+
+- id: spironolactone-overdosage
+  question: "What are the signs that someone took too much Aldactone?"
+  cid: 5833
+  drug: spironolactone
+  section_group: overdosage
+  evidence: "Acute overdosage of ALDACTONE may be manifested by drowsiness, mental confusion"
+  origin: sampled
+
+- id: carbamazepine-overdosage
+  question: "How soon do symptoms show after a Tegretol overdose?"
+  cid: 2554
+  drug: carbamazepine
+  section_group: overdosage
+  evidence: "The first signs and symptoms appear after 1 to 3 hours."
+  origin: sampled
+
+- id: haloperidol-overdosage
+  question: "What does a haloperidol overdose look like?"
+  cid: 3559
+  drug: haloperidol
+  section_group: overdosage
+  evidence: "severe extrapyramidal reactions, 2) hypotension, or 3) sedation"
+  origin: sampled
+
+- id: raltegravir-overdosage
+  question: "What should be done if someone takes too much Isentress?"
+  cid: 54671008
+  drug: raltegravir
+  section_group: overdosage
+  evidence: "it is reasonable to employ the standard supportive measures"
+  origin: sampled
+
+- id: lansoprazole-overdosage
+  question: "Can dialysis remove lansoprazole after an overdose?"
+  cid: 3883
+  drug: lansoprazole
+  section_group: overdosage
+  evidence: "Lansoprazole is not removed from the circulation by hemodialysis."
+  origin: sampled
+
+- id: diclofenac-overdosage
+  question: "What symptoms does a diclofenac overdose usually cause?"
+  cid: 3033
+  drug: diclofenac
+  section_group: overdosage
+  evidence: "lethargy, drowsiness, nausea, vomiting, and epigastric pain"
+  origin: sampled
+
+- id: diclofenac-patient-information
+  question: "Can I put a heating pad on skin where I used Voltaren gel?"
+  cid: 3033
+  drug: diclofenac
+  section_group: patient_information
+  evidence: "do not apply with external heat such as heating pad"
+  origin: sampled
+
+- id: erlotinib-patient-information
+  question: "Does smoking change my erlotinib dose?"
+  cid: 176870
+  drug: erlotinib
+  section_group: patient_information
+  evidence: "the dose of erlotinib tablets may need to be adjusted if they smoke"
+  origin: sampled
+
+- id: memantine-patient-information
+  question: "Can I open memantine extended-release capsules and mix them with food?"
+  cid: 4054
+  drug: memantine
+  section_group: patient_information
+  evidence: "may be opened and sprinkled on applesauce before swallowing"
+  origin: sampled
+
+- id: losartan-patient-information
+  question: "Can I use salt substitutes while taking Cozaar?"
+  cid: 3961
+  drug: losartan
+  section_group: patient_information
+  evidence: "not to use potassium supplements or salt substitutes containing potassium without consulting their healthcare provider"
+  origin: sampled
+
+- id: valacyclovir-patient-information
+  question: "Can Valtrex cure genital herpes?"
+  cid: 135398742
+  drug: valacyclovir
+  section_group: patient_information
+  evidence: "VALTREX does not cure cold sores, chickenpox, shingles, or genital herpes."
+  origin: sampled
+
+- id: risperidone-patient-information
+  question: "How should I store Risperdal oral solution?"
+  cid: 5073
+  drug: risperidone
+  section_group: patient_information
+  evidence: "Do not freeze RISPERDAL Oral Solution. Protect from light."
+  origin: sampled
+
+- id: semaglutide-patient-information
+  question: "Is it okay to share my Ozempic pen if I change the needle?"
+  cid: 56843331
+  drug: semaglutide
+  section_group: patient_information
+  evidence: "they must never share an OZEMPIC pen with another person, even if the needle is changed"
+  origin: sampled
+
+- id: acetaminophen-pharmacology
+  question: "Does acetaminophen bind much to blood proteins?"
+  cid: 1983
+  drug: acetaminophen
+  section_group: pharmacology
+  evidence: "binding of acetaminophen to plasma proteins is low (ranging from 10% to 25%)"
+  origin: sampled
+
+- id: esomeprazole-pharmacology
+  question: "Does Nexium weaken the effect of clopidogrel?"
+  cid: 9568614
+  drug: esomeprazole
+  section_group: pharmacology
+  evidence: "Exposure to the active metabolite of clopidogrel was reduced by 35% to 40%"
+  origin: sampled
+
+- id: valacyclovir-pharmacology
+  question: "How does Valtrex stop the herpes virus from multiplying?"
+  cid: 135398742
+  drug: valacyclovir
+  section_group: pharmacology
+  evidence: "competitive inhibition of viral DNA polymerase, 2) incorporation and termination of the growing viral DNA chain"
+  origin: sampled
+
+- id: oseltamivir-pharmacology
+  question: "Does Tamiflu need a different dose in pregnancy?"
+  cid: 65028
+  drug: oseltamivir
+  section_group: pharmacology
+  evidence: "insufficient pharmacokinetics and safety data to recommend a dose adjustment for pregnant women"
+  origin: sampled
+
+- id: dexamethasone-product
+  question: "Does the Seacall dexamethasone ointment contain beeswax?"
+  cid: 5743
+  drug: dexamethasone
+  section_group: product
+  evidence: "Mineral Oil, Zinc Oxide, Beeswax"
+  origin: sampled
+
+- id: esomeprazole-product
+  question: "Does Nexium 24HR contain sugar?"
+  cid: 9568614
+  drug: esomeprazole
+  section_group: product
+  evidence: "sodium stearyl fumarate, sucrose, talc"
+  origin: sampled
+
+- id: baclofen-product
+  question: "What flavor is Fleqsuvy baclofen suspension?"
+  cid: 2284
+  drug: baclofen
+  section_group: product
+  evidence: "It is a concentrated orange to yellow-colored, grape-flavored suspension"
+  origin: sampled
+
+- id: cetirizine-product
+  question: "Does the cetirizine liquid contain parabens?"
+  cid: 2678
+  drug: cetirizine
+  section_group: product
+  evidence: "artificial grape flavor, glacial acetic acid, glycerin, methylparaben"
+  origin: sampled
+
+- id: gabapentin-product
+  question: "What strengths do Gralise tablets come in?"
+  cid: 3446
+  drug: gabapentin
+  section_group: product
+  evidence: "supplied as tablets containing 300 mg, 450 mg, 600 mg, 750 mg, or 900 mg of gabapentin USP"
+  origin: sampled
+
+- id: levothyroxine-product
+  question: "How is Tirosint-SOL packaged?"
+  cid: 5819
+  drug: levothyroxine
+  section_group: product
+  evidence: "supplied in a 1 mL white, non-transparent, unit-dose ampule"
+  origin: sampled
+
+- id: methylphenidate-product
+  question: "How much of a methylphenidate CD capsule is released right away?"
+  cid: 4158
+  drug: methylphenidate
+  section_group: product
+  evidence: "30% of the dose is provided by the IR component and 70% of the dose is provided by the ER component"
+  origin: sampled
+
+- id: apixaban-specific-populations
+  question: "Can Eliquis be used by people on dialysis?"
+  cid: 10182969
+  drug: apixaban
+  section_group: specific_populations
+  evidence: "Clinical efficacy and safety studies with ELIQUIS did not enroll patients with end-stage renal disease (ESRD) on dialysis"
+  origin: sampled
+
+- id: nicotine-specific-populations
+  question: "Is Nicotrol nasal spray safe for people over 65?"
+  cid: 89594
+  drug: nicotine
+  section_group: specific_populations
+  evidence: "did not include sufficient numbers of subjects age 65 and over"
+  origin: sampled
+
+- id: venlafaxine-specific-populations
+  question: "Does taking Effexor XR during pregnancy raise the risk of preeclampsia?"
+  cid: 5656
+  drug: venlafaxine
+  section_group: specific_populations
+  evidence: "an association between venlafaxine use and preeclampsia"
+  origin: sampled
+
+- id: ondansetron-specific-populations
+  question: "Is ondansetron in early pregnancy linked to cleft lip or palate?"
+  cid: 4595
+  drug: ondansetron
+  section_group: specific_populations
+  evidence: "showed an increased risk of oral clefts among 88,467 pregnancies in which oral ondansetron was prescribed in the first trimester"
+  origin: sampled
+
+- id: sumatriptan-specific-populations
+  question: "What did animal studies show about Imitrex in pregnancy?"
+  cid: 5358
+  drug: sumatriptan
+  section_group: specific_populations
+  evidence: "resulted in an increased incidence of fetal blood vessel (cervicothoracic and umbilical) abnormalities"
+  origin: sampled
+
+- id: ramipril-specific-populations
+  question: "Does ramipril work differently in older people?"
+  cid: 5362129
+  drug: ramipril
+  section_group: specific_populations
+  evidence: "No overall differences in effectiveness or safety were observed between these patients and younger patients"
+  origin: sampled
+
+- id: morphine-specific-populations
+  question: "Do people with liver cirrhosis need special care with MS Contin?"
+  cid: 5288826
+  drug: morphine
+  section_group: specific_populations
+  evidence: "Morphine pharmacokinetics have been reported to be significantly altered in patients with cirrhosis"
+  origin: sampled
+
+- id: dextromethorphan-warnings
+  question: "Can I take Delsym if I'm on an MAOI antidepressant?"
+  cid: 5360696
+  drug: dextromethorphan
+  section_group: warnings
+  evidence: "Do not use if you are now taking a prescription monoamine oxidase inhibitor (MAOI)"
+  origin: sampled
+
+- id: celecoxib-warnings
+  question: "How common are stomach ulcers or bleeding with celecoxib?"
+  cid: 2662
+  drug: celecoxib
+  section_group: warnings
+  evidence: "occurred in approximately 1% of patients treated for 3 to 6 months, and in about 2% to 4% of patients treated for one year"
+  origin: sampled
+
+- id: fluticasone-warnings
+  question: "Can using too much Xhance nasal spray affect my adrenal glands?"
+  cid: 5311101
+  drug: fluticasone
+  section_group: warnings
+  evidence: "Hypercorticism and adrenal suppression may occur when nasal corticosteroids, such as XHANCE, are used at higher than recommended dosages"
+  origin: sampled
+
+- id: haloperidol-warnings
+  question: "Can haloperidol cause uncontrollable face and tongue movements?"
+  cid: 3559
+  drug: haloperidol
+  section_group: warnings
+  evidence: "Tardive dyskinesia, a syndrome consisting of potentially irreversible, involuntary, dyskinetic movements"
+  origin: sampled
+
+- id: ondansetron-adverse-reactions
+  question: "Does ondansetron give people headaches?"
+  cid: 4595
+  drug: ondansetron
+  section_group: adverse_reactions
+  evidence: "Headache 58 (24%) 34 (13%)"
+  origin: sampled
+
+- id: montelukast-clinical-studies
+  question: "Does Singulair help people whose asthma is set off by aspirin?"
+  cid: 5281040
+  drug: montelukast
+  section_group: clinical_studies
+  evidence: "demonstrated that SINGULAIR, compared with placebo, resulted in significant improvement in parameters of asthma control"
+  origin: sampled
