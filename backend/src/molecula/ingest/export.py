@@ -138,7 +138,7 @@ def write_archive(path: Path, db_copy: Path, build_dir: Path) -> None:
 
 def run(settings: Settings) -> int:
     """`python -m molecula.ingest export`: pack the built store for a GitHub release. Run it
-    while no ingest step writes to the store."""
+    with the backend stopped: Chroma writes to the index whenever it opens it."""
     try:
         manifest = export_store(settings, settings.export_dir, datetime.now(UTC))
     except ExportError as error:
