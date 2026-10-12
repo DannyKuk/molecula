@@ -1,11 +1,14 @@
 """Compare embedding models on the retrieval questions.
 
     OFFLINE=1 uv run python -m evals.retrieval.compare_embeddings [--only bge-small qwen3-0.6b]
+        [--device cpu]
 
 Reports recall@1, recall@5 and MRR@10 per model, searched within the question's drug (as the
 retriever in #13 filters) and over the whole index, plus document embedding time, index size and
-the time to embed one query. The first run downloads the candidates into data/build/eval/models,
-so run it once without OFFLINE=1. Document vectors are cached in data/build/eval/vectors.
+the time to embed one query. The first run downloads the local candidates into
+data/build/eval/models, so run it once without OFFLINE=1; cloud candidates always need the network
+and OPENROUTER_API_KEY. Document vectors are cached in data/build/eval/vectors, so a run with
+--device cpu after a GPU run only embeds the questions and measures CPU query time.
 """
 
 import argparse
@@ -19,7 +22,7 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from time import perf_counter
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal, Protocol
 
 import numpy as np
 from evals.retrieval.candidates import CANDIDATES, Candidate
@@ -28,17 +31,21 @@ from evals.retrieval.dataset import Question, is_hit, load_questions, unanswerab
 from molecula.config import Settings, get_settings
 from molecula.ingest.index import stored_labels
 from molecula.rag.chunking import chunk_labels
-from molecula.rag.embeddings import load_chunk_tokenizer
+from molecula.rag.embeddings import get_embeddings, load_chunk_tokenizer
 from molecula.store.index import Chunk, LabelIndex
 
 if TYPE_CHECKING:
+    from langchain_core.embeddings import Embeddings
     from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
 TOP_K = 10
 WARMUP_QUERIES = 3
-EMBED_BATCH = 32
+EMBED_BATCH = 16
+CLOUD_BATCH = 64
+
+type Device = Literal["auto", "cpu"]
 
 
 @dataclass(frozen=True)
@@ -53,8 +60,9 @@ class Result:
     label: str
     model: str
     dimensions: int
-    device: str
+    build_device: str
     build_seconds: float
+    query_device: str
     index_mb: float
     query_ms_p50: float
     query_ms_p95: float
@@ -67,6 +75,9 @@ class Result:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--only", nargs="+", metavar="LABEL", help="candidate labels to run")
+    parser.add_argument(
+        "--device", choices=["auto", "cpu"], default="auto", help="where local models run"
+    )
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
@@ -80,7 +91,9 @@ def main() -> int:
         return 1
     logger.info("%d questions over %d chunks", len(questions), len(chunks))
 
-    results = [evaluate(candidate, chunks, questions, settings) for candidate in candidates]
+    results = [
+        evaluate(candidate, chunks, questions, settings, args.device) for candidate in candidates
+    ]
     print(report(results, questions))
     save(results, settings)
     return 0
@@ -92,12 +105,16 @@ def label_chunks(settings: Settings) -> list[Chunk]:
 
 
 def evaluate(
-    candidate: Candidate, chunks: list[Chunk], questions: list[Question], settings: Settings
+    candidate: Candidate,
+    chunks: list[Chunk],
+    questions: list[Question],
+    settings: Settings,
+    device: Device,
 ) -> Result:
     logger.info("%s: %s", candidate.label, candidate.model)
-    model = load_model(candidate.model, settings)
-    documents, build_seconds = document_vectors(candidate, model, chunks, settings)
-    queries, latencies = query_vectors(candidate, model, questions)
+    embedder = load_embedder(candidate, settings, device)
+    documents, build_seconds, build_device = document_vectors(candidate, embedder, chunks, settings)
+    queries, latencies = query_vectors(candidate, embedder, questions)
     scores = queries @ documents.T
     cids = np.array([chunk.cid for chunk in chunks])
 
@@ -113,8 +130,9 @@ def evaluate(
         label=candidate.label,
         model=candidate.model,
         dimensions=documents.shape[1],
-        device=str(model.device),
+        build_device=build_device,
         build_seconds=build_seconds,
+        query_device=embedder.device,
         index_mb=index_size_mb(chunks, documents, candidate.model),
         query_ms_p50=statistics.median(latencies),
         query_ms_p95=statistics.quantiles(latencies, n=20)[-1],
@@ -127,65 +145,109 @@ def evaluate(
     )
 
 
-def load_model(name: str, settings: Settings) -> SentenceTransformer:
+class Embedder(Protocol):
+    device: str
+
+    def documents(self, texts: list[str]) -> np.ndarray: ...
+
+    def query(self, text: str) -> np.ndarray: ...
+
+
+class LocalEmbedder:
+    def __init__(self, model: SentenceTransformer) -> None:
+        self._model = model
+        self.device = str(model.device)
+
+    def documents(self, texts: list[str]) -> np.ndarray:
+        return self._model.encode_document(
+            texts,
+            batch_size=EMBED_BATCH,
+            normalize_embeddings=True,
+            convert_to_numpy=True,
+            show_progress_bar=True,
+        )
+
+    def query(self, text: str) -> np.ndarray:
+        return self._model.encode_query(text, normalize_embeddings=True, convert_to_numpy=True)
+
+
+class CloudEmbedder:
+    """A model behind OpenRouter, through the app's own `get_embeddings`. Vectors are scaled to
+    unit length here, since not every provider returns them that way."""
+
+    device = "openrouter"
+
+    def __init__(self, embeddings: Embeddings) -> None:
+        self._embeddings = embeddings
+
+    def documents(self, texts: list[str]) -> np.ndarray:
+        vectors: list[list[float]] = []
+        for start in range(0, len(texts), CLOUD_BATCH):
+            vectors.extend(self._embeddings.embed_documents(texts[start : start + CLOUD_BATCH]))
+            logger.info("  embedded %d of %d chunks", len(vectors), len(texts))
+        return unit_length(np.array(vectors))
+
+    def query(self, text: str) -> np.ndarray:
+        return unit_length(np.array(self._embeddings.embed_query(text)))
+
+
+def unit_length(vectors: np.ndarray) -> np.ndarray:
+    return vectors / np.linalg.norm(vectors, axis=-1, keepdims=True)
+
+
+def load_embedder(candidate: Candidate, settings: Settings, device: Device) -> Embedder:
+    if candidate.cloud:
+        return CloudEmbedder(
+            get_embeddings(settings.model_copy(update={"embedding_model": candidate.model}))
+        )
     import torch
     from sentence_transformers import SentenceTransformer
 
-    on_gpu = torch.cuda.is_available()
-    return SentenceTransformer(
-        name,
-        device="cuda" if on_gpu else "cpu",
-        cache_folder=str(settings.build_dir / "eval" / "models"),
-        local_files_only=settings.offline,
-        model_kwargs={"dtype": torch.float16} if on_gpu else {},
+    on_gpu = device == "auto" and torch.cuda.is_available()
+    return LocalEmbedder(
+        SentenceTransformer(
+            candidate.model,
+            device="cuda" if on_gpu else "cpu",
+            cache_folder=str(settings.build_dir / "eval" / "models"),
+            local_files_only=settings.offline,
+            model_kwargs={"dtype": torch.float16} if on_gpu else {},
+        )
     )
 
 
 def document_vectors(
-    candidate: Candidate, model: SentenceTransformer, chunks: list[Chunk], settings: Settings
-) -> tuple[np.ndarray, float]:
-    """The chunks' vectors and how long embedding them took, from the cache when the model,
-    prefix and chunks are unchanged."""
+    candidate: Candidate, embedder: Embedder, chunks: list[Chunk], settings: Settings
+) -> tuple[np.ndarray, float, str]:
+    """The chunks' vectors, how long embedding them took and where, from the cache when the
+    model, prefix and chunks are unchanged."""
     texts = [candidate.document_prefix + chunk.text for chunk in chunks]
     key = hashlib.sha256("\n".join([candidate.model, *texts]).encode()).hexdigest()[:16]
     cache = settings.build_dir / "eval" / "vectors" / f"{key}.npz"
     if cache.exists():
         cached = np.load(cache)
         logger.info("  document vectors from %s", cache)
-        return cached["vectors"], float(cached["seconds"])
+        return cached["vectors"], float(cached["seconds"]), str(cached["device"])
 
     started = perf_counter()
-    vectors = model.encode_document(
-        texts,
-        batch_size=EMBED_BATCH,
-        normalize_embeddings=True,
-        convert_to_numpy=True,
-        show_progress_bar=True,
-    ).astype(np.float32)
+    vectors = embedder.documents(texts).astype(np.float32)
     seconds = perf_counter() - started
-    logger.info("  embedded %d chunks in %.0f s on %s", len(texts), seconds, model.device)
+    logger.info("  embedded %d chunks in %.0f s on %s", len(texts), seconds, embedder.device)
     cache.parent.mkdir(parents=True, exist_ok=True)
-    np.savez(cache, vectors=vectors, seconds=seconds)
-    return vectors, seconds
+    np.savez(cache, vectors=vectors, seconds=seconds, device=embedder.device)
+    return vectors, seconds, embedder.device
 
 
 def query_vectors(
-    candidate: Candidate, model: SentenceTransformer, questions: list[Question]
+    candidate: Candidate, embedder: Embedder, questions: list[Question]
 ) -> tuple[np.ndarray, list[float]]:
     """Each question embedded on its own, as the app embeds a user's question, with the time
     each one took in milliseconds."""
-
-    def embed(text: str) -> np.ndarray:
-        return model.encode_query(
-            candidate.query_prefix + text, normalize_embeddings=True, convert_to_numpy=True
-        )
-
     for question in questions[:WARMUP_QUERIES]:
-        embed(question.question)
+        embedder.query(candidate.query_prefix + question.question)
     vectors, latencies = [], []
     for question in questions:
         started = perf_counter()
-        vectors.append(embed(question.question))
+        vectors.append(embedder.query(candidate.query_prefix + question.question))
         latencies.append((perf_counter() - started) * 1000)
     return np.stack(vectors).astype(np.float32), latencies
 
@@ -236,8 +298,8 @@ def report(results: list[Result], questions: list[Question]) -> str:
             f"| {r.label} | {r.dimensions} | {r.in_drug.recall_at_1:.2f} "
             f"| {r.in_drug.recall_at_5:.2f} | {r.in_drug.mrr_at_10:.3f} "
             f"| {r.whole_index.recall_at_5:.2f} | {r.whole_index.mrr_at_10:.3f} "
-            f"| {r.build_seconds:.0f} ({r.device}) | {r.index_mb:.1f} "
-            f"| {r.query_ms_p50:.0f} / {r.query_ms_p95:.0f} |"
+            f"| {r.build_seconds:.0f} ({r.build_device}) | {r.index_mb:.1f} "
+            f"| {r.query_ms_p50:.0f} / {r.query_ms_p95:.0f} ({r.query_device}) |"
         )
     counts: dict[str, int] = defaultdict(int)
     for question in questions:
