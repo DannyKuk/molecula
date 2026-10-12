@@ -18,7 +18,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from evals.retrieval.compare_embeddings import label_chunks
-from evals.retrieval.dataset import Question, is_hit, load_questions
+from evals.retrieval.dataset import Question, load_questions
 
 from molecula.config import Settings, get_settings
 from molecula.store.compounds import CompoundStore
@@ -81,9 +81,13 @@ def check(chunks: list[Chunk], questions: list[Question]) -> int:
 
 
 def problem_with(question: Question, chunks: list[Chunk]) -> str | None:
-    answering = [chunk for chunk in chunks if is_hit(question, chunk)]
-    if not answering:
-        return "no chunk of the drug holds the evidence"
+    own = [chunk for chunk in chunks if chunk.cid == question.cid]
+    missing = [p for p in question.passages if not any(p in chunk.text for chunk in own)]
+    if missing:
+        return f"no chunk of the drug holds {missing[0]!r}"
+    # The question was written from the chunks holding `evidence`; pooled passages were found
+    # later in other wording, so only the source chunks count as copied.
+    sources = [chunk for chunk in own if question.evidence in chunk.text]
     # People say "Advil", not "Advil Menstrual Pain", and "Dilantin", not "Dilantin-125".
     names = [
         question.drug,
@@ -91,7 +95,7 @@ def problem_with(question: Question, chunks: list[Chunk]) -> str | None:
     ]
     if not any(name.lower() in question.question.lower() for name in names):
         return f"the question names none of {names}"
-    if any(copies(question.question, chunk.text) for chunk in answering):
+    if any(copies(question.question, chunk.text) for chunk in sources):
         return f"the question repeats {COPIED_WORDS} words in a row from its passage"
     return None
 

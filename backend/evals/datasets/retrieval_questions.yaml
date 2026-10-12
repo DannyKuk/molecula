@@ -35,6 +35,9 @@
   drug: finasteride
   section_group: indications
   evidence: "symptomatic benign prostatic hyperplasia (BPH) in men with an enlarged prostate"
+  pooled_evidence:
+    - "PROSCAR is a medication used to treat symptoms of benign prostatic hyperplasia (BPH) in men with an enlarged prostate."
+    - "Your doctor has prescribed PROSCAR for BPH and not for treatment of prostate cancer"
   origin: hand
 
 - id: apixaban-indication
@@ -43,6 +46,9 @@
   drug: apixaban
   section_group: indications
   evidence: "risk of stroke and systemic embolism"
+  pooled_evidence:
+    - "Reduction of Risk of Stroke and Systemic Embolism in Nonvalvular Atrial Fibrillation"
+    - "reduce the risk of stroke and blood clots in people who have atrial fibrillation (a type of irregular heartbeat)"
   origin: hand
 
 - id: dextromethorphan-indication
@@ -91,6 +97,9 @@
   drug: simvastatin
   section_group: interactions
   evidence: "strong CYP3A4 inhibitors"
+  pooled_evidence:
+    - "If treatment with a CYP3A4 inhibitor is unavoidable, suspend ZOCOR during the course of strong CYP3A4 inhibitor treatment."
+    - "Do not take ZOCOR if you: take certain medicines called CYP3A4 inhibitors"
   origin: hand
 
 - id: ciprofloxacin-tizanidine
@@ -115,6 +124,8 @@
   drug: ciprofloxacin
   section_group: warnings
   evidence: "Tendinitis and"
+  pooled_evidence:
+    - "Tendon rupture or swelling of the tendon (tendinitis)."
   origin: hand
 
 - id: montelukast-mood
@@ -123,6 +134,8 @@
   drug: montelukast
   section_group: warnings
   evidence: "agitation, aggress"
+  pooled_evidence:
+    - "unusual changes in behavior or thinking, including any of these symptoms: agitation, including aggressive behavior or hostility"
   origin: hand
 
 - id: ibuprofen-stomach-bleeding-signs
@@ -179,6 +192,8 @@
   drug: atorvastatin
   section_group: adverse_reactions
   evidence: "nasopharyngitis, arthralgia, diarrhea, pain in extremity, and urinary tract infection"
+  pooled_evidence:
+    - "The most common side effects of LIPITOR include: • nasal congestion, sore throat, runny nose • diarrhea • urinary tract infection"
   origin: hand
 
 - id: metformin-stomach-side-effects
@@ -235,6 +250,12 @@
   drug: oxycodone
   section_group: abuse_dependence
   evidence: "Taking cut, broken, chewed, crushed, or dissolved OXYCONTIN enhances drug release and increases the risk of overdose and death"
+  pooled_evidence:
+    - "crushing, chewing, or dissolving OXYCONTIN tablets can cause rapid release and absorption of a potentially fatal dose of oxycodone"
+    - "not to cut, break, chew, crush, or dissolve tablets (risk of potentially fatal dose)"
+    - "Cutting, breaking, crushing, chewing, or dissolving OXYCONTIN tablets will result in uncontrolled delivery of oxycodone and can lead to overdose or death"
+    - "Cutting, breaking, chewing, crushing or dissolving OXYCONTIN impairs the controlled-release delivery mechanism and results in the rapid release and absorption of a potentially fatal dose of oxycodone"
+    - "Do not cut, break, chew, crush, dissolve, snort, or inject OXYCONTIN because this may cause you to overdose and die."
   origin: sampled
 
 - id: morphine-abuse-dependence
@@ -283,6 +304,9 @@
   drug: dapagliflozin
   section_group: clinical_studies
   evidence: "randomized in a 24-week, placebo-controlled trial to evaluate dapagliflozin as add-on therapy to insulin"
+  pooled_evidence:
+    - "Dapagliflozin has been studied in adult patients as monotherapy, in combination with metformin, pioglitazone, sulfonylurea (glimepiride), sitagliptin (with or without metformin), metformin plus a sulfonylurea, or insulin"
+    - "compared with placebo in combination with insulin, with or without up to 2 OADs"
   origin: sampled
 
 - id: apixaban-clinical-studies
@@ -291,6 +315,8 @@
   drug: apixaban
   section_group: clinical_studies
   evidence: "comparing the effects of ELIQUIS and warfarin on the risk of stroke"
+  pooled_evidence:
+    - "ELIQUIS was superior to warfarin for the primary endpoint of reducing the risk of stroke and systemic embolism"
   origin: sampled
 
 - id: sumatriptan-clinical-studies
@@ -323,6 +349,8 @@
   drug: clopidogrel
   section_group: contraindications
   evidence: "Plavix is contraindicated in patients with active pathological bleeding such as peptic ulcer or intracranial hemorrhage"
+  pooled_evidence:
+    - "Do not take Plavix if you: currently have a condition that causes bleeding, such as a stomach ulcer"
   origin: sampled
 
 - id: acetazolamide-contraindications
@@ -339,6 +367,9 @@
   drug: atorvastatin
   section_group: contraindications
   evidence: "Acute liver failure or decompensated cirrhosis"
+  pooled_evidence:
+    - "Do not take LIPITOR if you: • have liver problems (acute liver failure or decompensated cirrhosis)"
+    - "LIPITOR is contraindicated in patients with acute liver failure or decompensated cirrhosis"
   origin: sampled
 
 - id: finasteride-contraindications
@@ -347,6 +378,8 @@
   drug: finasteride
   section_group: contraindications
   evidence: "finasteride may cause abnormalities of the external genitalia of a male fetus"
+  pooled_evidence:
+    - "PROSCAR may cause abnormal development of external genitalia in a male fetus if administered to a pregnant female"
   origin: sampled
 
 - id: naproxen-dosing
@@ -387,6 +420,9 @@
   drug: ciprofloxacin
   section_group: indications
   evidence: "CIPRO is indicated for treatment of plague"
+  pooled_evidence:
+    - "Plague in adult and pediatric patients ( 1.8 )"
+    - "CIPRO is also used in children younger than 18 years of age to treat complicated urinary tract and kidney infections or who may have breathed in anthrax germs, have plague"
   origin: sampled
 
 - id: omeprazole-indications
@@ -395,6 +431,9 @@
   drug: omeprazole
   section_group: indications
   evidence: "short-term treatment (up to 6 weeks) of EE due to acid-mediated GERD in pediatric patients 1 month to less than 1 year of age"
+  pooled_evidence:
+    - "pediatric patients 1 month to less than 1 year of age for treatment (up to 6 weeks) of erosive esophagitis due to acid-mediated GERD"
+    - "In children 1 month to less than 12 months of age , PRILOSEC is used for: • up to 6 weeks to treat GERD with EE."
   origin: sampled
 
 - id: donepezil-indications
@@ -403,6 +442,9 @@
   drug: donepezil
   section_group: indications
   evidence: "Efficacy has been demonstrated in patients with mild, moderate, and severe Alzheimer"
+  pooled_evidence:
+    - "The effectiveness of ARICEPT as a treatment for severe Alzheimer’s disease is demonstrated"
+    - "ARICEPT is a prescription medicine to treat mild, moderate, and severe Alzheimer’s disease."
   origin: sampled
 
 - id: sumatriptan-indications
@@ -411,6 +453,8 @@
   drug: sumatriptan
   section_group: indications
   evidence: "IMITREX is not indicated for the prevention of migraine attacks"
+  pooled_evidence:
+    - "IMITREX is not used to prevent or decrease the number of migraine headaches you have."
   origin: sampled
 
 - id: carvedilol-interactions
@@ -523,6 +567,10 @@
   drug: erlotinib
   section_group: patient_information
   evidence: "the dose of erlotinib tablets may need to be adjusted if they smoke"
+  pooled_evidence:
+    - "Concurrent cigarette smoking Increase erlotinib tablets by 50 mg increments at 2-week intervals to a maximum of 300 mg."
+    - "Increase the erlotinib dosage in patients that smoke tobacco"
+    - "Cigarette smoking and CYP1A2 inducers decrease erlotinib plasma concentrations. Avoid concomitant use. If not possible, increase erlotinib dose."
   origin: sampled
 
 - id: memantine-patient-information
@@ -555,6 +603,8 @@
   drug: risperidone
   section_group: patient_information
   evidence: "Do not freeze RISPERDAL Oral Solution. Protect from light."
+  pooled_evidence:
+    - "RISPERDAL 1 mg/mL Oral Solution should be stored at controlled room temperature 15 °C to 25 °C (59 °F to 77 °F). Protect from light and freezing."
   origin: sampled
 
 - id: semaglutide-patient-information
@@ -563,6 +613,8 @@
   drug: semaglutide
   section_group: patient_information
   evidence: "they must never share an OZEMPIC pen with another person, even if the needle is changed"
+  pooled_evidence:
+    - "Do not share your OZEMPIC pen with other people, even if the needle has been changed."
   origin: sampled
 
 - id: acetaminophen-pharmacology
@@ -619,6 +671,8 @@
   drug: baclofen
   section_group: product
   evidence: "It is a concentrated orange to yellow-colored, grape-flavored suspension"
+  pooled_evidence:
+    - "inactive ingredients are: artificial grape flavor"
   origin: sampled
 
 - id: cetirizine-product
@@ -635,6 +689,9 @@
   drug: gabapentin
   section_group: product
   evidence: "supplied as tablets containing 300 mg, 450 mg, 600 mg, 750 mg, or 900 mg of gabapentin USP"
+  pooled_evidence:
+    - "Tablets: 300 mg, 450 mg, 600 mg, 750 mg, and 900 mg"
+    - "300 mg tablets: GRALISE 300 mg tablets are white, oval, debossed with “SLV” on one side and “300” on the other side. NDC 52427-803-90 (Bottle of 90) • 450 mg tablets: GRALISE 450 mg tablets are red, oval, debossed with “ALM” on one side and “450” on the other side. NDC 52427-804-60 (Bottle of 60) • 600 mg tablets: GRALISE 600 mg tablets are beige, oval, debossed with “SLV” on one side and “600” on the other side. NDC 52427-806-90 (Bottle of 90) • 750 mg tablets: GRALISE 750 mg tablets are yellow, oval, debossed with “ALM” on one side and “750” on the other side. NDC 52427-850-60 (Bottle of 60) • 900 mg tablets"
   origin: sampled
 
 - id: levothyroxine-product
@@ -675,6 +732,10 @@
   drug: venlafaxine
   section_group: specific_populations
   evidence: "an association between venlafaxine use and preeclampsia"
+  pooled_evidence:
+    - "Advise patients that Effexor XR use during mid to late pregnancy may lead to an increased risk for preeclampsia"
+    - "Available data from observational studies with venlafaxine have identified a potential increased risk for preeclampsia when used during mid to late pregnancy"
+    - "Exposure to Effexor XR in mid to late pregnancy may increase the risk for preeclampsia"
   origin: sampled
 
 - id: ondansetron-specific-populations
@@ -731,6 +792,9 @@
   drug: fluticasone
   section_group: warnings
   evidence: "Hypercorticism and adrenal suppression may occur when nasal corticosteroids, such as XHANCE, are used at higher than recommended dosages"
+  pooled_evidence:
+    - "Adrenal insufficiency can also happen when nasal corticosteroids, such as XHANCE, are used at a dose higher than the usual dose"
+    - "Hypercorticism and adrenal suppression may occur with very high dosages or at the regular dosage in susceptible individuals."
   origin: sampled
 
 - id: haloperidol-warnings
@@ -747,6 +811,8 @@
   drug: ondansetron
   section_group: adverse_reactions
   evidence: "Headache 58 (24%) 34 (13%)"
+  pooled_evidence:
+    - "prevention of chemotherapy-induced (≥ 5%) are: headache, malaise/fatigue, constipation, diarrhea."
   origin: sampled
 
 - id: montelukast-clinical-studies
@@ -755,4 +821,6 @@
   drug: montelukast
   section_group: clinical_studies
   evidence: "demonstrated that SINGULAIR, compared with placebo, resulted in significant improvement in parameters of asthma control"
+  pooled_evidence:
+    - "SINGULAIR is effective in improving airway function in asthmatics with documented aspirin sensitivity"
   origin: sampled
