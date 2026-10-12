@@ -1,0 +1,232 @@
+# Questions for comparing retrieval over the label sections (recall@5, MRR).
+# One entry per question. answers: every label section that contains the answer (checked in the
+# store on 2026-10-12). evidence: an exact substring of every listed section that shows the answer
+# is there. The questions paraphrase the label on purpose, so they don't favour lexical matching.
+
+- id: imatinib-mechanism
+  question: How does Gleevec work against leukemia?
+  cid: 5291
+  drug: imatinib
+  section_group: pharmacology
+  answers:
+    - {set_id: 211ef2da-2868-4a77-8055-1cb2cd78e24b, section: mechanism_of_action}
+    - {set_id: 211ef2da-2868-4a77-8055-1cb2cd78e24b, section: clinical_pharmacology}
+  evidence: "protein-tyrosine kinase inhibitor that inhibits the BCR-ABL tyrosine kinase"
+
+- id: ibuprofen-mechanism
+  question: Why does ibuprofen bring down pain and fever?
+  cid: 3672
+  drug: ibuprofen
+  section_group: pharmacology
+  answers:
+    - {set_id: 2144eff0-d7ab-486d-b116-a4ff3ae2afe2, section: clinical_pharmacology}
+  evidence: "may be related to prostaglandin synthetase inhibition"
+
+- id: omeprazole-mechanism
+  question: How does omeprazole lower the amount of acid the stomach makes?
+  cid: 4594
+  drug: omeprazole
+  section_group: pharmacology
+  answers:
+    - {set_id: b6761f84-53ac-4745-a8c8-1e5427d7e179, section: mechanism_of_action}
+    - {set_id: b6761f84-53ac-4745-a8c8-1e5427d7e179, section: clinical_pharmacology}
+  evidence: "it blocks the final step of acid production"
+
+- id: finasteride-indication
+  question: What condition is Proscar prescribed for in men?
+  cid: 57363
+  drug: finasteride
+  section_group: indications
+  answers:
+    - {set_id: 6f988153-fc74-4ca4-b29a-111f750c4a4b, section: indications_and_usage}
+  evidence: "symptomatic benign prostatic hyperplasia (BPH) in men with an enlarged prostate"
+
+- id: apixaban-indication
+  question: What does apixaban protect against in people with an irregular heartbeat?
+  cid: 10182969
+  drug: apixaban
+  section_group: indications
+  answers:
+    - {set_id: a454cd24-0c6d-46e8-b1e4-197388606175, section: indications_and_usage}
+    - {set_id: a454cd24-0c6d-46e8-b1e4-197388606175, section: dosage_and_administration}
+  evidence: "risk of stroke and systemic embolism"
+
+- id: dextromethorphan-indication
+  question: Can Delsym be used for a cough that comes with a cold?
+  cid: 5360696
+  drug: dextromethorphan
+  section_group: indications
+  answers:
+    - {set_id: e3e1d126-76c2-4776-8ce0-449625b7e6ba, section: indications_and_usage}
+  evidence: "temporarily relieves cough due to minor throat and bronchial irritation as may occur with the common cold"
+
+- id: atorvastatin-starting-dose
+  question: What starting dose of atorvastatin does the label recommend for adults?
+  cid: 60823
+  drug: atorvastatin
+  section_group: dosing
+  answers:
+    - {set_id: a60cc18b-0631-4cf0-b021-9f52224ece65, section: dosage_and_administration}
+  evidence: "The recommended starting dosage of LIPITOR is 10 mg to 20 mg once daily"
+
+- id: cetirizine-daily-limit
+  question: According to the Zyrtec package, how many tablets can an adult take in one day?
+  cid: 2678
+  drug: cetirizine
+  section_group: dosing
+  answers:
+    - {set_id: 568960cf-2c8f-f1b0-e063-6294a90aebc7, section: dosage_and_administration}
+  evidence: "do not take more than one 10 mg tablet in 24 hours"
+
+- id: escitalopram-depression-dose
+  question: Which dose of escitalopram does the label recommend for adults with depression?
+  cid: 146570
+  drug: escitalopram
+  section_group: dosing
+  answers:
+    - {set_id: 13bb8267-1cab-43e5-acae-55a4d957630a, section: dosage_and_administration}
+  evidence: "Initial: 10 mg once daily Recommended: 10 mg once daily"
+
+- id: clopidogrel-omeprazole
+  question: Should clopidogrel be combined with omeprazole for heartburn?
+  cid: 60606
+  drug: clopidogrel
+  section_group: interactions
+  answers:
+    - {set_id: de8b0b67-eb25-4684-83b5-7ad785314227, section: drug_interactions}
+    - {set_id: de8b0b67-eb25-4684-83b5-7ad785314227, section: warnings_and_cautions}
+  evidence: "omeprazole or esomeprazole"
+
+- id: simvastatin-cyp3a4
+  question: Which kinds of medicines must never be taken with simvastatin because of the risk of muscle breakdown?
+  cid: 54454
+  drug: simvastatin
+  section_group: interactions
+  answers:
+    - {set_id: 8f55d5de-5a4f-4a39-8c84-c53976dd6af9, section: drug_interactions}
+    - {set_id: 8f55d5de-5a4f-4a39-8c84-c53976dd6af9, section: contraindications}
+    - {set_id: 8f55d5de-5a4f-4a39-8c84-c53976dd6af9, section: warnings_and_cautions}
+  evidence: "strong CYP3A4 inhibitors"
+
+- id: ciprofloxacin-tizanidine
+  question: Can ciprofloxacin be given to someone who takes the muscle relaxant tizanidine?
+  cid: 2764
+  drug: ciprofloxacin
+  section_group: interactions
+  answers:
+    - {set_id: 888dc7f9-ad9c-4c00-8d50-8ddfd9bd27c0, section: contraindications}
+    - {set_id: 888dc7f9-ad9c-4c00-8d50-8ddfd9bd27c0, section: drug_interactions}
+    - {set_id: 888dc7f9-ad9c-4c00-8d50-8ddfd9bd27c0, section: warnings_and_cautions}
+    - {set_id: 888dc7f9-ad9c-4c00-8d50-8ddfd9bd27c0, section: clinical_pharmacology}
+  evidence: "tizanidine"
+
+- id: acetaminophen-warfarin
+  question: Does Tylenol interact with blood thinners?
+  cid: 1983
+  drug: acetaminophen
+  section_group: interactions
+  answers:
+    - {set_id: 3af22fc8-e4e0-4863-8696-6bc1257047cb, section: ask_doctor_or_pharmacist}
+    - {set_id: 3af22fc8-e4e0-4863-8696-6bc1257047cb, section: warnings}
+    - {set_id: 464e404a-1957-44a2-a53a-f2a9d3c15bde, section: drug_interactions}
+  evidence: "warfarin"
+
+- id: ciprofloxacin-tendons
+  question: Can ciprofloxacin hurt your tendons?
+  cid: 2764
+  drug: ciprofloxacin
+  section_group: warnings
+  answers:
+    - {set_id: 888dc7f9-ad9c-4c00-8d50-8ddfd9bd27c0, section: boxed_warning}
+    - {set_id: 888dc7f9-ad9c-4c00-8d50-8ddfd9bd27c0, section: warnings_and_cautions}
+    - {set_id: 888dc7f9-ad9c-4c00-8d50-8ddfd9bd27c0, section: adverse_reactions}
+  evidence: "Tendinitis and"
+
+- id: montelukast-mood
+  question: Can Singulair cause mood or behaviour changes?
+  cid: 5281040
+  drug: montelukast
+  section_group: warnings
+  answers:
+    - {set_id: 482dcc92-b47f-4ea6-854a-f5ac2aea7842, section: boxed_warning}
+    - {set_id: 482dcc92-b47f-4ea6-854a-f5ac2aea7842, section: warnings_and_cautions}
+    - {set_id: 482dcc92-b47f-4ea6-854a-f5ac2aea7842, section: adverse_reactions}
+  evidence: "agitation, aggress"
+
+- id: ibuprofen-stomach-bleeding-signs
+  question: What signs of stomach bleeding does the Advil label tell you to watch for?
+  cid: 3672
+  drug: ibuprofen
+  section_group: warnings
+  answers:
+    - {set_id: ae1625f4-ef32-4d4f-bf54-c44085843e41, section: stop_use}
+    - {set_id: ae1625f4-ef32-4d4f-bf54-c44085843e41, section: warnings}
+  evidence: "feel faint vomit blood have bloody or black stools"
+
+- id: metformin-kidneys
+  question: Can metformin be used by people with severe kidney disease?
+  cid: 4091
+  drug: metformin
+  section_group: contraindications
+  answers:
+    - {set_id: 05d4df4b-dfe8-4828-b423-a3d4f2c4114a, section: contraindications}
+    - {set_id: 05d4df4b-dfe8-4828-b423-a3d4f2c4114a, section: warnings_and_cautions}
+    - {set_id: 05d4df4b-dfe8-4828-b423-a3d4f2c4114a, section: dosage_and_administration}
+  evidence: "30 mL/min"
+
+- id: lisinopril-angioedema
+  question: Is lisinopril safe for someone whose face and lips swelled up on another ACE inhibitor?
+  cid: 5362119
+  drug: lisinopril
+  section_group: contraindications
+  answers:
+    - {set_id: 9f6e4e57-a489-4b36-b093-b93865d3717c, section: contraindications}
+    - {set_id: 9f6e4e57-a489-4b36-b093-b93865d3717c, section: warnings_and_cautions}
+  evidence: "history of angioedema"
+
+- id: warfarin-pregnancy
+  question: Can warfarin be used during pregnancy?
+  cid: 54678486
+  drug: warfarin
+  section_group: contraindications
+  answers:
+    - {set_id: 7c4deb97-9966-4c8e-9ba6-bb260b71e130, section: contraindications}
+    - {set_id: 7c4deb97-9966-4c8e-9ba6-bb260b71e130, section: warnings_and_cautions}
+  evidence: "mechanical heart valves"
+
+- id: pseudoephedrine-antidepressants
+  question: Which antidepressants should not be combined with a pseudoephedrine decongestant?
+  cid: 7028
+  drug: pseudoephedrine
+  section_group: otc_consumer
+  answers:
+    - {set_id: 1fdb1ba5-4072-4baf-9e30-f01d57bf6d82, section: do_not_use}
+    - {set_id: 1fdb1ba5-4072-4baf-9e30-f01d57bf6d82, section: warnings}
+  evidence: "prescription monoamine oxidase inhibitor (MAOI)"
+
+- id: imatinib-common-side-effects
+  question: What side effects do people most often get on imatinib?
+  cid: 5291
+  drug: imatinib
+  section_group: adverse_reactions
+  answers:
+    - {set_id: 211ef2da-2868-4a77-8055-1cb2cd78e24b, section: adverse_reactions}
+  evidence: "edema, nausea, vomiting, muscle cramps, musculoskeletal pain, diarrhea, rash, fatigue, and abdominal pain"
+
+- id: atorvastatin-common-side-effects
+  question: What are the most common side effects of Lipitor?
+  cid: 60823
+  drug: atorvastatin
+  section_group: adverse_reactions
+  answers:
+    - {set_id: a60cc18b-0631-4cf0-b021-9f52224ece65, section: adverse_reactions}
+  evidence: "nasopharyngitis, arthralgia, diarrhea, pain in extremity, and urinary tract infection"
+
+- id: metformin-stomach-side-effects
+  question: Which stomach and gut problems are common with metformin?
+  cid: 4091
+  drug: metformin
+  section_group: adverse_reactions
+  answers:
+    - {set_id: 05d4df4b-dfe8-4828-b423-a3d4f2c4114a, section: adverse_reactions}
+  evidence: "diarrhea, nausea/vomiting, flatulence"
