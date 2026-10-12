@@ -62,7 +62,7 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 | `labels` | openFDA | one canonical Rx and one OTC label per drug, split into section groups. 133 of 134 drugs: 129 Rx and 27 OTC labels, 11.2M characters; metamizole has no US label | built (#63) |
 | `complexes` | `data/hero_set.yaml` (reviewed by hand, #6), RCSB mmCIF | one viewer-ready JSON per hero complex: CA trace, pocket, ligand, contacts | planned (#7) |
 | `index` | the stored label sections | chunks with label metadata in ChromaDB, embedded with `BAAI/bge-m3` saved in `data/build/models/` (2.3 GB); later BM25 next to it. 7,012 chunks from 156 labels, 135.1 MB | built (#87, #88); BM25 #44 |
-| `export` | the built store | `data/build/export/`: `molecula-store.tar.gz` (`molecula.db` with an empty HTTP cache, `structures/`, `index/`) and `manifest.json`. 78.9 MB, 149.9 MB unpacked | built (#117) |
+| `export` | the built store | `data/build/export/`: `molecula-store.tar.gz` (`molecula.db` with an empty HTTP cache, `structures/`, `index/`) and `manifest.json`. 79 MB, 149.9 MB unpacked | built (#117) |
 | `fetch`, `update` | the store release and the model from Hugging Face; openFDA for changed labels | the store on a fresh clone; re-indexed changed labels | planned (#118, #25) |
 
 ## Key design choices
