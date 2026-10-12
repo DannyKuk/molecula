@@ -14,7 +14,7 @@ flowchart LR
     DB[("<b>data/build/</b><br/>molecula.db<br/>structures/")]
     SVC["<b>Services</b>"]
     API["<b>FastAPI</b>"]
-    AG["<b>Agent tools</b><br/>(planned)"]
+    AG["<b>Agent tools</b>"]
     MCP["<b>MCP server</b><br/>(planned)"]
     FE["<b>Next.js</b>"]
     ING --> DB --> SVC
@@ -32,7 +32,7 @@ flowchart LR
 | **Store** (`data/build/`) | One SQLite file, `molecula.db`, plus conformer and complex files under `structures/`. The vector index in `index/chroma/` (#87), later BM25 next to it. **The store is the supported set**: a drug that isn't in it is "not supported". | built (schema version 5) |
 | **Services** (`backend/src/molecula/services/`) | Domain logic over the store: name resolution, compounds, targets; later labels and complexes. They never call a source. | compounds, targets built |
 | **FastAPI** (`backend/src/molecula/api/`) | Thin routes over the services: `GET /drugs`, `/drugs/resolve`, `/drugs/{cid}`, `/drugs/{cid}/structure`, `/drugs/{cid}/targets`, `/drugs/{cid}/labels`. | built; `/complex` (#73) and `POST /chat` (#16) planned |
-| **Agent** (`backend/src/molecula/agent/`, `tools/`) | A LangChain tool-calling agent whose tools call the same services, with RAG over the label sections. | LLM factory built (#11); tools (#15) and agent (#16) planned |
+| **Agent** (`backend/src/molecula/agent/`, `tools/`) | A LangChain tool-calling agent whose tools call the same services, with RAG over the label sections. | LLM factory built (#11); tools `resolve_drug`, `get_properties`, `get_targets`, `compare_drugs` and their registry built (#107); `search_labels` (#108), `get_complex` (#109) and the agent (#16) planned |
 | **MCP server** (`backend/src/molecula/mcp/`) | The same services for any MCP client. | planned (#42) |
 | **Frontend** (`frontend/`) | Next.js app. Today: the backend's health and a searchable list of the supported drugs. | chat (#19), sources (#20) and 3D viewer (#21) planned |
 
@@ -40,13 +40,13 @@ flowchart LR
 
 ## One question, start to end
 
-This is the planned flow. Name resolution and the data routes exist; the rest is in the issues linked below.
+This is the planned flow. Name resolution, the data routes, the label search and the first agent tools exist; the rest is in the issues linked below.
 
 | Stage | What happens | State |
 |---|---|---|
 | 1. Guard | The message is checked for length and content, then sorted into `ok`, personal medical advice, lethal dose, synthesis or misuse, or off-topic. Anything but `ok` gets a fixed, friendly answer. | planned (#17) |
 | 2. Resolve the drug | "Gleevec", "imatinib mesylate" or "Tylenol" becomes a stored compound, or `not_supported` with suggestions the user has to pick ([name resolution](decisions/name-resolution.md)). | built: `CompoundService.resolve`, `GET /drugs/resolve` |
-| 3. Tools | The agent looks things up instead of guessing: properties, targets and mechanism, the reviewed complex, a side-by-side comparison. Each tool wraps a service. | planned (#15); the data behind properties and targets is served |
+| 3. Tools | The agent looks things up instead of guessing: properties, targets and mechanism, the reviewed complex, a side-by-side comparison. Each tool wraps a service. | built: `resolve_drug`, `get_properties`, `get_targets`, `compare_drugs` (`tools/`, #107); planned: `search_labels` (#108), `get_complex` (#109) |
 | 4. Search the labels | Query translation (brand → generic, German → English, rewrites), a metadata filter for drug and label section, then embedding search over chunks of the canonical labels, with BM25 next to it for exact terms like "CYP3A4". | built: the filtered search (`rag/filters.py`, `rag/retriever.py`, #13); planned: query translation (#14), BM25 (#44) |
 | 5. Answer | Streamed over server-sent events: progress steps, tool calls and results, tokens, sources, and a retrieval trace. Label text is cited with a link to DailyMed. | planned (#16) |
 | 6. Show it | Citations and tool cards in the chat; the drug in 3D, and for hero drugs bound in its target's pocket with the hydrogen bonds marked. | planned (#19, #20, #21) |
@@ -89,6 +89,7 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 - **One service layer for routes, tools and MCP.** All three are thin wrappers over the same functions, so they answer the same way and none reaches a source (#9, `docs/data-plan.md` §4). Each service is built once at startup and handed to routes as a FastAPI dependency, so tests replace it (#56).
 - **Prompts are `.md` files with a strict loader** (`prompts/loader.py`, #65). `{name}` is a placeholder, `{{` `}}` are literal braces, and anything else in braces fails, so a typo like `{ today }` or raw JSON can't pass silently. Values are inserted without being parsed again, so label text with braces is safe. Tool docstrings are the only LLM-facing text in Python, because LangChain reads them from there.
 - **One LLM factory, `ChatOpenAI` against any OpenAI-compatible URL** (`agent/llm.py`, #66): OpenRouter by default, a local Ollama or LM Studio server when `LOCAL_LLM_BASE_URL` is set. The cloud model stays the default because local 8B models are unreliable at tool calling (`docs/data-plan.md` §6). Token usage comes back on every reply.
+- **A tool answers with a result, never an exception.** Each tool returns a pydantic model from `schemas/tools.py`: the model reads it as JSON and the agent gets the typed result as the tool message's artifact, for the trace and the UI. A drug outside the store is `not_supported` with the suggestions, and in `compare_drugs` it is reported in its place while the others are compared. Arguments are checked like the API's (`DrugName`; 2–4 drugs to compare), and a bad one comes back as an `invalid_arguments` result with one line per problem, through LangChain's `handle_validation_error`, so the model can fix its call instead of the agent loop failing (#107).
 - **Typed end to end.** Pydantic models at every boundary: source responses (a wrong shape raises `SourceFormatError`, not a `KeyError`), schemas shared by routes, tools and MCP, and settings. The frontend has a typed client in `frontend/lib/api.ts`.
 - **Tests never touch the network.** Source clients run against responses recorded from the live APIs in `tests/fixtures/` (the one hand-edited file has "handmade" in its name), `MockTransport` and a fake clock test retries and rate limits without waiting, and agent tests use a scripted fake chat model (`tests/fake_llm.py`). Real-model checks belong in `backend/evals/`, run with `OFFLINE=1`.
 - **The drugs page asks the backend only when its own list has no match.** The list filters on scope names and aliases. `GET /drugs/resolve` also knows salt names and PubChem synonyms, so "imatinib mesylate" shows as supported under another name instead of "not supported", and a typo gets the closest names. A suggestion is a link the user clicks, never applied on its own, because look-alike names (Celexa, Celebrex) make a silent correction unsafe (#79).
@@ -102,8 +103,8 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 
 | Folder | Contents |
 |---|---|
-| `backend/src/molecula/` | `api/` (routes), `services/`, `sources/` (one client per API plus `http.py`), `store/` (SQLite, schema, HTTP cache, files), `ingest/` (build steps), `agent/` (LLM factory), `prompts/` (loader and `.md` prompts), `schemas/` |
-| `backend/tests/` | pytest, mirroring `src/molecula/`; `fixtures/` holds recorded API responses; fake chat model in `fake_llm.py` |
+| `backend/src/molecula/` | `api/` (routes), `services/`, `sources/` (one client per API plus `http.py`), `store/` (SQLite, schema, HTTP cache, files), `ingest/` (build steps), `agent/` (LLM factory, tool registry), `tools/` (one module per agent tool), `prompts/` (loader and `.md` prompts), `schemas/` |
+| `backend/tests/` | pytest, mirroring `src/molecula/`; `fixtures/` holds recorded API responses; fake chat model in `fake_llm.py`, fake services for the tool tests in `tool_fakes.py` |
 | `backend/evals/` | Eval runners and datasets with real models: `retrieval/` compares embedding models on `datasets/retrieval_questions.yaml` |
 | `frontend/` | Next.js app: `app/` (pages), `components/`, `lib/` (typed API client, search) |
 | `data/` | `scope.yaml`, later `hero_set.yaml`, and the built store in `build/` (gitignored) |
