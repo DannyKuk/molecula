@@ -83,7 +83,7 @@ Anything spilled to shared memory runs from system RAM and is much slower. 8k fi
 
 ## Limits
 
-- One model, one run, at temperature 0.2. A second run may differ on a few questions.
+- One model at temperature 0.2. A second run without the cache (2026-10-13, with the soft section groups) changed the extraction on a few questions but not the score: recall@5 0.91 both times, drug named 93 instead of 94, the right group 75 instead of 74. The tables above come from the first run, which is the cache they reproduce from.
 - The questions are all English (German questions are part of #114 and #46).
 - The boost is in bge-m3's cosine units and was chosen on these 94 questions. A new embedding model, hybrid search (#44) or a re-ranker (#96) needs it measured again.
 - No brand per question in the answer key, so brand narrowing is not scored.
