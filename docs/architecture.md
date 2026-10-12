@@ -31,7 +31,7 @@ flowchart LR
 | **Ingest steps** (`backend/src/molecula/ingest/`) | Fill the store at build time ([the pipeline](#the-data-pipeline-in-short)). | `compounds`, `targets`, `labels` built; `complexes`, `index` planned |
 | **Store** (`data/build/`) | One SQLite file, `molecula.db`, plus conformer and complex files under `structures/`. Later also the vector and BM25 index. **The store is the supported set**: a drug that isn't in it is "not supported". | built (schema version 4) |
 | **Services** (`backend/src/molecula/services/`) | Domain logic over the store: name resolution, compounds, targets; later labels and complexes. They never call a source. | compounds, targets built |
-| **FastAPI** (`backend/src/molecula/api/`) | Thin routes over the services: `GET /drugs`, `/drugs/resolve`, `/drugs/{cid}`, `/drugs/{cid}/structure`, `/drugs/{cid}/targets`. | built; `/labels` (#72), `/complex` (#73) and `POST /chat` (#16) planned |
+| **FastAPI** (`backend/src/molecula/api/`) | Thin routes over the services: `GET /drugs`, `/drugs/resolve`, `/drugs/{cid}`, `/drugs/{cid}/structure`, `/drugs/{cid}/targets`, `/drugs/{cid}/labels`. | built; `/complex` (#73) and `POST /chat` (#16) planned |
 | **Agent** (`backend/src/molecula/agent/`, `tools/`) | A LangChain tool-calling agent whose tools call the same services, with RAG over the label sections. | LLM factory built (#11); tools (#15) and agent (#16) planned |
 | **MCP server** (`backend/src/molecula/mcp/`) | The same services for any MCP client. | planned (#42) |
 | **Frontend** (`frontend/`) | Next.js app. Today: the backend's health and a searchable list of the supported drugs. | chat (#19), sources (#20) and 3D viewer (#21) planned |
@@ -87,7 +87,7 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 - **The browser calls the backend directly, with CORS**, rather than through a Next.js proxy, because streaming the chat is simpler without a proxy that buffers the response (#50).
 
 **Answers and safety**
-- **No personal dosing or treatment advice**, and no lethal-dose or synthesis answers. Retrieved label text is data, passed in delimiters, and never overrides the system prompt. The openFDA disclaimer is a field the UI shows, not text the model has to remember (#17, #47; planned).
+- **No personal dosing or treatment advice**, and no lethal-dose or synthesis answers. Retrieved label text is data, passed in delimiters, and never overrides the system prompt. The openFDA disclaimer is a field the UI shows, not text the model has to remember: `GET /drugs/{cid}/labels` returns it with the labels (#72), the chat follows (#17, #47; planned).
 - **No question or answer text is stored on the server** (planned). Conversations stay in the browser, and usage logging keeps only metadata, because medical questions are sensitive (#36, #40).
 
 ## Repository map

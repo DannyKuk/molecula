@@ -55,9 +55,11 @@ def test_app_starts_without_a_store_and_supports_no_drug(settings: Settings) -> 
         assert client.get("/drugs").json() == []
         resolution = client.get("/drugs/resolve", params={"name": "imatinib"}).json()
         targets = client.get("/drugs/5291/targets")
+        labels = client.get("/drugs/5291/labels")
 
     assert resolution["status"] == "not_supported"
     assert targets.status_code == 404
+    assert labels.status_code == 404
     assert not settings.db_path.exists()
 
 
@@ -76,11 +78,13 @@ def test_routes_serve_the_built_store(settings: Settings) -> None:
         resolution = client.get("/drugs/resolve", params={"name": "imatinib mesylate"}).json()
         structure = client.get("/drugs/5291/structure")
         targets = client.get("/drugs/5291/targets").json()
+        labels = client.get("/drugs/5291/labels").json()
 
     assert drugs == [{"cid": 5291, "name": "imatinib", "aliases": ["Gleevec"], "has_3d": True}]
     assert resolution["compound"]["cid"] == 5291
     assert structure.text == SDF
     assert targets == {"cid": 5291, "targets": []}
+    assert labels == {"cid": 5291, "labels": [], "disclaimer": None}
 
 
 @pytest.mark.parametrize(("cutoff", "suggested"), [(0.8, ["Gleevec"]), (0.9, [])])
