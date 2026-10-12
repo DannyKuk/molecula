@@ -5,6 +5,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from molecula import prompts
+from molecula.schemas.compounds import Compound
 from molecula.schemas.labels import Label, ProductType, SectionGroup
 from molecula.schemas.retrieval import DrugFilter, LabelFilter, LabelQuery
 from molecula.services.compounds import CompoundService
@@ -65,7 +66,7 @@ class FilterExtractor:
 
     def _drug_filter(self, name: str, product_type: ProductType | None) -> DrugFilter | None:
         resolution = self._compounds.resolve(name)
-        compound = resolution.compound
+        compound = resolution.compound or self._drug_inside(name)
         if compound is None:
             return None
         drug_labels = self._labels.get_labels(compound.cid)
@@ -82,6 +83,14 @@ class FilterExtractor:
             set_ids=[label.set_id for label in labels],
             narrowed=len(labels) < len(all_labels),
         )
+
+    def _drug_inside(self, name: str) -> Compound | None:
+        """The one supported drug an unknown product name contains: "Fleqsuvy baclofen" is
+        baclofen. A name with two drugs in it stays unknown rather than picking one."""
+        cids = {mention.cid for mention in self._compounds.find_mentions(name)}
+        if len(cids) != 1:
+            return None
+        return self._compounds.get_compound(cids.pop())
 
 
 def narrowed[T](items: list[T], keep: Callable[[T], bool]) -> list[T]:

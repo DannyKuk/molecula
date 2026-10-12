@@ -42,6 +42,12 @@ Every change to the filter, the name resolution or the search is measured on the
 | Change | Where | Drug named | Group among picks | recall@5 |
 |---|---|---|---|---|
 | Baseline: gpt-oss-20b extracts the filter as in #13 | this run | 0.94 | 0.79 | 0.78 |
+| A label's brand counts as a name of its drug in `CompoundStore.find`, ignoring case and hyphens ("Doryx MPC", "Tirosint-SOL" for the label's "Tirosint SOL") | #14 | 0.98 | 0.79 | 0.82 |
+| An unknown name that contains exactly one supported drug name is that drug (`FilterExtractor._drug_inside`: "Fleqsuvy baclofen", "Seacall dexamethasone ointment") | #14 | 1.00 | 0.79 | 0.84 |
+
+Tried and not built:
+
+- **Brand and alias names replaced by the generic name in the search text** ("How does Gleevec work" → "How does imatinib work"), with `CompoundService.find_mentions`. 47 of the 94 questions change. With the extracted filter recall@5 stays 0.84 (MRR 0.727 → 0.715); over the whole index it drops from 0.74 to 0.68, and within the answer key's drug from 0.85 to 0.81. bge-m3 matches the brand names in the label text better than the generic, so the question goes to the search as asked.
 
 ## Qwen3.8-27B does not fit next to a decision model
 

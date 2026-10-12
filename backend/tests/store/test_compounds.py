@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 import pytest
 
 from molecula.store.compounds import CompoundRecord, CompoundStore, Synonym, SynonymMatch
+from molecula.store.labels import LabelRecord, LabelSection, LabelStore
 
 FIRST_FETCH = datetime(2026, 10, 11, tzinfo=UTC)
 LATER_FETCH = datetime(2026, 11, 1, tzinfo=UTC)
@@ -110,7 +111,7 @@ def test_find_matches_an_alias_ignoring_case(store: CompoundStore) -> None:
 
     match = store.find("GUARANINE")
 
-    assert match == SynonymMatch(CAFFEINE, Synonym("Guaranine", "pubchem"))
+    assert match == SynonymMatch(CAFFEINE, "Guaranine", "pubchem")
 
 
 def test_find_prefers_a_scope_name_over_another_compounds_synonym(store: CompoundStore) -> None:
@@ -120,7 +121,48 @@ def test_find_prefers_a_scope_name_over_another_compounds_synonym(store: Compoun
 
     match = store.find("theine")
 
-    assert match == SynonymMatch(theine, Synonym("theine", "name"))
+    assert match == SynonymMatch(theine, "theine", "name")
+
+
+def save_label(conn: sqlite3.Connection, cid: int, brand: str) -> None:
+    label = LabelRecord(
+        set_id=f"label-{cid}",
+        substance="CAFFEINE",
+        brand=brand,
+        product_type="otc",
+        effective_time="20260101",
+        url="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=label",
+        sections=(LabelSection("otc_purpose", "otc_consumer", "Alertness aid.", False),),
+    )
+    LabelStore(conn).save(cid, (label,), FIRST_FETCH)
+
+
+@pytest.mark.parametrize("name", ["stay awake", "STAY-AWAKE", "Stay Awake"])
+def test_find_matches_a_label_brand_ignoring_case_and_hyphens(
+    conn: sqlite3.Connection, store: CompoundStore, name: str
+) -> None:
+    store.save(CAFFEINE, [Synonym("caffeine", "name")], FIRST_FETCH)
+    save_label(conn, CAFFEINE.cid, "Stay Awake")
+
+    assert store.find(name) == SynonymMatch(CAFFEINE, "Stay Awake", "brand")
+
+
+def test_find_prefers_a_synonym_over_a_label_brand(
+    conn: sqlite3.Connection, store: CompoundStore
+) -> None:
+    store.save(CAFFEINE, [Synonym("caffeine", "name")], FIRST_FETCH)
+    theine = replace(CAFFEINE, cid=99, name="theine")
+    store.save(theine, [Synonym("theine", "name"), Synonym("Wake Up", "alias")], FIRST_FETCH)
+    save_label(conn, CAFFEINE.cid, "Wake Up")
+
+    assert store.find("wake up") == SynonymMatch(theine, "Wake Up", "alias")
+
+
+def test_find_a_brand_only_as_a_whole_name(conn: sqlite3.Connection, store: CompoundStore) -> None:
+    store.save(CAFFEINE, [Synonym("caffeine", "name")], FIRST_FETCH)
+    save_label(conn, CAFFEINE.cid, "Stay Awake")
+
+    assert store.find("Stay") is None
 
 
 def test_find_unknown_alias_gives_none(store: CompoundStore) -> None:

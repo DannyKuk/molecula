@@ -263,3 +263,34 @@ def test_a_filter_says_whether_a_drug_lost_labels_to_its_brand_or_product_type(
     assert filters.check(LabelQuery(substances=["Voltaren"])).drugs[0].narrowed
     assert not filters.check(LabelQuery(substances=["diclofenac"])).drugs[0].narrowed
     assert not filters.check(LabelQuery(substances=["Advil", "ibuprofen"])).drugs[0].narrowed
+
+
+def test_an_unknown_product_name_with_a_supported_drug_in_it_searches_that_drug(
+    services: Services,
+) -> None:
+    filters, _ = extractor(services)
+
+    found = filters.check(LabelQuery(substances=["Seacall diclofenac gel"]))
+
+    assert [(drug.name, drug.cid) for drug in found.drugs] == [
+        ("Seacall diclofenac gel", DICLOFENAC)
+    ]
+    assert found.set_ids == ["zipsor", "voltaren"]
+    assert found.unsupported == []
+
+
+def test_an_unknown_name_with_two_drugs_in_it_stays_unsupported(services: Services) -> None:
+    filters, _ = extractor(services)
+
+    found = filters.check(LabelQuery(substances=["ibuprofen warfarin kit"]))
+
+    assert found.drugs == []
+    assert found.unsupported == ["ibuprofen warfarin kit"]
+
+
+def test_a_brand_from_a_label_finds_its_drug(services: Services) -> None:
+    filters, _ = extractor(services)
+
+    found = filters.check(LabelQuery(substances=["zipsor"]))
+
+    assert found.set_ids == ["zipsor"]

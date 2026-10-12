@@ -93,7 +93,7 @@ class Resolution(BaseModel):
     status: Literal["found", "not_supported"]
     compound: Compound | None = None
     matched_alias: str | None = None
-    match_kind: Literal["name", "alias", "pubchem"] | None = None
+    match_kind: Literal["name", "alias", "pubchem", "brand"] | None = None
     suggestions: list[Suggestion] = []
 
 

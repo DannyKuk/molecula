@@ -93,8 +93,8 @@ class CompoundService:
                     query=query,
                     status="found",
                     compound=to_compound(match.compound),
-                    matched_alias=match.synonym.alias,
-                    match_kind=match.synonym.kind,
+                    matched_alias=match.alias,
+                    match_kind=match.kind,
                 )
         # The last candidate is the name without salt words, so "imatinb mesylate" finds imatinib.
         suggestions = self._suggest(candidates[-1]) if candidates else []
