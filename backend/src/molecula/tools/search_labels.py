@@ -22,8 +22,9 @@ def search_labels_tool(
         `question` is one standalone question in plain words that names the drugs it is about
         ("Does ibuprofen interact with warfarin?"). Set `drug` when the search is about one
         drug: it is then searched directly, which is faster; leave it empty for a question
-        about two or more drugs. `section` moves that part of the label to the top of the
-        results; it never hides the other parts.
+        about two or more drugs. With `drug`, also set `section` to the part of the label the
+        question is about: it moves that part to the top of the results and never hides the
+        other parts.
 
         Returns `status: "found"` with `drugs`, the generic names searched, and `passages`,
         best first: the label `text` with its `substance`, `brand`, `product_type` (rx or
