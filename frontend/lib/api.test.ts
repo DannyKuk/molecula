@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { API_URL, ApiError, getDrugs, getHealth } from "./api";
+import { API_URL, ApiError, getDrugs, getHealth, resolveDrug } from "./api";
 
 function stubFetch(response: Response) {
   const fetchMock = vi.fn().mockResolvedValue(response);
@@ -49,5 +49,44 @@ describe("getDrugs", () => {
     stubFetch(new Response("Internal Server Error", { status: 500 }));
 
     await expect(getDrugs()).rejects.toMatchObject({ path: "/drugs", status: 500 });
+  });
+});
+
+describe("resolveDrug", () => {
+  it("returns the resolution with the suggestions for an unsupported name", async () => {
+    const resolution = {
+      query: "Gleevek",
+      status: "not_supported",
+      compound: null,
+      matched_alias: null,
+      match_kind: null,
+      suggestions: [{ alias: "Gleevec", cid: 5291, name: "imatinib" }],
+    };
+    const fetchMock = stubFetch(Response.json(resolution));
+
+    await expect(resolveDrug("Gleevek")).resolves.toEqual(resolution);
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/drugs/resolve?name=Gleevek`, {
+      signal: undefined,
+    });
+  });
+
+  it("encodes the name in the query string", async () => {
+    const fetchMock = stubFetch(Response.json({}));
+
+    await resolveDrug("imatinib mesylate & co");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_URL}/drugs/resolve?name=imatinib%20mesylate%20%26%20co`,
+      { signal: undefined },
+    );
+  });
+
+  it("throws an ApiError when the backend rejects the name", async () => {
+    stubFetch(new Response("Unprocessable Content", { status: 422 }));
+
+    await expect(resolveDrug("<script>")).rejects.toMatchObject({
+      path: "/drugs/resolve?name=%3Cscript%3E",
+      status: 422,
+    });
   });
 });

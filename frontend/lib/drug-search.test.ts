@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { Drug } from "./api";
-import { filterDrugs } from "./drug-search";
+import type { Compound, Drug, Resolution } from "./api";
+import { filterDrugs, namesToOffer } from "./drug-search";
 
 const imatinib: Drug = {
   cid: 5291,
@@ -39,5 +39,63 @@ describe("filterDrugs", () => {
 
   it("returns nothing when no name or alias matches", () => {
     expect(filterDrugs(drugs, "aspirin")).toEqual([]);
+  });
+});
+
+const imatinibCompound: Compound = {
+  cid: 5291,
+  name: "imatinib",
+  inchikey: "KTUFNOKKBVMGRW-UHFFFAOYSA-N",
+  smiles: "CC1=C(C=C(C=C1)NC(=O)C2=CC=C(C=C2)CN3CCN(CC3)C)NC4=NC=CC(=N4)C5=CN=CC=C5",
+  formula: "C29H31N7O",
+  molecular_weight: 493.6,
+  xlogp: 3.5,
+  tpsa: 86.3,
+  hbond_donors: 2,
+  hbond_acceptors: 7,
+  rotatable_bonds: 7,
+  heavy_atoms: 37,
+  has_3d: true,
+  conformer_source: "pubchem",
+  source: "PubChem",
+  source_url: "https://pubchem.ncbi.nlm.nih.gov/compound/5291",
+};
+
+function notSupported(query: string, suggestions: Resolution["suggestions"]): Resolution {
+  return {
+    query,
+    status: "not_supported",
+    compound: null,
+    matched_alias: null,
+    match_kind: null,
+    suggestions,
+  };
+}
+
+describe("namesToOffer", () => {
+  it("offers the backend's suggestions for an unsupported name, in its order", () => {
+    const suggestions = [
+      { alias: "Gleevec", cid: 5291, name: "imatinib" },
+      { alias: "Glivec", cid: 5291, name: "imatinib" },
+    ];
+
+    expect(namesToOffer(notSupported("Gleevek", suggestions))).toEqual(suggestions);
+  });
+
+  it("offers nothing when the backend has no close name", () => {
+    expect(namesToOffer(notSupported("aspirin", []))).toEqual([]);
+  });
+
+  it("offers the drug a salt name or synonym resolves to", () => {
+    const resolution: Resolution = {
+      query: "imatinib mesylate",
+      status: "found",
+      compound: imatinibCompound,
+      matched_alias: "imatinib",
+      match_kind: "name",
+      suggestions: [],
+    };
+
+    expect(namesToOffer(resolution)).toEqual([{ alias: "imatinib", cid: 5291, name: "imatinib" }]);
   });
 });
