@@ -63,6 +63,7 @@ class FakeCompoundService:
             "imatinib mesylate": (IMATINIB, "imatinib", "name"),
             "advil": (IBUPROFEN, "Advil", "alias"),
             "fluticasone": (FLUTICASONE, "fluticasone", "name"),
+            "xhance": (FLUTICASONE, "Xhance", "brand"),
             "orphan": (ORPHAN, "orphan", "name"),
         }
         self.suggestions = {"gleevek": [GLEEVEC_SUGGESTION]}

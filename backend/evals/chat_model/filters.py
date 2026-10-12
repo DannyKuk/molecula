@@ -8,7 +8,9 @@ Runs `FilterExtractor.extract` with the chat model the settings point at on ever
 the model returns a valid filter, names the question's drug and picks its section group, the
 recall of the filtered search next to the answer key's filters, and the time and output tokens
 per question. Each extraction is cached in data/build/eval/filters/, keyed by model, prompt and
-question, so a re-score or an interrupted run doesn't call the model again.
+question, so a re-score or an interrupted run doesn't call the model again. The cached model
+output is checked against the store by the current code on every run, so changes to name
+resolution and the filter show in the scores.
 """
 
 import hashlib
@@ -85,7 +87,7 @@ def main() -> int:
 
     extractions = extract_all(extractor, questions, cache_path(settings, model_name))
     scored = [
-        score(question, extraction, retriever)
+        score(question, extraction, extractor, retriever)
         for question, extraction in zip(questions, extractions, strict=True)
     ]
     gold = gold_ranks(questions, retriever, labels_by_drug(index.chunks()))
@@ -150,8 +152,13 @@ def as_json(extraction: Extraction) -> dict[str, object]:
     return {**asdict(extraction), "label_filter": extraction.label_filter.model_dump(mode="json")}
 
 
-def score(question: Question, extraction: Extraction, retriever: LabelRetriever) -> Scored:
-    found = extraction.label_filter
+def score(
+    question: Question,
+    extraction: Extraction,
+    extractor: FilterExtractor,
+    retriever: LabelRetriever,
+) -> Scored:
+    found = rechecked(extraction.label_filter, extractor)
     cids = {drug.cid for drug in found.drugs}
     retrieval = retriever.retrieve(question.question, found)
     return Scored(
@@ -165,6 +172,13 @@ def score(question: Question, extraction: Extraction, retriever: LabelRetriever)
         seconds=extraction.seconds,
         output_tokens=extraction.output_tokens,
     )
+
+
+def rechecked(cached: LabelFilter, extractor: FilterExtractor) -> LabelFilter:
+    """The cached model output checked against the store by the current code, so a change to
+    name resolution or the filter is scored without calling the model again."""
+    checked = extractor.check(cached.extracted)
+    return checked.model_copy(update={"extraction_error": cached.extraction_error})
 
 
 def gold_ranks(

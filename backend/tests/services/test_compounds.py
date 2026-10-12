@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from molecula.schemas.compounds import Suggestion, SupportedDrug
+from molecula.schemas.compounds import DrugMention, Suggestion, SupportedDrug
 from molecula.services import compounds
 from molecula.services.compounds import CompoundService, name_candidates
 from molecula.store.compounds import CompoundRecord, CompoundStore, ConformerSource, Synonym
@@ -326,3 +326,69 @@ def test_list_drugs_has_the_scope_aliases_and_no_pubchem_synonyms(
 )
 def test_name_candidates(query: str, candidates: list[str]) -> None:
     assert name_candidates(query) == candidates
+
+
+def mentioned(service: CompoundService, text: str) -> list[tuple[str, str]]:
+    return [(mention.text, mention.name) for mention in service.find_mentions(text)]
+
+
+def test_find_mentions_finds_brands_and_names_in_a_sentence(
+    scope_service: CompoundService,
+) -> None:
+    mentions = scope_service.find_mentions("Can I take Tylenol with advil?")
+
+    assert mentions == [
+        DrugMention(text="Tylenol", start=11, end=18, cid=1983, name="acetaminophen"),
+        DrugMention(text="advil", start=24, end=29, cid=3672, name="ibuprofen"),
+    ]
+
+
+def test_find_mentions_reads_german_questions(scope_service: CompoundService) -> None:
+    assert mentioned(scope_service, "Darf ich Ibuflam und Paracetamol zusammen nehmen?") == [
+        ("Ibuflam", "ibuprofen"),
+        ("Paracetamol", "acetaminophen"),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("text", "mentions"),
+    [
+        ("Is acetylsalicylic acid an NSAID?", [("acetylsalicylic acid", "aspirin")]),
+        ("How does esomeprazole differ?", [("esomeprazole", "esomeprazole")]),
+        ("Is ben-u-ron safe for kids?", [("ben-u-ron", "acetaminophen")]),
+        ("When do I take L-thyroxine?", [("L-thyroxine", "levothyroxine")]),
+        ("Gleevecs and imatinibs", []),
+    ],
+)
+def test_find_mentions_matches_whole_names_only_longest_first(
+    scope_service: CompoundService, text: str, mentions: list[tuple[str, str]]
+) -> None:
+    assert mentioned(scope_service, text) == mentions
+
+
+@pytest.mark.parametrize(
+    ("text", "mentions"),
+    [
+        ("Hilft ASS gegen Kopfschmerzen?", [("ASS", "aspirin")]),
+        ("Is ASA the same drug?", [("ASA", "aspirin")]),
+        ("This pain is a pain in the ass", []),
+        ("Is asa safe?", []),
+    ],
+)
+def test_find_mentions_matches_abbreviations_only_in_capitals(
+    scope_service: CompoundService, text: str, mentions: list[tuple[str, str]]
+) -> None:
+    assert mentioned(scope_service, text) == mentions
+
+
+def test_find_mentions_keeps_every_mention_and_skips_pubchem_synonyms(
+    service: CompoundService,
+) -> None:
+    assert mentioned(service, "Gleevec or imatinib, not Glamox") == [
+        ("Gleevec", "imatinib"),
+        ("imatinib", "imatinib"),
+    ]
+
+
+def test_find_mentions_in_text_without_a_drug_is_empty(scope_service: CompoundService) -> None:
+    assert scope_service.find_mentions("What helps against a headache?") == []

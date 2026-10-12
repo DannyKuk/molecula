@@ -42,7 +42,7 @@ export type Resolution = {
   status: "found" | "not_supported";
   compound: Compound | null;
   matched_alias: string | null;
-  match_kind: "name" | "alias" | "pubchem" | null;
+  match_kind: "name" | "alias" | "pubchem" | "brand" | null;
   suggestions: Suggestion[];
 };
 

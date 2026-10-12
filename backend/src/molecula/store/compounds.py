@@ -7,6 +7,8 @@ from typing import Literal
 
 type ConformerSource = Literal["pubchem", "rdkit"]
 type SynonymKind = Literal["name", "alias", "pubchem"]
+# A label brand is a name too, but it lives in the `label` table, not in `synonym`.
+type MatchKind = SynonymKind | Literal["brand"]
 
 
 @dataclass(frozen=True)
@@ -42,7 +44,8 @@ class Synonym:
 @dataclass(frozen=True)
 class SynonymMatch:
     compound: CompoundRecord
-    synonym: Synonym
+    alias: str
+    kind: MatchKind
 
 
 COLUMNS = [field.name for field in fields(CompoundRecord)]
@@ -74,7 +77,9 @@ class CompoundStore:
         """The compound an alias names, ignoring case.
 
         An alias can name several compounds (a PubChem synonym of one drug that is another's scope
-        name); the scope name wins over a scope alias, which wins over a PubChem synonym.
+        name); the scope name wins over a scope alias, which wins over a PubChem synonym. A name
+        that is none of these can still be the brand of a stored label ("Doryx MPC"), compared
+        with hyphens as spaces ("Tirosint-SOL" is the label's "Tirosint SOL").
         """
         compound_columns = ", ".join(f"compound.{column}" for column in COLUMNS)
         with self._lock:
@@ -85,10 +90,18 @@ class CompoundStore:
                 " synonym.rowid LIMIT 1",
                 (alias,),
             ).fetchone()
+            if row is None:
+                row = self._conn.execute(
+                    f"SELECT {compound_columns}, label.brand, 'brand'"
+                    " FROM label JOIN compound USING (cid)"
+                    " WHERE replace(label.brand, '-', ' ') = replace(?, '-', ' ') COLLATE NOCASE"
+                    " ORDER BY label.cid LIMIT 1",
+                    (alias,),
+                ).fetchone()
         if row is None:
             return None
-        *compound, synonym_alias, kind = row
-        return SynonymMatch(CompoundRecord(*compound), Synonym(synonym_alias, kind))
+        *compound, matched_alias, kind = row
+        return SynonymMatch(CompoundRecord(*compound), matched_alias, kind)
 
     def scope_aliases(self) -> dict[int, list[str]]:
         """The scope aliases of every compound that has any, in scope order. No PubChem synonyms."""
