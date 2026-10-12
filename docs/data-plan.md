@@ -56,7 +56,7 @@ Known limits, and how the app handles them:
  PubChem ─┐                                                     ┌─ FastAPI ──> Next.js
  ChEMBL  ─┼─> ingest steps ──> data/build/molecula.db (SQLite)──┤
  RCSB    ─┤                    data/build/structures/           └─ MCP server ──> LangChain agent
- openFDA ─┘                    data/build/index/ (vectors + BM25)
+ openFDA ─┘                    data/build/index/ (vectors + BM25), data/build/models/
 ```
 
 - **One service layer** (`backend/src/molecula/services/`). FastAPI routes, agent tools and the MCP server are thin wrappers around the same functions.
@@ -174,9 +174,11 @@ Consequences:
 - **Section groups** cover the three layouts (PLR Rx, older Rx, OTC Drug Facts): `pharmacology, indications, dosing, warnings, contraindications, interactions, adverse_reactions, otc_consumer`.
 - **Safety at index time:** `overdosage` is not indexed (it lists toxic doses). `dosing` is indexed with `sensitive=true`, so general label dosing can be cited but never turned into personal advice.
 - `*_table` HTML fields are dropped; the plain-text versions are kept.
-- Chunks: split by section, then recursively to ~500 tokens with 50 overlap. Metadata: `{cid, substance, brand, product_type, section_group, set_id, effective_time, url}`.
+- Chunks (`ingest index`, #87): each section on its own, then recursively to 500 tokens with 50 overlap, counted with the `BAAI/bge-small-en-v1.5` tokenizer for every embedding model, so models are compared on the same chunks and no chunk is longer than a BERT-sized model reads (512 tokens). Whitespace is collapsed. Metadata: `{cid, substance, brand, product_type, section, section_group, sensitive, set_id, effective_time, url}`; IDs `{set_id}:{section}:{n}`.
+- **Repeated text is indexed once within a section group.** Measured on 2026-10-12 over the 156 stored labels: `clinical_pharmacology` contains `mechanism_of_action` on 111 of 115 Rx labels that have both, and `pharmacodynamics` on 87 of 89; that text is cut out of `clinical_pharmacology` and kept under the specific section, and a leftover under 10 tokens (the heading) is dropped. OTC `warnings` repeats `do_not_use`, `stop_use`, `ask_doctor` and `when_using` on most Drug Facts labels, but those are another group (`otc_consumer`), so both stay: retrieval filters on the group.
+- Vectors in ChromaDB (`data/build/index/chroma/`, one collection, cosine), rebuilt from scratch in an emptied folder: Chroma keeps a deleted collection's files, and a rebuild in place grew the index from 74.8 to 96.7 MB. The collection records the embedding model, and a query with another model is refused, because vectors of two models don't compare. Model weights are saved in `data/build/models/` on the first build, so later builds and the app load them with `OFFLINE=1`.
 
-**Corpus estimate:** a canonical Rx label is 40–170k characters (measured), an OTC label 3–5k. For 120 drugs that is ~8–10M characters ≈ 2–2.5M tokens ≈ 4–5k chunks. Local embeddings handle this on a CPU in minutes. The first full run measured less (below).
+**Corpus estimate:** a canonical Rx label is 40–170k characters (measured), an OTC label 3–5k. For 120 drugs that is ~8–10M characters ≈ 2–2.5M tokens ≈ 4–5k chunks. Local embeddings handle this on a CPU in minutes. The first full run measured less (below). The first index build (2026-10-12, `bge-small-en-v1.5` on CPU): 3,813 chunks from 156 labels in 105–118 s, a 74.8 MB index, and 129 MB of model files.
 
 **How `ingest labels` works.** It runs after `ingest compounds`, for every compound in the store.
 

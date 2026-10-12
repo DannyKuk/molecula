@@ -4,13 +4,8 @@ from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
 
-from molecula.config import Settings
+from molecula.config import OPENROUTER_ATTRIBUTION_HEADERS, OPENROUTER_BASE_URL, Settings
 
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-OPENROUTER_ATTRIBUTION_HEADERS = {
-    "HTTP-Referer": "https://github.com/DannyKuk/molecula",
-    "X-OpenRouter-Title": "Molecula",
-}
 # The OpenAI client won't start without a key; Ollama and LM Studio ignore it.
 LOCAL_SERVER_API_KEY = SecretStr("local")
 

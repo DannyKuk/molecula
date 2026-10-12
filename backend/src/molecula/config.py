@@ -9,6 +9,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # Inside Docker the package is installed elsewhere, so compose sets DATA_DIR and passes .env in.
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
+# Shared by the chat model (agent/llm.py) and the cloud embeddings (rag/embeddings.py).
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+OPENROUTER_ATTRIBUTION_HEADERS = {
+    "HTTP-Referer": "https://github.com/DannyKuk/molecula",
+    "X-OpenRouter-Title": "Molecula",
+}
+
 
 class Settings(BaseSettings):
     """App settings, read from the environment and the repo's `.env` (keys as in `.env.example`)."""
@@ -27,6 +34,7 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = 60.0
     llm_max_retries: int = 2
     embedding_model: str = "local"
+    local_embedding_model: str = "BAAI/bge-small-en-v1.5"
     openfda_api_key: SecretStr | None = None
     offline: bool = False
     data_dir: Path = REPO_ROOT / "data"
@@ -49,6 +57,15 @@ class Settings(BaseSettings):
     @property
     def conformers_dir(self) -> Path:
         return self.build_dir / "structures" / "compounds"
+
+    @property
+    def index_dir(self) -> Path:
+        return self.build_dir / "index" / "chroma"
+
+    @property
+    def models_dir(self) -> Path:
+        """Local model weights, saved when the index is built so the app runs with OFFLINE=1."""
+        return self.build_dir / "models"
 
 
 @lru_cache

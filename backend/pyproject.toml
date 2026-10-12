@@ -4,13 +4,17 @@ version = "0.1.0"
 description = "Medicines chatbot backend: RAG over FDA drug labels, chemistry tools and 3D drug-target structures"
 requires-python = ">=3.14,<3.15"
 dependencies = [
+    "chromadb>=1.5.9",
     "fastapi>=0.115",
     "httpx2>=2.13.1",
     "langchain-core>=1.6.9",
     "langchain-openai>=1.7.0",
+    "langchain-text-splitters>=1.0",
     "pydantic-settings>=2.6",
     "pyyaml>=6.0.3",
     "rdkit>=2026.9.1",
+    "sentence-transformers>=6.1.0",
+    "torch>=2.14.1",
     "uvicorn[standard]>=0.32",
 ]
 
@@ -36,3 +40,12 @@ select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF"]
 testpaths = ["tests"]
 pythonpath = ["tests"]
 addopts = "--import-mode=importlib"
+
+# CPU-only PyTorch for sentence-transformers: the CUDA build is several GB and the app runs on CPU.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
