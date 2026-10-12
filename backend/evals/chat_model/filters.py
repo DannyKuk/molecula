@@ -82,7 +82,13 @@ def main() -> int:
     )
     index = LabelIndex(settings.index_dir)
     index.check_model(embedding_model_id(settings))
-    retriever = LabelRetriever(index, get_embeddings(settings), top_k=TOP_K, min_score=-1.0)
+    retriever = LabelRetriever(
+        index,
+        get_embeddings(settings),
+        top_k=TOP_K,
+        min_score=-1.0,
+        section_group_boost=settings.retrieval_section_group_boost,
+    )
     questions = load_questions()
 
     extractions = extract_all(extractor, questions, cache_path(settings, model_name))

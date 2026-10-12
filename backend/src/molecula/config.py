@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     local_embedding_model: str = "BAAI/bge-m3"
     retrieval_top_k: Annotated[int, Field(ge=1, le=50)] = 5
     retrieval_min_score: Annotated[float, Field(ge=-1.0, le=1.0)] = 0.0
+    # Added to the cosine similarity of a chunk in the extracted section groups. Chosen with
+    # bge-m3 on the retrieval questions; re-measure when the embeddings or ranking change (#112).
+    retrieval_section_group_boost: Annotated[float, Field(ge=0.0, le=2.0)] = 0.15
     openfda_api_key: SecretStr | None = None
     offline: bool = False
     data_dir: Path = REPO_ROOT / "data"

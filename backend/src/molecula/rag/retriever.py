@@ -7,48 +7,46 @@ from langchain_core.embeddings import Embeddings
 from molecula.schemas.retrieval import LabelFilter, Retrieval, RetrievedChunk, Widening
 from molecula.store.index import Chunk, LabelIndex
 
-# The labels go first: the section groups say what the question asks, a brand only which
-# product the user has, and another label of the same drug can still answer it.
-WIDENINGS: tuple[Widening, ...] = ("labels", "section_groups")
-
 
 class LabelRetriever:
     """Similarity search over the label chunks, narrowed by a checked `LabelFilter`.
 
-    The `top_k` closest chunks are candidates; those scoring below `min_score` are dropped but
-    still returned, so the retrieval trace can show them.
+    The drugs, their labels and the product type narrow the search; the section groups only
+    rank it. A chunk in one of the filter's groups counts `section_group_boost` higher, so a
+    wrong group the chat model picks still leaves the drug's other sections in reach. The
+    `top_k` best chunks are candidates; those whose own score is below `min_score` are dropped
+    but still returned, so the retrieval trace can show them.
     """
 
     def __init__(
-        self, index: LabelIndex, embeddings: Embeddings, *, top_k: int, min_score: float
+        self,
+        index: LabelIndex,
+        embeddings: Embeddings,
+        *,
+        top_k: int,
+        min_score: float,
+        section_group_boost: float,
     ) -> None:
         self._index = index
         self._embeddings = embeddings
         self._top_k = top_k
         self._min_score = min_score
+        self._section_group_boost = section_group_boost
 
     def retrieve(self, question: str, label_filter: LabelFilter | None = None) -> Retrieval:
         """The label chunks for `question`. A filter that names only drugs without searchable
         labels (unsupported, or no US label) finds nothing rather than other drugs' text.
 
-        When the full filter finds nothing, the search widens: first to every label of the
-        named drugs, then to every section. "Side effects of Advil" narrows to the OTC label,
-        whose Drug Facts have no adverse reactions section, so it falls back to the
-        prescription label's.
+        When none of the labels the filter narrows to has the section groups, the search widens
+        to every label of the named drugs (or any product type). "Side effects of Advil"
+        narrows to the OTC label, whose Drug Facts have no adverse reactions section, so it
+        falls back to the prescription label's.
         """
         if label_filter is not None and label_filter.names_drugs and not label_filter.set_ids:
             return Retrieval(question=question, filter=label_filter, chunks=[], dropped=[])
         vector = self._embeddings.embed_query(question)
-        widened: list[Widening] = []
-        found = self._index.search(vector, self._top_k, where_clause(label_filter))
-        for step in WIDENINGS:
-            if found or label_filter is None:
-                break
-            if where_clause(label_filter, [*widened, step]) == where_clause(label_filter, widened):
-                continue
-            widened.append(step)
-            found = self._index.search(vector, self._top_k, where_clause(label_filter, widened))
-        candidates = [retrieved(chunk, score) for chunk, score in found]
+        found, widened = self._search_widening(vector, label_filter)
+        candidates = self._ranked(found, label_filter)
         return Retrieval(
             question=question,
             filter=label_filter,
@@ -57,13 +55,62 @@ class LabelRetriever:
             widened=widened,
         )
 
+    def _search_widening(
+        self, vector: list[float], label_filter: LabelFilter | None
+    ) -> tuple[list[tuple[Chunk, float]], list[Widening]]:
+        """The search under the filter, or under every label of its drugs when that finds the
+        section groups and the narrower labels don't. A brand's label with text in other
+        sections is kept when no label of the drug has the groups either."""
+        found = self._search(vector, label_filter, [])
+        if label_filter is None or in_groups(found, label_filter):
+            return found, []
+        if where_clause(label_filter, ["labels"]) == where_clause(label_filter):
+            return found, []
+        wider = self._search(vector, label_filter, ["labels"])
+        if in_groups(wider, label_filter) or not found:
+            return wider, ["labels"]
+        return found, []
+
+    def _search(
+        self, vector: list[float], label_filter: LabelFilter | None, widened: list[Widening]
+    ) -> list[tuple[Chunk, float]]:
+        """The closest chunks in the filter's section groups and in every section, together."""
+        found = self._index.search(vector, self._top_k, where_clause(label_filter, widened))
+        if label_filter is None or not label_filter.section_groups:
+            return found
+        grouped = self._index.search(
+            vector, self._top_k, where_clause(label_filter, widened, section_groups=True)
+        )
+        return list({chunk.id: (chunk, score) for chunk, score in [*grouped, *found]}.values())
+
+    def _ranked(
+        self, found: list[tuple[Chunk, float]], label_filter: LabelFilter | None
+    ) -> list[RetrievedChunk]:
+        groups = label_filter.section_groups if label_filter else []
+        chunks = [retrieved(chunk, score, chunk.section_group in groups) for chunk, score in found]
+        chunks.sort(
+            key=lambda c: c.score + (self._section_group_boost if c.in_section_groups else 0.0),
+            reverse=True,
+        )
+        return chunks[: self._top_k]
+
+
+def in_groups(found: list[tuple[Chunk, float]], label_filter: LabelFilter) -> bool:
+    """Whether the search found a chunk in the filter's section groups; without groups, any."""
+    if not label_filter.section_groups:
+        return bool(found)
+    return any(chunk.section_group in label_filter.section_groups for chunk, _ in found)
+
 
 def where_clause(
-    label_filter: LabelFilter | None, widened: Sequence[Widening] = ()
+    label_filter: LabelFilter | None,
+    widened: Sequence[Widening] = (),
+    *,
+    section_groups: bool = False,
 ) -> dict[str, Any] | None:
     """The ChromaDB filter, with the `widened` parts given up; None searches the whole index.
     Named drugs are already narrowed to their labels of the product type, so the type only
-    applies on its own."""
+    applies on its own. The section groups narrow only when `section_groups` is set."""
     if label_filter is None:
         return None
     conditions: list[dict[str, Any]] = []
@@ -74,14 +121,14 @@ def where_clause(
             conditions.append({"set_id": {"$in": label_filter.set_ids}})
     elif label_filter.product_type and "labels" not in widened:
         conditions.append({"product_type": label_filter.product_type})
-    if label_filter.section_groups and "section_groups" not in widened:
+    if section_groups and label_filter.section_groups:
         conditions.append({"section_group": {"$in": label_filter.section_groups}})
     if not conditions:
         return None
     return conditions[0] if len(conditions) == 1 else {"$and": conditions}
 
 
-def retrieved(chunk: Chunk, score: float) -> RetrievedChunk:
+def retrieved(chunk: Chunk, score: float, in_section_groups: bool = False) -> RetrievedChunk:
     return RetrievedChunk(
         id=chunk.id,
         text=chunk.text,
@@ -96,4 +143,5 @@ def retrieved(chunk: Chunk, score: float) -> RetrievedChunk:
         set_id=chunk.set_id,
         effective_time=datetime.strptime(chunk.effective_time, "%Y%m%d").date(),
         url=chunk.url,
+        in_section_groups=in_section_groups,
     )

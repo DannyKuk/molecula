@@ -16,7 +16,7 @@ class LabelQuery(BaseModel):
     product_type: ProductType | None = None
 
 
-type Widening = Literal["labels", "section_groups"]
+type Widening = Literal["labels"]
 
 
 class DrugFilter(BaseModel):
@@ -60,7 +60,8 @@ class LabelFilter(BaseModel):
 
 
 class RetrievedChunk(BaseModel):
-    """A label chunk a search found, with its cosine similarity to the query and what to cite."""
+    """A label chunk a search found, with its cosine similarity to the query and what to cite.
+    `in_section_groups` means it is in one of the filter's section groups and ranked higher."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -77,15 +78,16 @@ class RetrievedChunk(BaseModel):
     set_id: str
     effective_time: date
     url: str
+    in_section_groups: bool = False
 
 
 class Retrieval(BaseModel):
     """The chunks a label search kept, best first, and the candidates it dropped for scoring
     below the threshold, with the filter it searched under (None: the whole index).
 
-    `widened` lists the parts of the filter given up, in order, because the search under the
-    full filter found nothing: "labels" searched every label of the named drugs (or any product
-    type), "section_groups" every section.
+    `widened` lists the parts of the filter given up because the labels it narrowed to have
+    none of its section groups: "labels" searched every label of the named drugs (or any
+    product type).
     """
 
     model_config = ConfigDict(frozen=True)

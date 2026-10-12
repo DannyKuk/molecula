@@ -44,6 +44,25 @@ Every change to the filter, the name resolution or the search is measured on the
 | Baseline: gpt-oss-20b extracts the filter as in #13 | this run | 0.94 | 0.79 | 0.78 |
 | A label's brand counts as a name of its drug in `CompoundStore.find`, ignoring case and hyphens ("Doryx MPC", "Tirosint-SOL" for the label's "Tirosint SOL") | #14 | 0.98 | 0.79 | 0.82 |
 | An unknown name that contains exactly one supported drug name is that drug (`FilterExtractor._drug_inside`: "Fleqsuvy baclofen", "Seacall dexamethasone ointment") | #14 | 1.00 | 0.79 | 0.84 |
+| The section groups rank the search instead of filtering it: within the drug's labels, a chunk in an extracted group counts 0.15 higher (`RETRIEVAL_SECTION_GROUP_BOOST`) | #112 | 1.00 | 0.79 | **0.91** |
+
+With the soft section groups, the 20 questions with a wrong group go from 0.35 to 0.70 and the 74 with the right group stay at 0.97. MRR@10 goes from 0.727 to 0.759. The answer key's ceiling (drug + section group) drops by one question, from 0.98 to 0.97 (MRR 0.890 → 0.877): the answer to imatinib-mechanism is the fifth pharmacology chunk, and closer chunks of other sections push it out of the top 10.
+
+How the two searches (in the groups, and in every section of the drug's labels) are merged was decided on these questions. The boost rows are reproduced with `RETRIEVAL_SECTION_GROUP_BOOST`; the other merges were a one-off script on the same cache.
+
+| Merge | Extracted recall@5 | Group wrong (20) | Ceiling recall@5 |
+|---|---|---|---|
+| Hard filter (before) | 0.84 | 0.35 | 0.98 |
+| No groups (boost 0) | 0.85 | 0.85 | 0.85 |
+| Boost +0.08 | 0.90 | 0.70 | 0.95 |
+| Boost +0.12 | 0.91 | 0.70 | 0.96 |
+| **Boost +0.15** | **0.91** | 0.70 | 0.97 |
+| Boost +0.20 | 0.90 | 0.65 | 0.97 |
+| Reciprocal rank fusion (k = 60) | 0.90 | 0.75 | 0.96 |
+| Groups' top 2, then the rest | 0.90 | 0.85 | 0.95 |
+| Reciprocal rank fusion, groups weighted 2:1 or 3:1 | 0.89 | 0.60 | 0.98 |
+
+Above +0.08 the extracted score is flat (0.90–0.91); what the boost decides is the ceiling. +0.15 is the smallest boost that keeps the ceiling within one question of the hard filter, which #112 asked for. Weighted fusion keeps the ceiling but isn't a soft filter: with 10 results per list, every grouped chunk outranks every other chunk, so a wrong group still hides the answer whenever the group has 10 chunks of the drug.
 
 Tried and not built:
 
@@ -65,7 +84,8 @@ Anything spilled to shared memory runs from system RAM and is much slower. 8k fi
 ## Limits
 
 - One model, one run, at temperature 0.2. A second run may differ on a few questions.
-- The questions are all English (German questions are part of #14 and #46).
+- The questions are all English (German questions are part of #114 and #46).
+- The boost is in bge-m3's cosine units and was chosen on these 94 questions. A new embedding model, hybrid search (#44) or a re-ranker (#96) needs it measured again.
 - No brand per question in the answer key, so brand narrowing is not scored.
 
 ## Reproduce
