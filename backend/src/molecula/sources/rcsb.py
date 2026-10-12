@@ -300,7 +300,8 @@ class RcsbClient:
         entries leave empty (1IEP), while UniProt's gene names are only in the data API.
 
         With a `taxon`, the source that carries the gene must have it in its lineage: viral gene
-        names such as `pol` are shared by HIV-1 and foamy virus.
+        names such as `pol` are shared by HIV-1 and foamy virus. `gag-pol` counts as `pol`, since
+        HIV-1 intasomes such as 8FN7 name only the polyprotein.
         """
         wanted = {name.upper() for name in gene_names}
         entry_ids = self.entries_with_ligand(ligand_code, refresh=refresh)
@@ -332,7 +333,17 @@ def connectivity_block(inchikey: str) -> str:
 
 
 def has_gene(genes: list[str], upper_gene_names: set[str]) -> bool:
-    return any(gene.upper() in upper_gene_names for gene in genes)
+    return any(gene_forms(gene) & upper_gene_names for gene in genes)
+
+
+def gene_forms(gene: str) -> set[str]:
+    """The gene name in upper case, and `POL` for `gag-pol`.
+
+    HIV-1 makes its protease, reverse transcriptase and integrase from one Gag-Pol polyprotein,
+    so many structures name the gene `gag-pol` where ChEMBL says `pol`.
+    """
+    upper = gene.upper()
+    return {upper, "POL"} if upper == "GAG-POL" else {upper}
 
 
 def entity_with_gene(

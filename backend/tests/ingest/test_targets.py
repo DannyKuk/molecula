@@ -174,11 +174,24 @@ def test_viral_target_keeps_only_entries_of_its_virus(ingest, store: TargetStore
     ingest([DOLUTEGRAVIR])
 
     candidates = store.get(54726191).candidates
-    assert [(c.pdb_id, c.organism, c.resolution) for c in candidates] == [
-        ("8W34", "Human immunodeficiency virus 1", 2.83),
-        ("8W09", "Human immunodeficiency virus 1", 3.2),
-        ("8W2R", "Human immunodeficiency virus 1", 3.23),
-        ("6VDK", "Human immunodeficiency virus 1", 4.5),
+    assert {c.organism for c in candidates} == {"Human immunodeficiency virus 1"}
+    assert [(c.pdb_id, c.resolution) for c in candidates] == [
+        ("9C9M", 2.01),
+        ("8FNG", 2.2),
+        ("8FNP", 2.2),
+        ("8FNJ", 2.4),
+        ("8FNO", 2.46),
+        ("8FNH", 2.5),
+        ("8FNN", 2.7),
+        ("8FN7", 2.8),
+        ("8FNL", 2.8),
+        ("8FNM", 2.8),
+        ("8W34", 2.83),
+        ("8FND", 3.0),
+        ("8W09", 3.2),
+        ("8W2R", 3.23),
+        ("6VDK", 4.5),
+        ("6U8Q", 4.67),
     ]
 
 
@@ -188,6 +201,8 @@ def test_viral_target_keeps_only_entries_of_its_virus(ingest, store: TargetStore
         ("Human immunodeficiency virus 1", "Human immunodeficiency virus 1"),
         ("Influenza A virus (A/Puerto Rico/8/1934(H1N1))", "Influenza A virus"),
         ("Influenza B virus (strain B/Lee/1940)", "Influenza B virus"),
+        ("Herpes simplex virus (type 1 / strain 17)", "Herpes simplex virus 1"),
+        ("Herpes simplex virus (type 2 / strain 333)", "Herpes simplex virus 2"),
         ("Homo sapiens", None),
         ("Bacteria", None),
         (None, None),

@@ -1,0 +1,30 @@
+{
+  "query_id" : "ca12824e-2633-41f8-9289-dca861fadeb5",
+  "result_type" : "entry",
+  "total_count" : 8,
+  "result_set" : [ {
+    "identifier" : "1PWY",
+    "score" : 1.0
+  }, {
+    "identifier" : "2KI5",
+    "score" : 1.0
+  }, {
+    "identifier" : "3IX2",
+    "score" : 1.0
+  }, {
+    "identifier" : "3MJR",
+    "score" : 1.0
+  }, {
+    "identifier" : "4DA7",
+    "score" : 1.0
+  }, {
+    "identifier" : "5I3C",
+    "score" : 1.0
+  }, {
+    "identifier" : "7VRH",
+    "score" : 1.0
+  }, {
+    "identifier" : "7VRI",
+    "score" : 1.0
+  } ]
+}
