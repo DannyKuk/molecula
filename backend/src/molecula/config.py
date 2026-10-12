@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     embedding_model: str = "local"
     # Multilingual and among the best CPU-sized models in docs/decisions/embeddings.md (#88).
     local_embedding_model: str = "BAAI/bge-m3"
+    retrieval_top_k: Annotated[int, Field(ge=1, le=50)] = 5
+    retrieval_min_score: Annotated[float, Field(ge=-1.0, le=1.0)] = 0.0
     openfda_api_key: SecretStr | None = None
     offline: bool = False
     data_dir: Path = REPO_ROOT / "data"

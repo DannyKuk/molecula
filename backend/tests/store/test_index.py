@@ -98,3 +98,24 @@ def test_empty_index_leaves_nothing_of_the_previous_build(tmp_path: Path) -> Non
 
     assert not leftover.parent.exists()
     assert index.chunks() == []
+
+
+def test_search_ranks_by_cosine_similarity(index: LabelIndex) -> None:
+    index.rebuild([PURPOSE, MECHANISM], [[0.0, 1.0], [1.0, 0.0]], MODEL)
+
+    found = index.search([1.0, 0.0], n=2)
+
+    assert [chunk for chunk, _ in found] == [MECHANISM, PURPOSE]
+    assert [round(score, 6) for _, score in found] == [1.0, 0.0]
+
+
+def test_search_keeps_only_chunks_matching_the_filter(index: LabelIndex) -> None:
+    index.rebuild([PURPOSE, MECHANISM], [[0.0, 1.0], [1.0, 0.0]], MODEL)
+
+    found = index.search([1.0, 0.0], n=2, where={"product_type": "otc"})
+
+    assert [chunk for chunk, _ in found] == [PURPOSE]
+
+
+def test_search_before_the_first_build_finds_nothing(index: LabelIndex) -> None:
+    assert index.search([1.0, 0.0], n=5) == []
