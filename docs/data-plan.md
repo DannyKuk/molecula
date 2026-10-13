@@ -73,7 +73,7 @@ Known limits, and how the app handles them:
 - The release is tagged `store-YYYY-MM-DD`, and the settings pin the tag as `STORE_RELEASE`, so code and data versions match. `python -m molecula.ingest fetch` downloads the pinned release, checks the SHA-256 and the schema version and unpacks it into `data/build/`; Docker runs it when the store is missing (#118). The first release is #119.
 - **The embedding model comes from Hugging Face, not from the release** (decided 2026-10-13 in #35). Each release asset must be under 2 GiB ([GitHub](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)), and bge-m3's weights alone are one 2,271,145,830-byte file. `fetch` downloads `LOCAL_EMBEDDING_MODEL` into `data/build/models/`, pinned to a revision and checked by hash, and with `OFFLINE=1` and no model it exits with a message, as it does without a store (#118). The manifest names the model because the index refuses queries from another one. Splitting the weights into parts would work but adds joining code to `fetch`; fp16 weights (~1.1 GB) would fit, but they change the vectors, so the index would have to be rebuilt and its recall measured again.
 - Not the other options from #34: an ingest on every clone (minutes, NCBI's block), committing the conformers only (no database), or committing the store (growing binary data in the git history). Git LFS counts every clone against its bandwidth quota.
-- **First export** (2026-10-13, the store from §5, 3.5 s): a 79 MB archive (78,950,603 bytes), 149.9 MB unpacked: `molecula.db` 13.8 MB (2.0 GB with the HTTP cache), the bge-m3 index 135.1 MB, conformers 0.9 MB. Rows: 134 compounds, 4,343 synonyms, 190 targets, 104 ligand codes, 317 complex candidates, 156 labels, 3,126 label sections, 1 disclaimer (a table later exports leave out, #180).
+- **First export** (2026-10-13, the store from §5, 3.5 s): a 79 MB archive (78,950,603 bytes), 149.9 MB unpacked: `molecula.db` 13.8 MB (2.0 GB with the HTTP cache), the bge-m3 index 135.1 MB, conformers 0.9 MB. Rows: 134 compounds, 4,343 synonyms, 190 targets, 104 ligand codes, 317 complex candidates, 156 labels, 3,126 label sections, 1 disclaimer (a table schema version 6 drops, #180).
 
 ---
 
@@ -231,7 +231,7 @@ Tables (schema version 5; version 5 widened the `section_group` check for #92):
 
 - `label(set_id, cid, substance, brand, product_type, effective_time, url, source, fetched_at)`, one row per (`cid`, `product_type`); `product_type` is `rx` or `otc`, `substance` the label's own (often a salt), `url` the DailyMed page `https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid={set_id}`.
 - `label_section(set_id, section, section_group, text, sensitive)`.
-- openFDA's `meta.disclaimer` is not stored. Stores built before #180 have it in a `source_disclaimer` table, which nothing reads; new stores don't create it, and the export leaves it out. openFDA's [terms](https://open.fda.gov/terms/) only ask for credit, which the chat shows under answers that used label text.
+- openFDA's `meta.disclaimer` is not stored. Until #180 it was, in a `source_disclaimer` table; schema version 6 drops that table when a store is first opened, so no rebuild is needed. openFDA's [terms](https://open.fda.gov/terms/) only ask for credit, which the chat shows under answers that used label text.
 
 A pruned compound takes its labels and sections with it (`ON DELETE CASCADE`). A drug that fails is reported and skipped; the run stops when openFDA stops answering. Re-running is served from the HTTP cache and leaves the rows untouched.
 

@@ -161,28 +161,6 @@ def test_built_store_is_not_changed(settings: Settings) -> None:
         assert HttpCache(conn).get("pubchem:name:imatinib") is not None
 
 
-def test_a_table_from_before_180_is_left_out_of_the_export(
-    settings: Settings, tmp_path: Path
-) -> None:
-    build_store(settings)
-    with closing(sqlite3.connect(settings.db_path)) as conn:
-        conn.execute(
-            "CREATE TABLE source_disclaimer (source TEXT PRIMARY KEY, text TEXT NOT NULL,"
-            " fetched_at TEXT NOT NULL)"
-        )
-        conn.execute(
-            "INSERT INTO source_disclaimer VALUES ('openfda', 'Do not rely on openFDA.', '2026')"
-        )
-        conn.commit()
-
-    manifest = export_store(settings, settings.export_dir, BUILT_AT)
-
-    assert "source_disclaimer" not in manifest.row_counts
-    with closing(connect(unpack(settings, tmp_path / "fresh") / "molecula.db")) as conn:
-        assert "source_disclaimer" not in export.table_names(conn)
-        assert LabelStore(conn).get(5291) == (GLEEVEC,)
-
-
 def test_manifest_matches_the_archive(settings: Settings, tmp_path: Path) -> None:
     build_store(settings)
 

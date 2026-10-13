@@ -88,9 +88,6 @@ CREATE TABLE complex_candidate (
     FOREIGN KEY (cid, ligand_code) REFERENCES ligand_code (cid, code) ON DELETE CASCADE
 );
 """,
-    # Stores built before #180 also have a `source_disclaimer` table, which nothing reads any
-    # more. It was dropped from here rather than in a new version, so opening such a store
-    # changes nothing in it.
     4: """
 CREATE TABLE label (
     set_id TEXT PRIMARY KEY,
@@ -116,6 +113,12 @@ CREATE TABLE label_section (
     sensitive INTEGER NOT NULL,
     PRIMARY KEY (set_id, section)
 );
+
+CREATE TABLE source_disclaimer (
+    source TEXT PRIMARY KEY,
+    text TEXT NOT NULL,
+    fetched_at TEXT NOT NULL
+);
 """,
     # SQLite can't change a CHECK constraint, so label_section is rebuilt with the new groups.
     5: """
@@ -135,6 +138,10 @@ INSERT INTO label_section_new SELECT set_id, section, section_group, text, sensi
     FROM label_section ORDER BY rowid;
 DROP TABLE label_section;
 ALTER TABLE label_section_new RENAME TO label_section;
+""",
+    # openFDA's API disclaimer is no longer stored or shown; answers credit openFDA instead (#180).
+    6: """
+DROP TABLE source_disclaimer;
 """,
 }
 SCHEMA_VERSION = max(MIGRATIONS)
