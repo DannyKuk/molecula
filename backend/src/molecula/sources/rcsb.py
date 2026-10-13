@@ -4,13 +4,13 @@ from urllib.parse import quote
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 from molecula.sources.http import SourceClient
+from molecula.sources.inchikey import connectivity_block
 from molecula.sources.parsing import parse
 
 SEARCH = "https://search.rcsb.org/rcsbsearch/v2/query"
 CHEM_COMP = "https://data.rcsb.org/rest/v1/core/chemcomp"
 STRUCTURE_FILES = "https://files.rcsb.org/download"
 GRAPHQL = "https://data.rcsb.org/graphql"
-CONNECTIVITY_BLOCK = 14
 ENTRY_BATCH = 200
 ENTRY_DETAILS = """query ($ids: [String!]!) {
   entries(entry_ids: $ids) {
@@ -343,10 +343,6 @@ class RcsbClient:
 
 def terminal(service: str, **parameters: str) -> dict[str, Any]:
     return {"type": "terminal", "service": service, "parameters": parameters}
-
-
-def connectivity_block(inchikey: str) -> str:
-    return inchikey[:CONNECTIVITY_BLOCK]
 
 
 def has_gene(genes: list[str], upper_gene_names: set[str]) -> bool:

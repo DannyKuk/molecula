@@ -6,10 +6,16 @@ from pathlib import Path
 
 import pytest
 
-from molecula.schemas.compounds import DrugMention, Match, Suggestion, SupportedDrug
+from molecula.schemas.compounds import (
+    ConformerSource,
+    DrugMention,
+    Match,
+    Suggestion,
+    SupportedDrug,
+)
 from molecula.services import compounds
 from molecula.services.compounds import CompoundService, name_candidates
-from molecula.store.compounds import CompoundRecord, CompoundStore, ConformerSource, Synonym
+from molecula.store.compounds import CompoundRecord, CompoundStore, Synonym
 from molecula.store.structures import ConformerFiles
 
 FETCHED_AT = datetime(2026, 10, 11, tzinfo=UTC)

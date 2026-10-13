@@ -7,7 +7,7 @@ from typing import Any
 import chromadb
 from chromadb.config import Settings as ChromaSettings
 
-from molecula.store.labels import ProductType, SectionGroup
+from molecula.schemas.labels import ProductType, SectionGroup
 
 COLLECTION = "label_chunks"
 MODEL_KEY = "embedding_model"

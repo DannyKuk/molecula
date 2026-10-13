@@ -1,28 +1,18 @@
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from threading import Lock
-from typing import Literal
 
-type ProductType = Literal["rx", "otc"]
-type SectionGroup = Literal[
-    "pharmacology",
-    "indications",
-    "dosing",
-    "warnings",
-    "contraindications",
-    "interactions",
-    "adverse_reactions",
-    "otc_consumer",
-    "specific_populations",
-    "patient_information",
-    "product",
-    "abuse_dependence",
-    "clinical_studies",
-    "overdosage",
-]
+from molecula.schemas.labels import ProductType, SectionGroup
+from molecula.store.sources import OPENFDA, SourceName
 
 LABEL_COLUMNS = ["set_id", "substance", "brand", "product_type", "effective_time", "url"]
+# openFDA writes a label's effective time as YYYYMMDD, and the store keeps it that way.
+LABEL_DATE_FORMAT = "%Y%m%d"
+
+
+def label_date(effective_time: str) -> date:
+    return datetime.strptime(effective_time, LABEL_DATE_FORMAT).date()
 
 
 @dataclass(frozen=True)
@@ -82,7 +72,7 @@ class LabelStore:
             for label in labels:
                 self._conn.execute(
                     f"INSERT INTO label (cid, {', '.join(LABEL_COLUMNS)}, source, fetched_at)"
-                    " VALUES (?, ?, ?, ?, ?, ?, ?, 'openfda', ?)",
+                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (
                         cid,
                         label.set_id,
@@ -91,6 +81,7 @@ class LabelStore:
                         label.product_type,
                         label.effective_time,
                         label.url,
+                        OPENFDA,
                         fetched_at.isoformat(),
                     ),
                 )
@@ -103,14 +94,14 @@ class LabelStore:
                     ],
                 )
 
-    def disclaimer(self, source: str) -> str | None:
+    def disclaimer(self, source: SourceName) -> str | None:
         with self._lock:
             row = self._conn.execute(
                 "SELECT text FROM source_disclaimer WHERE source = ?", (source,)
             ).fetchone()
         return row[0] if row else None
 
-    def save_disclaimer(self, source: str, text: str, fetched_at: datetime) -> None:
+    def save_disclaimer(self, source: SourceName, text: str, fetched_at: datetime) -> None:
         """Store the text a source asks to be shown with its data, once per source."""
         if self.disclaimer(source) == text:
             return

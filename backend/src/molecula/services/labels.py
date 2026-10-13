@@ -1,11 +1,7 @@
-from datetime import datetime
-
 from molecula.schemas.labels import DrugLabels, Label, LabelSection
 from molecula.store.compounds import CompoundStore
-from molecula.store.labels import LabelRecord, LabelStore
-
-# The labels ingest step writes every label row from openFDA.
-LABEL_SOURCE = "openfda"
+from molecula.store.labels import LabelRecord, LabelStore, label_date
+from molecula.store.sources import OPENFDA
 
 
 class LabelService:
@@ -22,7 +18,7 @@ class LabelService:
         return DrugLabels(
             cid=cid,
             labels=[to_label(record) for record in self._labels.get(cid)],
-            disclaimer=self._labels.disclaimer(LABEL_SOURCE),
+            disclaimer=self._labels.disclaimer(OPENFDA),
         )
 
 
@@ -32,7 +28,7 @@ def to_label(record: LabelRecord) -> Label:
         substance=record.substance,
         brand=record.brand,
         product_type=record.product_type,
-        effective_time=datetime.strptime(record.effective_time, "%Y%m%d").date(),
+        effective_time=label_date(record.effective_time),
         sections=[
             LabelSection(
                 section=section.section,
@@ -42,6 +38,6 @@ def to_label(record: LabelRecord) -> Label:
             )
             for section in record.sections
         ],
-        source=LABEL_SOURCE,
+        source=OPENFDA,
         source_url=record.url,
     )

@@ -1,11 +1,11 @@
 import sqlite3
 from dataclasses import replace
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 import pytest
 
 from molecula.store.compounds import CompoundRecord, CompoundStore
-from molecula.store.labels import LabelRecord, LabelSection, LabelStore
+from molecula.store.labels import LabelRecord, LabelSection, LabelStore, label_date
 
 FIRST_FETCH = datetime(2026, 10, 11, tzinfo=UTC)
 LATER_FETCH = datetime(2026, 11, 1, tzinfo=UTC)
@@ -137,3 +137,12 @@ def test_a_changed_disclaimer_replaces_the_old(store: LabelStore) -> None:
 
 def test_unknown_source_has_no_disclaimer(store: LabelStore) -> None:
     assert store.disclaimer("openfda") is None
+
+
+def test_a_stored_effective_time_reads_as_a_date() -> None:
+    assert label_date(RX.effective_time) == date(2025, 1, 1)
+
+
+def test_an_effective_time_in_another_format_is_rejected() -> None:
+    with pytest.raises(ValueError):
+        label_date("2025-01-01")
