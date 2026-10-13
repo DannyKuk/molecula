@@ -106,6 +106,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         tools = build_tools(
             app.state.compound_service,
             app.state.target_service,
+            app.state.complex_service,
             app.state.filter_extractor,
             app.state.label_retriever,
         )

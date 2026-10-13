@@ -345,13 +345,15 @@ def test_each_hero_is_stored_as_json_named_by_its_cid(ingest, files: ComplexFile
     imatinib = Complex.model_validate_json(files.read(5291) or "")
     zanamivir = Complex.model_validate_json(files.read(60855) or "")
     assert imatinib == build_complex(MMCIF, "STI", "A/201", IMATINIB_SMILES).model_copy(
-        update={"showcase": True}
+        update={"target": "ABL1", "organism": "Mus musculus", "showcase": True}
     )
-    assert (zanamivir.pdb_id, zanamivir.caption, zanamivir.showcase) == (
-        "3B7E",
-        "Neuraminidase of a 1918 strain.",
-        False,
-    )
+    assert (
+        zanamivir.pdb_id,
+        zanamivir.target,
+        zanamivir.organism,
+        zanamivir.caption,
+        zanamivir.showcase,
+    ) == ("3B7E", "NA", "Influenza A virus", "Neuraminidase of a 1918 strain.", False)
 
 
 def test_hero_whose_drug_isnt_stored_is_reported_and_the_rest_built(ingest, files) -> None:

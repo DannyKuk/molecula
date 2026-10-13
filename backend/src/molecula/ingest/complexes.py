@@ -109,7 +109,14 @@ def ingest_complex(
         hero.ligand_copy,
         smiles,
         exclude_chains=hero.exclude_chains,
-    ).model_copy(update={"caption": hero.caption, "showcase": hero.showcase})
+    ).model_copy(
+        update={
+            "target": hero.target,
+            "organism": hero.organism,
+            "caption": hero.caption,
+            "showcase": hero.showcase,
+        }
+    )
     text = complex_.model_dump_json()
     files.write(cid, text)
     return StoredComplex(hero, cid, len(text.encode()))

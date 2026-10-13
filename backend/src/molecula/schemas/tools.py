@@ -123,6 +123,58 @@ class DrugComparison(ToolResult):
         return [source for drug in self.drugs for source in drug.sources()]
 
 
+class HydrogenBond(BaseModel):
+    """A hydrogen bond between a pocket residue's atom and a ligand atom, in Å."""
+
+    model_config = ConfigDict(frozen=True)
+
+    residue: str
+    chain: str
+    residue_atom: str
+    ligand_atom: str
+    distance: float
+
+
+class ResidueContact(BaseModel):
+    """A pocket residue and its closest heavy-atom distance to the ligand, in Å."""
+
+    model_config = ConfigDict(frozen=True)
+
+    residue: str
+    chain: str
+    distance: float
+
+
+class DrugComplex(ToolResult):
+    """A summary of a supported drug's reviewed complex: what it is bound to and how, without
+    the coordinates the 3D view draws."""
+
+    status: Literal["found"] = "found"
+    query: str
+    cid: int
+    name: str
+    pdb_id: str
+    target: str | None
+    organism: str | None
+    ligand_code: str
+    caption: str | None
+    hydrogen_bonds: list[HydrogenBond]
+    contacts: list[ResidueContact]
+    source_url: str
+
+    def sources(self) -> list[Source]:
+        return [Source(kind="rcsb", name=self.pdb_id, url=self.source_url)]
+
+
+class NoComplex(ToolResult):
+    """A supported drug without a reviewed complex: the 3D view shows the molecule alone."""
+
+    status: Literal["no_complex"] = "no_complex"
+    query: str
+    cid: int
+    name: str
+
+
 class CitedPassage(RetrievedChunk):
     """A label passage and `ref`, the number an answer cites it with as `[ref]`."""
 

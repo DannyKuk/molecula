@@ -8,6 +8,7 @@ from molecula.agent.tool_registry import build_tools
 from molecula.schemas.tools import DrugTargetList, LabelPassages
 from molecula.tools.base import progress_of
 from tool_fakes import (
+    FakeComplexService,
     FakeCompoundService,
     FakeFilterExtractor,
     FakeLabelRetriever,
@@ -15,16 +16,28 @@ from tool_fakes import (
     call_tool,
 )
 
-TOOL_NAMES = ["resolve_drug", "get_properties", "get_targets", "search_labels", "compare_drugs"]
+TOOL_NAMES = [
+    "resolve_drug",
+    "get_properties",
+    "get_targets",
+    "get_complex",
+    "search_labels",
+    "compare_drugs",
+]
 
 
 def tools(targets: FakeTargetService | None = None) -> list[BaseTool]:
     return build_tools(
         FakeCompoundService(),
         targets or FakeTargetService(),
+        FakeComplexService(),
         FakeFilterExtractor(),
         FakeLabelRetriever(),
     )
+
+
+def named(registered: list[BaseTool], name: str) -> BaseTool:
+    return next(tool for tool in registered if tool.name == name)
 
 
 def test_registry_builds_the_tools_over_the_services() -> None:
@@ -44,7 +57,7 @@ def test_tools_bind_to_a_chat_model() -> None:
 
 def test_registered_tool_calls_its_service() -> None:
     targets = FakeTargetService()
-    get_targets = tools(targets)[2]
+    get_targets = named(tools(targets), "get_targets")
 
     message = call_tool(get_targets, {"drug": "Gleevec"})
 
@@ -53,7 +66,7 @@ def test_registered_tool_calls_its_service() -> None:
 
 
 def test_registered_label_search_searches() -> None:
-    search_labels = tools()[3]
+    search_labels = named(tools(), "search_labels")
 
     message = call_tool(search_labels, {"question": "How does imatinib work?"})
 

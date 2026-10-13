@@ -7,6 +7,7 @@ from typing import Any
 from langchain_core.messages import ToolMessage
 from langchain_core.tools import BaseTool
 
+from molecula.schemas.complexes import Atom, Complex, Contact, Ligand, Residue
 from molecula.schemas.compounds import Compound, Resolution, Suggestion
 from molecula.schemas.labels import SectionGroup
 from molecula.schemas.retrieval import (
@@ -108,6 +109,41 @@ class FakeTargetService:
     def targets_of(self, compound: Compound) -> DrugTargets:
         self.asked.append(compound.cid)
         return self.drugs.get(compound.cid, DrugTargets(cid=compound.cid, targets=[]))
+
+
+MET318 = Residue(chain="A", number=318, name="MET")
+THR315 = Residue(chain="A", number=315, name="THR")
+IMATINIB_ABL1_COMPLEX = Complex(
+    pdb_id="1IEP",
+    ligand=Ligand(
+        code="STI",
+        chain="A",
+        number=201,
+        atoms=[Atom(name="N3", element="N", xyz=(0.0, 0.0, 0.0))],
+        bonds=[],
+    ),
+    trace=[],
+    pocket=[],
+    contacts=[
+        Contact(kind="hbond", residue=MET318, residue_atom="N", ligand_atom=0, distance=3.0),
+        Contact(kind="contact", residue=MET318, residue_atom="N", ligand_atom=0, distance=3.0),
+        Contact(kind="contact", residue=THR315, residue_atom="OG1", ligand_atom=0, distance=2.9),
+    ],
+    target="ABL1",
+    organism="Mus musculus",
+)
+
+
+class FakeComplexService:
+    """Has imatinib's complex and no other; records the CIDs it was asked."""
+
+    def __init__(self) -> None:
+        self.complexes = {5291: IMATINIB_ABL1_COMPLEX}
+        self.asked: list[int] = []
+
+    def get_complex(self, cid: int) -> Complex | None:
+        self.asked.append(cid)
+        return self.complexes.get(cid)
 
 
 IMATINIB_SIDE_EFFECTS = RetrievedChunk(

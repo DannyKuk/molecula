@@ -112,7 +112,11 @@ async def ask(agent: ChatAgent, question: Question) -> Answer:
 def tool_descriptions(app: FastAPI) -> str:
     state = app.state
     tools = build_tools(
-        state.compound_service, state.target_service, state.filter_extractor, state.label_retriever
+        state.compound_service,
+        state.target_service,
+        state.complex_service,
+        state.filter_extractor,
+        state.label_retriever,
     )
     return "\n".join(f"{tool.name}: {tool.description}" for tool in tools)
 

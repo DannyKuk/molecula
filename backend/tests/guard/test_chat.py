@@ -22,6 +22,7 @@ from molecula.schemas.chat import (
 )
 from molecula.schemas.guard import InputCategory
 from tool_fakes import (
+    FakeComplexService,
     FakeCompoundService,
     FakeFilterExtractor,
     FakeLabelRetriever,
@@ -34,7 +35,11 @@ QUESTION = [ChatMessage(role="user", content="My son swallowed ten acetaminophen
 def agent(*script: Any) -> tuple[ChatAgent, ScriptedChatModel]:
     model = ScriptedChatModel(script=list(script))
     tools = build_tools(
-        FakeCompoundService(), FakeTargetService(), FakeFilterExtractor(), FakeLabelRetriever()
+        FakeCompoundService(),
+        FakeTargetService(),
+        FakeComplexService(),
+        FakeFilterExtractor(),
+        FakeLabelRetriever(),
     )
     return ChatAgent(model, tools, max_steps=5, timeout_seconds=10), model
 

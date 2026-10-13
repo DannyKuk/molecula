@@ -87,7 +87,7 @@ class Usage(BaseModel):
 class Source(BaseModel):
     """Where a fact the tools returned comes from: a label passage on DailyMed (`kind`
     "dailymed", with the label's date and `ref`, the number the answer cites it with as `[ref]`),
-    a PubChem compound page or a ChEMBL target page."""
+    a PubChem compound page, a ChEMBL target page or an RCSB entry page (`kind` "rcsb")."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -128,7 +128,7 @@ class ToolCallEvent(BaseModel):
 
 class ToolResultEvent(BaseModel):
     """The tool's result as the model read it. `status` is the result's own status (`found`,
-    `not_supported`, `invalid_arguments`), if it has one."""
+    `not_supported`, `no_complex`, `invalid_arguments`), if it has one."""
 
     type: Literal["tool_result"] = "tool_result"
     id: str
