@@ -46,6 +46,40 @@ export type Resolution = {
   suggestions: Suggestion[];
 };
 
+export type Xyz = [number, number, number];
+
+export type Residue = { chain: string; number: number; ins_code: string; name: string };
+
+export type Atom = { name: string; element: string; xyz: Xyz };
+
+/** A drug-target complex for the 3D view (`Complex` in `backend/src/molecula/schemas/complexes.py`):
+ * heavy atoms only, coordinates in Å. */
+export type Complex = {
+  pdb_id: string;
+  ligand: {
+    code: string;
+    chain: string;
+    number: number;
+    atoms: Atom[];
+    bonds: { atoms: [number, number]; order: "single" | "double" | "triple" | "aromatic" }[];
+  };
+  /** One point per residue: the CA atom of an amino acid, the P atom of a nucleotide (`sse` null). */
+  trace: (Residue & { sse: "helix" | "sheet" | "coil" | null; xyz: Xyz })[];
+  pocket: (Residue & { atoms: Atom[] })[];
+  contacts: {
+    kind: "hbond" | "contact";
+    residue: Residue;
+    residue_atom: string;
+    ligand_atom: number;
+    distance: number;
+  }[];
+  target: string | null;
+  organism: string | null;
+  caption: string | null;
+  showcase: boolean;
+  source_url: string;
+};
+
 export class ApiError extends Error {
   constructor(
     readonly path: string,
@@ -56,12 +90,16 @@ export class ApiError extends Error {
   }
 }
 
-async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+async function get(path: string, signal?: AbortSignal): Promise<Response> {
   const response = await fetch(`${API_URL}${path}`, { signal });
   if (!response.ok) {
     throw new ApiError(path, response.status);
   }
-  return (await response.json()) as T;
+  return response;
+}
+
+async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+  return (await (await get(path, signal)).json()) as T;
 }
 
 export function getHealth(signal?: AbortSignal): Promise<HealthResponse> {
@@ -76,4 +114,14 @@ export function getDrugs(signal?: AbortSignal): Promise<Drug[]> {
 /** Which supported drug a name refers to; an unsupported name comes with close supported names. */
 export function resolveDrug(name: string, signal?: AbortSignal): Promise<Resolution> {
   return getJson<Resolution>(`/drugs/resolve?name=${encodeURIComponent(name)}`, signal);
+}
+
+/** A drug's 3D conformer as SDF text; a 404 means the drug has none. */
+export async function getStructure(cid: number, signal?: AbortSignal): Promise<string> {
+  return (await get(`/drugs/${cid}/structure`, signal)).text();
+}
+
+/** A drug's reviewed complex with its target; a 404 means it has none. */
+export function getComplex(cid: number, signal?: AbortSignal): Promise<Complex> {
+  return getJson<Complex>(`/drugs/${cid}/complex`, signal);
 }

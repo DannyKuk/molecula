@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { cardOf, type Card } from "@/lib/tool-cards";
 import {
@@ -144,9 +144,35 @@ describe("get_complex", () => {
       "ILE360AO – N512.72 Å",
     );
     expect(within(card).getByRole("button", { name: "Show all 10" })).toBeDefined();
-    expect(
-      (within(card).getByRole("button", { name: "View in 3D" }) as HTMLButtonElement).disabled,
-    ).toBe(true);
+  });
+
+  it("scrolls to the drug's 3D view under the same answer", () => {
+    const card = cardOf({ id: "call_1", name: "get_complex", args: {}, result: IMATINIB_COMPLEX });
+    const { container } = render(
+      <>
+        <div data-turn>
+          <section data-structure="5291" />
+        </div>
+        <div data-turn>
+          <ToolCard
+            text="Step"
+            card={card as Exclude<Card, { kind: "pending" }>}
+            answer=""
+            current={false}
+          />
+          <section data-structure="5291" />
+        </div>
+      </>,
+    );
+    const [earlierView, view] = container.querySelectorAll("section");
+    earlierView.scrollIntoView = vi.fn();
+    view.scrollIntoView = vi.fn();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Step/ }));
+    fireEvent.click(screen.getByRole("button", { name: "View in 3D" }));
+
+    expect(view.scrollIntoView).toHaveBeenCalledOnce();
+    expect(earlierView.scrollIntoView).not.toHaveBeenCalled();
   });
 
   it("puts a stand-in structure's caption first and says when there are no hydrogen bonds", () => {
@@ -161,6 +187,7 @@ describe("get_complex", () => {
 
     expect(card.textContent).toContain("No reviewed structure");
     expect(card.textContent).toContain("The 3D view shows the molecule alone.");
+    expect(within(card).getByRole("button", { name: "View the molecule in 3D" })).toBeDefined();
   });
 });
 

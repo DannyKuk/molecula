@@ -70,6 +70,7 @@ export type ResidueContact = { residue: string; chain: string; distance: number 
 
 export type DrugComplex = {
   status: "found";
+  cid: number;
   name: string;
   pdb_id: string;
   target: string | null;
@@ -81,7 +82,7 @@ export type DrugComplex = {
   source_url: string;
 };
 
-export type NoComplex = { status: "no_complex"; name: string };
+export type NoComplex = { status: "no_complex"; cid: number; name: string };
 
 export type LabelPassage = {
   ref: number;
@@ -193,4 +194,22 @@ export function cardSteps(steps: Step[], mergeProperties: boolean): CardStep[] {
   return shown
     .filter((step) => step === lookups[0] || !lookups.includes(step))
     .map((step) => (step === lookups[0] ? merged : step));
+}
+
+/** A drug the answer shows in 3D: in its reviewed complex, or alone when it has none. */
+export type StructureTarget = { cid: number; name: string; complex: DrugComplex | null };
+
+/** The drugs whose structure the turn looked up, once each, in the order they were looked up. */
+export function structuresOf(steps: Step[]): StructureTarget[] {
+  const targets = new Map<number, StructureTarget>();
+  for (const step of steps) {
+    const card = cardOf(step.tool);
+    if (card?.kind === "complex" || card?.kind === "no_complex") {
+      const { cid, name } = card.result;
+      if (!targets.has(cid)) {
+        targets.set(cid, { cid, name, complex: card.kind === "complex" ? card.result : null });
+      }
+    }
+  }
+  return [...targets.values()];
 }

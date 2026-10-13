@@ -1,0 +1,145 @@
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { useImperativeHandle } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { API_URL } from "@/lib/api";
+import { SMALL_COMPLEX } from "@/lib/test-complexes";
+import { IMATINIB_COMPLEX, METFORMIN_COMPLEX } from "@/lib/test-tool-results";
+import type { DrugComplex } from "@/lib/tool-cards";
+
+import { StructurePanel } from "./structure-panel";
+import type { StructureViewerHandle } from "./structure-viewer";
+
+const replay = vi.fn();
+
+// jsdom has no WebGL; the stub shows what the viewer was asked to draw.
+vi.mock("./structure-viewer", () => ({
+  StructureViewer: ({
+    data,
+    mode,
+    label,
+    ref,
+  }: {
+    data: { kind: string };
+    mode: string;
+    label: string;
+    ref?: React.Ref<StructureViewerHandle>;
+  }) => {
+    useImperativeHandle(ref, () => ({ replay, reset: vi.fn() }));
+    return <div role="img" aria-label={label} data-kind={data.kind} data-mode={mode} />;
+  },
+}));
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+function stubFetch(...responses: (Response | Error)[]) {
+  const fetchMock = vi.fn();
+  for (const response of responses) {
+    if (response instanceof Error) fetchMock.mockRejectedValueOnce(response);
+    else fetchMock.mockResolvedValueOnce(response);
+  }
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
+const imatinib = { cid: 5291, name: "imatinib", complex: IMATINIB_COMPLEX as DrugComplex };
+const acetaminophen = { cid: 1983, name: "acetaminophen", complex: null };
+
+describe("StructurePanel", () => {
+  it("shows a drug with a complex in its binding site, and switches what the view shows", async () => {
+    const fetchMock = stubFetch(Response.json(SMALL_COMPLEX));
+    render(<StructurePanel target={imatinib} />);
+
+    const view = await screen.findByRole("img", { name: "Imatinib in ABL1 (BCR-ABL), in 3D" });
+    expect(fetchMock.mock.calls[0][0]).toBe(`${API_URL}/drugs/5291/complex`);
+    expect(screen.getByText("PDB 2HYY · Homo sapiens · 6 hydrogen bonds")).toBeDefined();
+    expect(view.dataset).toMatchObject({ kind: "complex", mode: "site" });
+    expect(pressed()).toBe("Binding site");
+    expect(screen.getByText("hydrogen bond")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Whole protein" }));
+    expect(view.dataset.mode).toBe("protein");
+    expect(screen.getByText("protein backbone")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Molecule" }));
+    expect(view.dataset.mode).toBe("molecule");
+    expect(screen.queryByText("hydrogen bond")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Replay binding" })).toBeNull();
+  });
+
+  it("replays the binding", async () => {
+    stubFetch(Response.json(SMALL_COMPLEX));
+    render(<StructurePanel target={imatinib} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Replay binding" }));
+
+    expect(replay).toHaveBeenCalledOnce();
+  });
+
+  it("shows a drug without a complex as the molecule alone, without the switch", async () => {
+    const fetchMock = stubFetch(new Response("1983\n$$$$\n"));
+    render(<StructurePanel target={acetaminophen} />);
+
+    const view = await screen.findByRole("img", { name: "Acetaminophen, in 3D" });
+    expect(fetchMock.mock.calls[0][0]).toBe(`${API_URL}/drugs/1983/structure`);
+    expect(view.dataset).toMatchObject({ kind: "molecule", mode: "molecule" });
+    expect(screen.queryByRole("group", { name: "What the 3D view shows" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Replay binding" })).toBeNull();
+  });
+
+  it("says why a drug without a 3D structure has no view", async () => {
+    stubFetch(Response.json({ detail: "insulin glargine has no 3D structure." }, { status: 404 }));
+    render(<StructurePanel target={{ cid: 118984454, name: "insulin glargine", complex: null }} />);
+
+    expect(await screen.findByText("No 3D model of insulin glargine")).toBeDefined();
+    expect(screen.queryByText(/the molecule alone/)).toBeNull();
+    expect(screen.queryByRole("img")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Full screen" })).toBeNull();
+  });
+
+  it("offers to try again when the structure couldn't be loaded", async () => {
+    const fetchMock = stubFetch(new TypeError("Failed to fetch"), new Response("1983\n$$$$\n"));
+    render(<StructurePanel target={acetaminophen} />);
+
+    const alert = await screen.findByRole("alert");
+    fireEvent.click(within(alert).getByRole("button", { name: "Try again" }));
+
+    expect(await screen.findByRole("img", { name: "Acetaminophen, in 3D" })).toBeDefined();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("puts a stand-in structure's caption above the view", async () => {
+    stubFetch(Response.json(SMALL_COMPLEX));
+    render(
+      <StructurePanel
+        target={{ cid: 4091, name: "metformin", complex: METFORMIN_COMPLEX as DrugComplex }}
+      />,
+    );
+
+    expect(await screen.findByText(METFORMIN_COMPLEX.caption)).toBeDefined();
+    expect(screen.getByText("PDB 8ZSQ · Sus scrofa · 0 hydrogen bonds")).toBeDefined();
+  });
+
+  it("opens the same view full screen, keeping the chosen view", async () => {
+    stubFetch(Response.json(SMALL_COMPLEX));
+    render(<StructurePanel target={imatinib} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Whole protein" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Full screen" }));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("img").dataset.mode).toBe("protein");
+    await waitFor(() => expect(screen.getAllByRole("img", { hidden: true })).toHaveLength(2));
+  });
+});
+
+function pressed(): string | null {
+  const group = screen.getByRole("group", { name: "What the 3D view shows" });
+  return (
+    within(group)
+      .getAllByRole("button")
+      .find((button) => button.getAttribute("aria-pressed") === "true")?.textContent ?? null
+  );
+}

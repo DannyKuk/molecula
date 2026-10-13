@@ -1,6 +1,7 @@
 import type { DrugComplex, NoComplex } from "@/lib/tool-cards";
 
 import { ShowMore } from "./show-more";
+import { ViewIn3D } from "./view-in-3d";
 import { SourceLink } from "./source-link";
 
 const SHOWN_CONTACTS = 8;
@@ -80,15 +81,8 @@ export function ComplexCard({ result }: { result: DrugComplex }) {
           )}
         />
       </p>
-      <p className="mt-3 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          disabled
-          className="cursor-not-allowed rounded-md border border-zinc-300 px-3 py-1 opacity-50 dark:border-zinc-700"
-        >
-          View in 3D
-        </button>
-        <span className="text-xs text-muted-foreground">comes with the 3D viewer</span>
+      <p className="mt-3">
+        <ViewIn3D cid={result.cid}>View in 3D</ViewIn3D>
       </p>
     </>
   );
@@ -97,9 +91,14 @@ export function ComplexCard({ result }: { result: DrugComplex }) {
 /** A supported drug without a reviewed complex. */
 export function NoComplexCard({ result }: { result: NoComplex }) {
   return (
-    <p>
-      Molecula has no reviewed structure of {result.name} bound to its target. The 3D view shows the
-      molecule alone.
-    </p>
+    <>
+      <p>
+        Molecula has no reviewed structure of {result.name} bound to its target. The 3D view shows
+        the molecule alone.
+      </p>
+      <p className="mt-3">
+        <ViewIn3D cid={result.cid}>View the molecule in 3D</ViewIn3D>
+      </p>
+    </>
   );
 }

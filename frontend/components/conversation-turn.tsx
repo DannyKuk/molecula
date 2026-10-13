@@ -1,8 +1,10 @@
 import type { Turn } from "@/lib/chat-turn";
+import { structuresOf } from "@/lib/tool-cards";
 
 import { AnswerMarkdown } from "./answer-markdown";
 import { AnswerSources } from "./answer-sources";
 import { ProgressSteps } from "./progress-steps";
+import { StructurePanel } from "./structure/structure-panel";
 
 type ConversationTurnProps = {
   turn: Turn;
@@ -14,7 +16,7 @@ type ConversationTurnProps = {
 export function ConversationTurn({ turn, onRetry }: ConversationTurnProps) {
   const answering = turn.state === "answering";
   return (
-    <li className="flex flex-col gap-3">
+    <li data-turn className="flex flex-col gap-3">
       <p className="max-w-[85%] self-end rounded-2xl bg-zinc-100 px-4 py-2 break-words whitespace-pre-wrap dark:bg-zinc-900">
         {turn.question}
       </p>
@@ -33,6 +35,9 @@ export function ConversationTurn({ turn, onRetry }: ConversationTurnProps) {
       {turn.sources && (
         <AnswerSources answer={turn.answer} sources={turn.sources} disclaimer={turn.disclaimer} />
       )}
+      {structuresOf(turn.steps).map((target) => (
+        <StructurePanel key={target.cid} target={target} />
+      ))}
       {turn.state === "stopped" && (
         <p className="text-sm text-zinc-600 dark:text-zinc-400">Stopped.</p>
       )}
