@@ -49,7 +49,7 @@ const SPIN_SPEED = 0.25;
 const SLAB = 500;
 
 /** The slow turn: on once the view is settled, held while it is off screen, and stopped for good
- * when the user grabs the view, until Reset or Replay. */
+ * when the user grabs the view, until Reset or the binding plays again. */
 type Turning = { start(): void; stop(): void; release(): void; grabbed(): boolean };
 
 /** Builds the 3D view in `element`, which must already have its size. */
@@ -204,7 +204,7 @@ function complexScene(
       const progress = Math.min(1, (now - start) / DOCK_MS);
       const positions = dockingPose(bound, approach, progress);
       placeLigand(positions);
-      // Once the user grabs the view, the camera is theirs.
+      // Once the user grabs the view during this binding, the camera is theirs.
       if (!turning.grabbed()) {
         const pullBack = easeInOut(Math.max(0, (progress - ZOOM_OUT_FROM) / (1 - ZOOM_OUT_FROM)));
         viewer.setView(viewAt(centroid(positions), from + (to - from) * pullBack));
@@ -252,6 +252,7 @@ function complexScene(
       viewer.render();
       turning.start();
     } else {
+      turning.release();
       dock(distanceFor("molecule"), to);
     }
   };
