@@ -3,6 +3,7 @@
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { StepDot } from "@/components/step-dot";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { Card } from "@/lib/tool-cards";
 
@@ -15,27 +16,33 @@ import { TargetsCard } from "./targets-card";
 
 type ShownCard = Exclude<Card, { kind: "pending" }>;
 
-/** A step that ran a tool: the step's text and a short summary, opening into what it returned. */
+/**
+ * A step that ran a tool. It looks like every other step, a dot and its text, with a short
+ * summary of the result; clicking it opens what the tool returned underneath.
+ */
 export function ToolCard({
   text,
   card,
   answer,
+  current,
 }: {
   text: string;
   card: ShownCard;
   answer: string;
+  current: boolean;
 }) {
   return (
-    <Collapsible className="rounded-lg border border-zinc-200 dark:border-zinc-800">
-      <CollapsibleTrigger className="group flex w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-3 py-2 text-left hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:hover:bg-zinc-900">
+    <Collapsible>
+      <CollapsibleTrigger className="group flex flex-wrap items-center gap-x-2 gap-y-1 rounded text-left text-zinc-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:text-zinc-400">
+        <StepDot current={current} />
+        <span className="underline-offset-4 group-hover:underline">{text}</span>
+        <span className="text-zinc-500">· {summary(card)}</span>
         <ChevronRight
           aria-hidden
-          className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[panel-open]:rotate-90"
+          className="size-3.5 shrink-0 transition-transform group-data-[panel-open]:rotate-90"
         />
-        <span className="font-medium">{text}</span>
-        <span className="ml-auto text-muted-foreground">{summary(card)}</span>
       </CollapsibleTrigger>
-      <CollapsibleContent className="border-t border-zinc-200 px-3 py-3 dark:border-zinc-800">
+      <CollapsibleContent className="mt-1.5 mb-2 ml-[2px] border-l border-zinc-200 pl-4 dark:border-zinc-800">
         {body(card, answer)}
       </CollapsibleContent>
     </Collapsible>

@@ -118,8 +118,8 @@ describe("Chat", () => {
         .getAllByRole("button")
         .map((card) => card.textContent),
     ).toEqual([
-      "Getting the properties of ibuprofenC13H18O2 · 206.28 g/mol",
-      "Getting the properties of naproxenC14H14O3 · 230.26 g/mol",
+      "Getting the properties of ibuprofen· C13H18O2 · 206.28 g/mol",
+      "Getting the properties of naproxen· C14H14O3 · 230.26 g/mol",
     ]);
 
     await streamed(() => stream.send(token("Both are NSAIDs.") + DONE));

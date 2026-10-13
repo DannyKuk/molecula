@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 
 import { cardSteps, type CardStep, type Step } from "@/lib/tool-cards";
 
+import { StepDot } from "./step-dot";
 import { ToolCard } from "./tool-cards/tool-card";
 
 type ProgressStepsProps = {
@@ -27,7 +28,7 @@ export function ProgressSteps({ steps, live, answer }: ProgressStepsProps) {
   const shown = cardSteps(steps, !live);
   if (live) {
     return (
-      <ol aria-label="Progress" aria-live="polite" className="flex flex-col gap-1.5 text-sm">
+      <ol aria-label="Progress" aria-live="polite" className="flex flex-col gap-1 text-sm">
         {shown.map((step, index) => (
           <StepRow key={index} step={step} current={index === shown.length - 1} answer={answer} />
         ))}
@@ -35,7 +36,7 @@ export function ProgressSteps({ steps, live, answer }: ProgressStepsProps) {
     );
   }
   return (
-    <div className="flex flex-col gap-1.5 text-sm">
+    <div className="flex flex-col gap-1 text-sm">
       <button
         type="button"
         aria-expanded={open}
@@ -46,7 +47,7 @@ export function ProgressSteps({ steps, live, answer }: ProgressStepsProps) {
         {stepCount(shown.length)}
       </button>
       {open && (
-        <ol id={listId} aria-label="Progress" className="flex flex-col gap-1.5">
+        <ol id={listId} aria-label="Progress" className="flex flex-col gap-1">
           {shown.map((step, index) => (
             <StepRow key={index} step={step} current={false} answer={answer} />
           ))}
@@ -60,16 +61,13 @@ function StepRow({ step, current, answer }: { step: CardStep; current: boolean; 
   if (step.card && step.card.kind !== "pending") {
     return (
       <li>
-        <ToolCard text={step.text} card={step.card} answer={answer} />
+        <ToolCard text={step.text} card={step.card} answer={answer} current={current} />
       </li>
     );
   }
   return (
     <li className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
-      <span
-        aria-hidden
-        className={`size-1.5 shrink-0 rounded-full ${current ? "animate-pulse bg-sky-500" : "bg-zinc-400"}`}
-      />
+      <StepDot current={current} />
       {step.text}
     </li>
   );

@@ -22,7 +22,7 @@ type Args = Record<string, unknown>;
 
 function renderCard(name: string, result: unknown, args: Args = {}, answer = "") {
   const card = cardOf({ id: "call_1", name, args, result }) as Exclude<Card, { kind: "pending" }>;
-  render(<ToolCard text="Step" card={card} answer={answer} />);
+  render(<ToolCard text="Step" card={card} answer={answer} current={false} />);
   return screen.getByRole("button", { name: /^Step/ });
 }
 
@@ -41,7 +41,7 @@ describe("ToolCard", () => {
   it("shows the step and a summary, and opens into the result", () => {
     const trigger = renderCard("resolve_drug", GLEEVEC_FOUND);
 
-    expect(trigger.textContent).toBe("Step“Gleevec” → imatinib");
+    expect(trigger.textContent).toBe("Step· “Gleevec” → imatinib");
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByText(/PubChem CID/)).toBeNull();
 
