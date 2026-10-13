@@ -1,0 +1,647 @@
+# The reviewed drug-target complexes for the 3D view (#6). `ingest complexes` (#7) builds only these.
+# Chosen from data/build/complex_candidates.md by the rules in docs/decisions/hero-complexes.md and
+# checked live against RCSB on 2026-10-13: every ligand copy exists and is complete.
+#
+# drug:        the name in scope.yaml
+# pdb:         the RCSB entry
+# ligand_code: the ligand's chemical component ID (the active form for prodrugs)
+# ligand_copy: the ligand instance as author chain/residue number; an entry can hold several copies
+# chain:       the polymer chain with the most contacts to that copy (RNA for azithromycin)
+# target:      the target as ChEMBL names it (gene symbol)
+# organism:    the chain's source organism
+# showcase:    the cleanest entries, for the landing page and demos
+# caption:     shown with the structure when it isn't simply the drug in its main target
+# note:        why this entry
+
+complexes:
+  - drug: acetazolamide
+    pdb: 3HS4
+    ligand_code: "AZM"
+    ligand_copy: A/701
+    chain: A
+    target: "CA2"
+    organism: Homo sapiens
+    showcase: true
+    note: "1.1 Å, wild type; best of 14 CA2 entries."
+  - drug: albuterol
+    pdb: 7DHI
+    ligand_code: "68H"
+    ligand_copy: R/401
+    chain: R
+    target: "ADRB2"
+    organism: Homo sapiens
+    note: "Only candidate; cryo-EM 3.26 Å in a Gs complex; 68H matched on connectivity (one enantiomer of racemic albuterol)."
+  - drug: alprazolam
+    pdb: 6HUO
+    ligand_code: "08H"
+    ligand_copy: D/501
+    chain: D
+    target: "GABRA1/GABRG2"
+    organism: Homo sapiens
+    note: "Only candidate; cryo-EM 3.26 Å (Masiulis 2019 Nature)."
+  - drug: amlodipine
+    pdb: 8WE8
+    ligand_code: "6UB"
+    ligand_copy: A/2309
+    chain: A
+    target: "CACNA1C"
+    organism: Homo sapiens
+    note: "Human Cav1.2, cryo-EM 2.9 Å; rabbit Cav1.1 7JPX is the same resolution."
+  - drug: apixaban
+    pdb: 2P16
+    ligand_code: "GG2"
+    ligand_copy: A/298
+    chain: A
+    target: "F10"
+    organism: Homo sapiens
+    showcase: true
+    note: "2.3 Å, the apixaban discovery paper; ligand is in heavy chain A (the candidate row lists light chain L)."
+  - drug: aripiprazole
+    pdb: 7VOE
+    ligand_code: "9SC"
+    ligand_copy: A/1709
+    chain: A
+    target: "HTR2A"
+    organism: Homo sapiens
+    caption: "Shown in the serotonin 5-HT2A receptor, one of its targets. No structure shows it in the dopamine D2 receptor, its main target."
+    note: "Human 5-HT2A, X-ray 2.9 Å, a mechanism ChEMBL lists. No D2 structure with aripiprazole exists."
+  - drug: aspirin
+    pdb: 3N8Y
+    ligand_code: "SAL"
+    ligand_copy: B/900
+    chain: B
+    target: "PTGS1"
+    organism: Ovis aries
+    caption: "What aspirin leaves behind: it moves its acetyl group onto Ser530, which blocks the enzyme for good, and becomes salicylate."
+    note: "Sheep COX-1, 2.6 Å: salicylate beside O-acetyl-Ser530 (OAS) in chain B. Diclofenac (B/585) also sits in this pocket; show only the salicylate and OAS 530. 1PTH carries bromoacetyl-Ser530 from an aspirin analog, not acetyl."
+  - drug: atorvastatin
+    pdb: 1HWK
+    ligand_code: "117"
+    ligand_copy: A/2
+    chain: B
+    target: "HMGCR"
+    organism: Homo sapiens
+    showcase: true
+    note: "2.22 Å, Istvan & Deisenhofer 2001 Science; the site spans two chains, so show both."
+  - drug: azithromycin
+    pdb: 8E42
+    ligand_code: "ZIT"
+    ligand_copy: I/3002
+    chain: I
+    target: "23S rRNA (bacterial 50S)"
+    organism: Escherichia coli
+    note: "E. coli 50S subunit, cryo-EM 2.29 Å: the macrolide site in the exit tunnel is 23S rRNA (A2058, A2059, A2062, A2503, G2505, U2609) plus uL22. Tiamulin also binds elsewhere in this entry. Crop to the pocket."
+  - drug: baclofen
+    pdb: 4MS4
+    ligand_code: "2C0"
+    ligand_copy: A/501
+    chain: A
+    target: "GABBR1"
+    organism: Homo sapiens
+    showcase: true
+    note: "1.9 Å (Geng 2013 Nature); ligand is in chain A = GABBR1 (the candidate row lists B = GABBR2)."
+  - drug: budesonide
+    pdb: 5NFP
+    ligand_code: "8W5"
+    ligand_copy: A/804
+    chain: A
+    target: "NR3C1"
+    organism: Homo sapiens
+    showcase: true
+    note: "2.1 Å; GR LBD with 4 engineering substitutions; 8W5 matched on connectivity (one C22 epimer)."
+  - drug: bupropion
+    pdb: 9JKI
+    ligand_code: "1XR"
+    ligand_copy: A/701
+    chain: A
+    target: "SLC6A3"
+    organism: Homo sapiens
+    note: "DAT cryo-EM 2.69 Å, unpublished; NET alternative 8WTX (2.9 Å, Nature 2024, code Y60, other stereo)."
+  - drug: caffeine
+    pdb: 5MZP
+    ligand_code: "CFF"
+    ligand_copy: A/2401
+    chain: A
+    target: "ADORA2A"
+    organism: Homo sapiens
+    showcase: true
+    note: "2.1 Å thermostabilized A2A StaR2-bRIL; caffeine modelled in two orientations (occupancy 0.5)."
+  - drug: carbamazepine
+    pdb: 8S9C
+    ligand_code: "N6W"
+    ligand_copy: A/2003
+    chain: A
+    target: "SCN9A (Nav1.7)"
+    organism: Homo sapiens
+    caption: "Nav1.7, a nerve sodium channel standing in for the brain sodium channels it blocks."
+    note: "Only candidate; cryo-EM 3.2 Å; Nav1.7 is a peripheral subtype standing in for the brain channels."
+  - drug: carvedilol
+    pdb: 6PS3
+    ligand_code: "CVD"
+    ligand_copy: A/1201
+    chain: A
+    target: "ADRB2"
+    organism: Homo sapiens
+    showcase: true
+    note: "Human beta2-T4L, XFEL 2.5 Å; turkey beta1 4AMJ (2.3 Å) is the alternative."
+  - drug: celecoxib
+    pdb: 3LN1
+    ligand_code: "CEL"
+    ligand_copy: A/682
+    chain: A
+    target: "PTGS2"
+    organism: Mus musculus
+    showcase: true
+    note: "Mouse COX-2, 2.4 Å; no human COX-2 entry with celecoxib."
+  - drug: ciprofloxacin
+    pdb: 5BTC
+    ligand_code: "CPF"
+    ligand_copy: G/101
+    chain: D
+    target: "gyrA/gyrB"
+    organism: Mycobacterium tuberculosis
+    note: "M. tuberculosis gyrase-DNA cleavage complex, 2.55 Å: the catalytic Tyr129 is bound to the cut DNA (PTR), the complex ciprofloxacin traps. GyrA A90S puts the serine that S. aureus and E. coli have (Ser84/Ser83) into the pocket. 2XCT (S. aureus, 3.35 Å) has the catalytic Y123F instead."
+  - drug: colchicine
+    pdb: 5NM5
+    ligand_code: "LOC"
+    ligand_copy: B/502
+    chain: B
+    target: "TUBB/TUBA"
+    organism: Bos taurus
+    showcase: true
+    note: "Bovine tubulin-DARPin, 2.05 Å, compact; 4O2B (2.3 Å, T2R-TTL) is the classic alternative."
+  - drug: dapagliflozin
+    pdb: 8HEZ
+    ligand_code: "LE6"
+    ligand_copy: A/802
+    chain: A
+    target: "SLC5A2"
+    organism: Homo sapiens
+    showcase: true
+    note: "Human SGLT2-MAP17, cryo-EM 2.8 Å."
+  - drug: dasatinib
+    pdb: 2GQG
+    ligand_code: "1N1"
+    ligand_copy: B/502
+    chain: B
+    target: "ABL1 (BCR-ABL)"
+    organism: Homo sapiens
+    showcase: true
+    note: "2.4 Å, Tokarski 2006; one substitution outside the pocket (likely H396P, inferred); rank-1 7N9G also holds imatinib."
+  - drug: dexamethasone
+    pdb: 1M2Z
+    ligand_code: "DEX"
+    ligand_copy: A/301
+    chain: A
+    target: "NR3C1"
+    organism: Homo sapiens
+    showcase: true
+    note: "2.5 Å, Bledsoe 2002 Cell; F602S solubilizing mutation."
+  - drug: diclofenac
+    pdb: 1PXX
+    ligand_code: "DIF"
+    ligand_copy: C/2701
+    chain: C
+    target: "PTGS2"
+    organism: Mus musculus
+    note: "Mouse COX-2, 2.9 Å (Rowlinson 2003); rank-1 3N8Y is aspirin-acetylated sheep COX-1 with salicylate also bound."
+  - drug: digoxin
+    pdb: 7DDH
+    ligand_code: "DGX"
+    ligand_copy: C/1121
+    chain: C
+    target: "ATP1A1"
+    organism: Sus scrofa
+    note: "Pig Na,K-ATPase, 3.46 Å; the other entry 4RET is 4.0 Å."
+  - drug: diltiazem
+    pdb: 6JPB
+    ligand_code: "C9F"
+    ligand_copy: A/1909
+    chain: A
+    target: "CACNA1S (Cav1.1)"
+    organism: Oryctolagus cuniculus
+    caption: "Cav1.1, the skeletal-muscle relative of its target Cav1.2. No structure shows diltiazem in Cav1.2."
+    note: "Rabbit skeletal-muscle Cav1.1, 2.9 Å; the clinical target Cav1.2 has no diltiazem structure."
+  - drug: dolutegravir
+    pdb: 9C9M
+    ligand_code: "DLU"
+    ligand_copy: O/101
+    chain: I
+    target: "HIV-1 IN"
+    organism: HIV-1
+    showcase: true
+    note: "HIV-1 intasome, cryo-EM 2.01 Å, wild type."
+  - drug: donepezil
+    pdb: 4EY7
+    ligand_code: "E20"
+    ligand_copy: A/604
+    chain: A
+    target: "ACHE"
+    organism: Homo sapiens
+    showcase: true
+    note: "2.35 Å, Cheung 2012; 6O4W is equal (2.35 Å, 12 contacts)."
+  - drug: empagliflozin
+    pdb: 7VSI
+    ligand_code: "7R3"
+    ligand_copy: A/703
+    chain: A
+    target: "SLC5A2"
+    organism: Homo sapiens
+    note: "Human SGLT2-MAP17, cryo-EM 2.95 Å (Niu 2022 Nature)."
+  - drug: erlotinib
+    pdb: 1M17
+    ligand_code: "AQ4"
+    ligand_copy: A/999
+    chain: A
+    target: "EGFR"
+    organism: Homo sapiens
+    showcase: true
+    note: "2.6 Å, Stamos 2002, wild type."
+  - drug: escitalopram
+    pdb: 5I71
+    ligand_code: "68P"
+    ligand_copy: A/701
+    chain: A
+    target: "SLC6A4"
+    organism: Homo sapiens
+    note: "ts3 thermostabilized SERT, X-ray 3.15 Å; central copy only (5I73 adds the allosteric copy)."
+  - drug: estradiol
+    pdb: 2YJA
+    ligand_code: "EST"
+    ligand_copy: B/1550
+    chain: B
+    target: "ESR1"
+    organism: Homo sapiens
+    showcase: true
+    note: "Wild-type ERalpha LBD, 1.82 Å; ranks 1-5 are Y537S or Y364S mutants."
+  - drug: ezetimibe
+    pdb: 7DFZ
+    ligand_code: "H56"
+    ligand_copy: A/1306
+    chain: A
+    target: "NPC1L1"
+    organism: Homo sapiens
+    note: "Only candidate; cryo-EM 3.58 Å."
+  - drug: fluconazole
+    pdb: 4WMZ
+    ligand_code: "TPF"
+    ligand_copy: A/602
+    chain: A
+    target: "ERG11 (CYP51)"
+    organism: Saccharomyces cerevisiae
+    note: "S. cerevisiae CYP51 wild type, 2.05 Å, standing in for Candida; rank 1 (5ESM) is a T322I mutant."
+  - drug: gabapentin
+    pdb: 8FD7
+    ligand_code: "GBN"
+    ligand_copy: D/1202
+    chain: D
+    target: "CACNA2D1"
+    organism: Oryctolagus cuniculus
+    note: "Cryo-EM 3.1 Å; gabapentin is in chain D = rabbit alpha2delta-1 inside a human Cav1.2 complex."
+  - drug: gefitinib
+    pdb: 4WKQ
+    ligand_code: "IRE"
+    ligand_copy: A/1101
+    chain: A
+    target: "EGFR"
+    organism: Homo sapiens
+    showcase: true
+    note: "Wild type, 1.85 Å; rank-1 4I22 is the T790M/L858R resistant mutant."
+  - drug: haloperidol
+    pdb: 6LUQ
+    ligand_code: "GMJ"
+    ligand_copy: A/1201
+    chain: A
+    target: "DRD2"
+    organism: Homo sapiens
+    note: "Only candidate; D2-T4L X-ray 3.1 Å."
+  - drug: hydrochlorothiazide
+    pdb: 9BWT
+    ligand_code: "HCZ"
+    ligand_copy: A/1302
+    chain: A
+    target: "SLC12A3"
+    organism: Homo sapiens
+    showcase: true
+    note: "Human NCC (S344E phosphomimetic), cryo-EM 2.5 Å."
+  - drug: hydrocortisone
+    pdb: 4P6X
+    ligand_code: "HCY"
+    ligand_copy: I/900
+    chain: I
+    target: "NR3C1"
+    organism: Homo sapiens
+    showcase: true
+    note: "2.5 Å; GR LBD with 7 engineering substitutions; 6 copies."
+  - drug: ibuprofen
+    pdb: 4PH9
+    ligand_code: "IBP"
+    ligand_copy: B/601
+    chain: B
+    target: "PTGS2"
+    organism: Mus musculus
+    showcase: true
+    note: "Mouse COX-2, 1.81 Å (Orlando 2015)."
+  - drug: imatinib
+    pdb: 2HYY
+    ligand_code: "STI"
+    ligand_copy: A/600
+    chain: A
+    target: "ABL1 (BCR-ABL)"
+    organism: Homo sapiens
+    showcase: true
+    note: "Human ABL1, 2.4 Å, imatinib only; ranks 1-5 add an allosteric activator or dasatinib; 1IEP (mouse, 2.1 Å) is the classic alternative."
+  - drug: lamotrigine
+    pdb: 8THH
+    ligand_code: "IYJ"
+    ligand_copy: A/2003
+    chain: A
+    target: "SCN9A (Nav1.7)"
+    organism: Homo sapiens
+    showcase: true
+    caption: "Nav1.7, a nerve sodium channel standing in for the brain sodium channels it blocks."
+    note: "Cryo-EM 2.7 Å; paper: dual-pocket inhibition."
+  - drug: levetiracetam
+    pdb: 9OKG
+    ligand_code: "UKX"
+    ligand_copy: A/801
+    chain: A
+    target: "SV2A"
+    organism: Homo sapiens
+    showcase: true
+    note: "Human SV2A, cryo-EM 2.58 Å."
+  - drug: levothyroxine
+    pdb: 1Y0X
+    ligand_code: "T44"
+    ligand_copy: X/500
+    chain: X
+    target: "THRB"
+    organism: Homo sapiens
+    note: "TRbeta with T4 in the hormone pocket, 3.1 Å. The top candidate 4LNX has T4 at a surface second site while T3 fills the pocket."
+  - drug: lisinopril
+    pdb: 1O86
+    ligand_code: "LPR"
+    ligand_copy: A/702
+    chain: A
+    target: "ACE"
+    organism: Homo sapiens
+    showcase: true
+    note: "2.0 Å, Natesh 2003 Nature (testis ACE = C-domain)."
+  - drug: loperamide
+    pdb: 9PY4
+    ligand_code: "A1CMV"
+    ligand_copy: R/503
+    chain: R
+    target: "OPRM1"
+    organism: Homo sapiens
+    showcase: true
+    note: "Cryo-EM 2.78 Å, MOR-Gi."
+  - drug: losartan
+    pdb: 9EAI
+    ligand_code: "LSN"
+    ligand_copy: A/1401
+    chain: A
+    target: "AGTR1"
+    organism: Homo sapiens
+    note: "Cryo-EM 3.1 Å; the engineered nanobody sits on the pocket mouth and touches losartan (chain B Ile104-Tyr106), as in the other two candidates; hide it in the view."
+  - drug: meloxicam
+    pdb: 4M11
+    ligand_code: "MXM"
+    ligand_copy: C/606
+    chain: C
+    target: "PTGS2"
+    organism: Mus musculus
+    showcase: true
+    note: "Mouse COX-2, 2.45 Å; meloxicam in two orientations (occupancy 0.5)."
+  - drug: memantine
+    pdb: 7SAD
+    ligand_code: "377"
+    ligand_copy: B/903
+    chain: B
+    target: "GRIN1/GRIN2B"
+    organism: Rattus norvegicus
+    note: "Rat NMDA receptor, cryo-EM 3.96 Å."
+  - drug: metformin
+    pdb: 8ZSQ
+    ligand_code: "MF8"
+    ligand_copy: S2/502
+    chain: S7
+    target: "complex I"
+    organism: Sus scrofa
+    caption: "A proposed binding site in mitochondrial complex I. How metformin lowers blood sugar is still debated."
+    note: "Pig respirasome, cryo-EM 2.86 Å: metformin between two complex I core subunits (chains S2/S7), 7 contacts. Crop to the pocket; the assembly is huge."
+  - drug: methotrexate
+    pdb: 1U72
+    ligand_code: "MTX"
+    ligand_copy: A/188
+    chain: A
+    target: "DHFR"
+    organism: Homo sapiens
+    showcase: true
+    note: "Wild-type human DHFR, 1.9 Å; rank-1 3EIG is the F31R/Q35E resistant mutant."
+  - drug: methylphenidate
+    pdb: 8Y2G
+    ligand_code: "A1D5U"
+    ligand_copy: A/701
+    chain: A
+    target: "SLC6A3"
+    organism: Homo sapiens
+    note: "Human DAT, cryo-EM 2.83 Å (just over 2.8)."
+  - drug: morphine
+    pdb: 8EF6
+    ligand_code: "MOI"
+    ligand_copy: R/401
+    chain: R
+    target: "OPRM1"
+    organism: Homo sapiens
+    note: "Cryo-EM 3.2 Å, MOR-Gi."
+  - drug: naloxone
+    pdb: 9PXU
+    ligand_code: "A1APV"
+    ligand_copy: R/501
+    chain: R
+    target: "OPRM1"
+    organism: Homo sapiens
+    note: "Inactive-state MOR with Nb6, 3.4 Å; chosen over the 3.0 Å G-protein complexes (9PXY, 9PXV) because an antagonist in an active complex suggests the wrong mechanism."
+  - drug: naproxen
+    pdb: 3NT1
+    ligand_code: "NPS"
+    ligand_copy: A/5
+    chain: A
+    target: "PTGS2"
+    organism: Mus musculus
+    showcase: true
+    note: "Mouse COX-2, 1.73 Å (Duggan 2010)."
+  - drug: nicotine
+    pdb: 6CNJ
+    ligand_code: "NCT"
+    ligand_copy: D/402
+    chain: D
+    target: "CHRNA4/CHRNB2"
+    organism: Homo sapiens
+    note: "Human alpha4beta2, cryo-EM 3.7 Å."
+  - drug: ondansetron
+    pdb: 6W1M
+    ligand_code: "S87"
+    ligand_copy: E/508
+    chain: D
+    target: "HTR3A"
+    organism: Mus musculus
+    note: "Mouse 5-HT3A, cryo-EM 3.06 Å, 5 copies."
+  - drug: oseltamivir
+    pdb: 3TI6
+    ligand_code: "G39"
+    ligand_copy: B/801
+    chain: B
+    target: "NA (N1)"
+    organism: Influenza A virus (2009 H1N1)
+    showcase: true
+    caption: "Oseltamivir carboxylate, the active form the body makes from oseltamivir."
+    note: "Oseltamivir carboxylate in 2009 pandemic H1N1 N1, 1.69 Å, wild type."
+  - drug: pioglitazone
+    pdb: 5Y2O
+    ligand_code: "8N6"
+    ligand_copy: A/501
+    chain: A
+    target: "PPARG"
+    organism: Homo sapiens
+    showcase: true
+    note: "1.8 Å, wild type; 8N6 matched on connectivity (one enantiomer of the racemate)."
+  - drug: propranolol
+    pdb: 6PS5
+    ligand_code: "SNP"
+    ligand_copy: A/1201
+    chain: A
+    target: "ADRB2"
+    organism: Homo sapiens
+    note: "Only candidate (beta1 has none); beta2-T4L XFEL 2.9 Å."
+  - drug: raltegravir
+    pdb: 3OYA
+    ligand_code: "RLT"
+    ligand_copy: A/398
+    chain: A
+    target: "PFV IN (model of HIV-1 IN)"
+    organism: Prototype foamy virus
+    caption: "Prototype foamy virus integrase, a close relative of the HIV-1 enzyme. No structure shows raltegravir in HIV-1 integrase."
+    note: "PFV intasome, 2.65 Å (Hare 2010): the drug sits on the DDE triad (PFV Asp128, Asp185, Glu221 = HIV-1 Asp64, Asp116, Glu152) with the Mg ions and the viral DNA end, as dolutegravir does in HIV-1 (9C9M)."
+  - drug: risperidone
+    pdb: 6CM4
+    ligand_code: "8NU"
+    ligand_copy: A/2001
+    chain: A
+    target: "DRD2"
+    organism: Homo sapiens
+    note: "2.87 Å, Wang 2018 Nature; 5-HT2A 6A93 (3.0 Å) is the alternative."
+  - drug: ritonavir
+    pdb: 1HXW
+    ligand_code: "RIT"
+    ligand_copy: B/301
+    chain: B
+    target: "HIV-1 PR"
+    organism: HIV-1
+    showcase: true
+    note: "Wild type, 1.8 Å, the discovery paper. HIV-1 protease is its antiviral target; today it is mostly given to boost other drugs through CYP3A4 (3NXU). The top candidates 3NDX/3NDW are a 5-mutant protease."
+  - drug: rivaroxaban
+    pdb: 2W26
+    ligand_code: "RIV"
+    ligand_copy: A/1001
+    chain: A
+    target: "F10"
+    organism: Homo sapiens
+    showcase: true
+    note: "2.08 Å, the discovery paper; ligand in chain A (catalytic chain), the candidate row lists B (light chain)."
+  - drug: sertraline
+    pdb: 6AWO
+    ligand_code: "SRE"
+    ligand_copy: A/701
+    chain: A
+    target: "SLC6A4"
+    organism: Homo sapiens
+    note: "ts3 SERT, X-ray 3.53 Å."
+  - drug: sildenafil
+    pdb: 1UDT
+    ligand_code: "VIA"
+    ligand_copy: A/1000
+    chain: A
+    target: "PDE5A"
+    organism: Homo sapiens
+    showcase: true
+    note: "Wild type, 2.3 Å, Sung 2003 Nature; rank-1 1TBF is a PDE5/PDE4 H-loop chimera (18 substitutions)."
+  - drug: sitagliptin
+    pdb: 1X70
+    ligand_code: "715"
+    ligand_copy: B/801
+    chain: B
+    target: "DPP4"
+    organism: Homo sapiens
+    showcase: true
+    note: "2.1 Å, the discovery paper."
+  - drug: spironolactone
+    pdb: 2AB2
+    ligand_code: "SNL"
+    ligand_copy: B/503
+    chain: B
+    target: "NR3C2"
+    organism: Homo sapiens
+    note: "Every MR entry carries S810L (+C808S); S810L is in the pocket and is the mutation that turns spironolactone into an agonist (inferred from the literature); 3VHU (2.11 Å, RSCC 0.97) fits the density better."
+  - drug: tadalafil
+    pdb: 1UDU
+    ligand_code: "CIA"
+    ligand_copy: B/2003
+    chain: B
+    target: "PDE5A"
+    organism: Homo sapiens
+    note: "Wild type, 2.83 Å (Sung 2003); rank-1 1XOZ (1.37 Å) is a PDE5/PDE4 H-loop chimera."
+  - drug: tamoxifen
+    pdb: 3ERT
+    ligand_code: "OHT"
+    ligand_copy: A/600
+    chain: A
+    target: "ESR1"
+    organism: Homo sapiens
+    showcase: true
+    caption: "4-Hydroxytamoxifen, one of the active forms the body makes from tamoxifen."
+    note: "4-hydroxytamoxifen in wild-type human ERalpha LBD, 1.9 Å, Shiau 1998 Cell."
+  - drug: tamsulosin
+    pdb: 7YMJ
+    ligand_code: "JGX"
+    ligand_copy: A/401
+    chain: A
+    target: "ADRA1A"
+    organism: Homo sapiens
+    note: "Cryo-EM 3.35 Å with Nb6."
+  - drug: topiramate
+    pdb: 9RL5
+    ligand_code: "TOR"
+    ligand_copy: B/602
+    chain: B
+    target: "GABRA5/GABRB3"
+    organism: Homo sapiens
+    caption: "One of several targets: topiramate also blocks sodium channels and glutamate receptors, which have no structure with it."
+    note: "GABA-A alpha5beta3, cryo-EM 3.1 Å, at the beta3+/alpha5- transmembrane interface, a mechanism ChEMBL lists. CA2 3HKU (1.8 Å) is a side activity, not the anticonvulsant action."
+  - drug: warfarin
+    pdb: 6WV3
+    ligand_code: "SWF"
+    ligand_copy: A/404
+    chain: A
+    target: "VKORC1"
+    organism: Homo sapiens
+    showcase: true
+    note: "Human VKOR, 2.2 Å, Liu 2021 Science; S-warfarin."
+  - drug: zanamivir
+    pdb: 3B7E
+    ligand_code: "ZMR"
+    ligand_copy: B/1002
+    chain: B
+    target: "NA (N1)"
+    organism: Influenza A virus (1918 H1N1)
+    showcase: true
+    note: "1918 H1N1 N1, 1.45 Å; N1 matches ChEMBL's A/PR/8/1934 H1N1 target; rank-1 6HCX is avian N9, 1.3 Å."
+  - drug: zolpidem
+    pdb: 8DD2
+    ligand_code: "R5R"
+    ligand_copy: D/601
+    chain: D
+    target: "GABRA1/GABRG2"
+    organism: Homo sapiens
+    note: "Human alpha1beta2gamma2, cryo-EM 2.9 Å; mouse native 8G4N is 2.67 Å."

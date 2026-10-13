@@ -101,7 +101,7 @@ Runs after `ingest compounds`, for every compound in the store.
 2. InChIKey → PDB ligand code(s): exact first; connectivity fallback (stereo-relaxed SMILES search, kept when the ligand's InChIKey shares the connectivity block) only when there is no exact match.
 3. For each target and ligand code: entries with the ligand, kept when a protein entity comes from one of the target's genes (depositor or UniProt primary gene name, any organism) → candidate entries with the target's chains. For a **viral target** (the ChEMBL organism contains "virus") the source organism that carries the gene must also have the target's species in its NCBI taxonomy lineage, ignoring case. The species is the ChEMBL organism without the strain in parentheses: "Influenza A virus (A/Puerto Rico/8/1934(H1N1))" → "Influenza A virus". A type in the parentheses stays, because NCBI numbers the species: "Herpes simplex virus (type 1 / strain 17)" → "Herpes simplex virus 1". The gene name `gag-pol` counts as `pol` (#83).
 4. Rank per target: human proteins first, then resolution (`rcsb_entry_info.resolution_combined`), entries without one last.
-5. A person reviews the candidates in `data/build/complex_candidates.md` and writes the chosen entry to `data/hero_set.yaml`: `pdb, ligand_code, chain, target, organism, note`.
+5. A person reviews the candidates in `data/build/complex_candidates.md` and writes the chosen entry to `data/hero_set.yaml`: `pdb, ligand_code, ligand_copy, chain, target, organism, showcase, caption, note` (#6, [hero complexes](decisions/hero-complexes.md)).
 
 Tables (schema version 3), each row with `source` and `fetched_at`:
 

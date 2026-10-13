@@ -12,7 +12,7 @@ HERO_CANDIDATES = {
     "sitagliptin", "lisinopril", "acetazolamide", "oseltamivir", "zanamivir", "ritonavir",
     "warfarin", "tamoxifen", "sildenafil", "raltegravir",
 }  # fmt: skip
-MOLECULE_ONLY = {"acetaminophen", "metformin", "cetirizine", "omeprazole"}
+MOLECULE_ONLY = {"acetaminophen", "cetirizine", "omeprazole"}
 
 
 def scope(*drugs: dict[str, object]) -> Scope:
