@@ -12,7 +12,13 @@ from molecula.agent.agent import ChatAgent
 from molecula.agent.tool_registry import build_tools
 from molecula.api.dependencies import chat_agent
 from molecula.main import app
-from molecula.schemas.chat import MAX_MESSAGE_LENGTH, MAX_MESSAGES, ChatEvent, ChatMessage
+from molecula.schemas.chat import (
+    MAX_ANSWER_LENGTH,
+    MAX_MESSAGES,
+    MAX_QUESTION_LENGTH,
+    ChatEvent,
+    ChatMessage,
+)
 from sse import server_sent_events
 from tool_fakes import (
     FakeCompoundService,
@@ -101,7 +107,18 @@ def conversation(length: int) -> list[dict[str, str]]:
     ("messages", "problem"),
     [
         (conversation(MAX_MESSAGES + 1), "at most 10 items"),
-        ([{"role": "user", "content": "x" * (MAX_MESSAGE_LENGTH + 1)}], "at most 4000 characters"),
+        (
+            [{"role": "user", "content": "x" * (MAX_QUESTION_LENGTH + 1)}],
+            "a user message must have at most 4000 characters",
+        ),
+        (
+            [
+                {"role": "user", "content": "Compare these"},
+                {"role": "assistant", "content": "x" * (MAX_ANSWER_LENGTH + 1)},
+                {"role": "user", "content": "Shorter please"},
+            ],
+            "at most 8000 characters",
+        ),
         ([{"role": "user", "content": "   "}], "at least 1 character"),
         ([], "at least 1 item"),
         (
@@ -137,3 +154,16 @@ def test_chat_without_an_agent_answers_503(client: TestClient) -> None:
 
     assert response.status_code == 503
     assert "Chat is off" in response.json()["detail"]
+
+
+def test_an_earlier_answer_may_be_longer_than_a_question(client: TestClient) -> None:
+    use(agent([answer_message("Shorter: it blocks ABL1.")]))
+    messages = [
+        {"role": "user", "content": "Tell me everything about imatinib"},
+        {"role": "assistant", "content": "x" * MAX_ANSWER_LENGTH},
+        {"role": "user", "content": "Shorter please"},
+    ]
+
+    response = client.post("/chat", json={"messages": messages})
+
+    assert server_sent_events(response.text)[-1][0] == "done"
