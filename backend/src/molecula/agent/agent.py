@@ -11,6 +11,7 @@ from langchain_core.tools import BaseTool
 from molecula import prompts
 from molecula.agent.events import AgentRun
 from molecula.agent.llm import ChatModelError, describe_provider_error
+from molecula.agent.references import NumberPassages, References
 from molecula.schemas.chat import ChatEvent, ChatMessage, ErrorEvent
 
 logger = logging.getLogger(__name__)
@@ -32,7 +33,8 @@ class ChatAgent:
             model,
             tools,
             system_prompt=prompts.load("agent/system"),
-            middleware=[StepLimit(max_steps)],
+            middleware=[StepLimit(max_steps), NumberPassages()],
+            context_schema=References,
         )
         self._tools = tools
         self._max_steps = max_steps
@@ -48,6 +50,7 @@ class ChatAgent:
                 async for mode, data in self._graph.astream(
                     {"messages": to_langchain(conversation)},
                     stream_mode=["messages", "updates"],
+                    context=References(),
                 ):
                     for event in run.events(mode, data):
                         yield event

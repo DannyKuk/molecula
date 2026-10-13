@@ -1,4 +1,5 @@
-from typing import Annotated, Literal
+from collections.abc import Callable
+from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
@@ -122,6 +123,12 @@ class DrugComparison(ToolResult):
         return [source for drug in self.drugs for source in drug.sources()]
 
 
+class CitedPassage(RetrievedChunk):
+    """A label passage and `ref`, the number an answer cites it with as `[ref]`."""
+
+    ref: int
+
+
 class LabelPassages(ToolResult):
     """The label passages a search found, best first, each with what to cite.
 
@@ -136,8 +143,15 @@ class LabelPassages(ToolResult):
     drugs: list[str]
     drugs_without_label: list[str]
     unsupported: list[DrugNotSupported]
-    passages: list[RetrievedChunk]
+    passages: list[CitedPassage]
     retrieval: Retrieval = Field(exclude=True)
+
+    def renumbered(self, ref_of: Callable[[str], int]) -> Self:
+        """The same passages with the reference numbers `ref_of` gives their chunk ids."""
+        passages = [
+            passage.model_copy(update={"ref": ref_of(passage.id)}) for passage in self.passages
+        ]
+        return self.model_copy(update={"passages": passages})
 
     def sources(self) -> list[Source]:
         return [
@@ -147,6 +161,7 @@ class LabelPassages(ToolResult):
                 url=passage.url,
                 section=passage.section,
                 effective_time=passage.effective_time,
+                ref=passage.ref,
             )
             for passage in self.passages
         ]

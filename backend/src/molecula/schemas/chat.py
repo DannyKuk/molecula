@@ -51,8 +51,9 @@ class Usage(BaseModel):
 
 
 class Source(BaseModel):
-    """Where a fact the tools returned comes from: a label section on DailyMed (`kind`
-    "dailymed", with the label's date), a PubChem compound page or a ChEMBL target page."""
+    """Where a fact the tools returned comes from: a label passage on DailyMed (`kind`
+    "dailymed", with the label's date and `ref`, the number the answer cites it with as `[ref]`),
+    a PubChem compound page or a ChEMBL target page."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -61,6 +62,7 @@ class Source(BaseModel):
     url: str
     section: str | None = None
     effective_time: date | None = None
+    ref: int | None = None
 
 
 class TranslationStep(BaseModel):
@@ -107,8 +109,13 @@ class TokenEvent(BaseModel):
 
 
 class SourcesEvent(BaseModel):
+    """Where the answer's facts come from. A citation is `[n]` or, from some models, `【n】`.
+    `unknown_refs` are numbers the answer cites that no source has: show them as plain text,
+    not as a link."""
+
     type: Literal["sources"] = "sources"
     sources: list[Source]
+    unknown_refs: list[int] = []
 
 
 class RetrievalTraceEvent(BaseModel):

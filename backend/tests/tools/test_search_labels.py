@@ -22,6 +22,7 @@ from tool_fakes import (
     FakeFilterExtractor,
     FakeLabelRetriever,
     call_tool,
+    cited,
     drug_filter,
 )
 
@@ -48,8 +49,9 @@ def test_a_question_gets_label_passages_with_their_citations(tool: StructuredToo
     assert message.status == "success"
     assert isinstance(message.artifact, LabelPassages)
     assert message.artifact.drugs == ["imatinib"]
-    assert message.artifact.passages == [IMATINIB_SIDE_EFFECTS]
+    assert message.artifact.passages == [cited(IMATINIB_SIDE_EFFECTS, 1)]
     [passage] = json.loads(str(message.content))["passages"]
+    assert passage["ref"] == 1
     assert passage["url"] == "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=gleevec"
     assert (passage["section"], passage["effective_time"], passage["sensitive"]) == (
         "adverse_reactions",
@@ -119,7 +121,21 @@ def test_an_unsupported_drug_beside_a_supported_one_is_listed_with_the_passages(
 
     assert isinstance(message.artifact, LabelPassages)
     assert message.artifact.unsupported == [DrugNotSupported(query="Celexa", suggestions=[])]
-    assert message.artifact.passages == [IMATINIB_SIDE_EFFECTS]
+    assert message.artifact.passages == [cited(IMATINIB_SIDE_EFFECTS, 1)]
+
+
+def test_passages_are_numbered_from_one_best_first(
+    tool: StructuredTool, retriever: FakeLabelRetriever
+) -> None:
+    retriever.chunks = [IMATINIB_SIDE_EFFECTS, IMATINIB_LOW_SCORE]
+
+    message = call_tool(tool, {"question": SIDE_EFFECTS})
+
+    passages = json.loads(str(message.content))["passages"]
+    assert [(p["ref"], p["id"]) for p in passages] == [
+        (1, IMATINIB_SIDE_EFFECTS.id),
+        (2, IMATINIB_LOW_SCORE.id),
+    ]
 
 
 def test_a_supported_drug_without_a_label_finds_nothing_and_says_so(
