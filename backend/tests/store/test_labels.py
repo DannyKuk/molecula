@@ -6,6 +6,7 @@ import pytest
 
 from molecula.store.compounds import CompoundRecord, CompoundStore
 from molecula.store.labels import LabelRecord, LabelSection, LabelStore, label_date
+from store_records import MOTRIN
 
 FIRST_FETCH = datetime(2026, 10, 11, tzinfo=UTC)
 LATER_FETCH = datetime(2026, 11, 1, tzinfo=UTC)
@@ -26,18 +27,6 @@ IBUPROFEN = CompoundRecord(
     conformer_source="pubchem",
     source="pubchem",
 )
-RX = LabelRecord(
-    set_id="rx-set-id",
-    substance="IBUPROFEN",
-    brand="Motrin",
-    product_type="rx",
-    effective_time="20250101",
-    url="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=rx-set-id",
-    sections=(
-        LabelSection("clinical_pharmacology", "pharmacology", "Ibuprofen inhibits COX.", False),
-        LabelSection("dosage_and_administration", "dosing", "400 mg every 4 hours.", True),
-    ),
-)
 OTC = LabelRecord(
     set_id="otc-set-id",
     substance="IBUPROFEN",
@@ -57,9 +46,9 @@ def store(conn: sqlite3.Connection) -> LabelStore:
 
 
 def test_round_trips_labels_with_their_sections_prescription_first(store: LabelStore) -> None:
-    store.save(3672, (RX, OTC), FIRST_FETCH)
+    store.save(3672, (MOTRIN, OTC), FIRST_FETCH)
 
-    assert store.get(3672) == (RX, OTC)
+    assert store.get(3672) == (MOTRIN, OTC)
 
 
 def test_compound_without_labels_gives_none(store: LabelStore) -> None:
@@ -67,7 +56,7 @@ def test_compound_without_labels_gives_none(store: LabelStore) -> None:
 
 
 def test_rows_record_source_and_fetch_time(store: LabelStore, conn: sqlite3.Connection) -> None:
-    store.save(3672, (RX,), FIRST_FETCH)
+    store.save(3672, (MOTRIN,), FIRST_FETCH)
 
     row = conn.execute("SELECT source, fetched_at FROM label").fetchone()
     assert row == ("openfda", FIRST_FETCH.isoformat())
@@ -76,10 +65,10 @@ def test_rows_record_source_and_fetch_time(store: LabelStore, conn: sqlite3.Conn
 def test_saving_the_same_labels_changes_nothing(
     store: LabelStore, conn: sqlite3.Connection
 ) -> None:
-    store.save(3672, (RX, OTC), FIRST_FETCH)
+    store.save(3672, (MOTRIN, OTC), FIRST_FETCH)
     changes = conn.total_changes
 
-    store.save(3672, (RX, OTC), LATER_FETCH)
+    store.save(3672, (MOTRIN, OTC), LATER_FETCH)
 
     assert conn.total_changes == changes
 
@@ -87,8 +76,8 @@ def test_saving_the_same_labels_changes_nothing(
 def test_a_new_canonical_label_replaces_the_old_and_its_sections(
     store: LabelStore, conn: sqlite3.Connection
 ) -> None:
-    store.save(3672, (RX, OTC), FIRST_FETCH)
-    newer = replace(RX, set_id="newer-set-id", effective_time="20260101")
+    store.save(3672, (MOTRIN, OTC), FIRST_FETCH)
+    newer = replace(MOTRIN, set_id="newer-set-id", effective_time="20260101")
 
     store.save(3672, (newer,), LATER_FETCH)
 
@@ -101,13 +90,13 @@ def test_a_new_canonical_label_replaces_the_old_and_its_sections(
 
 def test_one_label_per_product_type(store: LabelStore) -> None:
     with pytest.raises(sqlite3.IntegrityError):
-        store.save(3672, (RX, replace(RX, set_id="second-rx")), FIRST_FETCH)
+        store.save(3672, (MOTRIN, replace(MOTRIN, set_id="second-rx")), FIRST_FETCH)
 
 
 def test_deleting_the_compound_deletes_its_labels(
     store: LabelStore, conn: sqlite3.Connection
 ) -> None:
-    store.save(3672, (RX, OTC), FIRST_FETCH)
+    store.save(3672, (MOTRIN, OTC), FIRST_FETCH)
 
     with conn:
         conn.execute("DELETE FROM compound WHERE cid = 3672")
@@ -140,7 +129,7 @@ def test_unknown_source_has_no_disclaimer(store: LabelStore) -> None:
 
 
 def test_a_stored_effective_time_reads_as_a_date() -> None:
-    assert label_date(RX.effective_time) == date(2025, 1, 1)
+    assert label_date(MOTRIN.effective_time) == date(2025, 1, 1)
 
 
 def test_an_effective_time_in_another_format_is_rejected() -> None:

@@ -7,7 +7,6 @@ from pathlib import Path
 import pytest
 
 from molecula.schemas.compounds import (
-    ConformerSource,
     DrugMention,
     Match,
     Suggestion,
@@ -15,8 +14,9 @@ from molecula.schemas.compounds import (
 )
 from molecula.services import compounds
 from molecula.services.compounds import CompoundService, name_candidates
-from molecula.store.compounds import CompoundRecord, CompoundStore, Synonym
+from molecula.store.compounds import CompoundStore, Synonym
 from molecula.store.structures import ConformerFiles
+from store_records import compound_record
 
 FETCHED_AT = datetime(2026, 10, 11, tzinfo=UTC)
 SDF = "5291\n  stored conformer\n$$$$\n"
@@ -44,42 +44,25 @@ SCOPE = [
 ]
 
 
-def record(cid: int, name: str, conformer_source: ConformerSource | None = "pubchem"):
-    return CompoundRecord(
-        cid=cid,
-        name=name,
-        inchikey=f"INCHIKEY-{cid}",
-        smiles="C",
-        formula="C",
-        mw=100.0,
-        xlogp=1.0,
-        tpsa=10.0,
-        hbd=1,
-        hba=1,
-        rotb=0,
-        heavy_atoms=10,
-        conformer_source=conformer_source,
-        source="pubchem",
-    )
-
-
 @pytest.fixture
 def store(conn: sqlite3.Connection) -> CompoundStore:
     store = CompoundStore(conn)
     store.save(
-        record(5291, "imatinib"),
+        compound_record(5291, "imatinib"),
         [Synonym("imatinib", "name"), Synonym("Gleevec", "alias"), Synonym("Glamox", "pubchem")],
         FETCHED_AT,
     )
     store.save(
-        record(3672, "ibuprofen"),
+        compound_record(3672, "ibuprofen"),
         [Synonym("ibuprofen", "name"), Synonym("Ibuflam", "alias"), Synonym("Advil", "alias")],
         FETCHED_AT,
     )
-    store.save(record(4091, "metformin"), [Synonym("metformin", "name")], FETCHED_AT)
-    store.save(record(60823, "atorvastatin"), [Synonym("atorvastatin", "name")], FETCHED_AT)
+    store.save(compound_record(4091, "metformin"), [Synonym("metformin", "name")], FETCHED_AT)
     store.save(
-        record(56843331, "semaglutide", conformer_source=None),
+        compound_record(60823, "atorvastatin"), [Synonym("atorvastatin", "name")], FETCHED_AT
+    )
+    store.save(
+        compound_record(56843331, "semaglutide", conformer_source=None),
         [Synonym("semaglutide", "name")],
         FETCHED_AT,
     )
@@ -104,7 +87,7 @@ def scope_store(conn: sqlite3.Connection) -> CompoundStore:
     store = CompoundStore(conn)
     for cid, name, aliases in SCOPE:
         store.save(
-            record(cid, name),
+            compound_record(cid, name),
             [Synonym(name, "name"), *(Synonym(alias, "alias") for alias in aliases)],
             FETCHED_AT,
         )
@@ -245,11 +228,11 @@ def test_scope_name_wins_over_a_pubchem_synonym_of_another_compound(
 ) -> None:
     # Saved first, so the shared alias's oldest row belongs to the wrong compound.
     store.save(
-        record(2519, "caffeine"),
+        compound_record(2519, "caffeine"),
         [Synonym("caffeine", "name"), Synonym("theophylline", "pubchem")],
         FETCHED_AT,
     )
-    store.save(record(2153, "theophylline"), [Synonym("theophylline", "name")], FETCHED_AT)
+    store.save(compound_record(2153, "theophylline"), [Synonym("theophylline", "name")], FETCHED_AT)
 
     resolution = service.resolve("Theophylline")
 

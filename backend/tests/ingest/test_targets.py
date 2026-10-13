@@ -25,35 +25,16 @@ from molecula.sources.chembl import ChemblClient
 from molecula.sources.http import SourceClient
 from molecula.sources.rcsb import RcsbClient
 from molecula.store.compounds import CompoundRecord, CompoundStore
-from molecula.store.http_cache import HttpCache
 from molecula.store.targets import DrugTargets, LigandCode, TargetStore
+from store_records import compound_record
 
 HUMAN = 9606
 
 
-def compound(cid: int, name: str, inchikey: str, smiles: str = "C") -> CompoundRecord:
-    return CompoundRecord(
-        cid=cid,
-        name=name,
-        inchikey=inchikey,
-        smiles=smiles,
-        formula="C",
-        mw=1.0,
-        xlogp=None,
-        tpsa=None,
-        hbd=0,
-        hba=0,
-        rotb=0,
-        heavy_atoms=1,
-        conformer_source=None,
-        source="pubchem",
-    )
-
-
-IMATINIB = compound(5291, "imatinib", chembl_replay.IMATINIB)
-ACETAMINOPHEN = compound(1983, "acetaminophen", chembl_replay.ACETAMINOPHEN)
-RALTEGRAVIR = compound(54671008, "raltegravir", chembl_replay.RALTEGRAVIR)
-DOLUTEGRAVIR = compound(54726191, "dolutegravir", chembl_replay.DOLUTEGRAVIR)
+IMATINIB = compound_record(5291, "imatinib", inchikey=chembl_replay.IMATINIB)
+ACETAMINOPHEN = compound_record(1983, "acetaminophen", inchikey=chembl_replay.ACETAMINOPHEN)
+RALTEGRAVIR = compound_record(54671008, "raltegravir", inchikey=chembl_replay.RALTEGRAVIR)
+DOLUTEGRAVIR = compound_record(54726191, "dolutegravir", inchikey=chembl_replay.DOLUTEGRAVIR)
 
 
 class Sources:
@@ -83,14 +64,11 @@ def store(conn: sqlite3.Connection) -> TargetStore:
 
 
 @pytest.fixture
-def clients(cache: HttpCache) -> Callable[..., tuple[ChemblClient, RcsbClient]]:
+def clients(
+    replaying_client: Callable[..., SourceClient],
+) -> Callable[..., tuple[ChemblClient, RcsbClient]]:
     def make(sources: Sources | None = None) -> tuple[ChemblClient, RcsbClient]:
-        http = SourceClient(
-            cache,
-            offline=False,
-            transport=httpx2.MockTransport(sources or Sources()),
-            sleep=lambda _: None,
-        )
+        http = replaying_client(sources or Sources())
         return ChemblClient(http), RcsbClient(http)
 
     return make
@@ -268,7 +246,7 @@ def test_run_stops_when_a_source_stops_answering(ingest, store: TargetStore) -> 
 def test_unnamed_exact_match_falls_back_to_the_connectivity_block(clients) -> None:
     chembl, _ = clients()
 
-    pick = pick_molecule(chembl, compound(3476, "glimepiride", GLIMEPIRIDE))
+    pick = pick_molecule(chembl, compound_record(3476, "glimepiride", inchikey=GLIMEPIRIDE))
 
     assert pick is not None
     assert (pick.molecule.chembl_id, pick.matched_on) == ("CHEMBL1481", "connectivity")
@@ -279,7 +257,7 @@ def test_unnamed_exact_match_falls_back_to_the_connectivity_block(clients) -> No
 def test_the_named_molecule_wins_and_the_others_are_reported(clients) -> None:
     chembl, _ = clients()
 
-    pick = pick_molecule(chembl, compound(644073, "buprenorphine", BUPRENORPHINE))
+    pick = pick_molecule(chembl, compound_record(644073, "buprenorphine", inchikey=BUPRENORPHINE))
 
     assert pick is not None
     assert (pick.molecule.chembl_id, pick.matched_on) == ("CHEMBL511142", "connectivity")
@@ -289,7 +267,7 @@ def test_the_named_molecule_wins_and_the_others_are_reported(clients) -> None:
 def test_another_tautomer_is_found_by_name_through_the_parent(clients) -> None:
     chembl, _ = clients()
 
-    pick = pick_molecule(chembl, compound(54671203, "doxycycline", DOXYCYCLINE))
+    pick = pick_molecule(chembl, compound_record(54671203, "doxycycline", inchikey=DOXYCYCLINE))
 
     assert pick is not None
     assert (pick.molecule.chembl_id, pick.matched_on) == ("CHEMBL1200699", "name")
@@ -300,7 +278,7 @@ def test_another_tautomer_is_found_by_name_through_the_parent(clients) -> None:
 def test_drug_without_mechanisms_keeps_its_exact_match(clients) -> None:
     chembl, _ = clients()
 
-    pick = pick_molecule(chembl, compound(5311101, "fluticasone", FLUTICASONE))
+    pick = pick_molecule(chembl, compound_record(5311101, "fluticasone", inchikey=FLUTICASONE))
 
     assert pick is not None
     assert (pick.molecule.chembl_id, pick.matched_on) == ("CHEMBL1201396", "inchikey")
@@ -310,12 +288,12 @@ def test_drug_without_mechanisms_keeps_its_exact_match(clients) -> None:
 def test_no_match_anywhere_gives_no_molecule(clients) -> None:
     chembl, _ = clients()
 
-    assert pick_molecule(chembl, compound(1, "notadrugxyz", DOXYCYCLINE)) is None
+    assert pick_molecule(chembl, compound_record(1, "notadrugxyz", inchikey=DOXYCYCLINE)) is None
 
 
 def test_mechanisms_repeated_across_salts_give_one_target_each(clients) -> None:
     chembl, _ = clients()
-    pick = pick_molecule(chembl, compound(54671203, "doxycycline", DOXYCYCLINE))
+    pick = pick_molecule(chembl, compound_record(54671203, "doxycycline", inchikey=DOXYCYCLINE))
     assert pick is not None
 
     unique = unique_by_target(pick.mechanisms)
@@ -337,8 +315,10 @@ def test_report_lists_each_drug_and_its_candidates(ingest) -> None:
     assert "- Ligand codes: TYL (inchikey)" in text
 
 
-def test_offline_run_on_an_empty_store_writes_an_empty_report(tmp_path: Path) -> None:
-    exit_code = run(Settings(data_dir=tmp_path, offline=True))
+def test_offline_run_on_an_empty_store_writes_an_empty_report(
+    settings: Settings, tmp_path: Path
+) -> None:
+    exit_code = run(settings)
 
     assert exit_code == 0
     report = (tmp_path / "build" / "complex_candidates.md").read_text(encoding="utf-8")

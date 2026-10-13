@@ -13,9 +13,10 @@ from molecula.schemas.compounds import Resolution
 from molecula.schemas.retrieval import DrugFilter, LabelQuery
 from molecula.services.compounds import CompoundService
 from molecula.services.labels import LabelService
-from molecula.store.compounds import CompoundRecord, CompoundStore, Synonym
+from molecula.store.compounds import CompoundStore, Synonym
 from molecula.store.labels import LabelRecord, LabelSection, LabelStore
 from molecula.store.structures import ConformerFiles
+from store_records import compound_record
 
 type Services = tuple[CompoundService, LabelService]
 
@@ -57,25 +58,6 @@ DRUGS: list[tuple[int, str, list[Synonym], list[tuple[str, str | None, str]]]] =
 ]
 
 
-def compound(cid: int, name: str) -> CompoundRecord:
-    return CompoundRecord(
-        cid=cid,
-        name=name,
-        inchikey=f"INCHIKEY-{cid}",
-        smiles="C",
-        formula="C",
-        mw=100.0,
-        xlogp=1.0,
-        tpsa=10.0,
-        hbd=1,
-        hba=1,
-        rotb=0,
-        heavy_atoms=10,
-        conformer_source=None,
-        source="pubchem",
-    )
-
-
 def label(set_id: str, brand: str | None, product_type: Any) -> LabelRecord:
     return LabelRecord(
         set_id=set_id,
@@ -93,7 +75,7 @@ def services(conn: sqlite3.Connection, tmp_path: Path) -> Services:
     compounds = CompoundStore(conn)
     labels = LabelStore(conn)
     for cid, name, synonyms, drug_labels in DRUGS:
-        compounds.save(compound(cid, name), [Synonym(name, "name"), *synonyms], FETCHED_AT)
+        compounds.save(compound_record(cid, name), [Synonym(name, "name"), *synonyms], FETCHED_AT)
         labels.save(cid, tuple(label(*entry) for entry in drug_labels), FETCHED_AT)
     return (
         CompoundService(compounds, ConformerFiles(tmp_path), suggestion_cutoff=0.8),

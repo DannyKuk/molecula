@@ -1,6 +1,6 @@
+from collections.abc import Callable
 from dataclasses import replace
 from datetime import UTC, datetime
-from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -16,29 +16,14 @@ from molecula.main import app
 from molecula.rag.embeddings import embedding_model_id
 from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
-from molecula.store.compounds import CompoundRecord, CompoundStore, Synonym
+from molecula.store.compounds import CompoundStore, Synonym
 from molecula.store.db import connect
 from molecula.store.index import Chunk, IndexModelMismatch, LabelIndex
-from molecula.store.labels import LabelRecord, LabelSection, LabelStore
+from molecula.store.labels import LabelStore
 from molecula.store.structures import ConformerFiles
 from sse import server_sent_events
+from store_records import GLEEVEC, IMATINIB
 
-IMATINIB = CompoundRecord(
-    cid=5291,
-    name="imatinib",
-    inchikey="KTUFNOKKBVMGRW-UHFFFAOYSA-N",
-    smiles="CC1=C(C=C(C=C1)NC(=O)C2=CC=C(C=C2)CN3CCN(CC3)C)NC4=NC=CC(=N4)C5=CN=CC=C5",
-    formula="C29H31N7O",
-    mw=493.6,
-    xlogp=3.5,
-    tpsa=86.3,
-    hbd=2,
-    hba=7,
-    rotb=7,
-    heavy_atoms=37,
-    conformer_source="pubchem",
-    source="pubchem",
-)
 SDF = "5291\n  stored conformer\n$$$$\n"
 CHUNK = Chunk(
     id="gleevec:adverse_reactions:0",
@@ -59,8 +44,8 @@ QUESTION = {"messages": [{"role": "user", "content": "How does imatinib work?"}]
 
 
 @pytest.fixture
-def settings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Settings:
-    settings = Settings(_env_file=None, data_dir=tmp_path)
+def settings(make_settings: Callable[..., Settings], monkeypatch: pytest.MonkeyPatch) -> Settings:
+    settings = make_settings(offline=False)
     monkeypatch.setattr(main, "get_settings", lambda: settings)
     return settings
 
@@ -211,15 +196,6 @@ def test_startup_refuses_an_index_built_with_another_embedding_model(
     assert loaded_models == []
 
 
-GLEEVEC = LabelRecord(
-    set_id="gleevec",
-    substance="IMATINIB MESYLATE",
-    brand="Gleevec",
-    product_type="rx",
-    effective_time="20260713",
-    url="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=gleevec",
-    sections=(LabelSection("mechanism_of_action", "pharmacology", "Inhibits BCR-ABL.", False),),
-)
 MECHANISM = replace(
     CHUNK,
     id="gleevec:mechanism_of_action:0",

@@ -4,7 +4,6 @@ searches (see `tests/openfda_replay.py`)."""
 import sqlite3
 from collections.abc import Callable
 from datetime import UTC, datetime
-from pathlib import Path
 
 import httpx2
 import pytest
@@ -20,9 +19,9 @@ from molecula.ingest.labels import (
 from molecula.sources.http import SourceClient
 from molecula.sources.openfda import PAGE_SIZE, Label, OpenFdaClient, OpenFdaFields
 from molecula.store.compounds import CompoundRecord, CompoundStore
-from molecula.store.http_cache import HttpCache
 from molecula.store.labels import LabelStore
 from openfda_replay import Replay
+from store_records import compound_record
 
 RX = "HUMAN PRESCRIPTION DRUG"
 OTC = "HUMAN OTC DRUG"
@@ -30,30 +29,11 @@ GLEEVEC = "211ef2da-2868-4a77-8055-1cb2cd78e24b"
 MECHANISM = ("mechanism_of_action",)
 
 
-def compound(cid: int, name: str) -> CompoundRecord:
-    return CompoundRecord(
-        cid=cid,
-        name=name,
-        inchikey="K",
-        smiles="C",
-        formula="C",
-        mw=1.0,
-        xlogp=None,
-        tpsa=None,
-        hbd=0,
-        hba=0,
-        rotb=0,
-        heavy_atoms=1,
-        conformer_source=None,
-        source="pubchem",
-    )
-
-
-IMATINIB = compound(5291, "imatinib")
-IBUPROFEN = compound(3672, "ibuprofen")
-ACETAMINOPHEN = compound(1983, "acetaminophen")
+IMATINIB = compound_record(5291, "imatinib")
+IBUPROFEN = compound_record(3672, "ibuprofen")
+ACETAMINOPHEN = compound_record(1983, "acetaminophen")
 # openFDA has US labels only; a store that named the drug paracetamol would find none.
-PARACETAMOL = compound(1983, "paracetamol")
+PARACETAMOL = compound_record(1983, "paracetamol")
 
 
 def label(
@@ -233,15 +213,9 @@ def store(conn: sqlite3.Connection) -> LabelStore:
 
 
 @pytest.fixture
-def openfda(cache: HttpCache) -> Callable[..., OpenFdaClient]:
+def openfda(replaying_client: Callable[..., SourceClient]) -> Callable[..., OpenFdaClient]:
     def make(handler: Callable[[httpx2.Request], httpx2.Response] | None = None) -> OpenFdaClient:
-        http = SourceClient(
-            cache,
-            offline=False,
-            transport=httpx2.MockTransport(handler or Replay()),
-            sleep=lambda _: None,
-        )
-        return OpenFdaClient(http)
+        return OpenFdaClient(replaying_client(handler or Replay()))
 
     return make
 
@@ -477,8 +451,8 @@ def test_run_stops_when_openfda_stops_answering(ingest, store: LabelStore) -> No
     assert store.get(5291) == ()
 
 
-def test_offline_run_on_an_empty_store_succeeds(tmp_path: Path) -> None:
-    assert run(Settings(data_dir=tmp_path, offline=True)) == 0
+def test_offline_run_on_an_empty_store_succeeds(settings: Settings) -> None:
+    assert run(settings) == 0
 
 
 def dump(conn: sqlite3.Connection) -> list[tuple[object, ...]]:

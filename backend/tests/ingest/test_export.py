@@ -1,6 +1,7 @@
 import hashlib
 import sqlite3
 import tarfile
+from collections.abc import Callable
 from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
@@ -18,28 +19,13 @@ from molecula.store.index import Chunk, LabelIndex
 from molecula.store.labels import LabelRecord, LabelSection, LabelStore
 from molecula.store.schema import SCHEMA_VERSION
 from molecula.store.structures import ConformerFiles
+from store_records import GLEEVEC, IMATINIB
 
 LABELS_FETCHED = datetime(2026, 10, 12, 9, 30, tzinfo=UTC)
 LATER_LABEL_FETCHED = datetime(2026, 10, 12, 10, 0, tzinfo=UTC)
 BUILT_AT = datetime(2026, 10, 13, 12, 0, tzinfo=UTC)
 MODEL = "fake-model"
 CACHED_URL = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/imatinib/cids/JSON"
-IMATINIB = CompoundRecord(
-    cid=5291,
-    name="imatinib",
-    inchikey="KTUFNOKKBVMGRW-UHFFFAOYSA-N",
-    smiles="C",
-    formula="C29H31N7O",
-    mw=493.6,
-    xlogp=3.5,
-    tpsa=86.3,
-    hbd=2,
-    hba=7,
-    rotb=7,
-    heavy_atoms=37,
-    conformer_source="pubchem",
-    source="pubchem",
-)
 IBUPROFEN = CompoundRecord(
     cid=3672,
     name="ibuprofen",
@@ -55,18 +41,6 @@ IBUPROFEN = CompoundRecord(
     heavy_atoms=15,
     conformer_source="pubchem",
     source="pubchem",
-)
-GLEEVEC = LabelRecord(
-    set_id="gleevec",
-    substance="IMATINIB MESYLATE",
-    brand="Gleevec",
-    product_type="rx",
-    effective_time="20260713",
-    url="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=gleevec",
-    sections=(
-        LabelSection("indications_and_usage", "indications", "1 INDICATIONS Ph+ CML.", False),
-        LabelSection("mechanism_of_action", "pharmacology", "Inhibits BCR-ABL.", False),
-    ),
 )
 ADVIL = LabelRecord(
     set_id="advil",
@@ -94,8 +68,8 @@ CHUNK = Chunk(
 
 
 @pytest.fixture
-def settings(tmp_path: Path) -> Settings:
-    return Settings(_env_file=None, data_dir=tmp_path / "data", offline=True)
+def settings(make_settings: Callable[..., Settings], tmp_path: Path) -> Settings:
+    return make_settings(data_dir=tmp_path / "data")
 
 
 def build_store(settings: Settings, *, with_index: bool = True) -> None:

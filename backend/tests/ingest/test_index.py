@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -7,35 +8,15 @@ from langchain_core.embeddings import DeterministicFakeEmbedding
 
 from molecula.config import Settings
 from molecula.ingest.index import build_index, run
-from molecula.store.compounds import CompoundRecord, CompoundStore
+from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
 from molecula.store.index import LabelIndex
-from molecula.store.labels import LabelRecord, LabelSection, LabelStore
+from molecula.store.labels import LabelSection, LabelStore
+from store_records import GLEEVEC, IMATINIB
 
 FETCHED_AT = datetime(2026, 10, 12, tzinfo=UTC)
-IMATINIB = CompoundRecord(
-    cid=5291,
-    name="imatinib",
-    inchikey="KTUFNOKKBVMGRW-UHFFFAOYSA-N",
-    smiles="C",
-    formula="C29H31N7O",
-    mw=493.6,
-    xlogp=3.5,
-    tpsa=86.3,
-    hbd=2,
-    hba=7,
-    rotb=7,
-    heavy_atoms=37,
-    conformer_source="pubchem",
-    source="pubchem",
-)
-GLEEVEC = LabelRecord(
-    set_id="gleevec",
-    substance="IMATINIB MESYLATE",
-    brand="Gleevec",
-    product_type="rx",
-    effective_time="20260713",
-    url="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=gleevec",
+GLEEVEC_WITH_LONG_DOSING = replace(
+    GLEEVEC,
     sections=(
         LabelSection("indications_and_usage", "indications", "1 INDICATIONS Ph+ CML.", False),
         LabelSection(
@@ -57,15 +38,10 @@ class FakeTokenizer:
         return text.split()
 
 
-@pytest.fixture
-def settings(tmp_path: Path) -> Settings:
-    return Settings(_env_file=None, data_dir=tmp_path, offline=True)
-
-
 def store_labels(settings: Settings) -> None:
     conn = connect(settings.db_path)
     CompoundStore(conn).save(IMATINIB, [], FETCHED_AT)
-    LabelStore(conn).save(5291, (GLEEVEC,), FETCHED_AT)
+    LabelStore(conn).save(5291, (GLEEVEC_WITH_LONG_DOSING,), FETCHED_AT)
     conn.close()
 
 
@@ -73,7 +49,7 @@ def test_build_indexes_every_chunk_with_the_model_name(tmp_path: Path) -> None:
     index = LabelIndex(tmp_path / "chroma")
 
     chunks = build_index(
-        [(5291, GLEEVEC)], words, DeterministicFakeEmbedding(size=8), index, "fake"
+        [(5291, GLEEVEC_WITH_LONG_DOSING)], words, DeterministicFakeEmbedding(size=8), index, "fake"
     )
 
     assert len(chunks) > 2
@@ -85,9 +61,9 @@ def test_rebuilding_gives_the_same_chunks(tmp_path: Path) -> None:
     index = LabelIndex(tmp_path / "chroma")
     embeddings = DeterministicFakeEmbedding(size=8)
 
-    build_index([(5291, GLEEVEC)], words, embeddings, index, "fake")
+    build_index([(5291, GLEEVEC_WITH_LONG_DOSING)], words, embeddings, index, "fake")
     first = index.chunks()
-    build_index([(5291, GLEEVEC)], words, embeddings, index, "fake")
+    build_index([(5291, GLEEVEC_WITH_LONG_DOSING)], words, embeddings, index, "fake")
 
     assert index.chunks() == first
 
