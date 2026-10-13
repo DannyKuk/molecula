@@ -1,3 +1,5 @@
+from typing import Any
+
 from langchain_core.tools import StructuredTool
 
 from molecula.rag.filters import FilterExtractor
@@ -50,7 +52,13 @@ def search_labels_tool(extractor: FilterExtractor, retriever: LabelRetriever) ->
             retrieval=retrieval,
         )
 
-    return build_tool(search_labels, SearchLabelsArgs)
+    return build_tool(search_labels, SearchLabelsArgs, searching_labels)
+
+
+def searching_labels(args: dict[str, Any]) -> str:
+    if args.get("drug"):
+        return f"Searching the {args['drug']} label"
+    return "Searching the drug labels"
 
 
 def without_label(label_filter: LabelFilter) -> list[str]:

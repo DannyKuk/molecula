@@ -1,3 +1,5 @@
+from typing import Any
+
 from langchain_core.tools import StructuredTool
 
 from molecula.schemas.tools import DrugArgs, DrugNotSupported, DrugProperties
@@ -31,4 +33,8 @@ def get_properties_tool(compounds: CompoundService) -> StructuredTool:
         """
         return drug_properties(compounds, drug)
 
-    return build_tool(get_properties, DrugArgs)
+    return build_tool(get_properties, DrugArgs, getting_properties)
+
+
+def getting_properties(args: dict[str, Any]) -> str:
+    return f"Getting the properties of {args.get('drug', 'the drug')}"

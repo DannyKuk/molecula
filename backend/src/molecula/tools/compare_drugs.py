@@ -1,3 +1,5 @@
+from typing import Any
+
 from langchain_core.tools import StructuredTool
 
 from molecula.schemas.tools import CompareDrugsArgs, DrugComparison
@@ -22,4 +24,8 @@ def compare_drugs_tool(compounds: CompoundService) -> StructuredTool:
         """
         return DrugComparison(drugs=[drug_properties(compounds, drug) for drug in drugs])
 
-    return build_tool(compare_drugs, CompareDrugsArgs)
+    return build_tool(compare_drugs, CompareDrugsArgs, comparing)
+
+
+def comparing(args: dict[str, Any]) -> str:
+    return f"Comparing {', '.join(args.get('drugs', []))}"

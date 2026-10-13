@@ -1,3 +1,5 @@
+from typing import Any
+
 from langchain_core.tools import StructuredTool
 
 from molecula.schemas.tools import DrugArgs, DrugNotSupported, DrugTargetList
@@ -34,4 +36,8 @@ def get_targets_tool(compounds: CompoundService, targets: TargetService) -> Stru
             targets=found.targets,
         )
 
-    return build_tool(get_targets, DrugArgs)
+    return build_tool(get_targets, DrugArgs, finding_targets)
+
+
+def finding_targets(args: dict[str, Any]) -> str:
+    return f"Finding the targets of {args.get('drug', 'the drug')}"
