@@ -1,8 +1,12 @@
+from typing import Any
+
+import pytest
 from langchain_core.tools import BaseTool
 
 from fake_llm import ScriptedChatModel
 from molecula.agent.tool_registry import build_tools
 from molecula.schemas.tools import DrugTargetList, LabelPassages
+from molecula.tools.base import progress_of
 from tool_fakes import (
     FakeCompoundService,
     FakeFilterExtractor,
@@ -54,3 +58,30 @@ def test_registered_label_search_searches() -> None:
     message = call_tool(search_labels, {"question": "How does imatinib work?"})
 
     assert isinstance(message.artifact, LabelPassages)
+
+
+def test_every_registered_tool_has_its_own_progress_text() -> None:
+    without_progress = [tool.name for tool in tools() if progress_of(tool) is None]
+
+    assert without_progress == []
+
+
+@pytest.mark.parametrize(
+    ("name", "args", "expected"),
+    [
+        ("resolve_drug", {"name": "Gleevec"}, "Looking up Gleevec"),
+        ("get_properties", {"drug": "imatinib"}, "Getting the properties of imatinib"),
+        ("get_targets", {"drug": "imatinib"}, "Finding the targets of imatinib"),
+        ("search_labels", {"question": "Q?", "drug": "imatinib"}, "Searching the imatinib label"),
+        ("search_labels", {"question": "Q?"}, "Searching the drug labels"),
+        ("compare_drugs", {"drugs": ["imatinib", "Advil"]}, "Comparing imatinib, Advil"),
+        ("get_targets", {}, "Finding the targets of the drug"),
+    ],
+)
+def test_progress_text_names_what_the_call_is_doing(
+    name: str, args: dict[str, Any], expected: str
+) -> None:
+    progress = progress_of(next(tool for tool in tools() if tool.name == name))
+
+    assert progress is not None
+    assert progress(args) == expected

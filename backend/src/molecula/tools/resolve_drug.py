@@ -1,3 +1,5 @@
+from typing import Any
+
 from langchain_core.tools import StructuredTool
 
 from molecula.schemas.tools import DrugNotSupported, ResolvedDrug, ResolveDrugArgs
@@ -33,4 +35,8 @@ def resolve_drug_tool(compounds: CompoundService) -> StructuredTool:
             source_url=match.compound.source_url,
         )
 
-    return build_tool(resolve_drug, ResolveDrugArgs)
+    return build_tool(resolve_drug, ResolveDrugArgs, resolving)
+
+
+def resolving(args: dict[str, Any]) -> str:
+    return f"Looking up {args.get('name', 'the drug')}"

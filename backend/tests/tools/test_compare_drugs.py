@@ -3,6 +3,7 @@ from typing import Any
 import pytest
 from langchain_core.tools import StructuredTool
 
+from molecula.schemas.chat import Source
 from molecula.schemas.tools import (
     DrugComparison,
     DrugNotSupported,
@@ -81,3 +82,13 @@ def test_bad_argument_is_a_readable_error_result(
     [problem] = InvalidArguments.model_validate_json(str(message.content)).errors
     assert problem.startswith(error)
     assert compounds.resolved == []
+
+
+def test_sources_are_the_compared_drugs_pubchem_pages(tool: StructuredTool) -> None:
+    message = call_tool(tool, {"drugs": ["Advil", "Gleevek", "imatinib"]})
+
+    assert isinstance(message.artifact, DrugComparison)
+    assert message.artifact.sources() == [
+        Source(kind="pubchem", name="ibuprofen", url=IBUPROFEN.source_url),
+        Source(kind="pubchem", name="imatinib", url=IMATINIB.source_url),
+    ]

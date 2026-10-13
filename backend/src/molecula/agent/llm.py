@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 
+import openai
 from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
@@ -8,6 +9,10 @@ from molecula.config import OPENROUTER_ATTRIBUTION_HEADERS, OPENROUTER_BASE_URL,
 
 # The OpenAI client won't start without a key; Ollama and LM Studio ignore it.
 LOCAL_SERVER_API_KEY = SecretStr("local")
+
+# What the model from get_chat_model raises when a call fails: it talks to every endpoint
+# through the OpenAI client.
+ChatModelError = openai.APIError
 
 
 class LLMConfigError(Exception):
@@ -77,3 +82,25 @@ def _openrouter_endpoint(api_key: SecretStr | None, model: str | None) -> Endpoi
         model=model,
         headers=dict(OPENROUTER_ATTRIBUTION_HEADERS),
     )
+
+
+def describe_provider_error(error: openai.APIError) -> str:
+    """What went wrong with the chat model, for the user."""
+    match error:
+        case openai.APITimeoutError():
+            return "The language model didn't answer in time. Try again."
+        case openai.APIConnectionError():
+            return "Molecula couldn't reach the language model. Check that its server is running."
+        case openai.RateLimitError():
+            return "The language model is busy right now (rate limit). Try again in a minute."
+        case openai.AuthenticationError() | openai.PermissionDeniedError():
+            return "The language model refused Molecula's API key. Check OPENROUTER_API_KEY."
+        case openai.NotFoundError():
+            return "The language model wasn't found. Check LLM_MODEL or LOCAL_LLM_MODEL."
+        case openai.BadRequestError():
+            return (
+                "The language model rejected the request, for example because the "
+                "conversation is longer than it can read. Start a new conversation."
+            )
+        case _:
+            return "The language model failed. Try again."

@@ -4,6 +4,7 @@ from typing import Any
 import pytest
 from langchain_core.tools import StructuredTool
 
+from molecula.schemas.chat import Source
 from molecula.schemas.tools import DrugNotSupported, InvalidArguments, ResolvedDrug
 from molecula.tools.resolve_drug import resolve_drug_tool
 from tool_fakes import GLEEVEC_SUGGESTION, FakeCompoundService, call_tool
@@ -92,3 +93,23 @@ def test_tool_is_named_and_described_for_the_model(tool: StructuredTool) -> None
     assert tool.name == "resolve_drug"
     assert "brand" in tool.description
     assert list(tool.args) == ["name"]
+
+
+def test_the_source_is_the_drugs_pubchem_page(tool: StructuredTool) -> None:
+    message = call_tool(tool, {"name": "Gleevec"})
+
+    assert isinstance(message.artifact, ResolvedDrug)
+    assert message.artifact.sources() == [
+        Source(
+            kind="pubchem",
+            name="imatinib",
+            url="https://pubchem.ncbi.nlm.nih.gov/compound/5291",
+        )
+    ]
+
+
+def test_an_unsupported_drug_has_no_source(tool: StructuredTool) -> None:
+    message = call_tool(tool, {"name": "Gleevek"})
+
+    assert isinstance(message.artifact, DrugNotSupported)
+    assert message.artifact.sources() == []
