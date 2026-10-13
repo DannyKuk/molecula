@@ -8,8 +8,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.language_models import BaseChatModel
 
+from molecula.agent.agent import ChatAgent
 from molecula.agent.llm import LLMConfigError, get_chat_model
-from molecula.api import drugs, health
+from molecula.agent.tool_registry import build_tools
+from molecula.api import chat, drugs, health
 from molecula.config import Settings, get_settings
 from molecula.rag.embeddings import embedding_model_id, get_embeddings
 from molecula.rag.filters import FilterExtractor
@@ -47,7 +49,9 @@ def open_label_index(settings: Settings) -> LabelIndex | None:
     settings name, before that model is loaded.
     """
     if not settings.index_dir.exists():
-        logger.warning("No label index at %s yet; label search is off", settings.index_dir)
+        logger.warning(
+            "No label index at %s yet; label search and chat are off", settings.index_dir
+        )
         return None
     index = LabelIndex(settings.index_dir)
     index.check_model(embedding_model_id(settings))
@@ -55,12 +59,12 @@ def open_label_index(settings: Settings) -> LabelIndex | None:
 
 
 def open_chat_model(settings: Settings) -> BaseChatModel | None:
-    """The chat model, or None while none is configured: until the agent runs (#16), only the
-    label search needs it, and the data routes work without it."""
+    """The chat model, or None while none is configured: the chat and the label search are then
+    off, and the data routes still work."""
     try:
         return get_chat_model(settings)
     except LLMConfigError as error:
-        logger.warning("Label search is off: %s", error)
+        logger.warning("Label search and chat are off: %s", error)
         return None
 
 
@@ -78,6 +82,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.label_service = LabelService(LabelStore(conn), compounds)
     app.state.label_retriever = None
     app.state.filter_extractor = None
+    app.state.chat_agent = None
     index = open_label_index(settings)
     chat_model = open_chat_model(settings) if index is not None else None
     if index is not None and chat_model is not None:
@@ -90,6 +95,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         )
         app.state.filter_extractor = FilterExtractor(
             chat_model, app.state.compound_service, app.state.label_service
+        )
+        tools = build_tools(
+            app.state.compound_service,
+            app.state.target_service,
+            app.state.filter_extractor,
+            app.state.label_retriever,
+        )
+        app.state.chat_agent = ChatAgent(
+            chat_model,
+            tools,
+            max_steps=settings.chat_max_steps,
+            timeout_seconds=settings.chat_timeout_seconds,
         )
     yield
     conn.close()
@@ -104,3 +121,4 @@ app.add_middleware(
 )
 app.include_router(health.router)
 app.include_router(drugs.router)
+app.include_router(chat.router)

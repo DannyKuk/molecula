@@ -1,16 +1,36 @@
 from datetime import date
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 from molecula.schemas.retrieval import LabelFilter, RetrievedChunk, Widening
+
+# Earlier turns travel as question and answer text only, so ten messages of this length stay
+# around 10k tokens next to the current turn's tools and passages (#125).
+MAX_MESSAGES = 10
+MAX_MESSAGE_LENGTH = 4000
 
 
 class ChatMessage(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     role: Literal["user", "assistant"]
-    content: str
+    content: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_MESSAGE_LENGTH)
+    ]
+
+
+class ChatRequest(BaseModel):
+    """The conversation so far, oldest first, ending with the user's new message. A longer
+    conversation is sent as its latest messages."""
+
+    messages: Annotated[list[ChatMessage], Field(min_length=1, max_length=MAX_MESSAGES)]
+
+    @model_validator(mode="after")
+    def ends_with_the_user(self) -> Self:
+        if self.messages[-1].role != "user":
+            raise ValueError("the last message must be the user's")
+        return self
 
 
 class Usage(BaseModel):
