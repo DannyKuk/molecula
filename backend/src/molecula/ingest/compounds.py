@@ -6,13 +6,11 @@ from datetime import UTC, datetime
 
 from molecula.config import Settings
 from molecula.ingest.conformers import embed_conformer
+from molecula.ingest.runner import StepReport, log_failures, run_step, store_and_sources
 from molecula.ingest.scope import Scope, ScopeEntry, load_scope
-from molecula.sources.errors import SourceError, SourceUnavailable
-from molecula.sources.http import SourceClient
+from molecula.sources.errors import SourceError
 from molecula.sources.pubchem import CompoundProperties, PubChemClient
 from molecula.store.compounds import CompoundRecord, CompoundStore, ConformerSource, Synonym
-from molecula.store.db import connect
-from molecula.store.http_cache import HttpCache
 from molecula.store.structures import ConformerFiles
 
 logger = logging.getLogger(__name__)
@@ -36,16 +34,10 @@ class DuplicateCompound(IngestError):
 
 
 @dataclass
-class IngestReport:
+class IngestReport(StepReport):
     stored: list[CompoundRecord] = field(default_factory=list)
-    failures: dict[str, str] = field(default_factory=dict)
-    not_attempted: list[str] = field(default_factory=list)
     pruned: list[CompoundRecord] = field(default_factory=list)
     pruned_conformers: list[int] = field(default_factory=list)
-
-    @property
-    def complete(self) -> bool:
-        return not (self.failures or self.not_attempted)
 
 
 def ingest_compounds(
@@ -61,18 +53,15 @@ def ingest_compounds(
     """
     report = IngestReport()
     claimed: dict[int, str] = {}
-    for position, entry in enumerate(scope.drugs):
-        try:
-            compound = ingest_entry(entry, pubchem, store, conformers, claimed)
-        except (SourceError, IngestError) as error:
-            logger.warning("%s: %s", entry.name, error)
-            report.failures[entry.name] = str(error)
-            if isinstance(error, SourceUnavailable):
-                report.not_attempted = [drug.name for drug in scope.drugs[position + 1 :]]
-                break
-        else:
-            claimed[compound.cid] = compound.name
-            report.stored.append(compound)
+
+    def ingest_and_claim(entry: ScopeEntry) -> CompoundRecord:
+        compound = ingest_entry(entry, pubchem, store, conformers, claimed)
+        claimed[compound.cid] = compound.name
+        return compound
+
+    report.stored = run_step(
+        scope.drugs, ingest_and_claim, report, catch=(SourceError, IngestError)
+    )
     if report.complete:
         report.pruned = store.prune(claimed)
         report.pruned_conformers = conformers.prune(claimed)
@@ -159,15 +148,10 @@ def to_record(
 def run(settings: Settings) -> int:
     """`python -m molecula.ingest compounds`: fill the store for the whole scope."""
     scope = load_scope(settings.scope_path)
-    conn = connect(settings.db_path)
-    http = SourceClient(HttpCache(conn), offline=settings.offline)
-    try:
+    with store_and_sources(settings) as (conn, http):
         report = ingest_compounds(
             scope, PubChemClient(http), CompoundStore(conn), ConformerFiles(settings.conformers_dir)
         )
-    finally:
-        http.close()
-        conn.close()
     log_summary(report)
     return 0 if report.complete else 1
 
@@ -199,11 +183,4 @@ def log_summary(report: IngestReport) -> None:
             len(report.pruned_conformers),
             ", ".join(f"{cid}.sdf" for cid in report.pruned_conformers),
         )
-    for name, reason in report.failures.items():
-        logger.error("  failed: %s: %s", name, reason)
-    if report.not_attempted:
-        logger.error(
-            "stopped because PubChem stopped answering; %d drugs not attempted. "
-            "Re-run later: what is stored so far is served from the cache.",
-            len(report.not_attempted),
-        )
+    log_failures(report, "PubChem")

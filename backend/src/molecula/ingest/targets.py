@@ -7,14 +7,11 @@ from pathlib import Path
 from typing import Literal
 
 from molecula.config import Settings
+from molecula.ingest.runner import StepReport, log_failures, run_step, store_and_sources
 from molecula.ingest.targets_report import write_report
 from molecula.sources.chembl import ChemblClient, Mechanism, Molecule, Target
-from molecula.sources.errors import SourceError, SourceUnavailable
-from molecula.sources.http import SourceClient
 from molecula.sources.rcsb import ComplexCandidate, RcsbClient
 from molecula.store.compounds import CompoundRecord, CompoundStore
-from molecula.store.db import connect
-from molecula.store.http_cache import HttpCache
 from molecula.store.targets import (
     CandidateRecord,
     DrugTargets,
@@ -50,10 +47,8 @@ class DrugResult:
 
 
 @dataclass
-class TargetsReport:
+class TargetsReport(StepReport):
     results: list[DrugResult] = field(default_factory=list)
-    failures: dict[str, str] = field(default_factory=dict)
-    not_attempted: list[str] = field(default_factory=list)
 
 
 def ingest_targets(
@@ -64,21 +59,13 @@ def ingest_targets(
     A compound that fails is reported and skipped. When a source stops answering, the run stops.
     """
     report = TargetsReport()
-    for position, compound in enumerate(compounds):
-        try:
-            result = ingest_compound(compound, chembl, rcsb, store)
-        except SourceError as error:
-            logger.warning("%s: %s", compound.name, error)
-            report.failures[compound.name] = str(error)
-            if isinstance(error, SourceUnavailable):
-                report.not_attempted = [later.name for later in compounds[position + 1 :]]
-                break
-        else:
-            report.results.append(result)
+    report.results = run_step(
+        compounds, lambda compound: ingest_targets_of(compound, chembl, rcsb, store), report
+    )
     return report
 
 
-def ingest_compound(
+def ingest_targets_of(
     compound: CompoundRecord, chembl: ChemblClient, rcsb: RcsbClient, store: TargetStore
 ) -> DrugResult:
     pick = pick_molecule(chembl, compound)
@@ -220,19 +207,14 @@ def rank_key(complex_: ComplexCandidate) -> tuple[bool, bool, float, str]:
 
 def run(settings: Settings) -> int:
     """`python -m molecula.ingest targets`: targets and complex candidates for every compound."""
-    conn = connect(settings.db_path)
-    http = SourceClient(HttpCache(conn), offline=settings.offline)
-    try:
+    with store_and_sources(settings) as (conn, http):
         report = ingest_targets(
             CompoundStore(conn).all(), ChemblClient(http), RcsbClient(http), TargetStore(conn)
         )
-    finally:
-        http.close()
-        conn.close()
     path = settings.build_dir / REPORT_NAME
     write_report(report, path)
     log_summary(report, path)
-    return 1 if report.failures or report.not_attempted else 0
+    return 0 if report.complete else 1
 
 
 def log_summary(report: TargetsReport, path: Path) -> None:
@@ -245,11 +227,4 @@ def log_summary(report: TargetsReport, path: Path) -> None:
         len(with_candidates),
         path,
     )
-    for name, reason in report.failures.items():
-        logger.error("  failed: %s: %s", name, reason)
-    if report.not_attempted:
-        logger.error(
-            "stopped because a source stopped answering; %d compounds not attempted. "
-            "Re-run later: what is fetched so far is served from the cache.",
-            len(report.not_attempted),
-        )
+    log_failures(report, "a source")

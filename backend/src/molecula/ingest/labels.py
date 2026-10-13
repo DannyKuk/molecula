@@ -4,13 +4,11 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from molecula.config import Settings
+from molecula.ingest.runner import StepReport, log_failures, run_step, store_and_sources
 from molecula.services.compounds import name_candidates
-from molecula.sources.errors import SourceError, SourceNotFound, SourceUnavailable
-from molecula.sources.http import SourceClient
+from molecula.sources.errors import SourceNotFound
 from molecula.sources.openfda import Label, OpenFdaClient
 from molecula.store.compounds import CompoundRecord, CompoundStore
-from molecula.store.db import connect
-from molecula.store.http_cache import HttpCache
 from molecula.store.labels import LabelRecord, LabelSection, LabelStore, ProductType, SectionGroup
 
 logger = logging.getLogger(__name__)
@@ -99,10 +97,8 @@ class DrugLabels:
 
 
 @dataclass
-class LabelsReport:
+class LabelsReport(StepReport):
     results: list[DrugLabels] = field(default_factory=list)
-    failures: dict[str, str] = field(default_factory=dict)
-    not_attempted: list[str] = field(default_factory=list)
 
     @property
     def without_label(self) -> list[str]:
@@ -117,21 +113,13 @@ def ingest_labels(
     A compound that fails is reported and skipped. When openFDA stops answering, the run stops.
     """
     report = LabelsReport()
-    for position, compound in enumerate(compounds):
-        try:
-            result = ingest_compound(compound, openfda, store)
-        except SourceError as error:
-            logger.warning("%s: %s", compound.name, error)
-            report.failures[compound.name] = str(error)
-            if isinstance(error, SourceUnavailable):
-                report.not_attempted = [later.name for later in compounds[position + 1 :]]
-                break
-        else:
-            report.results.append(result)
+    report.results = run_step(
+        compounds, lambda compound: ingest_labels_of(compound, openfda, store), report
+    )
     return report
 
 
-def ingest_compound(
+def ingest_labels_of(
     compound: CompoundRecord, openfda: OpenFdaClient, store: LabelStore
 ) -> DrugLabels:
     """Search openFDA by the compound's name, which `data/scope.yaml` keeps as the US generic."""
@@ -244,19 +232,14 @@ def to_record(label: Label, product_type: ProductType) -> LabelRecord:
 
 def run(settings: Settings) -> int:
     """`python -m molecula.ingest labels`: canonical labels for every compound."""
-    conn = connect(settings.db_path)
-    http = SourceClient(HttpCache(conn), offline=settings.offline)
-    try:
+    with store_and_sources(settings) as (conn, http):
         report = ingest_labels(
             CompoundStore(conn).all(),
             OpenFdaClient(http, api_key=settings.openfda_api_key),
             LabelStore(conn),
         )
-    finally:
-        http.close()
-        conn.close()
     log_summary(report)
-    return 1 if report.failures or report.not_attempted else 0
+    return 0 if report.complete else 1
 
 
 def log_summary(report: LabelsReport) -> None:
@@ -277,11 +260,4 @@ def log_summary(report: LabelsReport) -> None:
         logger.info("  %s: %d found; %s", result.compound.name, result.found, chosen or "none")
     if report.without_label:
         logger.info("no US label: %s", ", ".join(report.without_label))
-    for name, reason in report.failures.items():
-        logger.error("  failed: %s: %s", name, reason)
-    if report.not_attempted:
-        logger.error(
-            "stopped because openFDA stopped answering; %d compounds not attempted. "
-            "Re-run later: what is fetched so far is served from the cache.",
-            len(report.not_attempted),
-        )
+    log_failures(report, "openFDA")
