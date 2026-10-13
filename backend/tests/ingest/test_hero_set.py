@@ -77,9 +77,12 @@ def test_a_copy_on_a_multi_letter_chain_and_negative_residue_loads() -> None:
 
 def test_the_repo_hero_set_is_valid_and_in_scope() -> None:
     complexes = {c.drug: c for c in load_hero_set(REPO_ROOT / "data" / "hero_set.yaml").complexes}
-    scope = {drug.name for drug in load_scope(REPO_ROOT / "data" / "scope.yaml").drugs}
+    drugs = load_scope(REPO_ROOT / "data" / "scope.yaml").drugs
+    scope = {drug.name for drug in drugs}
+    hero_candidates = {drug.name for drug in drugs if drug.hero}
 
     assert set(complexes) - scope == set()
+    assert hero_candidates - set(complexes) == set()
     assert complexes["imatinib"].organism == "Homo sapiens"
     assert any(c.showcase for c in complexes.values())
 
