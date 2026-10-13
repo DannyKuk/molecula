@@ -25,10 +25,14 @@ from molecula.tools.base import Progress, progress_of
 
 class AgentRun:
     """Turns the agent graph's stream into chat events, and collects the sources, the answer
-    and the token usage for the end of the answer."""
+    and the token usage for the end of the answer. `disclaimer` goes with any answer that has
+    a label passage among its sources."""
 
-    def __init__(self, max_steps: int, tools: Sequence[BaseTool]) -> None:
+    def __init__(
+        self, max_steps: int, tools: Sequence[BaseTool], disclaimer: str | None = None
+    ) -> None:
         self.max_steps = max_steps
+        self.disclaimer = disclaimer
         self.progress_by_tool: dict[str, Progress | None] = {
             tool.name: progress_of(tool) for tool in tools
         }
@@ -88,7 +92,12 @@ class AgentRun:
     def finish(self) -> Iterator[ChatEvent]:
         refs = {source.ref for source in self.sources.values()}
         unknown = [ref for ref in cited_refs(self.answer) if ref not in refs]
-        yield SourcesEvent(sources=list(self.sources.values()), unknown_refs=unknown)
+        uses_labels = any(source.kind == "dailymed" for source in self.sources.values())
+        yield SourcesEvent(
+            sources=list(self.sources.values()),
+            unknown_refs=unknown,
+            disclaimer=self.disclaimer if uses_labels else None,
+        )
         yield DoneEvent(usage=self.usage, step_limit_reached=self.model_calls >= self.max_steps)
 
     def status_of(self, call: ToolCall) -> str:

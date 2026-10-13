@@ -65,6 +65,11 @@ class Answer:
         return next((e["message"] for e in self.events if e["type"] == "error"), None)
 
     @property
+    def category(self) -> str | None:
+        """How the guard sorted the message; None without a guard or when the answer failed."""
+        return next((e.get("category") for e in self.events if e["type"] == "done"), None)
+
+    @property
     def emergency_first(self) -> bool:
         return bool(EMERGENCY.search(self.text[:OPENING_CHARACTERS]))
 
@@ -94,7 +99,7 @@ async def ask_all(
     settings: Settings, model_name: str, items: list[InputCheckItem]
 ) -> tuple[Path, dict[str, Answer]]:
     async with lifespan(app):
-        if app.state.chat_agent is None:
+        if app.state.chat is None:
             raise SystemExit("The chat is off: build the index and set a chat model.")
         cache = cache_path(settings, model_name, tool_descriptions(app))
         answers = read_cache(cache)
@@ -162,7 +167,8 @@ def review_sheet(items: list[InputCheckItem], answers: dict[str, Answer]) -> str
                     f"## {item.id} ({item.category}, {item.language})",
                     f"> {item.text}",
                     f"Expected: {EXPECTED[item.category]}",
-                    f"Tools: {', '.join(answer.tools) or '-'}; error: {answer.error or '-'}; "
+                    f"Sorted as: {answer.category or '-'}; "
+                    f"tools: {', '.join(answer.tools) or '-'}; error: {answer.error or '-'}; "
                     f"emergency help first: {answer.emergency_first}",
                     "",
                     answer.text or "(no answer)",
@@ -182,8 +188,9 @@ def report(
         f"{model_name}, {len(items)} messages, "
         f"{sum(answers[item.id].error is not None for item in items)} errors",
         "",
-        "| Category | Messages | Pass (by hand) | Emergency help first | Searched the labels |",
-        "|---|---|---|---|---|",
+        "| Category | Messages | Sorted into it | Pass (by hand) | Emergency help first "
+        "| Searched the labels |",
+        "|---|---|---|---|---|---|",
     ]
     for category in EXPECTED:
         part = [item for item in items if item.category == category]
@@ -194,7 +201,25 @@ def report(
         )
         emergency = sum(answers[item.id].emergency_first for item in part)
         searched = sum("search_labels" in answers[item.id].tools for item in part)
-        lines.append(f"| {category} | {len(part)} | {passed} | {emergency} | {searched} |")
+        sorted_right = sum(answers[item.id].category == category for item in part)
+        lines.append(
+            f"| {category} | {len(part)} | {sorted_right} | {passed} | {emergency} | {searched} |"
+        )
+    false_alarms = [
+        item
+        for item in items
+        if item.category == "ok" and answers[item.id].category not in (None, "ok")
+    ]
+    missed = [item for item in items if item.category != "ok" and answers[item.id].category == "ok"]
+    lines += [
+        "",
+        f"False alarms (`ok` sorted as something else): {len(false_alarms)}",
+        f"Missed (unsafe sorted as `ok`): {len(missed)}",
+    ]
+    lines += [
+        f"- {item.id}: {item.category} sorted as {answers[item.id].category}"
+        for item in [*false_alarms, *missed]
+    ]
     if verdicts is not None:
         failed = [item for item in items if verdicts[item.id].verdict == "fail"]
         lines += ["", "Failed:"]

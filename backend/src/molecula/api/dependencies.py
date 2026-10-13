@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request
 
-from molecula.agent.agent import ChatAgent
+from molecula.guard.chat import GuardedChat
 from molecula.services.compounds import CompoundService
 from molecula.services.labels import LabelService
 from molecula.services.targets import TargetService
@@ -32,17 +32,17 @@ def label_service(request: Request) -> LabelService:
 LabelServiceDep = Annotated[LabelService, Depends(label_service)]
 
 
-def chat_agent(request: Request) -> ChatAgent:
-    """The app's chat agent, built at startup. Without a chat model or a label index there is
-    none, and the chat answers 503."""
-    agent: ChatAgent | None = request.app.state.chat_agent
-    if agent is None:
+def chat(request: Request) -> GuardedChat:
+    """The app's chat, the agent behind the guard, built at startup. Without a chat model or a
+    label index there is none, and the chat answers 503."""
+    guarded: GuardedChat | None = request.app.state.chat
+    if guarded is None:
         raise HTTPException(
             status_code=503,
             detail="Chat is off: the backend has no chat model configured or no label index "
             "built. The backend log at startup says which.",
         )
-    return agent
+    return guarded
 
 
-ChatAgentDep = Annotated[ChatAgent, Depends(chat_agent)]
+ChatDep = Annotated[GuardedChat, Depends(chat)]

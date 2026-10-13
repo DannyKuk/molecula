@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
-from molecula.api.dependencies import ChatAgentDep
+from molecula.api.dependencies import ChatDep
 from molecula.schemas.chat import ChatEvent, ChatRequest, ErrorEvent
 
 logger = logging.getLogger(__name__)
@@ -20,12 +20,12 @@ router = APIRouter()
         503: {"description": "Chat is off: no chat model or no label index"},
     },
 )
-async def chat(request: ChatRequest, agent: ChatAgentDep) -> StreamingResponse:
+async def chat(request: ChatRequest, guarded: ChatDep) -> StreamingResponse:
     """Answers the conversation's last message as server-sent events: each event's name is its
     `type` and its data the event as JSON (`schemas/chat.py`). The stream ends with `done` or
-    `error`."""
+    `error`; `done` says how the guard sorted the question."""
     return StreamingResponse(
-        server_sent(agent.stream(request.messages)),
+        server_sent(guarded.stream(request.messages)),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache"},
     )

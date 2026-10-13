@@ -12,6 +12,7 @@ from molecula import main
 from molecula.agent.agent import ChatAgent
 from molecula.agent.llm import LLMConfigError
 from molecula.config import Settings
+from molecula.guard.chat import GuardedChat
 from molecula.main import app
 from molecula.rag.embeddings import embedding_model_id
 from molecula.rag.filters import FilterExtractor
@@ -21,6 +22,7 @@ from molecula.store.compounds import CompoundStore, Synonym
 from molecula.store.db import connect
 from molecula.store.index import Chunk, IndexModelMismatch, LabelIndex
 from molecula.store.labels import LabelStore
+from molecula.store.sources import OPENFDA
 from molecula.store.structures import ComplexFiles, ConformerFiles
 from sse import server_sent_events
 from store_records import GLEEVEC, IMATINIB, IMATINIB_COMPLEX, compound_record
@@ -42,6 +44,7 @@ CHUNK = Chunk(
 )
 
 QUESTION = {"messages": [{"role": "user", "content": "How does imatinib work?"}]}
+DISCLAIMER = "Do not rely on openFDA to make decisions regarding medical care."
 
 
 @pytest.fixture
@@ -185,6 +188,7 @@ def test_startup_builds_the_label_search_over_a_matching_index(
         assert isinstance(app.state.label_retriever, LabelRetriever)
         assert isinstance(app.state.filter_extractor, FilterExtractor)
         assert isinstance(app.state.chat_agent, ChatAgent)
+        assert isinstance(app.state.chat, GuardedChat)
 
     assert loaded_models == ["chat", "embeddings"]
 
@@ -204,6 +208,7 @@ def test_without_a_chat_model_the_label_search_is_off_and_the_routes_still_work(
         assert app.state.label_retriever is None
         assert app.state.filter_extractor is None
         assert app.state.chat_agent is None
+        assert app.state.chat is None
 
     assert loaded_models == []
 
@@ -248,12 +253,14 @@ def test_chat_answers_from_the_stored_labels_offline(
         IMATINIB, [Synonym("imatinib", "name"), Synonym("Gleevec", "alias")], fetched
     )
     LabelStore(conn).save(5291, (GLEEVEC,), fetched)
+    LabelStore(conn).save_disclaimer(OPENFDA, DISCLAIMER, fetched)
     conn.close()
     LabelIndex(settings.index_dir).rebuild(
         [MECHANISM], [[1.0, 0.0, 0.0]], embedding_model_id(settings)
     )
     model = ScriptedChatModel(
         script=[
+            tool_call_message("SortedMessage", {"category": "ok"}),
             tool_call_message(
                 "search_labels",
                 {
@@ -286,4 +293,6 @@ def test_chat_answers_from_the_stored_labels_offline(
             "ref": 1,
         }
     ]
+    assert events["sources"]["disclaimer"] == DISCLAIMER
     assert events["done"]["step_limit_reached"] is False
+    assert events["done"]["category"] == "ok"
