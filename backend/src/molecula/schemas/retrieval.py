@@ -3,6 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
+from molecula.schemas.compounds import Resolution
 from molecula.schemas.labels import ProductType, SectionGroup
 
 
@@ -35,16 +36,16 @@ class DrugFilter(BaseModel):
 class LabelFilter(BaseModel):
     """What a label search is narrowed to, after checking the extracted query against the store.
 
-    `unsupported` holds named drugs that aren't in the store and `ignored_section_groups` the
-    extracted groups that don't exist; both are left out of the search. `extraction_error` says
-    why the model gave no usable query.
+    `unsupported` holds the resolutions of named drugs that aren't in the store, with their
+    suggestions, and `ignored_section_groups` the extracted groups that don't exist; both are
+    left out of the search. `extraction_error` says why the model gave no usable query.
     """
 
     model_config = ConfigDict(frozen=True)
 
     extracted: LabelQuery
     drugs: list[DrugFilter] = []
-    unsupported: list[str] = []
+    unsupported: list[Resolution] = []
     section_groups: list[SectionGroup] = []
     ignored_section_groups: list[str] = []
     product_type: ProductType | None = None

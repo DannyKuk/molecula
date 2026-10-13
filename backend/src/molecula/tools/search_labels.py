@@ -41,7 +41,7 @@ def search_labels_tool(
         """
         label_filter = extractor.filter_for(question, drug=drug, section=section)
         retrieval = retriever.retrieve(question, label_filter)
-        unsupported = [not_supported(compounds.resolve(name)) for name in label_filter.unsupported]
+        unsupported = [not_supported(resolution) for resolution in label_filter.unsupported]
         if unsupported and not label_filter.drugs:
             return LabelDrugsNotSupported(question=question, drugs=unsupported, retrieval=retrieval)
         return LabelPassages(

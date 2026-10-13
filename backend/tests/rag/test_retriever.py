@@ -7,6 +7,7 @@ import pytest
 from langchain_core.embeddings import Embeddings
 
 from molecula.rag.retriever import LabelRetriever
+from molecula.schemas.compounds import Resolution
 from molecula.schemas.labels import SectionGroup
 from molecula.schemas.retrieval import DrugFilter, LabelFilter, LabelQuery
 from molecula.store.index import Chunk, LabelIndex
@@ -85,7 +86,9 @@ def retriever(index: LabelIndex, top_k: int = 10, min_score: float = -1.0) -> La
 
 
 def label_filter(
-    drugs: list[DrugFilter] | None = None, unsupported: list[str] | None = None, **fields
+    drugs: list[DrugFilter] | None = None,
+    unsupported: list[Resolution] | None = None,
+    **fields,
 ) -> LabelFilter:
     return LabelFilter(
         extracted=LabelQuery(), drugs=drugs or [], unsupported=unsupported or [], **fields
@@ -93,6 +96,7 @@ def label_filter(
 
 
 IMATINIB = DrugFilter(name="Gleevec", cid=5291, generic="imatinib", set_ids=["gleevec"])
+CELEXA = Resolution(query="Celexa", status="not_supported")
 IBUPROFEN = DrugFilter(
     name="ibuprofen", cid=3672, generic="ibuprofen", set_ids=["ibuprofen-rx", "advil"]
 )
@@ -177,7 +181,7 @@ def test_the_product_type_alone_narrows_the_whole_index(index: LabelIndex) -> No
 
 
 def test_only_unsupported_drugs_find_nothing(index: LabelIndex) -> None:
-    retrieval = retriever(index).retrieve("nausea", label_filter(unsupported=["Celexa"]))
+    retrieval = retriever(index).retrieve("nausea", label_filter(unsupported=[CELEXA]))
 
     assert retrieval.chunks == [] and retrieval.dropped == []
 

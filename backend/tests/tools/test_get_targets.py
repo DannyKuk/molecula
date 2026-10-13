@@ -63,14 +63,6 @@ def test_unknown_name_is_not_supported_without_asking_for_targets(
     assert targets.asked == []
 
 
-def test_resolved_drug_the_target_service_doesnt_know_is_not_supported(
-    tool: StructuredTool,
-) -> None:
-    message = call_tool(tool, {"drug": "orphan"})
-
-    assert message.artifact == DrugNotSupported(query="orphan", suggestions=[])
-
-
 @pytest.mark.parametrize(
     ("args", "error"),
     [

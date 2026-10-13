@@ -20,8 +20,6 @@ from molecula.schemas.retrieval import (
 from molecula.schemas.targets import DrugTargets, Target
 
 FLUTICASONE_CID = 5311101
-# A compound whose targets the fake target service has lost, to test a resolve/targets mismatch.
-ORPHAN_CID = 999
 
 
 def compound(cid: int, name: str) -> Compound:
@@ -48,7 +46,6 @@ def compound(cid: int, name: str) -> Compound:
 IMATINIB = compound(5291, "imatinib")
 IBUPROFEN = compound(3672, "ibuprofen")
 FLUTICASONE = compound(FLUTICASONE_CID, "fluticasone")
-ORPHAN = compound(ORPHAN_CID, "orphan")
 ABL1 = Target(
     target_chembl_id="CHEMBL1862",
     name="Tyrosine-protein kinase ABL1",
@@ -75,7 +72,6 @@ class FakeCompoundService:
             "advil": (IBUPROFEN, "Advil", "alias"),
             "fluticasone": (FLUTICASONE, "fluticasone", "name"),
             "xhance": (FLUTICASONE, "Xhance", "brand"),
-            "orphan": (ORPHAN, "orphan", "name"),
         }
         self.suggestions = {"gleevek": [GLEEVEC_SUGGESTION]}
         self.resolved: list[str] = []

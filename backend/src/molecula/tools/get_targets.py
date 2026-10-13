@@ -23,16 +23,17 @@ def get_targets_tool(compounds: CompoundService, targets: TargetService) -> Stru
         say so and offer the suggestions, never pick one yourself.
         """
         resolution = compounds.resolve(drug)
-        if resolution.compound is None:
+        match = resolution.match
+        if match is None:
             return not_supported(resolution)
-        found = targets.get_targets(resolution.compound.cid)
-        if found is None:
-            return not_supported(resolution)
+        # Only a CID missing from the store has no DrugTargets, and this one was just resolved
+        # from the store.
+        found = targets.get_targets(match.compound.cid)
         return DrugTargetList(
             query=resolution.query,
-            cid=resolution.compound.cid,
-            name=resolution.compound.name,
-            targets=found.targets,
+            cid=match.compound.cid,
+            name=match.compound.name,
+            targets=found.targets if found else [],
         )
 
     return build_tool(get_targets, DrugArgs)

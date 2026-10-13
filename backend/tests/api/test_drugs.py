@@ -130,6 +130,20 @@ def test_resolve_finds_a_brand_and_is_not_taken_for_a_cid(client: TestClient) ->
     assert (body["status"], body["compound"]["cid"], body["match_kind"]) == ("found", 5291, "alias")
 
 
+@pytest.mark.parametrize("name", ["Gleevec", "Gleevek"])
+def test_resolve_answers_with_the_same_fields_found_or_not(client: TestClient, name: str) -> None:
+    response = client.get("/drugs/resolve", params={"name": name})
+
+    assert set(response.json()) == {
+        "query",
+        "status",
+        "compound",
+        "matched_alias",
+        "match_kind",
+        "suggestions",
+    }
+
+
 @pytest.mark.parametrize(
     "name", ["Vicodin", "Acetylsalicylsäure", "Co-trimoxazole (TMP+SMX)", "St. John's wort, 5"]
 )

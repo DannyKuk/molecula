@@ -4,6 +4,7 @@ from typing import Any
 import pytest
 from langchain_core.tools import StructuredTool
 
+from molecula.schemas.compounds import Resolution
 from molecula.schemas.retrieval import LabelFilter, LabelQuery
 from molecula.schemas.tools import (
     DrugNotSupported,
@@ -86,11 +87,14 @@ def test_the_agents_drug_and_section_reach_the_filter(
 
 
 def test_a_question_naming_only_unsupported_drugs_is_not_supported(
-    tool: StructuredTool, extractor: FakeFilterExtractor, retriever: FakeLabelRetriever
+    tool: StructuredTool, extractor: FakeFilterExtractor, compounds: FakeCompoundService
 ) -> None:
     question = "What are the side effects of Gleevek?"
     extractor.filters[question] = LabelFilter(
-        extracted=LabelQuery(substances=["Gleevek"]), unsupported=["Gleevek"]
+        extracted=LabelQuery(substances=["Gleevek"]),
+        unsupported=[
+            Resolution(query="Gleevek", status="not_supported", suggestions=[GLEEVEC_SUGGESTION])
+        ],
     )
 
     message = call_tool(tool, {"question": question})
@@ -103,19 +107,23 @@ def test_a_question_naming_only_unsupported_drugs_is_not_supported(
     )
     assert message.artifact.retrieval.chunks == []
     assert IMATINIB_SIDE_EFFECTS.text not in str(message.content)
+    assert compounds.resolved == []
 
 
 def test_an_unsupported_drug_beside_a_supported_one_is_listed_with_the_passages(
-    tool: StructuredTool, extractor: FakeFilterExtractor
+    tool: StructuredTool, extractor: FakeFilterExtractor, compounds: FakeCompoundService
 ) -> None:
     question = "Can I take Gleevec with Celexa?"
-    extractor.filters[question] = GLEEVEC_FILTER.model_copy(update={"unsupported": ["Celexa"]})
+    extractor.filters[question] = GLEEVEC_FILTER.model_copy(
+        update={"unsupported": [Resolution(query="Celexa", status="not_supported")]}
+    )
 
     message = call_tool(tool, {"question": question})
 
     assert isinstance(message.artifact, LabelPassages)
     assert message.artifact.unsupported == [DrugNotSupported(query="Celexa", suggestions=[])]
     assert message.artifact.passages == [IMATINIB_SIDE_EFFECTS]
+    assert compounds.resolved == []
 
 
 def test_a_supported_drug_without_a_label_finds_nothing_and_says_so(

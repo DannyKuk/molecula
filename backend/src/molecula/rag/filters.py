@@ -5,7 +5,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from molecula import prompts
-from molecula.schemas.compounds import Compound
+from molecula.schemas.compounds import Compound, Resolution
 from molecula.schemas.labels import Label, ProductType, SectionGroup
 from molecula.schemas.retrieval import DrugFilter, LabelFilter, LabelQuery
 from molecula.services.compounds import CompoundService
@@ -59,13 +59,14 @@ class FilterExtractor:
         """`query` checked against the store: drug names resolved to supported drugs and their
         labels, unknown section groups set aside."""
         drugs: dict[int, DrugFilter] = {}
-        unsupported: list[str] = []
+        unsupported: list[Resolution] = []
         for name in query.substances:
             if not name.strip():
                 continue
-            drug = self._drug_filter(name, query.product_type)
+            resolution = self._compounds.resolve(name)
+            drug = self._drug_filter(name, resolution, query.product_type)
             if drug is None:
-                unsupported.append(name)
+                unsupported.append(resolution)
             elif drug.cid in drugs:
                 drugs[drug.cid] = merged(drugs[drug.cid], drug)
             else:
@@ -80,15 +81,17 @@ class FilterExtractor:
             product_type=query.product_type,
         )
 
-    def _drug_filter(self, name: str, product_type: ProductType | None) -> DrugFilter | None:
-        resolution = self._compounds.resolve(name)
-        compound = resolution.compound or self._drug_inside(name)
+    def _drug_filter(
+        self, name: str, resolution: Resolution, product_type: ProductType | None
+    ) -> DrugFilter | None:
+        match = resolution.match
+        compound = match.compound if match else self._drug_inside(name)
         if compound is None:
             return None
         drug_labels = self._labels.get_labels(compound.cid)
         all_labels = drug_labels.labels if drug_labels else []
         labels = all_labels
-        if resolution.match_kind != "name":
+        if match is None or match.kind != "name":
             labels = narrowed(labels, lambda label: is_brand_of(name, label, compound.name))
         if product_type:
             labels = narrowed(labels, lambda label: label.product_type == product_type)
