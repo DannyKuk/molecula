@@ -35,13 +35,18 @@ cp .env.example .env              # fill in what you need; every key is optional
 docker compose up --build         # frontend on http://localhost:3000, backend on http://localhost:8000/health
 ```
 
-Backend development needs [uv](https://docs.astral.sh/uv/):
+### Without Docker
+
+The backend needs [uv](https://docs.astral.sh/uv/) and runs on the CPU; it reads `.env` from the repo root and the store from `data/`.
 
 ```
 cd backend
 uv sync
+uv run uvicorn molecula.main:app --reload   # http://localhost:8000, restarts when the code changes
 uv run ruff check . && uv run ruff format --check . && uv run pytest
 ```
+
+For a local chat model, set `LOCAL_LLM_BASE_URL` and `LOCAL_LLM_MODEL` in `.env`, e.g. `http://localhost:1234/v1` and `openai/gpt-oss-20b` for LM Studio, or `http://localhost:11434/v1` for Ollama. A backend in Docker can't reach the host as `localhost` and needs `http://host.docker.internal:1234/v1` instead. Running the embedding model on an NVIDIA or AMD GPU is [#90](https://github.com/DannyKuk/molecula/issues/90).
 
 Frontend development needs Node.js 22. The dev server expects the backend on http://localhost:8000; set `NEXT_PUBLIC_API_URL` to point it elsewhere.
 
