@@ -26,6 +26,7 @@ from tool_fakes import (
     IMATINIB,
     IMATINIB_LOW_SCORE,
     IMATINIB_SIDE_EFFECTS,
+    FakeComplexService,
     FakeCompoundService,
     FakeFilterExtractor,
     FakeLabelRetriever,
@@ -62,6 +63,7 @@ def agent(
     tools = build_tools(
         FakeCompoundService(),
         FakeTargetService(),
+        FakeComplexService(),
         extractor or FakeFilterExtractor(),
         retriever or FakeLabelRetriever(),
     )

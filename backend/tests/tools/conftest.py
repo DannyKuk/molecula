@@ -1,6 +1,7 @@
 import pytest
 
 from tool_fakes import (
+    FakeComplexService,
     FakeCompoundService,
     FakeFilterExtractor,
     FakeLabelRetriever,
@@ -16,6 +17,11 @@ def compounds() -> FakeCompoundService:
 @pytest.fixture
 def targets() -> FakeTargetService:
     return FakeTargetService()
+
+
+@pytest.fixture
+def complexes() -> FakeComplexService:
+    return FakeComplexService()
 
 
 @pytest.fixture

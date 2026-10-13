@@ -296,3 +296,44 @@ def test_chat_answers_from_the_stored_labels_offline(
     assert events["sources"]["disclaimer"] == DISCLAIMER
     assert events["done"]["step_limit_reached"] is False
     assert events["done"]["category"] == "ok"
+
+
+def test_chat_describes_the_stored_complex_offline(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "offline", True)
+    conn = connect(settings.db_path)
+    CompoundStore(conn).save(IMATINIB, [Synonym("imatinib", "name")], datetime.now(UTC))
+    conn.close()
+    stored = IMATINIB_COMPLEX.model_copy(update={"target": "ABL1", "organism": "Homo sapiens"})
+    ComplexFiles(settings.complexes_dir).write(5291, stored.model_dump_json())
+    LabelIndex(settings.index_dir).rebuild(
+        [MECHANISM], [[1.0, 0.0, 0.0]], embedding_model_id(settings)
+    )
+    model = ScriptedChatModel(
+        script=[
+            tool_call_message("SortedMessage", {"category": "ok"}),
+            tool_call_message("get_complex", {"drug": "imatinib"}),
+            answer_message("The 3D view shows imatinib in ABL1."),
+        ]
+    )
+    monkeypatch.setattr(main, "get_embeddings", lambda settings: UnitEmbeddings())
+    monkeypatch.setattr(main, "get_chat_model", lambda settings: model)
+
+    with TestClient(app) as client:
+        response = client.post("/chat", json=QUESTION)
+
+    events = dict(server_sent_events(response.text))
+    result = events["tool_result"]["result"]
+    assert (result["status"], result["pdb_id"], result["target"]) == ("found", "2HYY", "ABL1")
+    assert events["sources"]["sources"] == [
+        {
+            "kind": "rcsb",
+            "name": "2HYY",
+            "url": "https://www.rcsb.org/structure/2HYY",
+            "section": None,
+            "effective_time": None,
+            "ref": None,
+        }
+    ]
+    assert events["sources"]["disclaimer"] is None

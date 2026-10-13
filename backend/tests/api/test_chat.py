@@ -23,6 +23,7 @@ from molecula.schemas.chat import (
 )
 from sse import server_sent_events
 from tool_fakes import (
+    FakeComplexService,
     FakeCompoundService,
     FakeFilterExtractor,
     FakeLabelRetriever,
@@ -36,7 +37,11 @@ def agent(script: list[Any], check: FakeCheck | None = None) -> GuardedChat:
     """The scripted agent behind a guard that lets every message through, or sorts it with
     `check`."""
     tools = build_tools(
-        FakeCompoundService(), FakeTargetService(), FakeFilterExtractor(), FakeLabelRetriever()
+        FakeCompoundService(),
+        FakeTargetService(),
+        FakeComplexService(),
+        FakeFilterExtractor(),
+        FakeLabelRetriever(),
     )
     chat_agent = ChatAgent(ScriptedChatModel(script=script), tools, max_steps=5, timeout_seconds=10)
     return GuardedChat(check or FakeCheck(), chat_agent, timeout_seconds=5)

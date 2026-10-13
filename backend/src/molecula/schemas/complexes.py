@@ -7,6 +7,8 @@ type SecondaryStructure = Literal["helix", "sheet", "coil"]
 type BondOrder = Literal["single", "double", "triple", "aromatic"]
 type ContactKind = Literal["hbond", "contact"]
 
+RCSB_ENTRY_URL = "https://www.rcsb.org/structure/{pdb_id}"
+
 
 class Residue(BaseModel):
     """A polymer residue, named as the depositor numbered it (author chain and residue number)."""
@@ -83,8 +85,10 @@ class Complex(BaseModel):
     """One drug-target complex, ready for the 3D viewer: coordinates in Å from the PDB entry,
     heavy atoms only.
 
-    `caption` is shown with the structure when it isn't simply the drug in its main target;
-    `showcase` marks the cleanest complexes, for the landing page and demos.
+    `target` (gene symbols, as ChEMBL names the target) and `organism` say what the drug is bound
+    to, from the reviewed entry in `data/hero_set.yaml`. `caption` is shown with the structure
+    when it isn't simply the drug in its main target; `showcase` marks the cleanest complexes,
+    for the landing page and demos.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -94,5 +98,11 @@ class Complex(BaseModel):
     trace: list[TraceResidue]
     pocket: list[PocketResidue]
     contacts: list[Contact]
+    target: str | None = None
+    organism: str | None = None
     caption: str | None = None
     showcase: bool = False
+
+    @property
+    def source_url(self) -> str:
+        return RCSB_ENTRY_URL.format(pdb_id=self.pdb_id)
