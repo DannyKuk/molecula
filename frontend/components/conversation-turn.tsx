@@ -1,20 +1,27 @@
 import type { Turn } from "@/lib/chat-turn";
+import { didYouMeanOf } from "@/lib/did-you-mean";
 import { structuresOf } from "@/lib/tool-cards";
 
 import { AnswerMarkdown } from "./answer-markdown";
 import { AnswerSources } from "./answer-sources";
+import { DidYouMeanButtons } from "./did-you-mean";
 import { ProgressSteps } from "./progress-steps";
 import { StructurePanel } from "./structure/structure-panel";
 
 type ConversationTurnProps = {
   turn: Turn;
+  /** Asks a new question, from a suggested name for one the tools didn't find. */
+  onAsk: (question: string) => void;
+  /** Whether any turn's answer is still coming in. */
+  chatAnswering: boolean;
   /** Set on the latest turn only, when it failed. */
   onRetry?: () => void;
 };
 
 /** One question, the steps taken for it and the answer as far as it has arrived. */
-export function ConversationTurn({ turn, onRetry }: ConversationTurnProps) {
+export function ConversationTurn({ turn, onAsk, chatAnswering, onRetry }: ConversationTurnProps) {
   const answering = turn.state === "answering";
+  const offers = answering ? [] : didYouMeanOf(turn.question, turn.steps);
   return (
     <li data-turn className="flex flex-col gap-3">
       <p className="max-w-[85%] self-end rounded-2xl bg-zinc-100 px-4 py-2 break-words whitespace-pre-wrap dark:bg-zinc-900">
@@ -37,6 +44,9 @@ export function ConversationTurn({ turn, onRetry }: ConversationTurnProps) {
         />
       )}
       {turn.sources && <AnswerSources answer={turn.answer} sources={turn.sources} />}
+      {offers.length > 0 && (
+        <DidYouMeanButtons offers={offers} onAsk={onAsk} disabled={chatAnswering} />
+      )}
       {turn.state === "stopped" && (
         <p className="text-sm text-zinc-600 dark:text-zinc-400">Stopped.</p>
       )}
