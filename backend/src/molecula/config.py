@@ -68,6 +68,14 @@ class Settings(BaseSettings):
         return self.build_dir / "structures" / "compounds"
 
     @property
+    def complexes_dir(self) -> Path:
+        return self.build_dir / "structures" / "complexes"
+
+    @property
+    def hero_set_path(self) -> Path:
+        return self.data_dir / "hero_set.yaml"
+
+    @property
     def index_dir(self) -> Path:
         return self.build_dir / "index" / "chroma"
 

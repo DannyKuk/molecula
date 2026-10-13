@@ -16,13 +16,14 @@ from molecula.main import app
 from molecula.rag.embeddings import embedding_model_id
 from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
+from molecula.sources.http import SourceClient
 from molecula.store.compounds import CompoundStore, Synonym
 from molecula.store.db import connect
 from molecula.store.index import Chunk, IndexModelMismatch, LabelIndex
 from molecula.store.labels import LabelStore
-from molecula.store.structures import ConformerFiles
+from molecula.store.structures import ComplexFiles, ConformerFiles
 from sse import server_sent_events
-from store_records import GLEEVEC, IMATINIB
+from store_records import GLEEVEC, IMATINIB, IMATINIB_COMPLEX, compound_record
 
 SDF = "5291\n  stored conformer\n$$$$\n"
 CHUNK = Chunk(
@@ -98,6 +99,28 @@ def test_routes_serve_the_built_store(settings: Settings) -> None:
     assert structure.text == SDF
     assert targets == {"cid": 5291, "targets": []}
     assert labels == {"cid": 5291, "labels": [], "disclaimer": None}
+
+
+def test_only_hero_drugs_have_a_complex_also_when_online(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    conn = connect(settings.db_path)
+    for record in (IMATINIB, compound_record(3672, "ibuprofen")):
+        CompoundStore(conn).save(record, [], datetime(2026, 10, 13, tzinfo=UTC))
+    conn.close()
+    ComplexFiles(settings.complexes_dir).write(5291, IMATINIB_COMPLEX.model_dump_json())
+
+    def no_fetch(*args: object, **kwargs: object) -> None:
+        raise AssertionError("a source was called")
+
+    monkeypatch.setattr(SourceClient, "get", no_fetch)
+
+    with TestClient(app) as client:
+        complexes = client.app.state.complex_service
+
+        assert not settings.offline
+        assert complexes.get_complex(5291) == IMATINIB_COMPLEX
+        assert complexes.get_complex(3672) is None
 
 
 @pytest.mark.parametrize(("cutoff", "suggested"), [(0.8, ["Gleevec"]), (0.9, [])])

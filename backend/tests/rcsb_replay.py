@@ -10,15 +10,27 @@ recorded on 2026-10-12 for 2KI5, HSV-1 thymidine kinase, whose lineage names the
 "Herpes simplex virus 1". The 1IEP mmCIF and the STI chem-comp were recorded on 2026-10-13 for the
 complex processing (`tests/ingest/test_complexes.py`).
 
+The hero entries with a special case (`CROPPED`) were recorded on 2026-10-13 too, with their
+ligands' chem-comps. Whole they are up to 13 MB, so each `{pdb}_cropped.cif` keeps only `_entry`
+and the `atom_site` rows of model 1 of every residue with an atom within 10 Å of the hero ligand
+copy, written with biotite's `CIFFile`. On each one `build_complex` gives the same pocket, contacts
+and ligand as on the whole entry.
+
 Search and GraphQL requests are POSTs to one URL, so they are told apart by their JSON body:
 `describe` turns a request into a short readable key. The ibuprofen InChIKey search answered
 HTTP 204 with an empty body, so it has no fixture file.
 """
 
 import json
+from contextlib import closing
 from pathlib import Path
 
 import httpx2
+
+from molecula.sources.http import SourceClient
+from molecula.sources.rcsb import RcsbClient
+from molecula.store.db import connect
+from molecula.store.http_cache import HttpCache
 
 FIXTURES = Path(__file__).parent / "fixtures" / "rcsb"
 IMATINIB_INCHIKEY = "KTUFNOKKBVMGRW-UHFFFAOYSA-N"
@@ -27,6 +39,15 @@ ACETAMINOPHEN_INCHIKEY = "RZVAJINKPMORJF-UHFFFAOYSA-N"
 RALTEGRAVIR_INCHIKEY = "CZFFBEXEKNGXKS-UHFFFAOYSA-N"
 DOLUTEGRAVIR_INCHIKEY = "RHWKPHLQXYSBKR-BMIGLBTASA-N"
 IBUPROFEN_SMILES = "CC(C)CC1=CC=C(C=C1)C(C)C(=O)O"
+# PDB ID -> ligand code of the hero entry, recorded cropped.
+CROPPED = {
+    "8E42": "ZIT",
+    "3N8Y": "SAL",
+    "9EAI": "LSN",
+    "3B7E": "ZMR",
+    "9C9M": "DLU",
+    "1HWK": "117",
+}
 
 
 def recorded_entries(code: str) -> list[str]:
@@ -52,6 +73,11 @@ DLU_ENTRY_DETAILS = f"graphql entries {','.join(recorded_entries('DLU'))}"
 AC2_ENTRY_DETAILS = f"graphql entries {','.join(recorded_entries('AC2'))}"
 
 RECORDED: dict[str, tuple[int, str | None]] = {
+    **{f"GET /download/{pdb}.cif": (200, f"{pdb}_cropped.cif") for pdb in CROPPED},
+    **{
+        f"GET /rest/v1/core/chemcomp/{code}": (200, f"chemcomp_{code}.json")
+        for code in CROPPED.values()
+    },
     INCHIKEY_SEARCH.format(IMATINIB_INCHIKEY): (200, "search_inchikey_imatinib.json"),
     INCHIKEY_SEARCH.format(IBUPROFEN_INCHIKEY): (204, None),
     RELAXED_STEREO_SEARCH.format(IBUPROFEN_SMILES): (
@@ -78,6 +104,24 @@ RECORDED: dict[str, tuple[int, str | None]] = {
     LIGAND_SEARCH.format("AC2"): (200, "search_entries_AC2.json"),
     AC2_ENTRY_DETAILS: (200, "graphql_entries_AC2.json"),
 }
+
+
+def recorded_structure(pdb_id: str) -> str:
+    name = f"{pdb_id}_cropped.cif" if pdb_id in CROPPED else f"{pdb_id}.cif"
+    return (FIXTURES / name).read_text(encoding="utf-8")
+
+
+def recorded_smiles(code: str) -> str:
+    """The SMILES `RcsbClient.ligand_smiles` reads from the recorded chem-comp."""
+    with (
+        closing(connect(Path(":memory:"))) as conn,
+        closing(
+            SourceClient(HttpCache(conn), offline=False, transport=httpx2.MockTransport(Replay()))
+        ) as http,
+    ):
+        smiles = RcsbClient(http).ligand_smiles(code)
+    assert smiles is not None
+    return smiles
 
 
 def describe(request: httpx2.Request) -> str:

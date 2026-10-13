@@ -16,6 +16,7 @@ from molecula.config import Settings, get_settings
 from molecula.rag.embeddings import embedding_model_id, get_embeddings
 from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
+from molecula.services.complexes import ComplexService
 from molecula.services.compounds import CompoundService
 from molecula.services.labels import LabelService
 from molecula.services.targets import TargetService
@@ -23,7 +24,7 @@ from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
 from molecula.store.index import LabelIndex
 from molecula.store.labels import LabelStore
-from molecula.store.structures import ConformerFiles
+from molecula.store.structures import ComplexFiles, ConformerFiles
 from molecula.store.targets import TargetStore
 
 logger = logging.getLogger(__name__)
@@ -80,6 +81,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     )
     app.state.target_service = TargetService(TargetStore(conn), compounds)
     app.state.label_service = LabelService(LabelStore(conn), compounds)
+    app.state.complex_service = ComplexService(ComplexFiles(settings.complexes_dir))
     app.state.label_retriever = None
     app.state.filter_extractor = None
     app.state.chat_agent = None

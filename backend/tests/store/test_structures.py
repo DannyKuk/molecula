@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from molecula.store.structures import ConformerFiles
+from molecula.store.structures import ComplexFiles, ConformerFiles
 
 SDF = "2519\n  RDKit          3D\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n$$$$\n"
 
@@ -52,3 +52,16 @@ def test_prune_deletes_the_conformers_not_kept(tmp_path: Path) -> None:
 
 def test_prune_without_a_conformer_folder_removes_nothing(tmp_path: Path) -> None:
     assert ConformerFiles(tmp_path / "missing").prune(set()) == []
+
+
+def test_complexes_are_json_files_and_prune_leaves_other_files(tmp_path: Path) -> None:
+    files = ComplexFiles(tmp_path)
+    files.write(5291, "{}")
+    files.write(2244, "{}")
+    ConformerFiles(tmp_path).write(2244, SDF)
+
+    removed = files.prune({5291})
+
+    assert files.path(5291).name == "5291.json"
+    assert removed == [2244]
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["2244.sdf", "5291.json"]
