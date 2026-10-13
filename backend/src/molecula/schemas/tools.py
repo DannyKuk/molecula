@@ -10,7 +10,7 @@ from molecula.schemas.targets import Target
 
 MIN_COMPARED_DRUGS = 2
 MAX_COMPARED_DRUGS = 4
-MAX_QUESTION_LENGTH = 500
+MAX_SEARCH_QUESTION_LENGTH = 500
 
 
 class ResolveDrugArgs(BaseModel):
@@ -29,7 +29,10 @@ class CompareDrugsArgs(BaseModel):
 
 class SearchLabelsArgs(BaseModel):
     question: Annotated[
-        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_QUESTION_LENGTH)
+        str,
+        StringConstraints(
+            strip_whitespace=True, min_length=1, max_length=MAX_SEARCH_QUESTION_LENGTH
+        ),
     ]
     drug: DrugName | None = None
     section: SectionGroup | None = None

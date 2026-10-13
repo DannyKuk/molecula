@@ -24,7 +24,7 @@ def json_example(example: Any) -> dict[str, Any]:
     return {"content": {"application/json": {"example": example}}}
 
 
-def not_supported(cid: int) -> HTTPException:
+def unsupported_cid(cid: int) -> HTTPException:
     return HTTPException(status_code=404, detail=f"CID {cid} is not a supported drug.")
 
 
@@ -82,7 +82,7 @@ def get_drug(cid: CidParam, service: CompoundServiceDep) -> Compound:
     """A supported drug with the properties PubChem reports."""
     compound = service.get_compound(cid)
     if compound is None:
-        raise not_supported(cid)
+        raise unsupported_cid(cid)
     return compound
 
 
@@ -105,7 +105,7 @@ def get_drug_structure(cid: CidParam, service: CompoundServiceDep) -> SdfRespons
     """The drug's 3D conformer as an SDF file, from PubChem or computed with RDKit."""
     compound = service.get_compound(cid)
     if compound is None:
-        raise not_supported(cid)
+        raise unsupported_cid(cid)
     structure = service.get_structure(cid)
     if structure is None:
         raise HTTPException(status_code=404, detail=f"{compound.name} has no 3D structure.")
@@ -121,7 +121,7 @@ def get_drug_targets(cid: CidParam, service: TargetServiceDep) -> DrugTargets:
     ChEMBL lists no mechanism for has an empty list."""
     targets = service.get_targets(cid)
     if targets is None:
-        raise not_supported(cid)
+        raise unsupported_cid(cid)
     return targets
 
 
@@ -137,5 +137,5 @@ def get_drug_labels(cid: CidParam, service: LabelServiceDep) -> DrugLabels:
     openFDA disclaimer. A supported drug without a US label has an empty list."""
     labels = service.get_labels(cid)
     if labels is None:
-        raise not_supported(cid)
+        raise unsupported_cid(cid)
     return labels
