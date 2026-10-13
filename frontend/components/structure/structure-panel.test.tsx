@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useImperativeHandle } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { API_URL } from "@/lib/api";
 import { SMALL_COMPLEX } from "@/lib/test-complexes";
@@ -18,17 +18,43 @@ vi.mock("./structure-viewer", () => ({
     data,
     mode,
     label,
+    onError,
     ref,
   }: {
     data: { kind: string };
     mode: string;
     label: string;
+    onError: () => void;
     ref?: React.Ref<StructureViewerHandle>;
   }) => {
     useImperativeHandle(ref, () => ({ replay, reset: vi.fn() }));
-    return <div role="img" aria-label={label} data-kind={data.kind} data-mode={mode} />;
+    return (
+      <div role="img" aria-label={label} data-kind={data.kind} data-mode={mode}>
+        <button type="button" onClick={onError}>
+          Lose WebGL
+        </button>
+      </div>
+    );
   },
 }));
+
+let reducedMotion = false;
+
+// Defined for the whole file, not per test: effects still running after a test ends read it.
+beforeAll(() => {
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    value: (query: string) => ({
+      matches: query === "(prefers-reduced-motion: reduce)" && reducedMotion,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }),
+  });
+});
+
+beforeEach(() => {
+  reducedMotion = false;
+});
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -93,7 +119,11 @@ describe("StructurePanel", () => {
     stubFetch(Response.json({ detail: "insulin glargine has no 3D structure." }, { status: 404 }));
     render(<StructurePanel target={{ cid: 118984454, name: "insulin glargine", complex: null }} />);
 
-    expect(await screen.findByText("No 3D model of insulin glargine")).toBeDefined();
+    expect(
+      await screen.findByText(
+        "No 3D model: Molecula has them for small-molecule drugs only, and insulin glargine is too large.",
+      ),
+    ).toBeDefined();
     expect(screen.queryByText(/the molecule alone/)).toBeNull();
     expect(screen.queryByRole("img")).toBeNull();
     expect(screen.queryByRole("button", { name: "Full screen" })).toBeNull();
@@ -110,6 +140,33 @@ describe("StructurePanel", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("treats a missing complex as a failure, not as a drug without 3D", async () => {
+    stubFetch(Response.json({ detail: "imatinib has no reviewed complex." }, { status: 404 }));
+    render(<StructurePanel target={imatinib} />);
+
+    expect(await screen.findByRole("alert")).toBeDefined();
+    expect(screen.queryByText(/No 3D model/)).toBeNull();
+  });
+
+  it("says the structure couldn't be loaded when the view can't be drawn", async () => {
+    stubFetch(Response.json(SMALL_COMPLEX));
+    render(<StructurePanel target={imatinib} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Lose WebGL" }));
+
+    expect(screen.getByRole("alert").textContent).toContain("couldn't be loaded");
+    expect(screen.queryByRole("img")).toBeNull();
+  });
+
+  it("offers no binding replay when the system asks for reduced motion", async () => {
+    reducedMotion = true;
+    stubFetch(Response.json(SMALL_COMPLEX));
+    render(<StructurePanel target={imatinib} />);
+
+    expect(await screen.findByRole("button", { name: "Reset view" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Replay binding" })).toBeNull();
+  });
+
   it("puts a stand-in structure's caption above the view", async () => {
     stubFetch(Response.json(SMALL_COMPLEX));
     render(
@@ -118,7 +175,8 @@ describe("StructurePanel", () => {
       />,
     );
 
-    expect(await screen.findByText(METFORMIN_COMPLEX.caption)).toBeDefined();
+    expect(await screen.findByRole("img")).toBeDefined();
+    expect(screen.getByText(METFORMIN_COMPLEX.caption)).toBeDefined();
     expect(screen.getByText("PDB 8ZSQ · Sus scrofa · 0 hydrogen bonds")).toBeDefined();
   });
 
@@ -131,6 +189,7 @@ describe("StructurePanel", () => {
 
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByRole("img").dataset.mode).toBe("protein");
+    expect(within(dialog).getByRole("button", { name: "Replay binding" })).toBeDefined();
     await waitFor(() => expect(screen.getAllByRole("img", { hidden: true })).toHaveLength(2));
   });
 });

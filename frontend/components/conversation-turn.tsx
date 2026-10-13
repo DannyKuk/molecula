@@ -21,6 +21,10 @@ export function ConversationTurn({ turn, onRetry }: ConversationTurnProps) {
         {turn.question}
       </p>
       <ProgressSteps steps={turn.steps} live={answering} answer={turn.answer} />
+      {/* Above the answer, so the streaming text doesn't push the 3D view off screen. */}
+      {structuresOf(turn.steps).map((target) => (
+        <StructurePanel key={target.cid} target={target} />
+      ))}
       {answering && turn.steps.length === 0 && !turn.answer && (
         <p role="status" className="text-sm text-zinc-600 dark:text-zinc-400">
           Thinking…
@@ -35,9 +39,6 @@ export function ConversationTurn({ turn, onRetry }: ConversationTurnProps) {
       {turn.sources && (
         <AnswerSources answer={turn.answer} sources={turn.sources} disclaimer={turn.disclaimer} />
       )}
-      {structuresOf(turn.steps).map((target) => (
-        <StructurePanel key={target.cid} target={target} />
-      ))}
       {turn.state === "stopped" && (
         <p className="text-sm text-zinc-600 dark:text-zinc-400">Stopped.</p>
       )}

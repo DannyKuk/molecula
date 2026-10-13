@@ -37,6 +37,7 @@ function fakeThreeDmol() {
       view = next;
     }),
     spin: vi.fn(),
+    setSlab: vi.fn(),
     render: vi.fn(),
     resize: vi.fn(),
     clear: vi.fn(),
@@ -84,7 +85,7 @@ describe("createScene", () => {
 
     expect(viewer.addCylinder).toHaveBeenCalledTimes(2);
     expect(viewer.addLabel.mock.calls.map(([label]) => label)).toEqual(["Glu2", "Thr7A"]);
-    expect(viewer.spin).toHaveBeenLastCalledWith("y", expect.any(Number), true);
+    expect(viewer.spin).toHaveBeenLastCalledWith("y", expect.any(Number));
   });
 
   it("shows the drug alone in Molecule mode", () => {
@@ -141,32 +142,67 @@ describe("createScene", () => {
     scene.replay();
 
     expect(frames).toHaveLength(0);
-    expect(viewer.spin).not.toHaveBeenCalledWith("y", expect.anything(), true);
+    expect(viewer.spin).not.toHaveBeenCalledWith("y", expect.anything());
     expect(viewer.addCylinder).toHaveBeenCalledTimes(4);
   });
 
-  it("draws a molecule from its SDF and frees the canvas when closed", () => {
+  it("draws a molecule in a box of its own and removes the box when closed", () => {
     const { lib, viewer } = fakeThreeDmol();
     const element = document.createElement("div");
-    element.append(document.createElement("canvas"));
     const scene = createScene(lib, element, { kind: "molecule", sdf: "1983\n$$$$\n" }, options);
 
     expect(viewer.addModel).toHaveBeenCalledWith("1983\n$$$$\n", "sdf");
+    expect(lib.createViewer).toHaveBeenCalledWith(element.firstChild, expect.anything());
 
     scene.dispose();
 
     expect(viewer.clear).toHaveBeenCalled();
-    expect(element.querySelector("canvas")).toBeNull();
+    expect(element.childElementCount).toBe(0);
   });
 
-  it("stops turning when the user grabs the view", () => {
+  it("stops turning when the user grabs the view, until Reset", () => {
     const { lib, viewer } = fakeThreeDmol();
     const element = document.createElement("div");
-    createScene(lib, element, { kind: "molecule", sdf: "1983\n$$$$\n" }, options);
+    const scene = createScene(lib, element, { kind: "molecule", sdf: "1983\n$$$$\n" }, options);
 
-    element.dispatchEvent(new Event("pointerdown"));
-
+    element.firstChild!.dispatchEvent(new Event("pointerdown"));
     expect(viewer.spin).toHaveBeenLastCalledWith(false);
+
+    scene.reset();
+    expect(viewer.spin).toHaveBeenLastCalledWith("y", expect.any(Number));
+  });
+
+  it("stops turning while off screen", () => {
+    const { lib, viewer } = fakeThreeDmol();
+    const element = document.createElement("div");
+    const scene = createScene(lib, element, { kind: "molecule", sdf: "1983\n$$$$\n" }, options);
+
+    scene.setOnScreen(false);
+    expect(viewer.spin).toHaveBeenLastCalledWith(false);
+
+    scene.setOnScreen(true);
+    expect(viewer.spin).toHaveBeenLastCalledWith("y", expect.any(Number));
+  });
+
+  it("leaves the camera alone once the user grabs the view during the binding", () => {
+    const { lib, viewer } = fakeThreeDmol();
+    const element = document.createElement("div");
+    const scene = createScene(
+      lib,
+      element,
+      { kind: "complex", complex: SMALL_COMPLEX },
+      { ...options, mode: "molecule" },
+    );
+    scene.setMode("site", true);
+    frames.shift()!(performance.now());
+    const cameraMoves = viewer.setView.mock.calls.length;
+
+    element.firstChild!.dispatchEvent(new Event("pointerdown"));
+    runFrames(100);
+
+    expect(viewer.setView.mock.calls.length).toBe(cameraMoves);
+    expect(viewer.spin).toHaveBeenLastCalledWith(false);
+    expect(viewer.addCylinder).toHaveBeenCalledTimes(2);
   });
 });
 

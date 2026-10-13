@@ -28,6 +28,8 @@ export type Scene = {
   /** Plays the binding again, or for a molecule just recenters it. */
   replay(): void;
   reset(): void;
+  /** A view scrolled off screen stops turning, so the views further up the chat cost nothing. */
+  setOnScreen(onScreen: boolean): void;
   resize(): void;
   dispose(): void;
 };
@@ -43,6 +45,12 @@ const DOCK_MS = 2600;
 // The camera holds the Molecule zoom while the drug travels and only pulls back once it is close.
 const ZOOM_OUT_FROM = 0.55;
 const SPIN_SPEED = 0.25;
+// Wider than any stored complex: `zoomTo` on the drug would otherwise clip the protein around it.
+const SLAB = 500;
+
+/** The slow turn: on once the view is settled, held while it is off screen, and stopped for good
+ * when the user grabs the view, until Reset or Replay. */
+type Turning = { start(): void; stop(): void; release(): void; grabbed(): boolean };
 
 /** Builds the 3D view in `element`, which must already have its size. */
 export function createScene(
@@ -51,22 +59,53 @@ export function createScene(
   data: SceneData,
   options: SceneOptions,
 ): Scene {
-  const viewer = lib.createViewer(element, { backgroundAlpha: 0, antialias: true });
-  const startSpin = () => {
-    if (!options.reduceMotion) viewer.spin("y", SPIN_SPEED, true);
+  // Each scene draws into its own box: 3Dmol keeps listeners on its container after `clear()`, and
+  // a disposed viewer would otherwise take over the next scene's canvas.
+  const box = document.createElement("div");
+  box.style.cssText = "position: absolute; inset: 0;";
+  element.append(box);
+  const viewer = lib.createViewer(box, { backgroundAlpha: 0, antialias: true });
+  let wanted = false;
+  let onScreen = true;
+  let grabbed = false;
+  const apply = () => {
+    if (wanted && onScreen && !grabbed && !options.reduceMotion) viewer.spin("y", SPIN_SPEED);
+    else viewer.spin(false);
   };
-  const stopSpin = () => viewer.spin(false);
-  element.addEventListener("pointerdown", stopSpin);
+  const turning: Turning = {
+    start: () => {
+      wanted = true;
+      apply();
+    },
+    stop: () => {
+      wanted = false;
+      apply();
+    },
+    release: () => {
+      grabbed = false;
+    },
+    grabbed: () => grabbed,
+  };
+  const grab = () => {
+    grabbed = true;
+    apply();
+  };
+  box.addEventListener("pointerdown", grab);
   const common = {
+    setOnScreen: (visible: boolean) => {
+      onScreen = visible;
+      apply();
+    },
     resize: () => {
       viewer.resize();
       viewer.render();
     },
     dispose: () => {
-      element.removeEventListener("pointerdown", stopSpin);
-      stopSpin();
+      box.removeEventListener("pointerdown", grab);
+      viewer.spin(false);
       viewer.clear();
-      releaseContext(element);
+      releaseContext(box);
+      box.remove();
     },
   };
 
@@ -74,24 +113,25 @@ export function createScene(
     viewer.addModel(data.sdf, "sdf");
     viewer.setStyle({}, { stick: { radius: 0.15 }, sphere: { scale: 0.25 } });
     const reset = () => {
+      turning.release();
       viewer.zoomTo();
+      viewer.setSlab(-SLAB, SLAB);
       viewer.render();
+      turning.start();
     };
     reset();
-    startSpin();
     return { ...common, setMode: () => {}, replay: reset, reset };
   }
 
-  return complexScene(viewer, data.complex, options, startSpin, stopSpin, common);
+  return complexScene(viewer, data.complex, options, turning, common);
 }
 
 function complexScene(
   viewer: GLViewer,
   complex: Complex,
   options: SceneOptions,
-  startSpin: () => void,
-  stopSpin: () => void,
-  common: Pick<Scene, "resize" | "dispose">,
+  turning: Turning,
+  common: Pick<Scene, "setOnScreen" | "resize" | "dispose">,
 ): Scene {
   const colors = options.dark ? COLORS.dark : COLORS.light;
   const protein = viewer.addModel();
@@ -154,6 +194,7 @@ function complexScene(
     viewer.zoom(ZOOM[target]);
     const distance = viewer.getView()[3];
     viewer.setView(current);
+    viewer.setSlab(-SLAB, SLAB);
     return distance;
   };
 
@@ -163,15 +204,18 @@ function complexScene(
       const progress = Math.min(1, (now - start) / DOCK_MS);
       const positions = dockingPose(bound, approach, progress);
       placeLigand(positions);
-      const pullBack = easeInOut(Math.max(0, (progress - ZOOM_OUT_FROM) / (1 - ZOOM_OUT_FROM)));
-      viewer.setView(viewAt(centroid(positions), from + (to - from) * pullBack));
+      // Once the user grabs the view, the camera is theirs.
+      if (!turning.grabbed()) {
+        const pullBack = easeInOut(Math.max(0, (progress - ZOOM_OUT_FROM) / (1 - ZOOM_OUT_FROM)));
+        viewer.setView(viewAt(centroid(positions), from + (to - from) * pullBack));
+      }
       viewer.render();
       if (progress < 1) {
         frame = requestAnimationFrame(tick);
       } else {
         showContacts();
         viewer.render();
-        startSpin();
+        turning.start();
       }
     };
     frame = requestAnimationFrame(tick);
@@ -181,7 +225,7 @@ function complexScene(
   const setMode = (next: ViewMode, animate: boolean) => {
     mode = next;
     cancelAnimationFrame(frame);
-    stopSpin();
+    turning.stop();
     viewer.removeAllShapes();
     viewer.removeAllLabels();
     const carbons = next === "molecule" ? "default" : "greenCarbon";
@@ -206,7 +250,7 @@ function complexScene(
       viewer.setView(viewAt(center, to));
       if (next !== "molecule") showContacts();
       viewer.render();
-      startSpin();
+      turning.start();
     } else {
       dock(distanceFor("molecule"), to);
     }
@@ -216,8 +260,14 @@ function complexScene(
   return {
     ...common,
     setMode,
-    replay: () => setMode(mode, true),
-    reset: () => setMode(mode, false),
+    replay: () => {
+      turning.release();
+      setMode(mode, true);
+    },
+    reset: () => {
+      turning.release();
+      setMode(mode, false);
+    },
     dispose: () => {
       cancelAnimationFrame(frame);
       common.dispose();

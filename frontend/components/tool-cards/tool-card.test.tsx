@@ -146,7 +146,7 @@ describe("get_complex", () => {
     expect(within(card).getByRole("button", { name: "Show all 10" })).toBeDefined();
   });
 
-  it("scrolls to the drug's 3D view under the same answer", () => {
+  it("scrolls to the drug's 3D view in the same turn", () => {
     const card = cardOf({ id: "call_1", name: "get_complex", args: {}, result: IMATINIB_COMPLEX });
     const { container } = render(
       <>
@@ -164,6 +164,7 @@ describe("get_complex", () => {
         </div>
       </>,
     );
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
     const [earlierView, view] = container.querySelectorAll("section");
     earlierView.scrollIntoView = vi.fn();
     view.scrollIntoView = vi.fn();

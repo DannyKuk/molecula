@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ApiError, getComplex, getStructure } from "@/lib/api";
 import type { StructureTarget } from "@/lib/tool-cards";
+import { useMediaQuery } from "@/lib/use-media-query";
 
 import type { SceneData, ViewMode } from "./scene";
 import { StructureViewer, type StructureViewerHandle } from "./structure-viewer";
@@ -34,7 +35,13 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
   const [mode, setMode] = useState<ViewMode>(target.complex ? "site" : "molecule");
   const [fullScreen, setFullScreen] = useState(false);
   const viewer = useRef<StructureViewerHandle>(null);
+  const fullScreenViewer = useRef<StructureViewerHandle>(null);
   const hasComplex = target.complex !== null;
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const failed = useCallback(() => {
+    setFullScreen(false);
+    setLoaded({ status: "failed" });
+  }, []);
 
   useEffect(() => {
     const abort = new AbortController();
@@ -45,7 +52,8 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
       (data) => setLoaded({ status: "ready", data }),
       (error: unknown) => {
         if (abort.signal.aborted) return;
-        const missing = error instanceof ApiError && error.status === 404;
+        // A drug the tool found a complex for always has one, so only a missing conformer is "missing".
+        const missing = !hasComplex && error instanceof ApiError && error.status === 404;
         setLoaded({ status: missing ? "missing" : "failed" });
       },
     );
@@ -81,6 +89,19 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
         </button>
       ))}
     </div>
+  );
+
+  const controls = (handle: RefObject<StructureViewerHandle | null>) => (
+    <>
+      {switchable && mode !== "molecule" && !reduceMotion && (
+        <button type="button" className={BUTTON} onClick={() => handle.current?.replay()}>
+          Replay binding
+        </button>
+      )}
+      <button type="button" className={BUTTON} onClick={() => handle.current?.reset()}>
+        Reset view
+      </button>
+    </>
   );
 
   const legend = ready && (
@@ -124,14 +145,7 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
         </div>
         {ready && (
           <div className="flex flex-wrap gap-2">
-            {switchable && mode !== "molecule" && (
-              <button type="button" className={BUTTON} onClick={() => viewer.current?.replay()}>
-                Replay binding
-              </button>
-            )}
-            <button type="button" className={BUTTON} onClick={() => viewer.current?.reset()}>
-              Reset view
-            </button>
+            {controls(viewer)}
             <button type="button" className={BUTTON} onClick={() => setFullScreen(true)}>
               Full screen
             </button>
@@ -144,18 +158,23 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
         </p>
       )}
       {modeSwitch}
-      {ready ? (
+      {loaded.status === "missing" ? (
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          No 3D model: Molecula has them for small-molecule drugs only, and {target.name} is too
+          large.
+        </p>
+      ) : ready ? (
         <StructureViewer
           ref={viewer}
           data={ready}
           mode={mode}
           label={`${title}, in 3D`}
+          onError={failed}
           className="h-[380px] rounded-lg border border-zinc-200 dark:border-zinc-800"
         />
       ) : (
         <Placeholder
           loaded={loaded}
-          name={target.name}
           onRetry={() => {
             setLoaded({ status: "loading" });
             setAttempt((n) => n + 1);
@@ -174,13 +193,18 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
                 {title}{" "}
                 <span className="text-sm font-normal text-zinc-500">{subtitle(target)}</span>
               </DialogTitle>
-              <DialogClose className={BUTTON}>Close</DialogClose>
+              <div className="flex flex-wrap justify-end gap-2">
+                {controls(fullScreenViewer)}
+                <DialogClose className={BUTTON}>Close</DialogClose>
+              </div>
             </div>
             {modeSwitch}
             <StructureViewer
+              ref={fullScreenViewer}
               data={ready}
               mode={mode}
               label={`${title}, in 3D`}
+              onError={failed}
               className="min-h-0 flex-1 rounded-lg border border-zinc-200 dark:border-zinc-800"
             />
             {legend}
@@ -211,27 +235,10 @@ function LegendItem({ swatch, children }: { swatch: ReactNode; children: ReactNo
   );
 }
 
-function Placeholder({
-  loaded,
-  name,
-  onRetry,
-}: {
-  loaded: Loaded;
-  name: string;
-  onRetry: () => void;
-}) {
+function Placeholder({ loaded, onRetry }: { loaded: Loaded; onRetry: () => void }) {
   return (
     <div className="flex h-[380px] items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-zinc-50 p-6 text-center text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
       {loaded.status === "loading" && <p role="status">Loading the 3D structure…</p>}
-      {loaded.status === "missing" && (
-        <div>
-          <p className="font-medium text-zinc-900 dark:text-zinc-100">No 3D model of {name}</p>
-          <p className="mt-1 max-w-sm">
-            Molecula has 3D models of small-molecule drugs only. PubChem has none of {name}, which
-            is too large, and one computed from its formula would mean little.
-          </p>
-        </div>
-      )}
       {loaded.status === "failed" && (
         <div role="alert">
           <p>The 3D structure couldn&apos;t be loaded.</p>
