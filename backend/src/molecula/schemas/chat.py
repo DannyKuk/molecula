@@ -145,13 +145,11 @@ class TokenEvent(BaseModel):
 class SourcesEvent(BaseModel):
     """Where the answer's facts come from. A citation is `[n]` or, from some models, `【n】`.
     `unknown_refs` are numbers the answer cites that no source has: show them as plain text,
-    not as a link. `disclaimer` is openFDA's, set whenever a source is a label passage: show
-    it with the answer."""
+    not as a link."""
 
     type: Literal["sources"] = "sources"
     sources: list[Source]
     unknown_refs: list[int] = []
-    disclaimer: str | None = None
 
 
 class RetrievalTraceEvent(BaseModel):

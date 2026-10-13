@@ -15,7 +15,6 @@ export type Turn = {
   state: "answering" | "done" | "stopped" | "failed";
   error?: string;
   sources: Source[] | null;
-  disclaimer: string | null;
   passages: Record<number, Passage>;
 };
 
@@ -26,7 +25,6 @@ export function startTurn(question: string): Turn {
     steps: [],
     state: "answering",
     sources: null,
-    disclaimer: null,
     passages: {},
   };
 }
@@ -46,7 +44,7 @@ export function applyEvent(turn: Turn, event: ChatEvent): Turn {
         : { ...turn, steps };
     }
     case "sources":
-      return { ...turn, sources: event.sources, disclaimer: event.disclaimer };
+      return { ...turn, sources: event.sources };
     case "done":
       return { ...turn, state: "done" };
     case "error":

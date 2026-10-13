@@ -54,16 +54,6 @@ def test_label_metadata_is_kept_out_of_the_sections(openfda) -> None:
     assert not {"set_id", "id", "version", "effective_time", "openfda"} & label.sections.keys()
 
 
-def test_search_returns_the_labels_with_the_openfda_disclaimer(openfda) -> None:
-    search = openfda().search("imatinib")
-
-    assert [label.set_id for label in search.labels] == [
-        label.set_id for label in openfda().labels("imatinib")
-    ]
-    assert search.disclaimer is not None
-    assert search.disclaimer.startswith("Do not rely on openFDA to make decisions")
-
-
 def test_application_number_tells_the_brand_from_a_generic(openfda) -> None:
     labels = openfda().labels("imatinib")
 

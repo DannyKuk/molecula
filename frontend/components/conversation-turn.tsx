@@ -36,9 +36,7 @@ export function ConversationTurn({ turn, onRetry }: ConversationTurnProps) {
           citations={turn.sources && { sources: turn.sources, passages: turn.passages }}
         />
       )}
-      {turn.sources && (
-        <AnswerSources answer={turn.answer} sources={turn.sources} disclaimer={turn.disclaimer} />
-      )}
+      {turn.sources && <AnswerSources answer={turn.answer} sources={turn.sources} />}
       {turn.state === "stopped" && (
         <p className="text-sm text-zinc-600 dark:text-zinc-400">Stopped.</p>
       )}

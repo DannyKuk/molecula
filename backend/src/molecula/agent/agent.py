@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 class ChatAgent:
     """The tool-calling agent behind the chat: it answers a conversation and reports each step
-    as a `ChatEvent`. `disclaimer` is openFDA's, sent with every answer that uses label text."""
+    as a `ChatEvent`."""
 
     def __init__(
         self,
@@ -28,7 +28,6 @@ class ChatAgent:
         *,
         max_steps: int,
         timeout_seconds: float,
-        disclaimer: str | None = None,
     ) -> None:
         self._graph = create_agent(
             model,
@@ -40,13 +39,12 @@ class ChatAgent:
         self._tools = tools
         self._max_steps = max_steps
         self._timeout_seconds = timeout_seconds
-        self._disclaimer = disclaimer
 
     async def stream(self, conversation: Sequence[ChatMessage]) -> AsyncIterator[ChatEvent]:
         """Status, tool calls and results, answer tokens and retrieval traces as they happen,
         then the sources and `done`; or an `error` event when the model fails or runs out of
         time."""
-        run = AgentRun(self._max_steps, self._tools, self._disclaimer)
+        run = AgentRun(self._max_steps, self._tools)
         try:
             async with asyncio.timeout(self._timeout_seconds):
                 async for mode, data in self._graph.astream(

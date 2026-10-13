@@ -8,28 +8,21 @@ const SITE_NAMES: Record<string, string> = {
   chembl: "ChEMBL",
   rcsb: "RCSB PDB",
 };
+const OPENFDA_URL = "https://open.fda.gov";
 
 /**
  * What sits under an answer once its sources are known: the labels it read when it cites none
- * of their passages, the PubChem, ChEMBL and RCSB pages its tools used, and openFDA's
- * disclaimer when it used label text.
+ * of their passages, the PubChem, ChEMBL and RCSB pages its tools used, and the credit openFDA
+ * asks for when it used label text.
  */
-export function AnswerSources({
-  answer,
-  sources,
-  disclaimer,
-}: {
-  answer: string;
-  sources: Source[];
-  disclaimer: string | null;
-}) {
+export function AnswerSources({ answer, sources }: { answer: string; sources: Source[] }) {
   const passages = sources.filter((source) => source.ref !== null);
   const cited = new Set(citedRefs(answer));
   const uncitedLabels = passages.some((source) => cited.has(source.ref!))
     ? []
     : uniqueByUrl(passages);
   const pages = uniqueByUrl(sources.filter((source) => source.ref === null));
-  if (uncitedLabels.length === 0 && pages.length === 0 && !disclaimer) return null;
+  if (passages.length === 0 && pages.length === 0) return null;
 
   return (
     <div className="flex flex-col gap-2 text-sm">
@@ -51,8 +44,26 @@ export function AnswerSources({
           ))}
         </SourceLinks>
       )}
-      {disclaimer && <p className="text-xs text-muted-foreground">{disclaimer}</p>}
+      {passages.length > 0 && <OpenFdaCredit />}
     </div>
+  );
+}
+
+// openFDA's terms (https://open.fda.gov/terms/) ask for this credit, though they don't require it.
+function OpenFdaCredit() {
+  return (
+    <p className="text-xs text-muted-foreground">
+      Data provided by the U.S. Food and Drug Administration (
+      <a
+        href={OPENFDA_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-medium underline underline-offset-4"
+      >
+        openFDA
+      </a>
+      )
+    </p>
   );
 }
 
