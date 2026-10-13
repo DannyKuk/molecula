@@ -26,10 +26,11 @@ def get_complex_tool(compounds: CompoundService, complexes: ComplexService) -> S
         resolved to the stored drug first.
 
         Returns `status: "found"` with the drug's CID and generic `name`; `pdb_id`, the Protein
-        Data Bank entry; `target`, the target's gene symbols (call `get_targets` for its full
-        name and the mechanism); `organism`, the species the protein comes from; `ligand_code`,
-        the drug's code in that entry; `caption`, set when the structure is a stand-in (a
-        related protein or species, a second target) and saying what it shows: pass it on;
+        Data Bank entry; `target`, the target's gene symbol, sometimes with a short note
+        (call `get_targets` for its full name and the mechanism); `organism`, the species the
+        protein comes from; `ligand_code`, the drug's code in that entry; `caption`, set when
+        the structure is a stand-in (a related protein or species, a second target) and saying
+        what it shows: pass it on;
         `hydrogen_bonds`, each with the residue (three-letter name and number), its chain, the
         two atoms and the distance in Å; `contacts`, every residue within 4 Å of the drug with
         its closest distance, closest first; and `source_url`, the entry's RCSB page to cite.

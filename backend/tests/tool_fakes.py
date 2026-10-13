@@ -113,7 +113,7 @@ class FakeTargetService:
 
 MET318 = Residue(chain="A", number=318, name="MET")
 THR315 = Residue(chain="A", number=315, name="THR")
-IMATINIB_COMPLEX = Complex(
+IMATINIB_ABL1_COMPLEX = Complex(
     pdb_id="1IEP",
     ligand=Ligand(
         code="STI",
@@ -138,7 +138,7 @@ class FakeComplexService:
     """Has imatinib's complex and no other; records the CIDs it was asked."""
 
     def __init__(self) -> None:
-        self.complexes = {5291: IMATINIB_COMPLEX}
+        self.complexes = {5291: IMATINIB_ABL1_COMPLEX}
         self.asked: list[int] = []
 
     def get_complex(self, cid: int) -> Complex | None:

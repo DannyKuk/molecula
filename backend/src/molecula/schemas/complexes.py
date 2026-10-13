@@ -85,10 +85,10 @@ class Complex(BaseModel):
     """One drug-target complex, ready for the 3D viewer: coordinates in Å from the PDB entry,
     heavy atoms only.
 
-    `target` (gene symbols, as ChEMBL names the target) and `organism` say what the drug is bound
-    to, from the reviewed entry in `data/hero_set.yaml`. `caption` is shown with the structure
-    when it isn't simply the drug in its main target; `showcase` marks the cleanest complexes,
-    for the landing page and demos.
+    `target` (the gene symbol, with a note where one is needed, such as "ABL1 (BCR-ABL)") and
+    `organism` say what the drug is bound to, from the reviewed entry in `data/hero_set.yaml`.
+    `caption` is shown with the structure when it isn't simply the drug in its main target;
+    `showcase` marks the cleanest complexes, for the landing page and demos.
     """
 
     model_config = ConfigDict(frozen=True)
