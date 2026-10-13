@@ -8,9 +8,11 @@ from molecula.config import Settings
 from molecula.ingest.conformers import embed_conformer
 from molecula.ingest.runner import StepReport, log_failures, run_step, store_and_sources
 from molecula.ingest.scope import Scope, ScopeEntry, load_scope
+from molecula.schemas.compounds import ConformerSource
 from molecula.sources.errors import SourceError
 from molecula.sources.pubchem import CompoundProperties, PubChemClient
-from molecula.store.compounds import CompoundRecord, CompoundStore, ConformerSource, Synonym
+from molecula.store.compounds import CompoundRecord, CompoundStore, Synonym
+from molecula.store.sources import PUBCHEM
 from molecula.store.structures import ConformerFiles
 
 logger = logging.getLogger(__name__)
@@ -141,7 +143,7 @@ def to_record(
         rotb=properties.rotatable_bonds,
         heavy_atoms=properties.heavy_atoms,
         conformer_source=conformer_source,
-        source="pubchem",
+        source=PUBCHEM,
     )
 
 

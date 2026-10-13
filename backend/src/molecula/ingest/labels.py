@@ -5,15 +5,16 @@ from datetime import UTC, datetime
 
 from molecula.config import Settings
 from molecula.ingest.runner import StepReport, log_failures, run_step, store_and_sources
+from molecula.schemas.labels import ProductType, SectionGroup
 from molecula.services.compounds import name_candidates
 from molecula.sources.errors import SourceNotFound
 from molecula.sources.openfda import Label, OpenFdaClient
 from molecula.store.compounds import CompoundRecord, CompoundStore
-from molecula.store.labels import LabelRecord, LabelSection, LabelStore, ProductType, SectionGroup
+from molecula.store.labels import LabelRecord, LabelSection, LabelStore
+from molecula.store.sources import OPENFDA
 
 logger = logging.getLogger(__name__)
 
-SOURCE = "openfda"
 DAILYMED_URL = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid={set_id}"
 PRODUCT_TYPES: dict[ProductType, str] = {
     "rx": "HUMAN PRESCRIPTION DRUG",
@@ -131,7 +132,7 @@ def ingest_labels_of(
     else:
         found = search.labels
         if search.disclaimer:
-            store.save_disclaimer(SOURCE, search.disclaimer, fetched_at)
+            store.save_disclaimer(OPENFDA, search.disclaimer, fetched_at)
     labels = canonical_labels(compound.name, found)
     store.save(compound.cid, labels, fetched_at)
     return DrugLabels(compound, len(found), labels)

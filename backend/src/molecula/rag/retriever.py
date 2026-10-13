@@ -1,11 +1,11 @@
 from collections.abc import Sequence
-from datetime import datetime
 from typing import Any
 
 from langchain_core.embeddings import Embeddings
 
 from molecula.schemas.retrieval import LabelFilter, Retrieval, RetrievedChunk, Widening
 from molecula.store.index import Chunk, LabelIndex
+from molecula.store.labels import label_date
 
 
 class LabelRetriever:
@@ -141,7 +141,7 @@ def retrieved(chunk: Chunk, score: float, in_section_groups: bool = False) -> Re
         section_group=chunk.section_group,
         sensitive=chunk.sensitive,
         set_id=chunk.set_id,
-        effective_time=datetime.strptime(chunk.effective_time, "%Y%m%d").date(),
+        effective_time=label_date(chunk.effective_time),
         url=chunk.url,
         in_section_groups=in_section_groups,
     )

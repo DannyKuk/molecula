@@ -17,17 +17,18 @@ from molecula.sources.errors import (
     SourceUnavailable,
 )
 from molecula.store.http_cache import CachedResponse, HttpCache
+from molecula.store.sources import CHEMBL, OPENFDA, PUBCHEM, RCSB, SourceName
 
 logger = logging.getLogger(__name__)
 
-REQUESTS_PER_SECOND = {"pubchem": 4.0, "chembl": 4.0, "rcsb": 5.0, "openfda": 4.0}
-HOST_SOURCES = {
-    "pubchem.ncbi.nlm.nih.gov": "pubchem",
-    "www.ebi.ac.uk": "chembl",
-    "search.rcsb.org": "rcsb",
-    "data.rcsb.org": "rcsb",
-    "files.rcsb.org": "rcsb",
-    "api.fda.gov": "openfda",
+REQUESTS_PER_SECOND: dict[SourceName, float] = {PUBCHEM: 4.0, CHEMBL: 4.0, RCSB: 5.0, OPENFDA: 4.0}
+HOST_SOURCES: dict[str, SourceName] = {
+    "pubchem.ncbi.nlm.nih.gov": PUBCHEM,
+    "www.ebi.ac.uk": CHEMBL,
+    "search.rcsb.org": RCSB,
+    "data.rcsb.org": RCSB,
+    "files.rcsb.org": RCSB,
+    "api.fda.gov": OPENFDA,
 }
 # PubChem signals throttling with 503 rather than 429.
 RETRY_STATUSES = frozenset({429, 503})

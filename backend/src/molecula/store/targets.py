@@ -5,6 +5,8 @@ from datetime import datetime
 from threading import Lock
 from typing import Any, Literal
 
+from molecula.store.sources import CHEMBL, RCSB, SourceName
+
 type MatchedOn = Literal["inchikey", "connectivity"]
 
 # Lists are stored as JSON arrays.
@@ -60,10 +62,10 @@ class DrugTargets:
     candidates: tuple[CandidateRecord, ...] = ()
 
 
-TABLES: list[tuple[str, type[Any], str]] = [
-    ("target", TargetRecord, "chembl"),
-    ("ligand_code", LigandCode, "rcsb"),
-    ("complex_candidate", CandidateRecord, "rcsb"),
+TABLES: list[tuple[str, type[Any], SourceName]] = [
+    ("target", TargetRecord, CHEMBL),
+    ("ligand_code", LigandCode, RCSB),
+    ("complex_candidate", CandidateRecord, RCSB),
 ]
 
 

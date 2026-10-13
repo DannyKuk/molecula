@@ -1,12 +1,12 @@
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 from molecula.sources.http import SourceClient
+from molecula.sources.inchikey import connectivity_block
 from molecula.sources.parsing import parse
 
 EBI = "https://www.ebi.ac.uk"
 API = f"{EBI}/chembl/api/data"
 MOLECULE_FIELDS = "molecule_chembl_id,pref_name,molecule_hierarchy"
-CONNECTIVITY_BLOCK_LENGTH = 14
 
 
 class MoleculeHierarchy(BaseModel):
@@ -90,7 +90,7 @@ class ChemblClient:
     def molecules_for_connectivity(self, inchikey: str, *, refresh: bool = False) -> list[Molecule]:
         """Molecules sharing the InChIKey's connectivity block (the first 14 characters, which
         leave out stereo); empty if none."""
-        block = inchikey[:CONNECTIVITY_BLOCK_LENGTH]
+        block = connectivity_block(inchikey)
         return self._molecules(
             {"molecule_structures__standard_inchi_key__startswith": block}, refresh=refresh
         )
