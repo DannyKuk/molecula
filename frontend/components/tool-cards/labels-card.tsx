@@ -1,7 +1,7 @@
 import { citedRefs, labelDate, sectionName } from "@/lib/citations";
 import type { LabelPassage, LabelPassages } from "@/lib/tool-cards";
 
-import { SourceLink } from "./parts";
+import { SourceLink } from "./source-link";
 
 /** What a label search looked for and every passage it found, each opening into its text;
  * the passages the answer cites are marked. */

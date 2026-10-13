@@ -1,6 +1,6 @@
 import type { ResolvedDrug } from "@/lib/tool-cards";
 
-import { SourceLink } from "./parts";
+import { SourceLink } from "./source-link";
 
 const MATCHES: Record<ResolvedDrug["match_kind"], string> = {
   name: "is the generic name of",

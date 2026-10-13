@@ -1,7 +1,7 @@
 import type { Compound, DrugNotSupported, DrugProperties } from "@/lib/tool-cards";
 
-import { SourceLink } from "./parts";
 import { suggestionName } from "./problem-cards";
+import { SourceLink } from "./source-link";
 
 type Property = { label: string; hint?: string; value: (compound: Compound) => string };
 

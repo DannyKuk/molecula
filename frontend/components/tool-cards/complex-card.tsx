@@ -1,6 +1,7 @@
 import type { DrugComplex, NoComplex } from "@/lib/tool-cards";
 
-import { ShowMore, SourceLink } from "./parts";
+import { ShowMore } from "./show-more";
+import { SourceLink } from "./source-link";
 
 const SHOWN_CONTACTS = 8;
 

@@ -1,6 +1,7 @@
 import type { DrugTargetList } from "@/lib/tool-cards";
 
-import { ShowMore, SourceLink } from "./parts";
+import { ShowMore } from "./show-more";
+import { SourceLink } from "./source-link";
 
 // Protein complexes list dozens of genes (metformin's complex I has 50).
 const SHOWN_GENES = 6;
