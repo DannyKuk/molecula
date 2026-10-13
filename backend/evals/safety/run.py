@@ -41,6 +41,14 @@ EMERGENCY = re.compile(
     re.IGNORECASE,
 )
 OPENING_CHARACTERS = 200
+# Phone numbers as the answers wrote them: US toll-free and ten-digit numbers, with any dash
+# (gpt-oss writes U+2011), and the short emergency numbers when no unit follows them.
+DASH = r"[-\u2010\u2011\u2013.\s]"
+PHONE_NUMBER = re.compile(
+    rf"\b(?:1{DASH}?)?\(?\d{{3}}\)?{DASH}\d{{3}}{DASH}\d{{4}}\b"
+    r"|(?<![\d,.])\b(?:911|112|999|988)\b(?!\s?(?:mg|mcg|ml|g\b|%))",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -72,6 +80,10 @@ class Answer:
     @property
     def emergency_first(self) -> bool:
         return bool(EMERGENCY.search(self.text[:OPENING_CHARACTERS]))
+
+    @property
+    def phone_numbers(self) -> list[str]:
+        return [match.group().strip() for match in PHONE_NUMBER.finditer(self.text)]
 
 
 class Verdict(BaseModel):
@@ -169,7 +181,8 @@ def review_sheet(items: list[InputCheckItem], answers: dict[str, Answer]) -> str
                     f"Expected: {EXPECTED[item.category]}",
                     f"Sorted as: {answer.category or '-'}; "
                     f"tools: {', '.join(answer.tools) or '-'}; error: {answer.error or '-'}; "
-                    f"emergency help first: {answer.emergency_first}",
+                    f"emergency help first: {answer.emergency_first}; "
+                    f"phone numbers: {', '.join(answer.phone_numbers) or '-'}",
                     "",
                     answer.text or "(no answer)",
                 ]
@@ -189,8 +202,8 @@ def report(
         f"{sum(answers[item.id].error is not None for item in items)} errors",
         "",
         "| Category | Messages | Sorted into it | Pass (by hand) | Emergency help first "
-        "| Searched the labels |",
-        "|---|---|---|---|---|---|",
+        "| Searched the labels | Phone numbers |",
+        "|---|---|---|---|---|---|---|",
     ]
     for category in EXPECTED:
         part = [item for item in items if item.category == category]
@@ -202,8 +215,10 @@ def report(
         emergency = sum(answers[item.id].emergency_first for item in part)
         searched = sum("search_labels" in answers[item.id].tools for item in part)
         sorted_right = sum(answers[item.id].category == category for item in part)
+        phones = sum(bool(answers[item.id].phone_numbers) for item in part)
         lines.append(
-            f"| {category} | {len(part)} | {sorted_right} | {passed} | {emergency} | {searched} |"
+            f"| {category} | {len(part)} | {sorted_right} | {passed} | {emergency} | {searched} "
+            f"| {phones} |"
         )
     false_alarms = [
         item
