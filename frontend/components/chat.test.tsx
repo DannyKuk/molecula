@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { StrictMode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CHAT_FAILED, CHAT_UNAVAILABLE } from "@/lib/chat";
 import { MAX_MESSAGE_LENGTH } from "@/lib/chat-limits";
@@ -10,10 +10,27 @@ import {
   IMATINIB_LABEL_SEARCH,
   IMATINIB_SOURCES_EVENT,
   stubChatStream,
+  stubPage,
 } from "@/lib/test-fixtures";
-import { IBUPROFEN_PROPERTIES, NAPROXEN_PROPERTIES } from "@/lib/test-tool-results";
+import {
+  IBUPROFEN_PROPERTIES,
+  IMATINIB_COMPLEX,
+  NAPROXEN_PROPERTIES,
+} from "@/lib/test-tool-results";
+import type { StructureTarget } from "@/lib/tool-cards";
 
 import { Chat } from "./chat";
+
+// jsdom has no WebGL; the 3D view only needs to be on the page.
+vi.mock("./structure/structure-panel", () => ({
+  StructurePanel: ({ target }: { target: StructureTarget }) => <p>3D view of {target.name}</p>,
+}));
+
+let page: ReturnType<typeof stubPage>;
+
+beforeEach(() => {
+  page = stubPage();
+});
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -36,6 +53,10 @@ function askQuestion(text: string) {
   pressEnter();
 }
 
+function conversationText(): string {
+  return document.querySelector('ol[aria-label="Conversation"]')?.textContent ?? "";
+}
+
 async function streamed(send: () => void) {
   await act(async () => send());
 }
@@ -47,6 +68,17 @@ function token(text: string): string {
 function status(message: string): string {
   return chatFrame({ type: "status", message });
 }
+
+const IMATINIB_IN_3D =
+  status("Getting the complex of imatinib") +
+  chatFrame({ type: "tool_call", id: "call_1", name: "get_complex", args: { drug: "imatinib" } }) +
+  chatFrame({
+    type: "tool_result",
+    id: "call_1",
+    name: "get_complex",
+    status: "found",
+    result: IMATINIB_COMPLEX,
+  });
 
 describe("Chat", () => {
   it("streams the answer's tokens into the conversation as they arrive", async () => {
@@ -355,5 +387,214 @@ describe("Chat", () => {
       role: "user",
       content: "What does sildenafil bind to?",
     });
+  });
+
+  it("scrolls to the end of the page once the sent question is on it, each time one is sent", async () => {
+    const stream = stubChatStream();
+    const conversationWhenScrolled: string[] = [];
+    page.scrollTo.mockImplementation(() => {
+      conversationWhenScrolled.push(conversationText());
+    });
+    render(<Chat />);
+    expect(page.scrollTo).not.toHaveBeenCalled();
+
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(token("It blocks BCR-ABL.") + DONE));
+    await screen.findByText("It blocks BCR-ABL.");
+    fireEvent.click(screen.getByRole("button", { name: "Help" }));
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "What does sildenafil bind to?",
+      }),
+    );
+
+    expect(conversationWhenScrolled).toHaveLength(3);
+    expect(conversationWhenScrolled[0]).toContain("How does Gleevec work?");
+    expect(conversationWhenScrolled[1]).toContain("It blocks BCR-ABL.");
+    expect(conversationWhenScrolled[2]).toContain("What does sildenafil bind to?");
+    expect(page.scrollTo).toHaveBeenLastCalledWith({ top: document.documentElement.scrollHeight });
+  });
+
+  it("scrolls to the end of the page again on Retry", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(chatFrame({ type: "error", message: "Timed out." })));
+    const retry = within(await screen.findByRole("alert")).getByRole("button", {
+      name: "Try again",
+    });
+    page.scrollTo.mockClear();
+    fireEvent.click(retry);
+
+    expect(page.scrollTo).toHaveBeenCalledOnce();
+  });
+
+  it("scrolls to the question it was opened with", async () => {
+    stubChatStream();
+    render(<Chat initialQuestion="How does imatinib work?" />);
+
+    await screen.findByText("How does imatinib work?");
+    expect(page.scrollTo).toHaveBeenCalledTimes(1);
+  });
+
+  it("doesn't scroll for a question it ignores while answering", async () => {
+    stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+    await screen.findByRole("button", { name: "Stop" });
+    fireEvent.click(screen.getByRole("button", { name: "Help" }));
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "What does sildenafil bind to?",
+      }),
+    );
+
+    expect(conversationText()).not.toContain("What does sildenafil bind to?");
+    expect(page.scrollTo).toHaveBeenCalledTimes(1);
+  });
+
+  it("follows the answer to the end of the page while it streams in", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(token("Imatinib blocks")));
+    page.scrollTo.mockClear();
+    page.grow(300);
+
+    expect(page.scrollTo).toHaveBeenCalledExactlyOnceWith({ top: 2300 });
+  });
+
+  it("stops following when the reader scrolls up, and follows again back at the end", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(token("Imatinib blocks")));
+    page.scrollTo.mockClear();
+    page.scrollBy(-200);
+    page.grow();
+    expect(page.scrollTo).not.toHaveBeenCalled();
+
+    page.scrollBy(1000);
+    page.grow();
+    expect(page.scrollTo).toHaveBeenCalledOnce();
+  });
+
+  it("stops following when the reader scrolls up just after the page followed", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(token("Imatinib blocks")));
+    page.grow();
+    page.scrollTo.mockClear();
+    page.scrollBy(-100);
+    page.grow();
+
+    expect(page.scrollTo).not.toHaveBeenCalled();
+  });
+
+  it("keeps following when a scroll event lands just after the page grew", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(token("Imatinib blocks")));
+    page.scrollTo.mockClear();
+    page.lengthen(500);
+    page.scrollBy(0);
+    page.grow();
+
+    expect(page.scrollTo).toHaveBeenCalledOnce();
+  });
+
+  it("stops following once the answer shows a 3D view", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("Show imatinib bound to its target in 3D.");
+    await streamed(() => stream.send(IMATINIB_IN_3D));
+    expect(await screen.findByText("3D view of imatinib")).toBeDefined();
+    page.scrollTo.mockClear();
+    await streamed(() => stream.send(token("Imatinib sits in the ATP pocket.")));
+    page.grow();
+
+    expect(page.scrollTo).not.toHaveBeenCalled();
+  });
+
+  it("follows a new answer after an earlier one showed a 3D view", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("Show imatinib bound to its target in 3D.");
+    await streamed(() => stream.send(IMATINIB_IN_3D + token("It sits in the ATP pocket.") + DONE));
+    await screen.findByText("It sits in the ATP pocket.");
+    askQuestion("What else does it bind?");
+    await streamed(() => stream.send(token("KIT and PDGFR.")));
+    page.scrollTo.mockClear();
+    page.grow();
+
+    expect(screen.getByText("3D view of imatinib")).toBeDefined();
+    expect(page.scrollTo).toHaveBeenCalledOnce();
+  });
+
+  it("scrolls to the end once more when the answer is done, so its sources are in view", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(token("It blocks BCR-ABL.")));
+    page.scrollTo.mockClear();
+    await streamed(() => stream.send(DONE));
+
+    expect(page.scrollTo).toHaveBeenCalledOnce();
+  });
+
+  it("doesn't scroll at the end of the answer when the reader scrolled up", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(token("It blocks BCR-ABL.")));
+    page.scrollBy(-200);
+    page.scrollTo.mockClear();
+    await streamed(() => stream.send(DONE));
+
+    expect(page.scrollTo).not.toHaveBeenCalled();
+  });
+
+  it("doesn't scroll at the end of an answer that shows a 3D view", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("Show imatinib bound to its target in 3D.");
+    await streamed(() => stream.send(IMATINIB_IN_3D + token("It sits in the ATP pocket.")));
+    page.scrollTo.mockClear();
+    await streamed(() => stream.send(DONE));
+
+    expect(page.scrollTo).not.toHaveBeenCalled();
+  });
+
+  it("doesn't follow once the answer is done or stopped", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(token("It blocks BCR-ABL.") + DONE));
+    await screen.findByText("It blocks BCR-ABL.");
+    page.scrollTo.mockClear();
+    page.grow();
+    expect(page.scrollTo).not.toHaveBeenCalled();
+
+    askQuestion("What else does it bind?");
+    await streamed(() => stream.send(token("KIT")));
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+    await screen.findByText("Stopped.");
+    page.scrollTo.mockClear();
+    page.grow();
+    expect(page.scrollTo).not.toHaveBeenCalled();
   });
 });

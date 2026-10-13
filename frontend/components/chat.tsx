@@ -13,6 +13,8 @@ import {
   stopTurn,
   type Turn,
 } from "@/lib/chat-turn";
+import { structuresOf } from "@/lib/tool-cards";
+import { useFollowAnswer } from "@/lib/use-follow-answer";
 
 import { ChatComposer } from "./chat-composer";
 import { ConversationTurn } from "./conversation-turn";
@@ -21,12 +23,12 @@ import { HelpDialog, HelpGuide } from "./help-guide";
 
 /** The chat: the conversation so far, the question box and the help guide. */
 export function Chat({ initialQuestion }: { initialQuestion?: string }) {
-  const { turns, answering, ask, retry, stop } = useConversation(initialQuestion);
-  const endRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (turns.length > 0) endRef.current?.scrollIntoView?.({ block: "end" });
-  }, [turns.length]);
+  const { turns, answering, sent, ask, retry, stop } = useConversation(initialQuestion);
+  const conversationRef = useRef<HTMLOListElement>(null);
+  // The 3D view sits above the answer, so following the text would push it away while it plays.
+  // Only the newest turn counts: a view in an earlier one doesn't stop following a new answer.
+  const showsStructure = structuresOf(turns.at(-1)?.steps ?? []).length > 0;
+  useFollowAnswer(conversationRef, sent, answering, showsStructure);
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 sm:px-6">
@@ -39,11 +41,11 @@ export function Chat({ initialQuestion }: { initialQuestion?: string }) {
           <HelpDialog onAsk={ask} />
         </nav>
       </header>
-      <div className="flex flex-1 flex-col gap-6 pb-6">
+      <div className="flex flex-1 flex-col gap-6 pb-12">
         {turns.length === 0 ? (
           <EmptyState onAsk={ask} />
         ) : (
-          <ol aria-label="Conversation" className="flex flex-col gap-8">
+          <ol ref={conversationRef} aria-label="Conversation" className="flex flex-col gap-8">
             {turns.map((turn, index) => (
               <ConversationTurn
                 key={index}
@@ -53,7 +55,6 @@ export function Chat({ initialQuestion }: { initialQuestion?: string }) {
             ))}
           </ol>
         )}
-        <div ref={endRef} />
       </div>
       <div className="sticky bottom-0 flex flex-col gap-2 border-t border-zinc-200 bg-background py-3 dark:border-zinc-800">
         <ChatComposer answering={answering} onSend={ask} onStop={stop} />
@@ -80,6 +81,7 @@ function EmptyState({ onAsk }: { onAsk: (question: string) => void }) {
  */
 function useConversation(initialQuestion?: string) {
   const [turns, setTurns] = useState<Turn[]>([]);
+  const [sent, setSent] = useState(0);
   const controllerRef = useRef<AbortController | null>(null);
   const answering = turns.at(-1)?.state === "answering";
 
@@ -94,6 +96,7 @@ function useConversation(initialQuestion?: string) {
     };
 
     setTurns([...earlier, startTurn(question)]);
+    setSent((count) => count + 1);
     try {
       const messages = requestMessages(conversationWith(earlier, question));
       for await (const event of streamChat(messages, controller.signal)) {
@@ -116,5 +119,5 @@ function useConversation(initialQuestion?: string) {
   const retry = () => answer(turns[turns.length - 1].question, turns.slice(0, -1));
   const stop = () => controllerRef.current?.abort();
 
-  return { turns, answering, ask, retry, stop };
+  return { turns, answering, sent, ask, retry, stop };
 }
