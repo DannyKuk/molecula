@@ -57,6 +57,59 @@ export function stubChatStream() {
   };
 }
 
+const WINDOW_HEIGHT = 800;
+
+/**
+ * Gives jsdom, which has no layout, a page to scroll: its height, the window's and the scroll
+ * position. `window.scrollTo` moves it, and resize observers hear when the page grows.
+ */
+export function stubPage() {
+  const page = { height: 2000, top: 2000 - WINDOW_HEIGHT };
+  const observers = new Set<() => void>();
+  const scrollTo = vi.fn(({ top }: ScrollToOptions) => {
+    page.top = Math.min(top ?? page.top, page.height - WINDOW_HEIGHT);
+  });
+  Object.defineProperty(document.documentElement, "scrollHeight", {
+    configurable: true,
+    get: () => page.height,
+  });
+  Object.defineProperty(window, "innerHeight", { configurable: true, value: WINDOW_HEIGHT });
+  Object.defineProperty(window, "scrollY", { configurable: true, get: () => page.top });
+  vi.stubGlobal("scrollTo", scrollTo);
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      private readonly notify: () => void;
+      constructor(callback: () => void) {
+        this.notify = callback;
+      }
+      observe() {
+        observers.add(this.notify);
+      }
+      disconnect() {
+        observers.delete(this.notify);
+      }
+    },
+  );
+  return {
+    scrollTo,
+    /** The reader scrolls the page by `pixels`, up when negative. */
+    scrollBy(pixels: number) {
+      page.top = Math.max(0, Math.min(page.top + pixels, page.height - WINDOW_HEIGHT));
+      window.dispatchEvent(new Event("scroll"));
+    },
+    /** The page gets `pixels` taller, before its resize observers hear of it. */
+    lengthen(pixels: number) {
+      page.height += pixels;
+    },
+    /** The page gets `pixels` taller and its resize observers hear of it. */
+    grow(pixels = 300) {
+      page.height += pixels;
+      observers.forEach((notify) => notify());
+    },
+  };
+}
+
 const GLEEVEC_URL =
   "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=211ef2da-2868-4a77-8055-1cb2cd78e24b";
 

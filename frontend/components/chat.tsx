@@ -13,6 +13,8 @@ import {
   stopTurn,
   type Turn,
 } from "@/lib/chat-turn";
+import { structuresOf } from "@/lib/tool-cards";
+import { useFollowAnswer } from "@/lib/use-follow-answer";
 
 import { ChatComposer } from "./chat-composer";
 import { ConversationTurn } from "./conversation-turn";
@@ -22,12 +24,11 @@ import { HelpDialog, HelpGuide } from "./help-guide";
 /** The chat: the conversation so far, the question box and the help guide. */
 export function Chat({ initialQuestion }: { initialQuestion?: string }) {
   const { turns, answering, sent, ask, retry, stop } = useConversation(initialQuestion);
-
-  // The page's own bottom, not an element's: scrolling an element into view ignores the sticky
-  // question box, which then covers the end of the conversation.
-  useEffect(() => {
-    if (sent > 0) window.scrollTo({ top: document.documentElement.scrollHeight });
-  }, [sent]);
+  const conversationRef = useRef<HTMLOListElement>(null);
+  // The 3D view sits above the answer, so following the text would push it away while it plays.
+  // Only the newest turn counts: a view in an earlier one doesn't stop following a new answer.
+  const showsStructure = structuresOf(turns.at(-1)?.steps ?? []).length > 0;
+  useFollowAnswer(conversationRef, sent, answering && !showsStructure);
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 sm:px-6">
@@ -44,7 +45,7 @@ export function Chat({ initialQuestion }: { initialQuestion?: string }) {
         {turns.length === 0 ? (
           <EmptyState onAsk={ask} />
         ) : (
-          <ol aria-label="Conversation" className="flex flex-col gap-8">
+          <ol ref={conversationRef} aria-label="Conversation" className="flex flex-col gap-8">
             {turns.map((turn, index) => (
               <ConversationTurn
                 key={index}
