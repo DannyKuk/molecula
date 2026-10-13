@@ -84,7 +84,10 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Reserves the scrollbar's space before the page overflows, so the page doesn't shift left when a
+     classic (non-overlay) scrollbar appears, as on Windows. */
   html {
     @apply font-sans;
+    scrollbar-gutter: stable;
   }
 }
