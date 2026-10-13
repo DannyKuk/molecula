@@ -38,7 +38,7 @@ describe("HelpGuide", () => {
     for (const source of ["FDA drug labels", "PubChem", "ChEMBL", "Protein Data Bank"]) {
       expect(text).toContain(source);
     }
-    expect(text).toContain("A number in brackets, like [1], points to the label passage");
+    expect(text).toContain("names the label section it comes from");
   });
 
   it("asks an example question when it is clicked", () => {
