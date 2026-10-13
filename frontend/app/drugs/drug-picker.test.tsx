@@ -1,6 +1,6 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { useRouter } from "next/navigation";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { getDrugs } from "@/lib/api";
 
@@ -12,11 +12,6 @@ vi.mock("@/lib/api", async (importOriginal) => ({
 }));
 
 vi.mock("next/navigation", () => ({ useRouter: vi.fn() }));
-
-afterEach(() => {
-  cleanup();
-  vi.resetAllMocks();
-});
 
 describe("DrugPicker", () => {
   it("opens the chat with the question about the clicked drug", async () => {

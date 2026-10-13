@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Compound, Drug, Resolution } from "./api";
 import { filterDrugs, namesToOffer } from "./drug-search";
+import { notSupported } from "./test-fixtures";
 
 const imatinib: Drug = {
   cid: 5291,
@@ -60,17 +61,6 @@ const imatinibCompound: Compound = {
   source: "PubChem",
   source_url: "https://pubchem.ncbi.nlm.nih.gov/compound/5291",
 };
-
-function notSupported(query: string, suggestions: Resolution["suggestions"]): Resolution {
-  return {
-    query,
-    status: "not_supported",
-    compound: null,
-    matched_alias: null,
-    match_kind: null,
-    suggestions,
-  };
-}
 
 describe("namesToOffer", () => {
   it("offers the backend's suggestions for an unsupported name, in its order", () => {

@@ -14,8 +14,8 @@ from molecula.api.dependencies import chat_agent
 from molecula.main import app
 from molecula.schemas.chat import (
     MAX_ANSWER_LENGTH,
+    MAX_MESSAGE_LENGTH,
     MAX_MESSAGES,
-    MAX_QUESTION_LENGTH,
     ChatEvent,
     ChatMessage,
 )
@@ -108,7 +108,7 @@ def conversation(length: int) -> list[dict[str, str]]:
     [
         (conversation(MAX_MESSAGES + 1), "at most 10 items"),
         (
-            [{"role": "user", "content": "x" * (MAX_QUESTION_LENGTH + 1)}],
+            [{"role": "user", "content": "x" * (MAX_MESSAGE_LENGTH + 1)}],
             "a user message must have at most 4000 characters",
         ),
         (

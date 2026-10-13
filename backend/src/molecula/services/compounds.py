@@ -174,10 +174,6 @@ class CompoundService:
             return None
         return Structure(cid=cid, sdf=sdf, conformer_source=record.conformer_source)
 
-    def list_compounds(self) -> list[Compound]:
-        """Every supported drug, by name."""
-        return [to_compound(record) for record in self._store.all()]
-
     def list_drugs(self) -> list[SupportedDrug]:
         """Every supported drug by name, with the scope aliases it can be found by."""
         aliases = self._store.scope_aliases()

@@ -10,7 +10,7 @@ from molecula.schemas.retrieval import LabelFilter, RetrievedChunk, Widening
 # than a question: the longest in the first manual run was 2,308 characters, and a conversation
 # must not be refused for an answer the server wrote.
 MAX_MESSAGES = 10
-MAX_QUESTION_LENGTH = 4000
+MAX_MESSAGE_LENGTH = 4000
 MAX_ANSWER_LENGTH = 8000
 
 
@@ -24,8 +24,8 @@ class ChatMessage(BaseModel):
 
     @model_validator(mode="after")
     def questions_are_shorter(self) -> Self:
-        if self.role == "user" and len(self.content) > MAX_QUESTION_LENGTH:
-            raise ValueError(f"a user message must have at most {MAX_QUESTION_LENGTH} characters")
+        if self.role == "user" and len(self.content) > MAX_MESSAGE_LENGTH:
+            raise ValueError(f"a user message must have at most {MAX_MESSAGE_LENGTH} characters")
         return self
 
 

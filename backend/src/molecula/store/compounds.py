@@ -5,11 +5,10 @@ from datetime import datetime
 from threading import Lock
 from typing import Literal
 
-from molecula.schemas.compounds import ConformerSource
+from molecula.schemas.compounds import ConformerSource, MatchKind
 
+# A label brand is a name too (`MatchKind` "brand"), but it lives in the `label` table.
 type SynonymKind = Literal["name", "alias", "pubchem"]
-# A label brand is a name too, but it lives in the `label` table, not in `synonym`.
-type MatchKind = SynonymKind | Literal["brand"]
 
 
 @dataclass(frozen=True)

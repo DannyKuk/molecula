@@ -283,12 +283,6 @@ def test_get_structure_without_a_conformer_is_none(service: CompoundService, cid
     assert service.get_structure(cid) is None
 
 
-def test_list_compounds_returns_every_stored_compound_by_name(service: CompoundService) -> None:
-    names = [compound.name for compound in service.list_compounds()]
-
-    assert names == ["atorvastatin", "ibuprofen", "imatinib", "metformin", "semaglutide"]
-
-
 def test_list_drugs_has_the_scope_aliases_and_no_pubchem_synonyms(
     service: CompoundService,
 ) -> None:

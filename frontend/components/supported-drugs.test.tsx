@@ -1,7 +1,8 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ApiError, type Drug, type Resolution, resolveDrug, type Suggestion } from "@/lib/api";
+import { ApiError, type Drug, resolveDrug } from "@/lib/api";
+import { notSupported } from "@/lib/test-fixtures";
 
 import { SupportedDrugs } from "./supported-drugs";
 
@@ -16,24 +17,8 @@ const DRUGS: Drug[] = [
   { cid: 5291, name: "imatinib", aliases: ["Gleevec", "Glivec"], has_3d: true },
 ];
 
-function notSupported(query: string, suggestions: Suggestion[]): Resolution {
-  return {
-    query,
-    status: "not_supported",
-    compound: null,
-    matched_alias: null,
-    match_kind: null,
-    suggestions,
-  };
-}
-
 beforeEach(() => {
   vi.mocked(resolveDrug).mockImplementation(async (name) => notSupported(name, []));
-});
-
-afterEach(() => {
-  cleanup();
-  vi.resetAllMocks();
 });
 
 function renderList(onAsk = vi.fn()) {

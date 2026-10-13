@@ -1,9 +1,7 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 
 import { Disclaimer } from "./disclaimer";
-
-afterEach(cleanup);
 
 describe("Disclaimer", () => {
   it("says that answers come from an AI and are not medical advice", () => {
