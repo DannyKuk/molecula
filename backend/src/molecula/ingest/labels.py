@@ -11,7 +11,6 @@ from molecula.sources.errors import SourceNotFound
 from molecula.sources.openfda import Label, OpenFdaClient
 from molecula.store.compounds import CompoundRecord, CompoundStore
 from molecula.store.labels import LabelRecord, LabelSection, LabelStore
-from molecula.store.sources import OPENFDA
 
 logger = logging.getLogger(__name__)
 
@@ -126,13 +125,9 @@ def ingest_labels_of(
     """Search openFDA by the compound's name, which `data/scope.yaml` keeps as the US generic."""
     fetched_at = datetime.now(UTC)
     try:
-        search = openfda.search(compound.name)
+        found = openfda.labels(compound.name)
     except SourceNotFound:
-        found: list[Label] = []
-    else:
-        found = search.labels
-        if search.disclaimer:
-            store.save_disclaimer(OPENFDA, search.disclaimer, fetched_at)
+        found = []
     labels = canonical_labels(compound.name, found)
     store.save(compound.cid, labels, fetched_at)
     return DrugLabels(compound, len(found), labels)

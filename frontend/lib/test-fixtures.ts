@@ -148,9 +148,6 @@ export const IMATINIB_PASSAGES: Record<number, Passage> = {
   3: { ref: 3, text: "12.3 Pharmacokinetics The pharmacokinetics of Gleevec have been evaluated." },
 };
 
-export const OPENFDA_DISCLAIMER =
-  "Do not rely on openFDA to make decisions regarding medical care.";
-
 /** The `search_labels` tool result with imatinib's passages, shortened to what the chat reads. */
 export const IMATINIB_LABEL_SEARCH = chatFrame({
   type: "tool_result",
@@ -164,5 +161,4 @@ export const IMATINIB_SOURCES_EVENT = chatFrame({
   type: "sources",
   sources: IMATINIB_SOURCES,
   unknown_refs: [],
-  disclaimer: OPENFDA_DISCLAIMER,
 });

@@ -18,12 +18,7 @@ class LabelService:
         return DrugLabels(
             cid=cid,
             labels=[to_label(record) for record in self._labels.get(cid)],
-            disclaimer=self.disclaimer(),
         )
-
-    def disclaimer(self) -> str | None:
-        """The disclaimer openFDA asks to show wherever its label text is shown."""
-        return self._labels.disclaimer(OPENFDA)
 
 
 def to_label(record: LabelRecord) -> Label:

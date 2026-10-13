@@ -4,7 +4,7 @@ from datetime import date, datetime
 from threading import Lock
 
 from molecula.schemas.labels import ProductType, SectionGroup
-from molecula.store.sources import OPENFDA, SourceName
+from molecula.store.sources import OPENFDA
 
 LABEL_COLUMNS = ["set_id", "substance", "brand", "product_type", "effective_time", "url"]
 # openFDA writes a label's effective time as YYYYMMDD, and the store keeps it that way.
@@ -44,7 +44,7 @@ class LabelRecord:
 
 
 class LabelStore:
-    """The `label` and `label_section` tables, per compound, and the sources' disclaimers.
+    """The `label` and `label_section` tables, per compound.
 
     A save that changes nothing leaves the rows untouched.
     """
@@ -93,25 +93,6 @@ class LabelStore:
                         for s in label.sections
                     ],
                 )
-
-    def disclaimer(self, source: SourceName) -> str | None:
-        with self._lock:
-            row = self._conn.execute(
-                "SELECT text FROM source_disclaimer WHERE source = ?", (source,)
-            ).fetchone()
-        return row[0] if row else None
-
-    def save_disclaimer(self, source: SourceName, text: str, fetched_at: datetime) -> None:
-        """Store the text a source asks to be shown with its data, once per source."""
-        if self.disclaimer(source) == text:
-            return
-        with self._lock, self._conn:
-            self._conn.execute(
-                "INSERT INTO source_disclaimer (source, text, fetched_at) VALUES (?, ?, ?)"
-                " ON CONFLICT (source) DO UPDATE SET text = excluded.text,"
-                " fetched_at = excluded.fetched_at",
-                (source, text, fetched_at.isoformat()),
-            )
 
     def _sections(self, set_id: str) -> tuple[LabelSection, ...]:
         rows = self._conn.execute(

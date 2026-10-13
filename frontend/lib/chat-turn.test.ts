@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { applyEvent, startTurn } from "./chat-turn";
-import { IMATINIB_PASSAGES, IMATINIB_SOURCES, OPENFDA_DISCLAIMER } from "./test-fixtures";
+import { IMATINIB_PASSAGES, IMATINIB_SOURCES } from "./test-fixtures";
 
 function toolResult(name: string, result: unknown) {
   return { type: "tool_result" as const, id: "call_1", name, status: "found", result };
@@ -93,16 +93,14 @@ describe("applyEvent", () => {
     expect(turn.steps).toEqual(announced.steps);
   });
 
-  it("keeps the sources and the disclaimer when they arrive", () => {
+  it("keeps the sources when they arrive", () => {
     const turn = applyEvent(startTurn("How does imatinib work?"), {
       type: "sources",
       sources: IMATINIB_SOURCES,
       unknown_refs: [],
-      disclaimer: OPENFDA_DISCLAIMER,
     });
 
     expect(turn.sources).toEqual(IMATINIB_SOURCES);
-    expect(turn.disclaimer).toBe(OPENFDA_DISCLAIMER);
   });
 
   it("has no sources while the answer streams", () => {

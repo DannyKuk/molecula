@@ -139,6 +139,10 @@ INSERT INTO label_section_new SELECT set_id, section, section_group, text, sensi
 DROP TABLE label_section;
 ALTER TABLE label_section_new RENAME TO label_section;
 """,
+    # openFDA's API disclaimer is no longer stored or shown; answers credit openFDA instead (#180).
+    6: """
+DROP TABLE source_disclaimer;
+""",
 }
 SCHEMA_VERSION = max(MIGRATIONS)
 

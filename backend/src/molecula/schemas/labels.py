@@ -50,11 +50,10 @@ class Label(BaseModel):
 
 
 class DrugLabels(BaseModel):
-    """The labels of a supported drug, prescription first, with the disclaimer openFDA asks to
-    be shown with them. An empty list means the drug has no US label."""
+    """The labels of a supported drug, prescription first. An empty list means the drug has no
+    US label."""
 
     model_config = ConfigDict(frozen=True)
 
     cid: int
     labels: list[Label]
-    disclaimer: str | None

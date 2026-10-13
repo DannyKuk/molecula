@@ -22,7 +22,6 @@ from molecula.store.compounds import CompoundStore, Synonym
 from molecula.store.db import connect
 from molecula.store.index import Chunk, IndexModelMismatch, LabelIndex
 from molecula.store.labels import LabelStore
-from molecula.store.sources import OPENFDA
 from molecula.store.structures import ComplexFiles, ConformerFiles
 from sse import server_sent_events
 from store_records import GLEEVEC, IMATINIB, IMATINIB_COMPLEX, compound_record
@@ -44,7 +43,6 @@ CHUNK = Chunk(
 )
 
 QUESTION = {"messages": [{"role": "user", "content": "How does imatinib work?"}]}
-DISCLAIMER = "Do not rely on openFDA to make decisions regarding medical care."
 
 
 @pytest.fixture
@@ -101,7 +99,7 @@ def test_routes_serve_the_built_store(settings: Settings) -> None:
     assert resolution["compound"]["cid"] == 5291
     assert structure.text == SDF
     assert targets == {"cid": 5291, "targets": []}
-    assert labels == {"cid": 5291, "labels": [], "disclaimer": None}
+    assert labels == {"cid": 5291, "labels": []}
 
 
 def test_only_hero_drugs_have_a_complex_also_when_online(
@@ -253,7 +251,6 @@ def test_chat_answers_from_the_stored_labels_offline(
         IMATINIB, [Synonym("imatinib", "name"), Synonym("Gleevec", "alias")], fetched
     )
     LabelStore(conn).save(5291, (GLEEVEC,), fetched)
-    LabelStore(conn).save_disclaimer(OPENFDA, DISCLAIMER, fetched)
     conn.close()
     LabelIndex(settings.index_dir).rebuild(
         [MECHANISM], [[1.0, 0.0, 0.0]], embedding_model_id(settings)
@@ -293,7 +290,7 @@ def test_chat_answers_from_the_stored_labels_offline(
             "ref": 1,
         }
     ]
-    assert events["sources"]["disclaimer"] == DISCLAIMER
+    assert "disclaimer" not in events["sources"]
     assert events["done"]["step_limit_reached"] is False
     assert events["done"]["category"] == "ok"
 
@@ -336,4 +333,4 @@ def test_chat_describes_the_stored_complex_offline(
             "ref": None,
         }
     ]
-    assert events["sources"]["disclaimer"] is None
+    assert "disclaimer" not in events["sources"]

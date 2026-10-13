@@ -91,7 +91,35 @@ def test_upgrades_a_version_3_store_and_adds_the_label_tables(tmp_path: Path) ->
 
     assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
     tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-    assert {"label", "label_section", "source_disclaimer"} <= tables
+    assert {"label", "label_section"} <= tables
+    assert "source_disclaimer" not in tables
+
+
+def test_upgrades_a_version_5_store_dropping_the_disclaimer_and_keeping_its_labels(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "molecula.db"
+    old = sqlite3.connect(path)
+    old.executescript("".join(MIGRATIONS[version] for version in range(1, 6)))
+    old.execute(
+        "INSERT INTO compound VALUES (5291, 'imatinib', 'K', 'C', 'F', 1.0, NULL, NULL,"
+        " 0, 0, 0, 1, 0, NULL, 'pubchem', '2026-01-01')"
+    )
+    old.execute(
+        "INSERT INTO label VALUES ('gleevec', 5291, 'IMATINIB MESYLATE', 'Gleevec', 'rx',"
+        " '20260713', 'https://dailymed', 'openfda', '2026-10-12')"
+    )
+    old.execute("INSERT INTO source_disclaimer VALUES ('openfda', 'Do not rely on openFDA.', '')")
+    old.execute("PRAGMA user_version = 5")
+    old.commit()
+    old.close()
+
+    conn = connect(path)
+
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
+    tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    assert "source_disclaimer" not in tables
+    assert conn.execute("SELECT set_id FROM label").fetchall() == [("gleevec",)]
 
 
 def test_upgrades_a_version_4_store_keeping_its_labels_and_allowing_the_new_groups(

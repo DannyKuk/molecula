@@ -405,15 +405,6 @@ def test_drug_without_a_us_label_is_listed_and_stores_nothing(ingest, store: Lab
     assert store.get(1983) == ()
 
 
-def test_openfda_disclaimer_is_stored_once(ingest, store: LabelStore, conn) -> None:
-    ingest([IMATINIB, IBUPROFEN])
-
-    disclaimer = store.disclaimer("openfda")
-    assert disclaimer is not None
-    assert disclaimer.startswith("Do not rely on openFDA to make decisions regarding medical care.")
-    assert conn.execute("SELECT count(*) FROM source_disclaimer").fetchone() == (1,)
-
-
 def test_rerun_is_served_from_the_cache_and_changes_nothing(
     ingest, conn: sqlite3.Connection
 ) -> None:
@@ -459,5 +450,4 @@ def dump(conn: sqlite3.Connection) -> list[tuple[object, ...]]:
     return [
         *conn.execute("SELECT rowid, * FROM label ORDER BY rowid"),
         *conn.execute("SELECT rowid, * FROM label_section ORDER BY rowid"),
-        *conn.execute("SELECT rowid, * FROM source_disclaimer ORDER BY rowid"),
     ]
