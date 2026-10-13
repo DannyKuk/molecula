@@ -4,7 +4,7 @@ import { createContext, useContext, type ReactNode } from "react";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Source } from "@/lib/chat";
-import { citedSources, sectionName, sourceLabel, type Citations } from "@/lib/citations";
+import { citedSources, labelDate, sectionName, sourceLabel, type Citations } from "@/lib/citations";
 
 /** The answer's sources and passages, or null while the answer is still streaming. */
 export const CitationsContext = createContext<Citations | null>(null);
@@ -86,13 +86,4 @@ function CitedPassage({ source, text }: { source: Source; text?: string }) {
 
 function excerpt(text: string): string {
   return text.length > EXCERPT_LENGTH ? `${text.slice(0, EXCERPT_LENGTH).trimEnd()}…` : text;
-}
-
-function labelDate(isoDate: string): string {
-  return new Date(`${isoDate}T00:00:00Z`).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  });
 }

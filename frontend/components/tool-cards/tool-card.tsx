@@ -1,0 +1,107 @@
+"use client";
+
+import { ChevronRight } from "lucide-react";
+import type { ReactNode } from "react";
+
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import type { Card } from "@/lib/tool-cards";
+
+import { ComplexCard, NoComplexCard } from "./complex-card";
+import { DrugCard } from "./drug-card";
+import { LabelsCard } from "./labels-card";
+import { InvalidCard, NotSupportedCard } from "./problem-cards";
+import { PropertiesCard } from "./properties-card";
+import { TargetsCard } from "./targets-card";
+
+type ShownCard = Exclude<Card, { kind: "pending" }>;
+
+/** A step that ran a tool: the step's text and a short summary, opening into what it returned. */
+export function ToolCard({
+  text,
+  card,
+  answer,
+}: {
+  text: string;
+  card: ShownCard;
+  answer: string;
+}) {
+  return (
+    <Collapsible className="rounded-lg border border-zinc-200 dark:border-zinc-800">
+      <CollapsibleTrigger className="group flex w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-3 py-2 text-left hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:hover:bg-zinc-900">
+        <ChevronRight
+          aria-hidden
+          className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[panel-open]:rotate-90"
+        />
+        <span className="font-medium">{text}</span>
+        <span className="ml-auto text-muted-foreground">{summary(card)}</span>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="border-t border-zinc-200 px-3 py-3 dark:border-zinc-800">
+        {body(card, answer)}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+function summary(card: ShownCard): ReactNode {
+  switch (card.kind) {
+    case "invalid":
+      return <Badge tone="error">Rejected call</Badge>;
+    case "not_supported":
+      return <Badge tone="warning">Not supported</Badge>;
+    case "drug":
+      return `“${card.result.query}” → ${card.result.name}`;
+    case "properties": {
+      if (card.drugs.length > 1) return "Side by side";
+      const drug = card.drugs[0];
+      return drug.status === "found"
+        ? `${drug.compound.formula} · ${drug.compound.molecular_weight} g/mol`
+        : "Not supported";
+    }
+    case "targets": {
+      const count = card.result.targets.length;
+      if (count === 0) return "No mechanism listed";
+      return `${count} ${count === 1 ? "target" : "targets"}`;
+    }
+    case "complex":
+      return [card.result.pdb_id, card.result.target].filter(Boolean).join(" · ");
+    case "no_complex":
+      return "No reviewed structure";
+    case "labels": {
+      const count = card.result.passages.length;
+      return `${count} ${count === 1 ? "passage" : "passages"}`;
+    }
+  }
+}
+
+function body(card: ShownCard, answer: string): ReactNode {
+  switch (card.kind) {
+    case "invalid":
+      return <InvalidCard errors={card.errors} />;
+    case "not_supported":
+      return <NotSupportedCard drugs={card.drugs} />;
+    case "drug":
+      return <DrugCard result={card.result} />;
+    case "properties":
+      return <PropertiesCard drugs={card.drugs} />;
+    case "targets":
+      return <TargetsCard result={card.result} />;
+    case "complex":
+      return <ComplexCard result={card.result} />;
+    case "no_complex":
+      return <NoComplexCard result={card.result} />;
+    case "labels":
+      return (
+        <LabelsCard result={card.result} drug={card.drug} section={card.section} answer={answer} />
+      );
+  }
+}
+
+function Badge({ tone, children }: { tone: "warning" | "error"; children: ReactNode }) {
+  const colors =
+    tone === "warning"
+      ? "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200"
+      : "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300";
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${colors}`}>{children}</span>
+  );
+}

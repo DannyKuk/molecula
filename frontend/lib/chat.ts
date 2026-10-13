@@ -21,12 +21,13 @@ export type Source = {
 export type ChatEvent =
   | { type: "status"; message: string }
   | { type: "token"; text: string }
+  | { type: "tool_call"; id: string; name: string; args: Record<string, unknown> }
   | { type: "tool_result"; id: string; name: string; status: string | null; result: unknown }
   | { type: "sources"; sources: Source[]; unknown_refs: number[]; disclaimer: string | null }
   | { type: "done"; step_limit_reached: boolean }
   | { type: "error"; message: string }
-  // Read but not shown yet: tool cards come with #161, the retrieval trace with #41.
-  | { type: "tool_call" | "retrieval_trace" };
+  // Read but not shown yet: the retrieval trace comes with #41.
+  | { type: "retrieval_trace" };
 
 export const CHAT_UNAVAILABLE = "The chat is currently unavailable. Try again later.";
 export const CHAT_FAILED = "Something went wrong while answering. Try again.";

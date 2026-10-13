@@ -45,3 +45,13 @@ export function citedSources(refs: number[], sources: Source[]): Source[] {
 export function sourceLabel(source: Source): string {
   return `${source.name} · ${sectionName(source.section)}`;
 }
+
+/** "2026-07-13" → "Jul 13, 2026". */
+export function labelDate(isoDate: string): string {
+  return new Date(`${isoDate}T00:00:00Z`).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
