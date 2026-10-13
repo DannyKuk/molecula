@@ -34,7 +34,7 @@ flowchart LR
 | **FastAPI** (`backend/src/molecula/api/`) | Thin routes over the services: `GET /drugs`, `/drugs/resolve`, `/drugs/{cid}`, `/drugs/{cid}/structure`, `/drugs/{cid}/targets`, `/drugs/{cid}/labels`. | built, and `POST /chat` (#125) streams the agent's answer as server-sent events; `/complex` (#73) planned |
 | **Agent** (`backend/src/molecula/agent/`, `tools/`) | A LangChain tool-calling agent whose tools call the same services, with RAG over the label sections. | LLM factory built (#11); tools `resolve_drug`, `get_properties`, `get_targets`, `compare_drugs` and their registry built (#107), `search_labels` built (#108); the agent and its event stream built (`agent/agent.py`, #124) and served by `POST /chat` (#125); `get_complex` (#109) planned |
 | **MCP server** (`backend/src/molecula/mcp/`) | The same services for any MCP client. | planned (#42) |
-| **Frontend** (`frontend/`) | Next.js app. Today: the backend's health and a searchable list of the supported drugs. | chat (#19), sources (#20) and 3D viewer (#21) planned |
+| **Frontend** (`frontend/`) | Next.js app: the chat on the home page and a searchable list of the supported drugs. | chat with progress steps and a help guide built (#19); sources (#20) and 3D viewer (#21) planned |
 
 **What never happens at run time:** a call to PubChem, ChEMBL, RCSB or openFDA. The app answers from the store only ([local store](decisions/local-store.md)).
 
@@ -49,7 +49,7 @@ This is the planned flow. Name resolution, the data routes, the label search and
 | 3. Tools | The agent looks things up instead of guessing: properties, targets and mechanism, the reviewed complex, a side-by-side comparison. Each tool wraps a service. | built: `resolve_drug`, `get_properties`, `get_targets`, `compare_drugs` (`tools/`, #107), `search_labels` (#108); planned: `get_complex` (#109) |
 | 4. Search the labels | Query translation (brand → generic, German → English, rewrites), a metadata filter for drug and label section, then embedding search over chunks of the canonical labels, with BM25 next to it for exact terms like "CYP3A4". | built: the filtered search (`rag/filters.py`, `rag/retriever.py`, #13); planned: query translation (#14), BM25 (#44) |
 | 5. Answer | Streamed over server-sent events: progress steps, tool calls and results, tokens, sources, and a retrieval trace. Label text is cited as `[n]`, a number the `sources` event resolves to its DailyMed passage. | built: the agent's events (`ChatAgent.stream`, #124), `POST /chat` (#125) |
-| 6. Show it | Citations and tool cards in the chat; the drug in 3D, and for hero drugs bound in its target's pocket with the hydrogen bonds marked. | planned (#19, #20, #21) |
+| 6. Show it | The answer streams into the chat under a live list of progress steps; citations and tool cards in the chat; the drug in 3D, and for hero drugs bound in its target's pocket with the hydrogen bonds marked. | built: the chat with its progress steps (`components/chat.tsx`, #19); planned: citations and tool cards (#20), 3D (#21) |
 
 ## The data pipeline in short
 
@@ -108,6 +108,7 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 - **Tests never touch the network.** Source clients run against responses recorded from the live APIs in `tests/fixtures/` (the one hand-edited file has "handmade" in its name), `MockTransport` and a fake clock test retries and rate limits without waiting, and agent tests use a scripted fake chat model (`tests/fake_llm.py`). Real-model checks belong in `backend/evals/`, run with `OFFLINE=1`.
 - **The drugs page asks the backend only when its own list has no match.** The list filters on scope names and aliases. `GET /drugs/resolve` also knows salt names and PubChem synonyms, so "imatinib mesylate" shows as supported under another name instead of "not supported", and a typo gets the closest names. A suggestion is a link the user clicks, never applied on its own, because look-alike names (Celexa, Celebrex) make a silent correction unsafe (#79).
 - **The browser calls the backend directly, with CORS**, rather than through a Next.js proxy, because streaming the chat is simpler without a proxy that buffers the response (#50).
+- **The chat reads `POST /chat` with `fetch` and a small SSE parser, not `EventSource`**, because `EventSource` can only send a GET. The conversation lives in the page's state and is sent with each question, cut to the backend's limits (`frontend/lib/chat-limits.ts` mirrors `schemas/chat.py`); Stop aborts the request and keeps what has arrived. An `error` event, a 503 or a lost connection shows a readable message with a retry. The disclaimer sits under the question box so it stays in view while the answer scrolls, so it moved out of the shared layout into each page (#19).
 
 **Answers and safety**
 - **No personal dosing or treatment advice**, and no lethal-dose or synthesis answers. Retrieved label text is data, passed in delimiters, and never overrides the system prompt. The openFDA disclaimer is a field the UI shows, not text the model has to remember: `GET /drugs/{cid}/labels` returns it with the labels (#72), the chat follows (#17, #47; planned).
@@ -120,7 +121,7 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 | `backend/src/molecula/` | `api/` (routes), `services/`, `sources/` (one client per API plus `http.py`), `store/` (SQLite, schema, HTTP cache, files), `ingest/` (build steps), `agent/` (LLM factory, tool registry), `tools/` (one module per agent tool), `guard/` (input validation; the safety check follows in #148), `prompts/` (loader and `.md` prompts), `schemas/` |
 | `backend/tests/` | pytest, mirroring `src/molecula/`; `fixtures/` holds recorded API responses; fake chat model in `fake_llm.py`, fake services for the tool tests in `tool_fakes.py` |
 | `backend/evals/` | Eval runners and datasets with real models: `retrieval/` compares embedding models on `datasets/retrieval_questions.yaml`, `chat_model/` measures a chat model's filter extraction and the agent's citations on the same questions, `safety/` asks the chat the messages of `datasets/input_check.yaml` and reports what it did with each category |
-| `frontend/` | Next.js app: `app/` (pages), `components/`, `lib/` (typed API client, search) |
+| `frontend/` | Next.js app: `app/` (pages), `components/`, `lib/` (typed API client, chat stream, search) |
 | `data/` | `scope.yaml`, `hero_set.yaml`, and the built store in `build/` (gitignored) |
 | `docs/` | `architecture.md`, `data-plan.md`, `decisions/`, `evals/` (eval reports), and `spikes/` (the scripts behind their numbers) |
 

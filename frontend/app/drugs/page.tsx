@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { Disclaimer } from "@/components/disclaimer";
+
 import { DrugPicker } from "./drug-picker";
 
 export const metadata: Metadata = {
@@ -25,6 +27,9 @@ export default function DrugsPage() {
         </p>
       </div>
       <DrugPicker />
+      <footer className="mt-auto border-t border-zinc-200 pt-6 dark:border-zinc-800">
+        <Disclaimer />
+      </footer>
     </main>
   );
 }
