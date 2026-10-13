@@ -1,5 +1,6 @@
 import type { Turn } from "@/lib/chat-turn";
 
+import { AnswerMarkdown } from "./answer-markdown";
 import { ProgressSteps } from "./progress-steps";
 
 type ConversationTurnProps = {
@@ -22,9 +23,7 @@ export function ConversationTurn({ turn, onRetry }: ConversationTurnProps) {
           Thinking…
         </p>
       )}
-      {turn.answer && (
-        <div className="leading-relaxed break-words whitespace-pre-wrap">{turn.answer}</div>
-      )}
+      {turn.answer && <AnswerMarkdown text={turn.answer} />}
       {turn.state === "stopped" && (
         <p className="text-sm text-zinc-600 dark:text-zinc-400">Stopped.</p>
       )}
