@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.language_models import BaseChatModel
 
@@ -13,6 +14,7 @@ from molecula.agent.llm import LLMConfigError, get_chat_model
 from molecula.agent.tool_registry import build_tools
 from molecula.api import chat, drugs, health
 from molecula.config import Settings, get_settings
+from molecula.guard.validation import readable_validation_error
 from molecula.rag.embeddings import embedding_model_id, get_embeddings
 from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
@@ -115,6 +117,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="Molecula", lifespan=lifespan)
+app.add_exception_handler(RequestValidationError, readable_validation_error)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_settings().cors_origins,

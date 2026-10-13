@@ -104,7 +104,7 @@ def client(
 
 def validation_messages(response: Any) -> list[str]:
     assert response.status_code == 422
-    return [error["msg"] for error in response.json()["detail"]]
+    return [error["msg"] for error in response.json()["errors"]]
 
 
 def test_list_drugs_returns_names_aliases_and_the_3d_flag(client: TestClient) -> None:
