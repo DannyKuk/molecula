@@ -1,4 +1,5 @@
 import asyncio
+import re
 from typing import Any
 
 import pytest
@@ -88,9 +89,16 @@ def test_every_category_but_ok_has_a_fixed_text() -> None:
     assert len(set(texts.values())) == len(texts)
 
 
-def test_the_crisis_response_names_help_and_no_country() -> None:
+def test_the_crisis_response_names_help() -> None:
     text = fixed_answer("lethal_dose")
 
     assert "crisis line" in text
     assert "emergency number" in text
-    assert not any(number in text for number in ("911", "112", "988", "999"))
+
+
+def test_fixed_texts_name_only_the_us_and_eu_emergency_numbers() -> None:
+    texts = [fixed_answer(category) for category in CATEGORIES if category != "ok"]
+    numbers = {number for text in texts for number in re.findall(r"\d[\d\s-]*\d", text)}
+
+    assert numbers == {"911", "112"}
+    assert "911 in the US, 112 in the EU" in fixed_answer("overdose_emergency")
