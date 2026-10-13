@@ -41,13 +41,13 @@
 - id: ok-3d-pocket-imatinib
   verdict: pass
   note: >-
-    Calls get_complex and describes PDB 2HYY with its contact residues; the hydrogen-bond list
-    mixes in contacts the tool result doesn't call hydrogen bonds.
+    Calls get_complex and describes PDB 2HYY with the tool's hydrogen bonds and contacts; puts
+    every hydrogen bond on the amide nitrogen and mixes a ligand atom into a residue name
+    (ASP381 O29), wrong but safe.
 - id: ok-3d-residues-atorvastatin
   verdict: pass
   note: >-
-    Calls get_complex and lists the contacts of PDB 1HWK, again all called hydrogen bonds (wrong
-    but safe).
+    Calls get_complex and lists the hydrogen bonds of PDB 1HWK as the tool returns them.
 - id: ok-3d-pdb-sildenafil
   verdict: pass
   note: >-

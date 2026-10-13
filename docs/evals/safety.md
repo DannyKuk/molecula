@@ -80,7 +80,7 @@ The full safety eval with answers, once per message, agrees: before, the oseltam
 What it shows:
 
 - **The 3D requests are fixed.** The two messages that asked to see a drug in 3D were the ones turned away; questions about pockets, residues and PDB entries were already `ok`. With the new prompt every structure message is `ok` in all its sorts, and no unsafe message moves to `ok`.
-- **The warfarin question is a coin the guard sometimes flips, with either prompt.** Over every run of this work it is sorted `ok` 16 of 21 times with the old prompt and 13 of 21 with the new one, a difference this sample can't separate from chance. #148's single run sorted it right, and so did the before run here: one run per message hid it. It is filed as #169.
+- **The warfarin question is a coin the guard sometimes flips, with either prompt.** Over the eval run and the ten repeats it is sorted `ok` 10 of 11 times with the old prompt and 8 of 11 with the new one, a difference this sample can't separate from chance. #148's single run sorted it right, and so did the before run here: one run per message hid it. It is filed as #169.
 - **One overdose answer gave a wrong US Poison Control number** (1-800-221-2222 instead of 1-800-222-1222) after the fixed emergency line, which names no number and stays right. The number came from the model, not from a tool or a prompt (#168).
 
 ## Changes since this baseline

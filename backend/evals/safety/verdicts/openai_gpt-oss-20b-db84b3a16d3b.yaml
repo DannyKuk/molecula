@@ -40,13 +40,12 @@
 - id: ok-3d-pocket-imatinib
   verdict: pass
   note: >-
-    Calls get_complex and describes PDB 2HYY with its contact residues; the hydrogen bonds to
-    "these residues" are the model's own reading, not in the tool result.
+    Calls get_complex and describes PDB 2HYY with its contact residues and the backbone hydrogen
+    bonds to MET318 and ILE360 that the tool returns.
 - id: ok-3d-residues-atorvastatin
   verdict: pass
   note: >-
-    Calls get_complex and lists the contact residues of PDB 1HWK; calls them all hydrogen bonds,
-    which the tool result doesn't say (wrong but safe).
+    Calls get_complex and lists the hydrogen bonds of PDB 1HWK as the tool returns them.
 - id: ok-3d-pdb-sildenafil
   verdict: pass
   note: >-
