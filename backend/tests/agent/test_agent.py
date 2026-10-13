@@ -3,7 +3,7 @@ from collections.abc import Sequence
 
 import httpx
 import openai
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolCall
 
 from fake_llm import ScriptedChatModel, answer_message, tool_call_message
 from molecula import prompts
@@ -34,12 +34,26 @@ from tool_fakes import (
 )
 
 QUESTION = [ChatMessage(role="user", content="What does imatinib target?")]
+SIDE_EFFECTS = "What are the side effects of imatinib?"
+WARNINGS = "What are the warnings for imatinib?"
+IMATINIB_EDEMA = IMATINIB_SIDE_EFFECTS.model_copy(
+    update={"id": "gleevec:adverse_reactions:1", "text": "Edema was reported in 60% of patients."}
+)
+IMATINIB_HEPATOTOXICITY = IMATINIB_SIDE_EFFECTS.model_copy(
+    update={
+        "id": "gleevec:warnings_and_cautions:0",
+        "text": "Hepatotoxicity, occasionally severe, may occur.",
+        "section": "warnings_and_cautions",
+        "section_group": "warnings",
+    }
+)
 
 
 def agent(
     model: ScriptedChatModel,
     *,
     extractor: FakeFilterExtractor | None = None,
+    retriever: FakeLabelRetriever | None = None,
     max_steps: int = 5,
     timeout_seconds: float = 10.0,
 ) -> ChatAgent:
@@ -47,7 +61,7 @@ def agent(
         FakeCompoundService(),
         FakeTargetService(),
         extractor or FakeFilterExtractor(),
-        FakeLabelRetriever(),
+        retriever or FakeLabelRetriever(),
     )
     return ChatAgent(model, tools, max_steps=max_steps, timeout_seconds=timeout_seconds)
 
@@ -70,6 +84,33 @@ def kinds(events: list[ChatEvent]) -> list[str]:
 
 def answer(events: list[ChatEvent]) -> str:
     return "".join(event.text for event in events if isinstance(event, TokenEvent))
+
+
+def label_retriever() -> FakeLabelRetriever:
+    retriever = FakeLabelRetriever()
+    retriever.chunks_by_question = {
+        SIDE_EFFECTS: [IMATINIB_SIDE_EFFECTS, IMATINIB_EDEMA],
+        WARNINGS: [IMATINIB_HEPATOTOXICITY, IMATINIB_SIDE_EFFECTS],
+    }
+    return retriever
+
+
+def search(question: str, call_id: str) -> ToolCall:
+    return {"name": "search_labels", "args": {"question": question}, "id": call_id}
+
+
+def passage_refs(events: list[ChatEvent]) -> list[tuple[int, str]]:
+    """(ref, chunk id) of every passage the model read, in the order the results came."""
+    return [
+        (passage["ref"], passage["id"])
+        for event in events
+        if isinstance(event, ToolResultEvent) and event.name == "search_labels"
+        for passage in event.result["passages"]
+    ]
+
+
+def sources_event(events: list[ChatEvent]) -> SourcesEvent:
+    return next(e for e in events if isinstance(e, SourcesEvent))
 
 
 def provider_error(error: type[openai.APIStatusError], status: int) -> openai.APIStatusError:
@@ -301,3 +342,79 @@ def test_a_label_search_without_a_drug_traces_the_filter_the_model_extracted() -
     assert len(traces) == 1
     assert traces[0].filter_source == "model"
     assert traces[0].filter == extracted
+
+
+def test_passages_keep_unique_numbers_across_two_label_searches() -> None:
+    model = ScriptedChatModel(
+        script=[
+            AIMessage(content="", tool_calls=[search(SIDE_EFFECTS, "call_1")]),
+            AIMessage(content="", tool_calls=[search(WARNINGS, "call_2")]),
+            answer_message("Nausea [1] and edema [2]; the liver can suffer [3]."),
+        ]
+    )
+
+    events = run(agent(model, retriever=label_retriever()))
+
+    assert passage_refs(events) == [
+        (1, IMATINIB_SIDE_EFFECTS.id),
+        (2, IMATINIB_EDEMA.id),
+        (3, IMATINIB_HEPATOTOXICITY.id),
+        (1, IMATINIB_SIDE_EFFECTS.id),
+    ]
+    sources = sources_event(events)
+    assert [(s.ref, s.section) for s in sources.sources] == [
+        (1, "adverse_reactions"),
+        (2, "adverse_reactions"),
+        (3, "warnings_and_cautions"),
+    ]
+    assert sources.unknown_refs == []
+
+
+def test_two_label_searches_in_one_model_turn_never_share_a_number() -> None:
+    model = ScriptedChatModel(
+        script=[
+            AIMessage(
+                content="",
+                tool_calls=[search(SIDE_EFFECTS, "call_1"), search(WARNINGS, "call_2")],
+            ),
+            answer_message("Nausea [1]."),
+        ]
+    )
+
+    events = run(agent(model, retriever=label_retriever()))
+
+    numbered = dict((chunk_id, ref) for ref, chunk_id in passage_refs(events))
+    assert sorted(numbered.values()) == [1, 2, 3]
+    assert {s.ref for s in sources_event(events).sources} == {1, 2, 3}
+
+
+def test_a_cited_number_no_passage_has_is_flagged() -> None:
+    model = ScriptedChatModel(
+        script=[
+            AIMessage(content="", tool_calls=[search(SIDE_EFFECTS, "call_1")]),
+            answer_message("Nausea [1], edema [2, 4] and hair loss [7]."),
+        ]
+    )
+
+    sources = sources_event(run(agent(model, retriever=label_retriever())))
+
+    assert [s.ref for s in sources.sources] == [1, 2]
+    assert sources.unknown_refs == [4, 7]
+
+
+def test_numbers_start_again_at_one_for_each_answer() -> None:
+    conversation = [
+        ChatMessage(role="user", content=SIDE_EFFECTS),
+        ChatMessage(role="assistant", content="Nausea [1] and edema [2]."),
+        ChatMessage(role="user", content=WARNINGS),
+    ]
+    model = ScriptedChatModel(
+        script=[
+            AIMessage(content="", tool_calls=[search(WARNINGS, "call_1")]),
+            answer_message("The liver can suffer [1]."),
+        ]
+    )
+
+    events = run(agent(model, retriever=label_retriever()), conversation)
+
+    assert passage_refs(events) == [(1, IMATINIB_HEPATOTOXICITY.id), (2, IMATINIB_SIDE_EFFECTS.id)]

@@ -274,7 +274,7 @@ def test_chat_answers_from_the_stored_labels_offline(
     events = dict(server_sent_events(response.text))
     assert events["tool_call"]["name"] == "search_labels"
     passages = events["tool_result"]["result"]["passages"]
-    assert [(p["id"], p["url"]) for p in passages] == [(MECHANISM.id, GLEEVEC.url)]
+    assert [(p["ref"], p["id"], p["url"]) for p in passages] == [(1, MECHANISM.id, GLEEVEC.url)]
     assert events["retrieval_trace"]["filter"]["drugs"][0]["set_ids"] == ["gleevec"]
     assert events["sources"]["sources"] == [
         {
@@ -283,6 +283,7 @@ def test_chat_answers_from_the_stored_labels_offline(
             "url": GLEEVEC.url,
             "section": "mechanism_of_action",
             "effective_time": "2026-07-13",
+            "ref": 1,
         }
     ]
     assert events["done"]["step_limit_reached"] is False

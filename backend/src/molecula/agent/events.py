@@ -5,6 +5,7 @@ from typing import Any
 from langchain_core.messages import AIMessage, AIMessageChunk, ToolCall, ToolMessage
 from langchain_core.tools import BaseTool
 
+from molecula.agent.references import cited_refs
 from molecula.schemas.chat import (
     Candidate,
     ChatEvent,
@@ -23,8 +24,8 @@ from molecula.tools.base import Progress, progress_of
 
 
 class AgentRun:
-    """Turns the agent graph's stream into chat events, and collects the sources and token
-    usage for the end of the answer."""
+    """Turns the agent graph's stream into chat events, and collects the sources, the answer
+    and the token usage for the end of the answer."""
 
     def __init__(self, max_steps: int, tools: Sequence[BaseTool]) -> None:
         self.max_steps = max_steps
@@ -34,7 +35,8 @@ class AgentRun:
         self.model_calls = 0
         self.usage = Usage()
         self.calls: dict[str, ToolCall] = {}
-        self.sources: dict[tuple[str, str | None], Source] = {}
+        self.sources: dict[tuple[str, str | None, int | None], Source] = {}
+        self.answer = ""
 
     def events(self, mode: str, data: Any) -> Iterator[ChatEvent]:
         if mode == "messages":
@@ -59,6 +61,8 @@ class AgentRun:
             self.usage.input_tokens += message.usage_metadata["input_tokens"]
             self.usage.output_tokens += message.usage_metadata["output_tokens"]
             self.usage.total_tokens += message.usage_metadata["total_tokens"]
+        if not message.tool_calls:
+            self.answer = message.text
         for call in message.tool_calls:
             call_id = call["id"] or ""
             self.calls[call_id] = call
@@ -79,10 +83,12 @@ class AgentRun:
             yield retrieval_trace(message.tool_call_id, artifact, call)
         if isinstance(artifact, ToolResult):
             for source in artifact.sources():
-                self.sources.setdefault((source.url, source.section), source)
+                self.sources.setdefault((source.url, source.section, source.ref), source)
 
     def finish(self) -> Iterator[ChatEvent]:
-        yield SourcesEvent(sources=list(self.sources.values()))
+        refs = {source.ref for source in self.sources.values()}
+        unknown = [ref for ref in cited_refs(self.answer) if ref not in refs]
+        yield SourcesEvent(sources=list(self.sources.values()), unknown_refs=unknown)
         yield DoneEvent(usage=self.usage, step_limit_reached=self.model_calls >= self.max_steps)
 
     def status_of(self, call: ToolCall) -> str:

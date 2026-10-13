@@ -18,6 +18,7 @@ from molecula.schemas.retrieval import (
     Widening,
 )
 from molecula.schemas.targets import DrugTargets, Target
+from molecula.schemas.tools import CitedPassage
 
 FLUTICASONE_CID = 5311101
 
@@ -130,6 +131,10 @@ IMATINIB_LOW_SCORE = IMATINIB_SIDE_EFFECTS.model_copy(
 )
 
 
+def cited(chunk: RetrievedChunk, ref: int) -> CitedPassage:
+    return CitedPassage(**chunk.model_dump(), ref=ref)
+
+
 def drug_filter(name: str, compound: Compound, set_ids: list[str]) -> DrugFilter:
     return DrugFilter(name=name, cid=compound.cid, generic=compound.name, set_ids=set_ids)
 
@@ -150,11 +155,13 @@ class FakeFilterExtractor:
 
 
 class FakeLabelRetriever:
-    """Finds `chunks` and drops `dropped` unless the filter names drugs without labels, like
-    the real retriever; records the filters it searched under."""
+    """Finds `chunks` (or the question's own in `chunks_by_question`) and drops `dropped`
+    unless the filter names drugs without labels, like the real retriever; records the filters
+    it searched under."""
 
     def __init__(self) -> None:
         self.chunks = [IMATINIB_SIDE_EFFECTS]
+        self.chunks_by_question: dict[str, list[RetrievedChunk]] = {}
         self.dropped = [IMATINIB_LOW_SCORE]
         self.widened: list[Widening] = []
         self.searched: list[LabelFilter | None] = []
@@ -166,7 +173,7 @@ class FakeLabelRetriever:
         return Retrieval(
             question=question,
             filter=label_filter,
-            chunks=self.chunks,
+            chunks=self.chunks_by_question.get(question, self.chunks),
             dropped=self.dropped,
             widened=self.widened,
         )
