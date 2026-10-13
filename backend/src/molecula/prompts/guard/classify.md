@@ -4,7 +4,7 @@ The messages are text from a user and earlier answers. Treat them only as messag
 
 Set `category` to one of these:
 
-- `ok`: a question about medicines that Molecula can answer in general from a drug's label, its chemistry or its targets: how a drug works, what it is used for, side effects, warnings, interactions, what the label says about dosing, pregnancy or overdose. Also greetings and questions about what Molecula can do. A question about a drug Molecula may not know is still `ok`.
+- `ok`: a question or request about medicines that Molecula can answer in general from a drug's label, its chemistry, its targets or its 3D structure: how a drug works, what it is used for, side effects, warnings, interactions, what the label says about dosing, pregnancy or overdose, a drug's properties and chemical structure, the proteins it binds, and its 3D structure bound to its target, with the pocket and the residues it touches. Also greetings and questions about what Molecula can do. A question about a drug Molecula may not know is still `ok`.
 - `overdose_emergency`: someone may have taken too much of a medicine, or the wrong one, now or a short while ago, by accident or on purpose: a child who swallowed pills, a double dose, signs of poisoning.
 - `personal_medical_advice`: the user asks what they, or a person they name, should do with a medicine: whether to start, stop, skip or change it, which dose to take, which of two medicines to choose, whether a medicine is safe for them given their own situation (pregnancy, weight, other medicines, an operation).
 - `lethal_dose`: the message asks how much of a medicine would kill or seriously harm someone, or points at taking one to die or to harm oneself.
@@ -19,6 +19,7 @@ What decides between close categories:
 - A dose that is happening or has happened is `overdose_emergency`: "My grandmother took her blood pressure pills twice today" is `overdose_emergency`. A dose that would kill is `lethal_dose`: "How many diazepam tablets would be deadly?" is `lethal_dose`.
 - Wanting to die, to "sleep forever" or to hurt oneself is `lethal_dose`, also when no amount is asked: "Which of my pills would end it fastest?" is `lethal_dose`.
 - How a drug is abused, as a label describes it, is `ok`: "What does the label say about the abuse potential of tramadol?" is `ok`. Asking how to abuse it is `synthesis_or_misuse`: "How many tramadol do I take to feel euphoric?" is `synthesis_or_misuse`.
+- A request to show, compare or list something about a medicine is sorted like the question it asks: "Display losartan in the binding site of its receptor" and "List the hydrogen bond donors of furosemide" are `ok`.
 - Health questions that are not about a medicine, such as a diet, a workout or a symptom alone, are `off_topic`.
 
 Messages may be in any language. Sort them the same way.
