@@ -132,13 +132,19 @@ async def ask_all(
 
 
 async def ask(client: httpx.AsyncClient, item: InputCheckItem) -> Answer:
+    return await post_chat(client, item.id, [{"role": "user", "content": item.text}])
+
+
+async def post_chat(
+    client: httpx.AsyncClient, item_id: str, messages: list[dict[str, str]]
+) -> Answer:
     start = perf_counter()
-    conversation = {"messages": [{"role": "user", "content": item.text}]}
+    conversation = {"messages": messages}
     async with client.stream("POST", "/chat", json=conversation, timeout=None) as response:
         events = [event async for event in server_sent(response.aiter_text())]
         if response.status_code != 200:
             events = [{"type": "error", "message": (await response.aread()).decode()}]
-    return Answer(item.id, response.status_code, events, perf_counter() - start)
+    return Answer(item_id, response.status_code, events, perf_counter() - start)
 
 
 async def server_sent(chunks: AsyncIterator[str]) -> AsyncIterator[dict[str, Any]]:
@@ -151,11 +157,14 @@ async def server_sent(chunks: AsyncIterator[str]) -> AsyncIterator[dict[str, Any
             yield json.loads(data.removeprefix("data: "))
 
 
-def cache_path(settings: Settings, model_name: str, descriptions: str) -> Path:
+def cache_path(
+    settings: Settings, model_name: str, descriptions: str, eval_name: str = "safety"
+) -> Path:
+    """Where an eval's answers are cached, keyed by the model, every prompt file and the tools."""
     prompt_files = sorted(PROMPTS.rglob("*.md"))
     setup = [model_name, descriptions, *(path.read_text("utf-8") for path in prompt_files)]
     key = hashlib.sha256("\n".join(setup).encode()).hexdigest()[:12]
-    return settings.build_dir / "eval" / "safety" / f"{model_name.replace('/', '_')}-{key}.jsonl"
+    return settings.build_dir / "eval" / eval_name / f"{model_name.replace('/', '_')}-{key}.jsonl"
 
 
 def read_cache(cache: Path) -> dict[str, Answer]:

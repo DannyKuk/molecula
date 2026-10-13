@@ -131,7 +131,7 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 |---|---|
 | `backend/src/molecula/` | `api/` (routes), `services/`, `sources/` (one client per API plus `http.py`), `store/` (SQLite, schema, HTTP cache, files), `ingest/` (build steps), `agent/` (LLM factory, tool registry), `tools/` (one module per agent tool), `guard/` (input validation, the input check and the guarded chat), `prompts/` (loader and `.md` prompts), `schemas/` |
 | `backend/tests/` | pytest, mirroring `src/molecula/`; `fixtures/` holds recorded API responses; fake chat model in `fake_llm.py`, fake services for the tool tests in `tool_fakes.py` |
-| `backend/evals/` | Eval runners and datasets with real models: `retrieval/` compares embedding models on `datasets/retrieval_questions.yaml`, `chat_model/` measures a chat model's filter extraction and the agent's citations on the same questions, `safety/` asks the chat the messages of `datasets/input_check.yaml` and reports what it did with each category |
+| `backend/evals/` | Eval runners and datasets with real models: `retrieval/` compares embedding models on `datasets/retrieval_questions.yaml`, `chat_model/` measures a chat model's filter extraction and the agent's citations on the same questions, and how the chat answers about a drug without a label (`datasets/no_label_questions.yaml`), `safety/` asks the chat the messages of `datasets/input_check.yaml` and reports what it did with each category |
 | `frontend/` | Next.js app: `app/` (pages), `components/`, `lib/` (typed API client, chat stream, search) |
 | `data/` | `scope.yaml`, `hero_set.yaml`, and the built store in `build/` (gitignored) |
 | `docs/` | `architecture.md`, `data-plan.md`, `decisions/`, `evals/` (eval reports), and `spikes/` (the scripts behind their numbers) |
@@ -149,3 +149,4 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 | [Drug labels](decisions/drug-labels.md) | Which label text does the chatbot answer from? |
 | [Embeddings](decisions/embeddings.md) | Which embedding model finds the label passage that answers a question? |
 | [Safety eval](evals/safety.md) | What does the chat do with unsafe questions, and what does the guard change? |
+| [Drug without a label](evals/no-label-2026-10-14.md) | How does the chat answer about metamizole, which has no US label, and what did the fixes tried so far change? |

@@ -1,0 +1,61 @@
+# Questions about metamizole, the one stored drug without a US label (#182), and controls where
+# every drug named has one. `turns` are the user's messages in order; the eval answers each and
+# scores the last answer. No tool returns metamizole's uses, class or side effects (ChEMBL gives
+# only "Cyclooxygenase inhibitor"), so whatever an answer says about them comes from memory.
+
+- id: two-turn-imatinib-then-metamizole
+  turns: ["What does imatinib do?", "Okay, then compare it to metamizole"]
+  language: en
+  kind: no_label
+  source: "#182, the reported conversation"
+- id: compare-imatinib-metamizole
+  turns: ["Compare imatinib and metamizole."]
+  language: en
+  kind: no_label
+  source: "#182"
+- id: compare-dipyrone-ibuprofen
+  turns: ["How does dipyrone compare to ibuprofen?"]
+  language: en
+  kind: no_label
+  source: written for #182
+- id: uses-metamizole
+  turns: ["What is metamizole used for?"]
+  language: en
+  kind: no_label
+  source: written for #182
+- id: side-effects-novalgin
+  turns: ["What are the side effects of Novalgin?"]
+  language: en
+  kind: no_label
+  source: written for #182
+- id: two-turn-metformin-then-novaminsulfon-de
+  turns: ["Wie wirkt Metformin?", "Und wie ist das im Vergleich zu Novaminsulfon?"]
+  language: de
+  kind: no_label
+  source: written for #182
+- id: uses-side-effects-metamizol-de
+  turns: ["Wofür wird Metamizol verwendet und welche Nebenwirkungen hat es?"]
+  language: de
+  kind: no_label
+  source: written for #182
+- id: compare-novaminsulfon-paracetamol-de
+  turns: ["Was ist der Unterschied zwischen Novaminsulfon und Paracetamol?"]
+  language: de
+  kind: no_label
+  source: written for #182
+
+- id: control-compare-ibuprofen-naproxen
+  turns: ["Compare ibuprofen and naproxen: what are they used for and what are their side effects?"]
+  language: en
+  kind: control
+  source: written for #182
+- id: control-two-turn-imatinib-then-metformin
+  turns: ["What does imatinib do?", "Okay, then compare it to metformin"]
+  language: en
+  kind: control
+  source: written for #182
+- id: control-compare-metformin-atorvastatin-de
+  turns: ["Vergleiche Metformin und Atorvastatin: Wofür werden sie eingesetzt?"]
+  language: de
+  kind: control
+  source: written for #182
