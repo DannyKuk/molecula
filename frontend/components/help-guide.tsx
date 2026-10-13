@@ -1,7 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef } from "react";
+import { useRef, useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 type Topic = {
   title: string;
@@ -107,58 +116,38 @@ function TopicCard({ topic, onAsk }: { topic: Topic; onAsk: (question: string) =
   );
 }
 
-/** The help guide over the chat, closed with its button, Escape or a click beside it. */
-export function HelpDialog({
-  onAsk,
-  onClose,
-}: {
-  onAsk: (question: string) => void;
-  onClose: () => void;
-}) {
-  const titleId = useId();
+/** The "?" button and the help guide it opens over the chat, closed with its Close button,
+ * Escape or a click beside it. */
+export function HelpDialog({ onAsk }: { onAsk: (question: string) => void }) {
+  const [open, setOpen] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    closeRef.current?.focus();
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [onClose]);
-
   return (
-    <div
-      className="fixed inset-0 z-20 flex items-end justify-center bg-black/40 sm:items-center sm:p-6"
-      onClick={onClose}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        onClick={(event) => event.stopPropagation()}
-        className="flex max-h-[90dvh] w-full max-w-2xl flex-col gap-4 overflow-y-auto rounded-t-2xl bg-background p-4 shadow-xl sm:rounded-2xl sm:p-6"
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger
+        aria-label="Help"
+        className="flex size-9 items-center justify-center rounded-full border border-zinc-300 font-semibold hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-700 dark:hover:bg-zinc-900"
+      >
+        ?
+      </DialogTrigger>
+      <DialogContent
+        showCloseButton={false}
+        initialFocus={closeRef}
+        className="top-auto bottom-0 max-h-[90dvh] max-w-2xl translate-y-0 gap-4 overflow-y-auto rounded-b-none bg-background p-4 sm:top-1/2 sm:bottom-auto sm:max-w-2xl sm:-translate-y-1/2 sm:rounded-2xl sm:p-6"
       >
         <div className="flex items-center justify-between gap-4">
-          <h2 id={titleId} className="text-lg font-semibold">
-            How to use Molecula
-          </h2>
-          <button
-            ref={closeRef}
-            type="button"
-            onClick={onClose}
-            className="rounded-md px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-zinc-500 dark:hover:bg-zinc-900"
-          >
+          <DialogTitle className="text-lg font-semibold">How to use Molecula</DialogTitle>
+          <DialogClose ref={closeRef} render={<Button variant="ghost" />}>
             Close
-          </button>
+          </DialogClose>
         </div>
         <HelpGuide
           onAsk={(question) => {
-            onClose();
+            setOpen(false);
             onAsk(question);
           }}
         />
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -22,8 +22,6 @@ import { HelpDialog, HelpGuide } from "./help-guide";
 /** The chat: the conversation so far, the question box and the help guide. */
 export function Chat({ initialQuestion }: { initialQuestion?: string }) {
   const { turns, answering, ask, retry, stop } = useConversation(initialQuestion);
-  const [helpOpen, setHelpOpen] = useState(false);
-  const closeHelp = useCallback(() => setHelpOpen(false), []);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,15 +36,7 @@ export function Chat({ initialQuestion }: { initialQuestion?: string }) {
           <Link href="/drugs" className="font-medium underline-offset-4 hover:underline">
             Supported drugs
           </Link>
-          <button
-            type="button"
-            onClick={() => setHelpOpen(true)}
-            aria-label="Help"
-            aria-haspopup="dialog"
-            className="flex size-9 items-center justify-center rounded-full border border-zinc-300 font-semibold hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-700 dark:hover:bg-zinc-900"
-          >
-            ?
-          </button>
+          <HelpDialog onAsk={ask} />
         </nav>
       </header>
       <div className="flex flex-1 flex-col gap-6 pb-6">
@@ -69,7 +59,6 @@ export function Chat({ initialQuestion }: { initialQuestion?: string }) {
         <ChatComposer answering={answering} onSend={ask} onStop={stop} />
         <Disclaimer />
       </div>
-      {helpOpen && <HelpDialog onAsk={ask} onClose={closeHelp} />}
     </main>
   );
 }
