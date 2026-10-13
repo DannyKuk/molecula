@@ -28,7 +28,7 @@ export function Chat({ initialQuestion }: { initialQuestion?: string }) {
   // The 3D view sits above the answer, so following the text would push it away while it plays.
   // Only the newest turn counts: a view in an earlier one doesn't stop following a new answer.
   const showsStructure = structuresOf(turns.at(-1)?.steps ?? []).length > 0;
-  useFollowAnswer(conversationRef, sent, answering && !showsStructure);
+  useFollowAnswer(conversationRef, sent, answering, showsStructure);
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 sm:px-6">
@@ -41,7 +41,7 @@ export function Chat({ initialQuestion }: { initialQuestion?: string }) {
           <HelpDialog onAsk={ask} />
         </nav>
       </header>
-      <div className="flex flex-1 flex-col gap-6 pb-6">
+      <div className="flex flex-1 flex-col gap-6 pb-12">
         {turns.length === 0 ? (
           <EmptyState onAsk={ask} />
         ) : (

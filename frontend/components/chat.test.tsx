@@ -408,9 +408,10 @@ describe("Chat", () => {
       }),
     );
 
-    expect(conversationWhenScrolled).toHaveLength(2);
+    expect(conversationWhenScrolled).toHaveLength(3);
     expect(conversationWhenScrolled[0]).toContain("How does Gleevec work?");
-    expect(conversationWhenScrolled[1]).toContain("What does sildenafil bind to?");
+    expect(conversationWhenScrolled[1]).toContain("It blocks BCR-ABL.");
+    expect(conversationWhenScrolled[2]).toContain("What does sildenafil bind to?");
     expect(page.scrollTo).toHaveBeenLastCalledWith({ top: document.documentElement.scrollHeight });
   });
 
@@ -420,12 +421,13 @@ describe("Chat", () => {
 
     askQuestion("How does Gleevec work?");
     await streamed(() => stream.send(chatFrame({ type: "error", message: "Timed out." })));
-    expect(page.scrollTo).toHaveBeenCalledTimes(1);
-    fireEvent.click(
-      within(await screen.findByRole("alert")).getByRole("button", { name: "Try again" }),
-    );
+    const retry = within(await screen.findByRole("alert")).getByRole("button", {
+      name: "Try again",
+    });
+    page.scrollTo.mockClear();
+    fireEvent.click(retry);
 
-    expect(page.scrollTo).toHaveBeenCalledTimes(2);
+    expect(page.scrollTo).toHaveBeenCalledOnce();
   });
 
   it("scrolls to the question it was opened with", async () => {
@@ -537,6 +539,43 @@ describe("Chat", () => {
 
     expect(screen.getByText("3D view of imatinib")).toBeDefined();
     expect(page.scrollTo).toHaveBeenCalledOnce();
+  });
+
+  it("scrolls to the end once more when the answer is done, so its sources are in view", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(token("It blocks BCR-ABL.")));
+    page.scrollTo.mockClear();
+    await streamed(() => stream.send(DONE));
+
+    expect(page.scrollTo).toHaveBeenCalledOnce();
+  });
+
+  it("doesn't scroll at the end of the answer when the reader scrolled up", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(token("It blocks BCR-ABL.")));
+    page.scrollBy(-200);
+    page.scrollTo.mockClear();
+    await streamed(() => stream.send(DONE));
+
+    expect(page.scrollTo).not.toHaveBeenCalled();
+  });
+
+  it("doesn't scroll at the end of an answer that shows a 3D view", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("Show imatinib bound to its target in 3D.");
+    await streamed(() => stream.send(IMATINIB_IN_3D + token("It sits in the ATP pocket.")));
+    page.scrollTo.mockClear();
+    await streamed(() => stream.send(DONE));
+
+    expect(page.scrollTo).not.toHaveBeenCalled();
   });
 
   it("doesn't follow once the answer is done or stopped", async () => {

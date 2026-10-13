@@ -4,17 +4,20 @@ import { type RefObject, useEffect, useLayoutEffect, useRef } from "react";
 const NEAR_END = 48;
 
 /**
- * Scrolls the page to its end each time a question is `sent` and then, while `following` is on,
- * keeps it there as `content` grows, like a terminal. The reader scrolling up stops that, and
- * scrolling back down to the end starts it again.
+ * Scrolls the page to its end each time a question is `sent` and then, while `answering` and not
+ * `paused`, keeps it there as `content` grows, like a terminal. The reader scrolling up stops that,
+ * and scrolling back down to the end starts it again.
  */
 export function useFollowAnswer(
   content: RefObject<HTMLElement | null>,
   sent: number,
-  following: boolean,
+  answering: boolean,
+  paused: boolean,
 ) {
+  const following = answering && !paused;
   const atEnd = useRef(true);
   const lastTop = useRef(0);
+  const wasFollowing = useRef(false);
 
   useEffect(() => {
     lastTop.current = window.scrollY;
@@ -47,6 +50,13 @@ export function useFollowAnswer(
     growth.observe(element);
     return () => growth.disconnect();
   }, [content, following]);
+
+  // The sources and the openFDA credit appear in the same commit that ends the answer, after the
+  // last growth the observer saw, so a finished answer is followed to its end once more.
+  useLayoutEffect(() => {
+    if (wasFollowing.current && !following && !paused && atEnd.current) scrollToEnd(lastTop);
+    wasFollowing.current = following;
+  }, [following, paused]);
 }
 
 // The page's own end, not an element's: scrolling an element into view ignores the sticky
