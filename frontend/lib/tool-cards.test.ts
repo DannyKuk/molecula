@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { cardOf, cardSteps, type Step } from "./tool-cards";
+import { cardOf, cardSteps, structuresOf, type Step } from "./tool-cards";
 import {
   ACETAMINOPHEN_NO_COMPLEX,
   COMPARISON_WITH_UNSUPPORTED,
   GLEEVEC_FOUND,
   IBUPROFEN_PROPERTIES,
+  IMATINIB_COMPLEX,
   IMATINIB_LABELS,
   NAPROXEN_PROPERTIES,
   ONE_DRUG_COMPARISON,
@@ -119,5 +120,36 @@ describe("cardSteps", () => {
       "not_supported",
       "properties",
     ]);
+  });
+});
+
+describe("structuresOf", () => {
+  const step = (name: string, result?: unknown): Step => ({
+    text: "Step",
+    tool: run(name, result),
+  });
+
+  it("lists each drug whose structure was looked up once, with its complex if it has one", () => {
+    const steps = [
+      step("get_complex", IMATINIB_COMPLEX),
+      step("get_properties", IBUPROFEN_PROPERTIES),
+      step("get_complex", ACETAMINOPHEN_NO_COMPLEX),
+      step("get_complex", IMATINIB_COMPLEX),
+    ];
+
+    expect(structuresOf(steps)).toEqual([
+      { cid: 5291, name: "imatinib", complex: IMATINIB_COMPLEX },
+      { cid: 1983, name: "acetaminophen", complex: null },
+    ]);
+  });
+
+  it("shows nothing for a lookup still running, an unsupported drug or a step without a tool", () => {
+    const steps = [
+      step("get_complex"),
+      step("get_complex", TYLENOLL_NOT_SUPPORTED),
+      { text: "Checked the question" },
+    ];
+
+    expect(structuresOf(steps)).toEqual([]);
   });
 });

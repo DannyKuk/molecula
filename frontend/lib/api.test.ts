@@ -1,6 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { API_URL, ApiError, getDrugs, getHealth, resolveDrug } from "./api";
+import {
+  API_URL,
+  ApiError,
+  getComplex,
+  getDrugs,
+  getHealth,
+  getStructure,
+  resolveDrug,
+} from "./api";
+import { SMALL_COMPLEX } from "./test-complexes";
 
 function stubFetch(response: Response) {
   const fetchMock = vi.fn().mockResolvedValue(response);
@@ -88,5 +97,35 @@ describe("resolveDrug", () => {
       path: "/drugs/resolve?name=%3Cscript%3E",
       status: 422,
     });
+  });
+});
+
+describe("getStructure", () => {
+  it("returns the drug's conformer as SDF text", async () => {
+    const sdf = "1983\n  -OEChem-\nM  END\n$$$$\n";
+    const fetchMock = stubFetch(new Response(sdf));
+
+    await expect(getStructure(1983)).resolves.toBe(sdf);
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/drugs/1983/structure`, {
+      signal: undefined,
+    });
+  });
+
+  it("throws an ApiError with status 404 for a drug without a 3D structure", async () => {
+    stubFetch(Response.json({ detail: "insulin glargine has no 3D structure." }, { status: 404 }));
+
+    await expect(getStructure(118984454)).rejects.toMatchObject({
+      path: "/drugs/118984454/structure",
+      status: 404,
+    });
+  });
+});
+
+describe("getComplex", () => {
+  it("returns the drug's complex", async () => {
+    const fetchMock = stubFetch(Response.json(SMALL_COMPLEX));
+
+    await expect(getComplex(5291)).resolves.toEqual(SMALL_COMPLEX);
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/drugs/5291/complex`, { signal: undefined });
   });
 });

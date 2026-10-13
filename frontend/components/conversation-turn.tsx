@@ -1,8 +1,10 @@
 import type { Turn } from "@/lib/chat-turn";
+import { structuresOf } from "@/lib/tool-cards";
 
 import { AnswerMarkdown } from "./answer-markdown";
 import { AnswerSources } from "./answer-sources";
 import { ProgressSteps } from "./progress-steps";
+import { StructurePanel } from "./structure/structure-panel";
 
 type ConversationTurnProps = {
   turn: Turn;
@@ -14,11 +16,15 @@ type ConversationTurnProps = {
 export function ConversationTurn({ turn, onRetry }: ConversationTurnProps) {
   const answering = turn.state === "answering";
   return (
-    <li className="flex flex-col gap-3">
+    <li data-turn className="flex flex-col gap-3">
       <p className="max-w-[85%] self-end rounded-2xl bg-zinc-100 px-4 py-2 break-words whitespace-pre-wrap dark:bg-zinc-900">
         {turn.question}
       </p>
       <ProgressSteps steps={turn.steps} live={answering} answer={turn.answer} />
+      {/* Above the answer, so the streaming text doesn't push the 3D view off screen. */}
+      {structuresOf(turn.steps).map((target) => (
+        <StructurePanel key={target.cid} target={target} />
+      ))}
       {answering && turn.steps.length === 0 && !turn.answer && (
         <p role="status" className="text-sm text-zinc-600 dark:text-zinc-400">
           Thinking…
