@@ -1,15 +1,17 @@
 import { CHAT_FAILED, type ChatEvent, type ChatMessage, type Source } from "./chat";
 import type { Passage } from "./citations";
+import type { Step } from "./tool-cards";
 
 /**
- * One question and the answer to it, with the steps Molecula took on the way. `sources` is
- * null until the answer's `sources` event arrives, after its last token; `passages` are the
- * label passages the label search returned, by the number the answer cites them with.
+ * One question and the answer to it, with the steps Molecula took on the way and what their
+ * tools returned. `sources` is null until the answer's `sources` event arrives, after its last
+ * token; `passages` are the label passages the label search returned, by the number the answer
+ * cites them with.
  */
 export type Turn = {
   question: string;
   answer: string;
-  steps: string[];
+  steps: Step[];
   state: "answering" | "done" | "stopped" | "failed";
   error?: string;
   sources: Source[] | null;
@@ -32,13 +34,17 @@ export function startTurn(question: string): Turn {
 export function applyEvent(turn: Turn, event: ChatEvent): Turn {
   switch (event.type) {
     case "status":
-      return { ...turn, steps: [...turn.steps, event.message] };
+      return { ...turn, steps: [...turn.steps, { text: event.message }] };
+    case "tool_call":
+      return { ...turn, steps: withCall(turn.steps, event) };
     case "token":
       return { ...turn, answer: turn.answer + event.text };
-    case "tool_result":
+    case "tool_result": {
+      const steps = withResult(turn.steps, event.id, event.result);
       return event.name === "search_labels"
-        ? { ...turn, passages: { ...turn.passages, ...passagesOf(event.result) } }
-        : turn;
+        ? { ...turn, steps, passages: { ...turn.passages, ...passagesOf(event.result) } }
+        : { ...turn, steps };
+    }
     case "sources":
       return { ...turn, sources: event.sources, disclaimer: event.disclaimer };
     case "done":
@@ -48,6 +54,25 @@ export function applyEvent(turn: Turn, event: ChatEvent): Turn {
     default:
       return turn;
   }
+}
+
+/** The backend sends each tool call right after the step that announces it. */
+function withCall(
+  steps: Step[],
+  call: { id: string; name: string; args: Record<string, unknown> },
+): Step[] {
+  const last = steps.at(-1);
+  if (!last || last.tool) return steps;
+  return [
+    ...steps.slice(0, -1),
+    { ...last, tool: { id: call.id, name: call.name, args: call.args } },
+  ];
+}
+
+function withResult(steps: Step[], id: string, result: unknown): Step[] {
+  return steps.map((step) =>
+    step.tool?.id === id ? { ...step, tool: { ...step.tool, result } } : step,
+  );
 }
 
 function passagesOf(result: unknown): Record<number, Passage> {

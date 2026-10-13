@@ -18,7 +18,7 @@ export function ConversationTurn({ turn, onRetry }: ConversationTurnProps) {
       <p className="max-w-[85%] self-end rounded-2xl bg-zinc-100 px-4 py-2 break-words whitespace-pre-wrap dark:bg-zinc-900">
         {turn.question}
       </p>
-      <ProgressSteps steps={turn.steps} live={answering} />
+      <ProgressSteps steps={turn.steps} live={answering} answer={turn.answer} />
       {answering && turn.steps.length === 0 && !turn.answer && (
         <p role="status" className="text-sm text-zinc-600 dark:text-zinc-400">
           Thinking…

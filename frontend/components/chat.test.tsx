@@ -12,6 +12,7 @@ import {
   OPENFDA_DISCLAIMER,
   stubChatStream,
 } from "@/lib/test-fixtures";
+import { IBUPROFEN_PROPERTIES, NAPROXEN_PROPERTIES } from "@/lib/test-tool-results";
 
 import { Chat } from "./chat";
 
@@ -93,6 +94,48 @@ describe("Chat", () => {
     expect(screen.getByText("Looking up Gleevec")).toBeDefined();
   });
 
+  it("opens a step into what its tool returned, and merges property lookups when done", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("Compare ibuprofen and naproxen");
+    for (const [id, drug, result] of [
+      ["call_1", "ibuprofen", IBUPROFEN_PROPERTIES],
+      ["call_2", "naproxen", NAPROXEN_PROPERTIES],
+    ] as const) {
+      await streamed(() =>
+        stream.send(
+          status(`Getting the properties of ${drug}`) +
+            chatFrame({ type: "tool_call", id, name: "get_properties", args: { drug } }) +
+            chatFrame({ type: "tool_result", id, name: "get_properties", status: "found", result }),
+        ),
+      );
+    }
+
+    const live = await screen.findByRole("list", { name: "Progress" });
+    expect(
+      within(live)
+        .getAllByRole("button")
+        .map((card) => card.textContent),
+    ).toEqual([
+      "Getting the properties of ibuprofen· C13H18O2 · 206.28 g/mol",
+      "Getting the properties of naproxen· C14H14O3 · 230.26 g/mol",
+    ]);
+
+    await streamed(() => stream.send(token("Both are NSAIDs.") + DONE));
+    fireEvent.click(await screen.findByRole("button", { name: "1 step" }));
+    const card = screen.getByRole("button", {
+      name: /Getting the properties of ibuprofen, naproxen/,
+    });
+    fireEvent.click(card);
+
+    expect(
+      within(card.parentElement!)
+        .getAllByRole("columnheader")
+        .map((header) => header.textContent),
+    ).toEqual(["ibuprofen", "naproxen"]);
+  });
+
   it("parses the events it doesn't show yet without breaking the answer", async () => {
     const stream = stubChatStream();
     render(<Chat />);
@@ -100,8 +143,7 @@ describe("Chat", () => {
     askQuestion("How does Gleevec work?");
     await streamed(() =>
       stream.send(
-        chatFrame({ type: "tool_call", id: "1", name: "resolve_drug", args: { name: "Gleevec" } }) +
-          chatFrame({ type: "tool_result", id: "1", name: "resolve_drug", status: "found" }) +
+        chatFrame({ type: "retrieval_trace", tool_call_id: "1", question: "x", candidates: [] }) +
           token("Imatinib.") +
           chatFrame({ type: "sources", sources: [], unknown_refs: [] }) +
           DONE,

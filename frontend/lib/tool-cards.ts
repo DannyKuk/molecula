@@ -1,0 +1,196 @@
+import type { Suggestion } from "./api";
+
+/** A tool the model called, and what it returned once it has (`ToolCallEvent` and
+ * `ToolResultEvent` in `backend/src/molecula/schemas/chat.py`). */
+export type ToolRun = {
+  id: string;
+  name: string;
+  args: Record<string, unknown>;
+  result?: unknown;
+};
+
+/** A step of the answer: the progress line, and the tool call it announced, if any. */
+export type Step = { text: string; tool?: ToolRun };
+
+// The result shapes of `backend/src/molecula/schemas/tools.py`, as far as the cards show them.
+
+export type DrugNotSupported = {
+  status: "not_supported";
+  query: string;
+  suggestions: Suggestion[];
+};
+
+export type ResolvedDrug = {
+  status: "found";
+  query: string;
+  cid: number;
+  name: string;
+  matched_alias: string;
+  match_kind: "name" | "alias" | "pubchem" | "brand";
+  source_url: string;
+};
+
+export type Compound = {
+  cid: number;
+  name: string;
+  formula: string;
+  molecular_weight: number;
+  xlogp: number | null;
+  tpsa: number | null;
+  hbond_donors: number;
+  hbond_acceptors: number;
+  rotatable_bonds: number;
+  heavy_atoms: number;
+  source_url: string;
+};
+
+export type DrugProperties = { status: "found"; query: string; compound: Compound };
+
+export type Target = {
+  target_chembl_id: string;
+  name: string;
+  target_type: string;
+  organism: string | null;
+  mechanism: string;
+  gene_symbols: string[];
+  source_url: string;
+};
+
+export type DrugTargetList = { status: "found"; name: string; targets: Target[] };
+
+export type HydrogenBond = {
+  residue: string;
+  chain: string;
+  residue_atom: string;
+  ligand_atom: string;
+  distance: number;
+};
+
+export type ResidueContact = { residue: string; chain: string; distance: number };
+
+export type DrugComplex = {
+  status: "found";
+  name: string;
+  pdb_id: string;
+  target: string | null;
+  organism: string | null;
+  ligand_code: string;
+  caption: string | null;
+  hydrogen_bonds: HydrogenBond[];
+  contacts: ResidueContact[];
+  source_url: string;
+};
+
+export type NoComplex = { status: "no_complex"; name: string };
+
+export type LabelPassage = {
+  ref: number;
+  text: string;
+  substance: string;
+  brand: string | null;
+  section: string;
+  effective_time: string | null;
+  url: string;
+};
+
+export type LabelPassages = {
+  status: "found";
+  question: string;
+  drugs_without_label: string[];
+  unsupported: DrugNotSupported[];
+  passages: LabelPassage[];
+};
+
+/** What one step's card shows. `properties` holds one drug, several merged, or a comparison. */
+export type Card =
+  | { kind: "pending" }
+  | { kind: "invalid"; errors: string[] }
+  | { kind: "not_supported"; drugs: DrugNotSupported[] }
+  | { kind: "drug"; result: ResolvedDrug }
+  | { kind: "properties"; drugs: (DrugProperties | DrugNotSupported)[] }
+  | { kind: "targets"; result: DrugTargetList }
+  | { kind: "complex"; result: DrugComplex }
+  | { kind: "no_complex"; result: NoComplex }
+  | { kind: "labels"; result: LabelPassages; drug: string | null; section: string | null };
+
+/** A step as the list shows it; a step without a card is a plain line. */
+export type CardStep = { text: string; card: Card | null };
+
+/** The card for a step's tool, or null for a step that ran none or a tool without a card. */
+export function cardOf(tool: ToolRun | undefined): Card | null {
+  if (!tool) return null;
+  if (tool.result === undefined) return { kind: "pending" };
+  const result = tool.result as { status?: string } | null;
+  if (typeof result !== "object" || result === null) return null;
+  if (result.status === "invalid_arguments") {
+    return { kind: "invalid", errors: (result as { errors: string[] }).errors };
+  }
+  switch (tool.name) {
+    case "resolve_drug":
+      return found(result, (drug: ResolvedDrug) => ({ kind: "drug", result: drug }));
+    case "get_properties":
+      return found(result, (drug: DrugProperties) => ({ kind: "properties", drugs: [drug] }));
+    case "get_targets":
+      return found(result, (list: DrugTargetList) => ({ kind: "targets", result: list }));
+    case "get_complex":
+      if (result.status === "no_complex") {
+        return { kind: "no_complex", result: result as NoComplex };
+      }
+      return found(result, (complex: DrugComplex) => ({ kind: "complex", result: complex }));
+    case "compare_drugs":
+      return {
+        kind: "properties",
+        drugs: (result as { drugs: (DrugProperties | DrugNotSupported)[] }).drugs,
+      };
+    case "search_labels":
+      if (result.status === "not_supported") {
+        return { kind: "not_supported", drugs: (result as { drugs: DrugNotSupported[] }).drugs };
+      }
+      return {
+        kind: "labels",
+        result: result as LabelPassages,
+        drug: stringArg(tool.args.drug),
+        section: stringArg(tool.args.section),
+      };
+    default:
+      return null;
+  }
+}
+
+function found<T>(result: { status?: string }, card: (result: T) => Card): Card {
+  if (result.status === "not_supported") {
+    return { kind: "not_supported", drugs: [result as DrugNotSupported] };
+  }
+  return card(result as T);
+}
+
+function stringArg(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
+}
+
+/**
+ * The steps with their cards. With `mergeProperties`, the properties of several drugs, each
+ * looked up on its own, show as one table at the first lookup's place.
+ */
+export function cardSteps(steps: Step[], mergeProperties: boolean): CardStep[] {
+  const shown = steps.map((step) => ({ text: step.text, card: cardOf(step.tool) }));
+  if (!mergeProperties) return shown;
+  const lookups = shown.filter(
+    (step) =>
+      step.card?.kind === "properties" &&
+      step.card.drugs.length === 1 &&
+      step.card.drugs[0].status === "found",
+  );
+  if (lookups.length < 2) return shown;
+  const drugs = lookups.flatMap((step) =>
+    step.card?.kind === "properties" ? step.card.drugs : [],
+  );
+  const names = drugs.map((drug) => (drug.status === "found" ? drug.compound.name : drug.query));
+  const merged: CardStep = {
+    text: `Getting the properties of ${names.join(", ")}`,
+    card: { kind: "properties", drugs },
+  };
+  return shown
+    .filter((step) => step === lookups[0] || !lookups.includes(step))
+    .map((step) => (step === lookups[0] ? merged : step));
+}

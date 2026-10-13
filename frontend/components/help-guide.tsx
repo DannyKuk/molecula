@@ -90,6 +90,10 @@ export function HelpGuide({ onAsk }: { onAsk: (question: string) => void }) {
           label section it comes from. Point at it or tap it to read the passage and open the label
           on DailyMed. Check the passage before relying on the fact.
         </p>
+        <p>
+          Above each answer, &ldquo;steps&rdquo; lists what Molecula looked up. Click a step to see
+          what it found: the label passages, the properties, the targets or the 3D complex.
+        </p>
       </section>
     </div>
   );
