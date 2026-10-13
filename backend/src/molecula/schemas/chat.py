@@ -1,16 +1,45 @@
 from datetime import date
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 from molecula.schemas.retrieval import LabelFilter, RetrievedChunk, Widening
+
+# Earlier turns travel as question and answer text only, so ten messages stay around 15k
+# tokens next to the current turn's tools and passages (about 5k, #125). An answer may be longer
+# than a question: the longest in the first manual run was 2,308 characters, and a conversation
+# must not be refused for an answer the server wrote.
+MAX_MESSAGES = 10
+MAX_QUESTION_LENGTH = 4000
+MAX_ANSWER_LENGTH = 8000
 
 
 class ChatMessage(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     role: Literal["user", "assistant"]
-    content: str
+    content: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_ANSWER_LENGTH)
+    ]
+
+    @model_validator(mode="after")
+    def questions_are_shorter(self) -> Self:
+        if self.role == "user" and len(self.content) > MAX_QUESTION_LENGTH:
+            raise ValueError(f"a user message must have at most {MAX_QUESTION_LENGTH} characters")
+        return self
+
+
+class ChatRequest(BaseModel):
+    """The conversation so far, oldest first, ending with the user's new message. A longer
+    conversation is sent as its latest messages."""
+
+    messages: Annotated[list[ChatMessage], Field(min_length=1, max_length=MAX_MESSAGES)]
+
+    @model_validator(mode="after")
+    def ends_with_the_user(self) -> Self:
+        if self.messages[-1].role != "user":
+            raise ValueError("the last message must be the user's")
+        return self
 
 
 class Usage(BaseModel):

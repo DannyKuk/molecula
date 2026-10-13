@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     # Added to the cosine similarity of a chunk in the extracted section groups. Chosen with
     # bge-m3 on the retrieval questions; re-measure when the embeddings or ranking change (#112).
     retrieval_section_group_boost: Annotated[float, Field(ge=0.0, le=2.0)] = 0.15
+    # Model calls per answer; the last one gets no tools, so the agent answers (#124).
+    chat_max_steps: Annotated[int, Field(ge=1, le=20)] = 8
+    chat_timeout_seconds: Annotated[float, Field(gt=0)] = 180.0
     openfda_api_key: SecretStr | None = None
     offline: bool = False
     data_dir: Path = REPO_ROOT / "data"

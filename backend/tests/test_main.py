@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -6,8 +7,9 @@ from fastapi.testclient import TestClient
 from langchain_core.embeddings import Embeddings, FakeEmbeddings
 from langchain_core.language_models import BaseChatModel
 
-from fake_llm import ScriptedChatModel
+from fake_llm import ScriptedChatModel, answer_message, tool_call_message
 from molecula import main
+from molecula.agent.agent import ChatAgent
 from molecula.agent.llm import LLMConfigError
 from molecula.config import Settings
 from molecula.main import app
@@ -17,7 +19,9 @@ from molecula.rag.retriever import LabelRetriever
 from molecula.store.compounds import CompoundRecord, CompoundStore, Synonym
 from molecula.store.db import connect
 from molecula.store.index import Chunk, IndexModelMismatch, LabelIndex
+from molecula.store.labels import LabelRecord, LabelSection, LabelStore
 from molecula.store.structures import ConformerFiles
+from sse import server_sent_events
 
 IMATINIB = CompoundRecord(
     cid=5291,
@@ -50,6 +54,8 @@ CHUNK = Chunk(
     effective_time="20260713",
     url="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=gleevec",
 )
+
+QUESTION = {"messages": [{"role": "user", "content": "How does imatinib work?"}]}
 
 
 @pytest.fixture
@@ -170,6 +176,7 @@ def test_startup_builds_the_label_search_over_a_matching_index(
     with TestClient(app):
         assert isinstance(app.state.label_retriever, LabelRetriever)
         assert isinstance(app.state.filter_extractor, FilterExtractor)
+        assert isinstance(app.state.chat_agent, ChatAgent)
 
     assert loaded_models == ["chat", "embeddings"]
 
@@ -185,8 +192,10 @@ def test_without_a_chat_model_the_label_search_is_off_and_the_routes_still_work(
 
     with TestClient(app) as client:
         assert client.get("/drugs").status_code == 200
+        assert client.post("/chat", json=QUESTION).status_code == 503
         assert app.state.label_retriever is None
         assert app.state.filter_extractor is None
+        assert app.state.chat_agent is None
 
     assert loaded_models == []
 
@@ -200,3 +209,81 @@ def test_startup_refuses_an_index_built_with_another_embedding_model(
         pass
 
     assert loaded_models == []
+
+
+GLEEVEC = LabelRecord(
+    set_id="gleevec",
+    substance="IMATINIB MESYLATE",
+    brand="Gleevec",
+    product_type="rx",
+    effective_time="20260713",
+    url="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=gleevec",
+    sections=(LabelSection("mechanism_of_action", "pharmacology", "Inhibits BCR-ABL.", False),),
+)
+MECHANISM = replace(
+    CHUNK,
+    id="gleevec:mechanism_of_action:0",
+    text="Imatinib inhibits the BCR-ABL tyrosine kinase.",
+    section="mechanism_of_action",
+    section_group="pharmacology",
+)
+
+
+class UnitEmbeddings(Embeddings):
+    """Embeds every text as the same vector, so the search finds the one stored chunk."""
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        return [[1.0, 0.0, 0.0] for _ in texts]
+
+    def embed_query(self, text: str) -> list[float]:
+        return [1.0, 0.0, 0.0]
+
+
+def test_chat_answers_from_the_stored_labels_offline(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "offline", True)
+    conn = connect(settings.db_path)
+    fetched = datetime(2026, 10, 11, tzinfo=UTC)
+    CompoundStore(conn).save(
+        IMATINIB, [Synonym("imatinib", "name"), Synonym("Gleevec", "alias")], fetched
+    )
+    LabelStore(conn).save(5291, (GLEEVEC,), fetched)
+    conn.close()
+    LabelIndex(settings.index_dir).rebuild(
+        [MECHANISM], [[1.0, 0.0, 0.0]], embedding_model_id(settings)
+    )
+    model = ScriptedChatModel(
+        script=[
+            tool_call_message(
+                "search_labels",
+                {
+                    "question": "How does imatinib work?",
+                    "drug": "imatinib",
+                    "section": "pharmacology",
+                },
+            ),
+            answer_message("It blocks the BCR-ABL kinase."),
+        ]
+    )
+    monkeypatch.setattr(main, "get_embeddings", lambda settings: UnitEmbeddings())
+    monkeypatch.setattr(main, "get_chat_model", lambda settings: model)
+
+    with TestClient(app) as client:
+        response = client.post("/chat", json=QUESTION)
+
+    events = dict(server_sent_events(response.text))
+    assert events["tool_call"]["name"] == "search_labels"
+    passages = events["tool_result"]["result"]["passages"]
+    assert [(p["id"], p["url"]) for p in passages] == [(MECHANISM.id, GLEEVEC.url)]
+    assert events["retrieval_trace"]["filter"]["drugs"][0]["set_ids"] == ["gleevec"]
+    assert events["sources"]["sources"] == [
+        {
+            "kind": "dailymed",
+            "name": "Gleevec",
+            "url": GLEEVEC.url,
+            "section": "mechanism_of_action",
+            "effective_time": "2026-07-13",
+        }
+    ]
+    assert events["done"]["step_limit_reached"] is False
