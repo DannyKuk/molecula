@@ -8,7 +8,8 @@ from langgraph.types import Command
 
 from molecula.schemas.tools import LabelPassages
 
-CITATION = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
+# gpt-oss often cites in its own full-width brackets, 【1】, even when asked for [1] (#129).
+CITATION = re.compile(r"[\[【](\d+(?:\s*,\s*\d+)*)[\]】]")
 
 
 class References:
@@ -42,6 +43,6 @@ class NumberPassages(AgentMiddleware):
 
 
 def cited_refs(answer: str) -> list[int]:
-    """The numbers an answer cites as `[n]` or `[n, m]`, in order, each once."""
+    """The numbers an answer cites as `[n]`, `[n, m]` or `【n】`, in order, each once."""
     refs = (int(ref) for match in CITATION.finditer(answer) for ref in match[1].split(","))
     return list(dict.fromkeys(refs))

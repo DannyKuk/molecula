@@ -109,8 +109,9 @@ class TokenEvent(BaseModel):
 
 
 class SourcesEvent(BaseModel):
-    """Where the answer's facts come from. `unknown_refs` are numbers the answer cites as `[n]`
-    that no source has: show them as plain text, not as a link."""
+    """Where the answer's facts come from. A citation is `[n]` or, from some models, `【n】`.
+    `unknown_refs` are numbers the answer cites that no source has: show them as plain text,
+    not as a link."""
 
     type: Literal["sources"] = "sources"
     sources: list[Source]
