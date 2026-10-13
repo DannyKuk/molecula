@@ -8,6 +8,7 @@ from molecula.sources.parsing import parse
 
 SEARCH = "https://search.rcsb.org/rcsbsearch/v2/query"
 CHEM_COMP = "https://data.rcsb.org/rest/v1/core/chemcomp"
+STRUCTURE_FILES = "https://files.rcsb.org/download"
 GRAPHQL = "https://data.rcsb.org/graphql"
 CONNECTIVITY_BLOCK = 14
 ENTRY_BATCH = 200
@@ -45,6 +46,8 @@ class SearchResult(BaseModel):
 
 class ChemCompDescriptor(BaseModel):
     inchikey: str | None = Field(None, alias="InChIKey")
+    smiles: str | None = Field(None, alias="SMILES")
+    smiles_stereo: str | None = Field(None, alias="SMILES_stereo")
 
 
 class ChemComp(BaseModel):
@@ -215,7 +218,8 @@ class EntriesResponse(BaseModel):
 
 
 class RcsbClient:
-    """RCSB PDB: a compound's ligand codes and the entries that show a ligand bound to a target."""
+    """RCSB PDB: a compound's ligand codes, the entries that show a ligand bound to a target, and
+    an entry's coordinates."""
 
     def __init__(self, http: SourceClient) -> None:
         self._http = http
@@ -254,9 +258,18 @@ class RcsbClient:
         ]
 
     def ligand_inchikey(self, code: str, *, refresh: bool = False) -> str | None:
-        response = self._http.get(f"{CHEM_COMP}/{quote(code, safe='')}", refresh=refresh)
-        descriptor = parse(response, ChemComp).descriptor
+        descriptor = self._chem_comp(code, refresh).descriptor
         return descriptor.inchikey if descriptor else None
+
+    def ligand_smiles(self, code: str, *, refresh: bool = False) -> str | None:
+        """The ligand's SMILES from its chem-comp record, with stereo when the record has it."""
+        descriptor = self._chem_comp(code, refresh).descriptor
+        return (descriptor.smiles_stereo or descriptor.smiles) if descriptor else None
+
+    def structure(self, pdb_id: str, *, refresh: bool = False) -> str:
+        """The entry's coordinates as mmCIF text."""
+        url = f"{STRUCTURE_FILES}/{quote(pdb_id.upper(), safe='')}.cif"
+        return self._http.get(url, refresh=refresh).text
 
     def entries_with_ligand(self, code: str, *, refresh: bool = False) -> list[str]:
         query = terminal(
@@ -310,6 +323,10 @@ class RcsbClient:
             for entry in self.entries(entry_ids, refresh=refresh)
             if (target := entity_with_gene(entry, wanted, taxon))
         ]
+
+    def _chem_comp(self, code: str, refresh: bool) -> ChemComp:
+        response = self._http.get(f"{CHEM_COMP}/{quote(code, safe='')}", refresh=refresh)
+        return parse(response, ChemComp)
 
     def _search(self, query: dict[str, Any], return_type: str, refresh: bool) -> list[str]:
         payload = {

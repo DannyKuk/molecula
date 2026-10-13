@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Medicines chatbot backend: RAG over FDA drug labels, chemistry tools and 3D drug-target structures"
 requires-python = ">=3.14,<3.15"
 dependencies = [
+    "biotite>=1.7.1",
     "chromadb>=1.5.9",
     "fastapi>=0.115",
     "httpx2>=2.13.1",
