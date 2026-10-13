@@ -482,6 +482,20 @@ describe("Chat", () => {
     expect(page.scrollTo).toHaveBeenCalledOnce();
   });
 
+  it("stops following when the reader scrolls up just after the page followed", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(token("Imatinib blocks")));
+    page.grow();
+    page.scrollTo.mockClear();
+    page.scrollBy(-100);
+    page.grow();
+
+    expect(page.scrollTo).not.toHaveBeenCalled();
+  });
+
   it("keeps following when a scroll event lands just after the page grew", async () => {
     const stream = stubChatStream();
     render(<Chat />);

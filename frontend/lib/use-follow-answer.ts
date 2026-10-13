@@ -14,15 +14,17 @@ export function useFollowAnswer(
   following: boolean,
 ) {
   const atEnd = useRef(true);
+  const lastTop = useRef(0);
 
   useEffect(() => {
-    let lastTop = window.scrollY;
+    lastTop.current = window.scrollY;
     const onScroll = () => {
-      // Content growing below leaves the scroll position where it was, so only a move up means
-      // the reader left the end, not a scroll event that lands just after the page grew.
+      // Only a move up from where the page last was means the reader left the end. Content growing
+      // below leaves the position as it was, so a scroll event that lands just after the page grew
+      // doesn't count, and one scroll event can carry both a follow and the reader's move up.
       if (nearEnd()) atEnd.current = true;
-      else if (window.scrollY < lastTop) atEnd.current = false;
-      lastTop = window.scrollY;
+      else if (window.scrollY < lastTop.current) atEnd.current = false;
+      lastTop.current = window.scrollY;
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -33,14 +35,14 @@ export function useFollowAnswer(
   useLayoutEffect(() => {
     if (sent === 0) return;
     atEnd.current = true;
-    scrollToEnd();
+    scrollToEnd(lastTop);
   }, [sent]);
 
   useLayoutEffect(() => {
     const element = content.current;
     if (!following || !element) return;
     const growth = new ResizeObserver(() => {
-      if (atEnd.current) scrollToEnd();
+      if (atEnd.current) scrollToEnd(lastTop);
     });
     growth.observe(element);
     return () => growth.disconnect();
@@ -49,8 +51,9 @@ export function useFollowAnswer(
 
 // The page's own end, not an element's: scrolling an element into view ignores the sticky
 // question box, which then covers the end of the conversation.
-function scrollToEnd() {
+function scrollToEnd(lastTop: RefObject<number>) {
   window.scrollTo({ top: document.documentElement.scrollHeight });
+  lastTop.current = window.scrollY;
 }
 
 function nearEnd(): boolean {
