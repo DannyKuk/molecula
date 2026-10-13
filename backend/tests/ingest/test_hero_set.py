@@ -44,6 +44,7 @@ def test_loads_an_entry_with_defaults(tmp_path: Path) -> None:
     assert entry.ligand_copy == "A/600"
     assert entry.showcase is False
     assert entry.caption is None
+    assert entry.exclude_chains == ()
 
 
 def test_two_complexes_for_one_drug_fail_case_insensitively() -> None:
@@ -73,6 +74,21 @@ def test_a_copy_on_a_multi_letter_chain_and_negative_residue_loads() -> None:
     (entry,) = hero_set({**ENTRY, "ligand_copy": "S2/-5", "chain": "S7"}).complexes
 
     assert entry.ligand_copy == "S2/-5"
+
+
+def test_excluded_chains_must_be_chain_ids() -> None:
+    (entry,) = hero_set({**ENTRY, "exclude_chains": ["B", "S7"]}).complexes
+
+    assert entry.exclude_chains == ("B", "S7")
+    with pytest.raises(ValidationError, match="exclude_chains"):
+        hero_set({**ENTRY, "exclude_chains": ["B/104"]})
+
+
+def test_the_repo_hero_set_leaves_out_losartans_nanobody() -> None:
+    complexes = {c.drug: c for c in load_hero_set(REPO_ROOT / "data" / "hero_set.yaml").complexes}
+
+    assert complexes["losartan"].exclude_chains == ("B",)
+    assert [c.drug for c in complexes.values() if c.exclude_chains] == ["losartan"]
 
 
 def test_the_repo_hero_set_is_valid_and_in_scope() -> None:

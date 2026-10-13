@@ -28,9 +28,10 @@ class Atom(BaseModel):
 
 
 class TraceResidue(Residue):
-    """One residue of the backbone trace, at its CA atom."""
+    """One residue of the backbone trace: an amino acid at its CA atom with its secondary
+    structure, or a nucleotide at its P atom, whose `sse` is None."""
 
-    sse: SecondaryStructure
+    sse: SecondaryStructure | None
     xyz: Coordinates
 
 
@@ -80,7 +81,11 @@ class Contact(BaseModel):
 
 class Complex(BaseModel):
     """One drug-target complex, ready for the 3D viewer: coordinates in Å from the PDB entry,
-    heavy atoms only."""
+    heavy atoms only.
+
+    `caption` is shown with the structure when it isn't simply the drug in its main target;
+    `showcase` marks the cleanest complexes, for the landing page and demos.
+    """
 
     model_config = ConfigDict(frozen=True)
 
@@ -89,3 +94,5 @@ class Complex(BaseModel):
     trace: list[TraceResidue]
     pocket: list[PocketResidue]
     contacts: list[Contact]
+    caption: str | None = None
+    showcase: bool = False

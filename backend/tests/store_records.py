@@ -1,10 +1,11 @@
 """Store records shared by the tests: a compound record builder, and imatinib, its Gleevec label,
-an ibuprofen prescription label (Motrin) and imatinib's ABL1 target as the store holds them.
-`tool_fakes.py` has the API schema counterparts (`Compound`, `Target`)."""
+an ibuprofen prescription label (Motrin), imatinib's ABL1 target and a stub of its hero complex as
+the store holds them. `tool_fakes.py` has the API schema counterparts (`Compound`, `Target`)."""
 
 from dataclasses import replace
 from typing import Any
 
+from molecula.schemas.complexes import Complex, Ligand
 from molecula.store.compounds import CompoundRecord
 from molecula.store.labels import LabelRecord, LabelSection
 from molecula.store.targets import TargetRecord
@@ -80,4 +81,13 @@ ABL1 = TargetRecord(
     action_type="INHIBITOR",
     accessions=("P00519",),
     gene_symbols=("ABL1",),
+)
+# Only the identifying fields; the geometry is tested on recorded structures (ingest).
+IMATINIB_COMPLEX = Complex(
+    pdb_id="2HYY",
+    ligand=Ligand(code="STI", chain="A", number=600, atoms=[], bonds=[]),
+    trace=[],
+    pocket=[],
+    contacts=[],
+    showcase=True,
 )

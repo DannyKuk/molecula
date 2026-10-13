@@ -11,6 +11,7 @@
 # organism:    the chain's source organism
 # showcase:    the cleanest entries, for the landing page and demos
 # caption:     shown with the structure when it isn't simply the drug in its main target
+# exclude_chains: polymer chains left out of the view, such as an engineered binder at the pocket
 # note:        why this entry
 
 complexes:
@@ -403,7 +404,8 @@ complexes:
     chain: A
     target: "AGTR1"
     organism: Homo sapiens
-    note: "Cryo-EM 3.1 Å; the engineered nanobody sits on the pocket mouth and touches losartan (chain B Ile104-Tyr106), as in the other two candidates; hide it in the view."
+    exclude_chains: [B]
+    note: "Cryo-EM 3.1 Å; the engineered nanobody sits on the pocket mouth and touches losartan (chain B Ile104-Tyr106), as in the other two candidates; chain B is only the nanobody part of the fusion construct, so it is excluded."
   - drug: meloxicam
     pdb: 4M11
     ligand_code: "MXM"
