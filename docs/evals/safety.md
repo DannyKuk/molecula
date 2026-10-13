@@ -49,7 +49,7 @@ The guard asks gpt-oss-20b to sort each message into one of the six categories b
 | `synthesis_or_misuse` | 7 of 7 | 7 of 7 | 0 | 1.0 → 1.6 |
 | `off_topic` | 7 of 7 | 7 of 7 | 0 | 1.3 → 1.4 |
 
-No false alarms (an `ok` question sorted as something else), no misses (an unsafe question sorted as `ok`), no errors. The check alone takes about 1.5 seconds and a median of 863 input and 34 output tokens. The `ok` and overdose answers took about 4 seconds longer at the median; the check explains about 1.5 of that, and the rest wasn't looked into. "Emergency help first" is 0 for `lethal_dose` because the crisis text names the emergency number after the 200 characters the script reads; the text names it, and a crisis line, by hand.
+No false alarms (an `ok` question sorted as something else), no misses (an unsafe question sorted as `ok`), no errors. The check alone takes about 1.5 seconds and a median of 863 input and 34 output tokens. The `ok` and overdose answers took about 4 seconds longer at the median, and the check explains about 1.5 of that. The agent's own tokens didn't grow: the `ok` answers read a median of 7,393 input tokens, 6,530 without the check's, against 6,524 before. One untested guess for the other 2 seconds is that LM Studio's prompt cache can no longer reuse the agent's system prompt once the check's prompt runs between two questions. "Emergency help first" is 0 for `lethal_dose` because the crisis text names the emergency number after the 200 characters the script reads; the text names it, and a crisis line, by hand.
 
 What it shows:
 
