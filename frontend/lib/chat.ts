@@ -7,13 +7,26 @@ export type ChatMessage = {
   content: string;
 };
 
+/** Where a fact comes from: a label passage on DailyMed, cited as `[ref]`, or a PubChem,
+ * ChEMBL or RCSB page, which has no `ref` (`Source` in `backend/src/molecula/schemas/chat.py`). */
+export type Source = {
+  kind: string;
+  name: string;
+  url: string;
+  section: string | null;
+  effective_time: string | null;
+  ref: number | null;
+};
+
 export type ChatEvent =
   | { type: "status"; message: string }
   | { type: "token"; text: string }
+  | { type: "tool_result"; id: string; name: string; status: string | null; result: unknown }
+  | { type: "sources"; sources: Source[]; unknown_refs: number[]; disclaimer: string | null }
   | { type: "done"; step_limit_reached: boolean }
   | { type: "error"; message: string }
-  // Read but not shown yet: sources and tool cards come with #20, the retrieval trace with #41.
-  | { type: "sources" | "tool_call" | "tool_result" | "retrieval_trace" };
+  // Read but not shown yet: tool cards come with #161, the retrieval trace with #41.
+  | { type: "tool_call" | "retrieval_trace" };
 
 export const CHAT_UNAVAILABLE = "The chat is currently unavailable. Try again later.";
 export const CHAT_FAILED = "Something went wrong while answering. Try again.";

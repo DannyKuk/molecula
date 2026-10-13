@@ -86,8 +86,9 @@ export function HelpGuide({ onAsk }: { onAsk: (question: string) => void }) {
           .
         </p>
         <p>
-          A number in brackets, like [1], points to the label passage a fact comes from. Check the
-          passage before relying on the fact.
+          A small tag after a fact, like &ldquo;Gleevec · Warnings and cautions&rdquo;, names the
+          label section it comes from. Point at it or tap it to read the passage and open the label
+          on DailyMed. Check the passage before relying on the fact.
         </p>
       </section>
     </div>

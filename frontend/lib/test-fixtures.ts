@@ -1,7 +1,8 @@
 import { vi } from "vitest";
 
 import type { Resolution, Suggestion } from "@/lib/api";
-import type { ChatMessage } from "@/lib/chat";
+import type { ChatMessage, Source } from "@/lib/chat";
+import type { Passage } from "@/lib/citations";
 
 /** The backend's answer for a name outside the supported drugs. */
 export function notSupported(query: string, suggestions: Suggestion[] = []): Resolution {
@@ -55,3 +56,60 @@ export function stubChatStream() {
       JSON.parse(fetchMock.mock.calls[fetchMock.mock.calls.length - 1][1].body as string).messages,
   };
 }
+
+const GLEEVEC_URL =
+  "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=211ef2da-2868-4a77-8055-1cb2cd78e24b";
+
+function gleevecPassage(ref: number, section: string): Source {
+  return {
+    kind: "dailymed",
+    name: "Gleevec",
+    url: GLEEVEC_URL,
+    section,
+    effective_time: "2026-07-13",
+    ref,
+  };
+}
+
+/** Imatinib's label passages and its PubChem page, as a `sources` event lists them. */
+export const IMATINIB_SOURCES: Source[] = [
+  gleevecPassage(1, "mechanism_of_action"),
+  gleevecPassage(2, "pharmacokinetics"),
+  gleevecPassage(3, "pharmacokinetics"),
+  {
+    kind: "pubchem",
+    name: "imatinib",
+    url: "https://pubchem.ncbi.nlm.nih.gov/compound/5291",
+    section: null,
+    effective_time: null,
+    ref: null,
+  },
+];
+
+export const IMATINIB_PASSAGES: Record<number, Passage> = {
+  1: {
+    ref: 1,
+    text: "12.1 Mechanism of Action Imatinib mesylate is a protein-tyrosine kinase inhibitor that inhibits the BCR-ABL tyrosine kinase.",
+  },
+  2: { ref: 2, text: "Unchanged imatinib accounted for 25% of the dose (5% urine, 20% feces)." },
+  3: { ref: 3, text: "12.3 Pharmacokinetics The pharmacokinetics of Gleevec have been evaluated." },
+};
+
+export const OPENFDA_DISCLAIMER =
+  "Do not rely on openFDA to make decisions regarding medical care.";
+
+/** The `search_labels` tool result with imatinib's passages, shortened to what the chat reads. */
+export const IMATINIB_LABEL_SEARCH = chatFrame({
+  type: "tool_result",
+  id: "call_1",
+  name: "search_labels",
+  status: "found",
+  result: { status: "found", passages: Object.values(IMATINIB_PASSAGES) },
+});
+
+export const IMATINIB_SOURCES_EVENT = chatFrame({
+  type: "sources",
+  sources: IMATINIB_SOURCES,
+  unknown_refs: [],
+  disclaimer: OPENFDA_DISCLAIMER,
+});

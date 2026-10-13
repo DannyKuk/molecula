@@ -4,7 +4,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CHAT_FAILED, CHAT_UNAVAILABLE } from "@/lib/chat";
 import { MAX_MESSAGE_LENGTH } from "@/lib/chat-limits";
-import { chatFrame, DONE, stubChatStream } from "@/lib/test-fixtures";
+import {
+  chatFrame,
+  DONE,
+  IMATINIB_LABEL_SEARCH,
+  IMATINIB_SOURCES_EVENT,
+  OPENFDA_DISCLAIMER,
+  stubChatStream,
+} from "@/lib/test-fixtures";
 
 import { Chat } from "./chat";
 
@@ -269,6 +276,26 @@ describe("Chat", () => {
 
     expect(stream.sentMessages()).toEqual([{ role: "user", content: "How does imatinib work?" }]);
     expect(await screen.findByRole("list", { name: "Conversation" })).toBeDefined();
+  });
+
+  it("turns the answer's citations into source chips once its sources arrive", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does imatinib work?");
+    await streamed(() => stream.send(IMATINIB_LABEL_SEARCH + token("It blocks BCR-ABL [1][2].")));
+    expect(await screen.findByText("It blocks BCR-ABL [1][2].")).toBeDefined();
+    expect(screen.queryByText(OPENFDA_DISCLAIMER)).toBeNull();
+
+    await streamed(() => stream.send(IMATINIB_SOURCES_EVENT + DONE));
+
+    expect(
+      await screen.findByRole("button", {
+        name: "Sources: Gleevec · Mechanism of action, Gleevec · Pharmacokinetics",
+      }),
+    ).toBeDefined();
+    expect(screen.queryByText(/\[1\]/)).toBeNull();
+    expect(screen.getByText(OPENFDA_DISCLAIMER)).toBeDefined();
   });
 
   it("opens the help guide from the ? button and sends an example asked from it", async () => {
