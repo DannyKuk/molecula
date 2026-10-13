@@ -181,11 +181,11 @@ def test_run_stops_when_pubchem_stops_answering(pubchem, store, conformers) -> N
 
 
 def test_offline_run_on_an_empty_store_fails_without_requests(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
+    settings: Settings, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
     (tmp_path / "scope.yaml").write_text("drugs:\n  - name: caffeine\n", encoding="utf-8")
 
-    exit_code = run(Settings(data_dir=tmp_path, offline=True))
+    exit_code = run(settings)
 
     assert exit_code == 1
     assert "OFFLINE=1, not requesting" in caplog.text

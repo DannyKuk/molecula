@@ -9,46 +9,17 @@ import pytest
 from molecula.schemas.targets import DrugTargets, Target
 from molecula.services import targets
 from molecula.services.targets import TargetService
-from molecula.store.compounds import CompoundRecord, CompoundStore
+from molecula.store.compounds import CompoundStore
 from molecula.store.targets import DrugTargets as StoredTargets
-from molecula.store.targets import TargetRecord, TargetStore
+from molecula.store.targets import TargetStore
+from store_records import ABL1, compound_record
 from tool_fakes import IMATINIB
 
 FETCHED_AT = datetime(2026, 10, 11, tzinfo=UTC)
 FLUTICASONE_CID = 5311101
 
 
-def compound(cid: int, name: str) -> CompoundRecord:
-    return CompoundRecord(
-        cid=cid,
-        name=name,
-        inchikey=f"INCHIKEY-{cid}",
-        smiles="C",
-        formula="C",
-        mw=100.0,
-        xlogp=1.0,
-        tpsa=10.0,
-        hbd=1,
-        hba=1,
-        rotb=0,
-        heavy_atoms=10,
-        conformer_source="pubchem",
-        source="pubchem",
-    )
-
-
 # Imatinib's targets as the targets ingest step stores them from the recorded ChEMBL responses.
-ABL1 = TargetRecord(
-    target_chembl_id="CHEMBL1862",
-    molecule_chembl_id="CHEMBL1642",
-    name="Tyrosine-protein kinase ABL1",
-    target_type="SINGLE PROTEIN",
-    organism="Homo sapiens",
-    mechanism="Tyrosine-protein kinase ABL inhibitor",
-    action_type="INHIBITOR",
-    accessions=("P00519",),
-    gene_symbols=("ABL1",),
-)
 PDGFRB = replace(
     ABL1,
     target_chembl_id="CHEMBL1913",
@@ -79,8 +50,8 @@ BCR_ABL = replace(
 @pytest.fixture
 def service(conn: sqlite3.Connection) -> TargetService:
     compounds = CompoundStore(conn)
-    compounds.save(compound(5291, "imatinib"), [], FETCHED_AT)
-    compounds.save(compound(FLUTICASONE_CID, "fluticasone"), [], FETCHED_AT)
+    compounds.save(compound_record(5291, "imatinib"), [], FETCHED_AT)
+    compounds.save(compound_record(FLUTICASONE_CID, "fluticasone"), [], FETCHED_AT)
     store = TargetStore(conn)
     store.save(5291, StoredTargets(targets=(ABL1, PDGFRB, KIT, BCR_ABL)), FETCHED_AT)
     return TargetService(store, compounds)

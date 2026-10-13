@@ -16,21 +16,14 @@ from chembl_replay import (
 from molecula.sources.chembl import ChemblClient
 from molecula.sources.errors import SourceFormatError
 from molecula.sources.http import SourceClient
-from molecula.store.http_cache import HttpCache
 
 
 @pytest.fixture
-def chembl(cache: HttpCache) -> Callable[..., ChemblClient]:
+def chembl(replaying_client: Callable[..., SourceClient]) -> Callable[..., ChemblClient]:
     """Makes a ChEMBL client that replays recorded responses through the store's HTTP cache."""
 
     def make(handler: Replay | None = None) -> ChemblClient:
-        http = SourceClient(
-            cache,
-            offline=False,
-            transport=httpx2.MockTransport(handler or Replay()),
-            sleep=lambda _: None,
-        )
-        return ChemblClient(http)
+        return ChemblClient(replaying_client(handler or Replay()))
 
     return make
 

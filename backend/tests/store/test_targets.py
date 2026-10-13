@@ -4,45 +4,18 @@ from datetime import UTC, datetime
 
 import pytest
 
-from molecula.store.compounds import CompoundRecord, CompoundStore
+from molecula.store.compounds import CompoundStore
 from molecula.store.targets import (
     CandidateRecord,
     DrugTargets,
     LigandCode,
-    TargetRecord,
     TargetStore,
 )
+from store_records import ABL1, IMATINIB
 
 FIRST_FETCH = datetime(2026, 10, 11, tzinfo=UTC)
 LATER_FETCH = datetime(2026, 11, 1, tzinfo=UTC)
 
-IMATINIB = CompoundRecord(
-    cid=5291,
-    name="imatinib",
-    inchikey="KTUFNOKKBVMGRW-UHFFFAOYSA-N",
-    smiles="CC1=C(C=C(C=C1)NC(=O)C2=CC=C(C=C2)CN3CCN(CC3)C)NC4=NC=CC(=N4)C5=CN=CC=C5",
-    formula="C29H31N7O",
-    mw=493.6,
-    xlogp=3.5,
-    tpsa=86.3,
-    hbd=2,
-    hba=7,
-    rotb=7,
-    heavy_atoms=37,
-    conformer_source="pubchem",
-    source="pubchem",
-)
-ABL1 = TargetRecord(
-    target_chembl_id="CHEMBL1862",
-    molecule_chembl_id="CHEMBL1642",
-    name="Tyrosine-protein kinase ABL1",
-    target_type="SINGLE PROTEIN",
-    organism="Homo sapiens",
-    mechanism="Tyrosine-protein kinase ABL inhibitor",
-    action_type="INHIBITOR",
-    accessions=("P00519",),
-    gene_symbols=("ABL1",),
-)
 STI = LigandCode("STI", "inchikey")
 IEP = CandidateRecord(
     target_chembl_id="CHEMBL1862",

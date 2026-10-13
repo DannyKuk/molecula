@@ -19,7 +19,7 @@ FLUTICASONE_CID = 5311101
 METAMIZOLE_CID = 3111
 
 
-class FakeCompoundService:
+class ExampleCompoundService:
     """Knows imatinib (with 3D) and semaglutide (without); records the names it was asked."""
 
     def __init__(self) -> None:
@@ -41,7 +41,7 @@ class FakeCompoundService:
         return Structure(cid=cid, sdf=SDF, conformer_source="pubchem") if cid == 5291 else None
 
 
-class FakeTargetService:
+class ExampleTargetService:
     """Knows imatinib (with targets) and fluticasone (without); records the CIDs it was asked."""
 
     def __init__(self) -> None:
@@ -56,7 +56,7 @@ class FakeTargetService:
         return self.drugs.get(cid)
 
 
-class FakeLabelService:
+class ExampleLabelService:
     """Knows imatinib (with a label) and metamizole (without); records the CIDs it was asked."""
 
     def __init__(self) -> None:
@@ -74,30 +74,30 @@ class FakeLabelService:
 
 
 @pytest.fixture
-def service() -> Iterator[FakeCompoundService]:
-    fake = FakeCompoundService()
+def service() -> Iterator[ExampleCompoundService]:
+    fake = ExampleCompoundService()
     app.dependency_overrides[compound_service] = lambda: fake
     yield fake
     app.dependency_overrides.clear()
 
 
 @pytest.fixture
-def targets(service: FakeCompoundService) -> FakeTargetService:
-    fake = FakeTargetService()
+def targets(service: ExampleCompoundService) -> ExampleTargetService:
+    fake = ExampleTargetService()
     app.dependency_overrides[target_service] = lambda: fake
     return fake
 
 
 @pytest.fixture
-def labels(service: FakeCompoundService) -> FakeLabelService:
-    fake = FakeLabelService()
+def labels(service: ExampleCompoundService) -> ExampleLabelService:
+    fake = ExampleLabelService()
     app.dependency_overrides[label_service] = lambda: fake
     return fake
 
 
 @pytest.fixture
 def client(
-    service: FakeCompoundService, targets: FakeTargetService, labels: FakeLabelService
+    service: ExampleCompoundService, targets: ExampleTargetService, labels: ExampleLabelService
 ) -> TestClient:
     return TestClient(app)
 
@@ -148,7 +148,7 @@ def test_resolve_answers_with_the_same_fields_found_or_not(client: TestClient, n
     "name", ["Vicodin", "Acetylsalicylsäure", "Co-trimoxazole (TMP+SMX)", "St. John's wort, 5"]
 )
 def test_resolve_answers_an_unknown_name_with_not_supported(
-    client: TestClient, service: FakeCompoundService, name: str
+    client: TestClient, service: ExampleCompoundService, name: str
 ) -> None:
     response = client.get("/drugs/resolve", params={"name": name})
 
@@ -179,7 +179,7 @@ def test_resolve_returns_the_suggestions_of_an_unsupported_name(client: TestClie
     ],
 )
 def test_resolve_rejects_an_invalid_name(
-    client: TestClient, service: FakeCompoundService, params: dict[str, str], message: str
+    client: TestClient, service: ExampleCompoundService, params: dict[str, str], message: str
 ) -> None:
     messages = validation_messages(client.get("/drugs/resolve", params=params))
 
@@ -279,7 +279,7 @@ def test_targets_of_an_unsupported_cid_is_404(client: TestClient) -> None:
     ],
 )
 def test_targets_rejects_an_invalid_cid(
-    client: TestClient, targets: FakeTargetService, cid: str, message: str
+    client: TestClient, targets: ExampleTargetService, cid: str, message: str
 ) -> None:
     messages = validation_messages(client.get(f"/drugs/{cid}/targets"))
 
@@ -330,7 +330,7 @@ def test_labels_of_an_unsupported_cid_is_404(client: TestClient) -> None:
     ],
 )
 def test_labels_rejects_an_invalid_cid(
-    client: TestClient, labels: FakeLabelService, cid: str, message: str
+    client: TestClient, labels: ExampleLabelService, cid: str, message: str
 ) -> None:
     messages = validation_messages(client.get(f"/drugs/{cid}/labels"))
 

@@ -8,9 +8,10 @@ import pytest
 from molecula.schemas.labels import DrugLabels, Label, LabelSection
 from molecula.services import labels
 from molecula.services.labels import LabelService
-from molecula.store.compounds import CompoundRecord, CompoundStore
+from molecula.store.compounds import CompoundStore
 from molecula.store.labels import LabelRecord, LabelStore
 from molecula.store.labels import LabelSection as StoredSection
+from store_records import MOTRIN, compound_record
 
 FETCHED_AT = datetime(2026, 10, 12, tzinfo=UTC)
 IBUPROFEN_CID = 3672
@@ -18,37 +19,6 @@ METAMIZOLE_CID = 3111
 DISCLAIMER = "Do not rely on openFDA to make decisions regarding medical care."
 
 
-def compound(cid: int, name: str) -> CompoundRecord:
-    return CompoundRecord(
-        cid=cid,
-        name=name,
-        inchikey=f"INCHIKEY-{cid}",
-        smiles="C",
-        formula="C",
-        mw=100.0,
-        xlogp=1.0,
-        tpsa=10.0,
-        hbd=1,
-        hba=1,
-        rotb=0,
-        heavy_atoms=10,
-        conformer_source="pubchem",
-        source="pubchem",
-    )
-
-
-RX = LabelRecord(
-    set_id="rx-set-id",
-    substance="IBUPROFEN",
-    brand="Motrin",
-    product_type="rx",
-    effective_time="20250101",
-    url="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=rx-set-id",
-    sections=(
-        StoredSection("clinical_pharmacology", "pharmacology", "Ibuprofen inhibits COX.", False),
-        StoredSection("dosage_and_administration", "dosing", "400 mg every 4 hours.", True),
-    ),
-)
 OTC = LabelRecord(
     set_id="otc-set-id",
     substance="IBUPROFEN",
@@ -63,10 +33,10 @@ OTC = LabelRecord(
 @pytest.fixture
 def store(conn: sqlite3.Connection) -> LabelStore:
     compounds = CompoundStore(conn)
-    compounds.save(compound(IBUPROFEN_CID, "ibuprofen"), [], FETCHED_AT)
-    compounds.save(compound(METAMIZOLE_CID, "metamizole"), [], FETCHED_AT)
+    compounds.save(compound_record(IBUPROFEN_CID, "ibuprofen"), [], FETCHED_AT)
+    compounds.save(compound_record(METAMIZOLE_CID, "metamizole"), [], FETCHED_AT)
     store = LabelStore(conn)
-    store.save(IBUPROFEN_CID, (OTC, RX), FETCHED_AT)
+    store.save(IBUPROFEN_CID, (OTC, MOTRIN), FETCHED_AT)
     return store
 
 

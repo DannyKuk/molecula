@@ -8,7 +8,6 @@ import pytest
 from molecula.sources.errors import SourceFormatError
 from molecula.sources.http import SourceClient
 from molecula.sources.rcsb import RcsbClient
-from molecula.store.http_cache import HttpCache
 from rcsb_replay import (
     IBUPROFEN_INCHIKEY,
     IBUPROFEN_SMILES,
@@ -39,17 +38,11 @@ ABL1_ENTRIES_WITH_STI = [
 
 
 @pytest.fixture
-def rcsb(cache: HttpCache) -> Callable[..., RcsbClient]:
+def rcsb(replaying_client: Callable[..., SourceClient]) -> Callable[..., RcsbClient]:
     """Makes an RCSB client that replays recorded responses through the store's HTTP cache."""
 
     def make(handler: Replay | None = None, *, offline: bool = False) -> RcsbClient:
-        http = SourceClient(
-            cache,
-            offline=offline,
-            transport=httpx2.MockTransport(handler or Replay()),
-            sleep=lambda _: None,
-        )
-        return RcsbClient(http)
+        return RcsbClient(replaying_client(handler or Replay(), offline=offline))
 
     return make
 

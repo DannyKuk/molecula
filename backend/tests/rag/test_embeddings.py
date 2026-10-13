@@ -1,5 +1,5 @@
 import os
-from pathlib import Path
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -47,10 +47,6 @@ def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv(key)
 
 
-def settings(tmp_path: Path, **values: Any) -> Settings:
-    return Settings(_env_file=None, data_dir=tmp_path, **values)
-
-
 @pytest.fixture
 def fake_model(monkeypatch: pytest.MonkeyPatch) -> list[FakeSentenceTransformer]:
     built: list[FakeSentenceTransformer] = []
@@ -65,9 +61,9 @@ def fake_model(monkeypatch: pytest.MonkeyPatch) -> list[FakeSentenceTransformer]
 
 
 def test_local_model_is_the_default_and_loads_from_the_models_dir(
-    tmp_path: Path, fake_model: list[FakeSentenceTransformer]
+    make_settings: Callable[..., Settings], fake_model: list[FakeSentenceTransformer]
 ) -> None:
-    current = settings(tmp_path)
+    current = make_settings(offline=False)
 
     model = get_embeddings(current)
 
@@ -79,36 +75,38 @@ def test_local_model_is_the_default_and_loads_from_the_models_dir(
 
 
 def test_loading_never_fetches_a_second_converted_copy_of_the_weights(
-    tmp_path: Path, fake_model: list[FakeSentenceTransformer]
+    make_settings: Callable[..., Settings], fake_model: list[FakeSentenceTransformer]
 ) -> None:
-    get_embeddings(settings(tmp_path))
+    get_embeddings(make_settings(offline=False))
 
     assert os.environ["DISABLE_SAFETENSORS_CONVERSION"] == "true"
 
 
 def test_offline_never_downloads_the_model(
-    tmp_path: Path, fake_model: list[FakeSentenceTransformer]
+    make_settings: Callable[..., Settings], fake_model: list[FakeSentenceTransformer]
 ) -> None:
-    get_embeddings(settings(tmp_path, offline=True))
+    get_embeddings(make_settings(offline=True))
 
     assert fake_model[0].options["local_files_only"] is True
 
 
 def test_gpu_runs_the_model_in_half_precision(
-    tmp_path: Path, fake_model: list[FakeSentenceTransformer], monkeypatch: pytest.MonkeyPatch
+    make_settings: Callable[..., Settings],
+    fake_model: list[FakeSentenceTransformer],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     import torch
 
     monkeypatch.setattr("torch.cuda.is_available", lambda: True)
 
-    get_embeddings(settings(tmp_path))
+    get_embeddings(make_settings(offline=False))
 
     assert fake_model[0].options["device"] == "cuda"
     assert fake_model[0].options["model_kwargs"] == {"dtype": torch.float16}
 
 
 def test_missing_model_offline_says_how_to_get_it(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    make_settings: Callable[..., Settings], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     def missing(name: str, **options: Any) -> None:
         raise OSError("not in the cache")
@@ -116,7 +114,7 @@ def test_missing_model_offline_says_how_to_get_it(
     monkeypatch.setattr("sentence_transformers.SentenceTransformer", missing)
 
     with pytest.raises(EmbeddingConfigError, match="once without OFFLINE=1"):
-        get_embeddings(settings(tmp_path, offline=True))
+        get_embeddings(make_settings(offline=True))
 
 
 def test_local_embeddings_use_the_model_prompts_and_unit_vectors() -> None:
@@ -131,12 +129,12 @@ def test_local_embeddings_use_the_model_prompts_and_unit_vectors() -> None:
     ]
 
 
-def test_cloud_model_goes_through_openrouter(tmp_path: Path) -> None:
+def test_cloud_model_goes_through_openrouter(make_settings: Callable[..., Settings]) -> None:
     model = get_embeddings(
-        settings(
-            tmp_path,
+        make_settings(
             embedding_model="openai/text-embedding-3-small",
             openrouter_api_key=SecretStr("sk-test"),
+            offline=False,
         )
     )
 
@@ -148,16 +146,19 @@ def test_cloud_model_goes_through_openrouter(tmp_path: Path) -> None:
     assert model.check_embedding_ctx_length is False
 
 
-def test_cloud_model_without_a_key_is_a_config_error(tmp_path: Path) -> None:
+def test_cloud_model_without_a_key_is_a_config_error(
+    make_settings: Callable[..., Settings],
+) -> None:
     with pytest.raises(EmbeddingConfigError, match="needs OPENROUTER_API_KEY"):
-        get_embeddings(settings(tmp_path, embedding_model="openai/text-embedding-3-small"))
+        get_embeddings(
+            make_settings(embedding_model="openai/text-embedding-3-small", offline=False)
+        )
 
 
-def test_cloud_model_is_refused_offline(tmp_path: Path) -> None:
+def test_cloud_model_is_refused_offline(make_settings: Callable[..., Settings]) -> None:
     with pytest.raises(EmbeddingConfigError, match="OFFLINE=1 allows no external calls"):
         get_embeddings(
-            settings(
-                tmp_path,
+            make_settings(
                 embedding_model="openai/text-embedding-3-small",
                 openrouter_api_key=SecretStr("sk-test"),
                 offline=True,
@@ -176,5 +177,7 @@ def test_cloud_model_is_refused_offline(tmp_path: Path) -> None:
         ({"embedding_model": "openai/text-embedding-3-small"}, "openai/text-embedding-3-small"),
     ],
 )
-def test_index_records_the_model_in_use(tmp_path: Path, values: dict[str, str], model: str) -> None:
-    assert embedding_model_id(settings(tmp_path, **values)) == model
+def test_index_records_the_model_in_use(
+    make_settings: Callable[..., Settings], values: dict[str, str], model: str
+) -> None:
+    assert embedding_model_id(make_settings(**values, offline=False)) == model

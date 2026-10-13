@@ -1,5 +1,4 @@
-from collections.abc import Callable, Iterator
-from pathlib import Path
+from collections.abc import Callable
 
 import httpx2
 import pytest
@@ -14,7 +13,6 @@ from molecula.sources.errors import (
 )
 from molecula.sources.http import MAX_ATTEMPTS, USER_AGENT, SourceClient
 from molecula.sources.parsing import parse
-from molecula.store.db import connect
 from molecula.store.http_cache import HttpCache
 
 PUBCHEM = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/imatinib/cids/JSON"
@@ -59,13 +57,6 @@ class Compound(BaseModel):
 
 def ok(body: bytes = b'{"ok": true}') -> httpx2.Response:
     return httpx2.Response(200, content=body, headers={"content-type": "application/json"})
-
-
-@pytest.fixture
-def cache(tmp_path: Path) -> Iterator[HttpCache]:
-    conn = connect(tmp_path / "molecula.db")
-    yield HttpCache(conn)
-    conn.close()
 
 
 @pytest.fixture

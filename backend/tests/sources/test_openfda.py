@@ -11,14 +11,13 @@ from pydantic import SecretStr
 from molecula.sources.errors import SourceFormatError, SourceNotFound
 from molecula.sources.http import SourceClient
 from molecula.sources.openfda import API_KEY_HEADER, PAGE_SIZE, OpenFdaClient
-from molecula.store.http_cache import HttpCache
 from openfda_replay import Replay
 
 FAKE_KEY = "fake-openfda-key-4f2a9c"
 
 
 @pytest.fixture
-def openfda(cache: HttpCache) -> Callable[..., OpenFdaClient]:
+def openfda(replaying_client: Callable[..., SourceClient]) -> Callable[..., OpenFdaClient]:
     """Makes an openFDA client that replays recorded responses through the store's HTTP cache."""
 
     def make(
@@ -28,12 +27,7 @@ def openfda(cache: HttpCache) -> Callable[..., OpenFdaClient]:
         page_size: int = PAGE_SIZE,
         offline: bool = False,
     ) -> OpenFdaClient:
-        http = SourceClient(
-            cache,
-            offline=offline,
-            transport=httpx2.MockTransport(handler or Replay()),
-            sleep=lambda _: None,
-        )
+        http = replaying_client(handler or Replay(), offline=offline)
         return OpenFdaClient(http, api_key=api_key, page_size=page_size)
 
     return make
