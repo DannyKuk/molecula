@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { stubChatStream } from "@/lib/test-fixtures";
 
@@ -17,6 +17,10 @@ function openWith(query: string) {
   render(<LinkedChat />);
   return replace;
 }
+
+beforeEach(() => {
+  vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+});
 
 afterEach(() => {
   vi.unstubAllGlobals();

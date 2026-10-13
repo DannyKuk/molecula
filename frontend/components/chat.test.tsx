@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { StrictMode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CHAT_FAILED, CHAT_UNAVAILABLE } from "@/lib/chat";
 import { MAX_MESSAGE_LENGTH } from "@/lib/chat-limits";
@@ -15,6 +15,12 @@ import {
 import { IBUPROFEN_PROPERTIES, NAPROXEN_PROPERTIES } from "@/lib/test-tool-results";
 
 import { Chat } from "./chat";
+
+const scrollTo = vi.spyOn(window, "scrollTo");
+
+beforeEach(() => {
+  scrollTo.mockImplementation(() => {});
+});
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -35,6 +41,10 @@ function pressEnter(options: { shiftKey?: boolean } = {}) {
 function askQuestion(text: string) {
   type(text);
   pressEnter();
+}
+
+function conversationText(): string {
+  return document.querySelector('ol[aria-label="Conversation"]')?.textContent ?? "";
 }
 
 async function streamed(send: () => void) {
@@ -356,5 +366,69 @@ describe("Chat", () => {
       role: "user",
       content: "What does sildenafil bind to?",
     });
+  });
+
+  it("scrolls to the end of the page once the sent question is on it, each time one is sent", async () => {
+    const stream = stubChatStream();
+    const conversationWhenScrolled: string[] = [];
+    scrollTo.mockImplementation(() => {
+      conversationWhenScrolled.push(conversationText());
+    });
+    render(<Chat />);
+    expect(scrollTo).not.toHaveBeenCalled();
+
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(token("It blocks BCR-ABL.") + DONE));
+    await screen.findByText("It blocks BCR-ABL.");
+    fireEvent.click(screen.getByRole("button", { name: "Help" }));
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "What does sildenafil bind to?",
+      }),
+    );
+
+    expect(conversationWhenScrolled).toHaveLength(2);
+    expect(conversationWhenScrolled[0]).toContain("How does Gleevec work?");
+    expect(conversationWhenScrolled[1]).toContain("What does sildenafil bind to?");
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: document.documentElement.scrollHeight });
+  });
+
+  it("scrolls to the end of the page again on Retry", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(chatFrame({ type: "error", message: "Timed out." })));
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    fireEvent.click(
+      within(await screen.findByRole("alert")).getByRole("button", { name: "Try again" }),
+    );
+
+    expect(scrollTo).toHaveBeenCalledTimes(2);
+  });
+
+  it("scrolls to the question it was opened with", async () => {
+    stubChatStream();
+    render(<Chat initialQuestion="How does imatinib work?" />);
+
+    await screen.findByText("How does imatinib work?");
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+  });
+
+  it("doesn't scroll for a question it ignores while answering", async () => {
+    stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+    await screen.findByRole("button", { name: "Stop" });
+    fireEvent.click(screen.getByRole("button", { name: "Help" }));
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "What does sildenafil bind to?",
+      }),
+    );
+
+    expect(conversationText()).not.toContain("What does sildenafil bind to?");
+    expect(scrollTo).toHaveBeenCalledTimes(1);
   });
 });
