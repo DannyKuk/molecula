@@ -21,7 +21,7 @@ from store_records import compound_record
 FETCHED_AT = datetime(2026, 10, 11, tzinfo=UTC)
 SDF = "5291\n  stored conformer\n$$$$\n"
 SUGGESTION_CUTOFF = 0.8
-# Copied from the built store (2026-10-12). Citalopram, hydroxyzine and hydralazine aren't in it.
+# Copied from the built store (2026-10-13). Citalopram, hydroxyzine and hydralazine aren't in it.
 SCOPE = [
     (3672, "ibuprofen", ["Advil", "Motrin", "Nurofen", "Ibuflam"]),
     (1983, "acetaminophen", ["paracetamol", "Tylenol", "Panadol", "ben-u-ron"]),
@@ -41,6 +41,8 @@ SCOPE = [
     (9568614, "esomeprazole", ["Nexium"]),
     (4679, "pantoprazole", ["Pantoprazol", "Protonix", "Pantozol"]),
     (3883, "lansoprazole", ["Prevacid"]),
+    (3111, "metamizole", ["Metamizol", "dipyrone", "Novalgin", "Novaminsulfon"]),
+    (1986, "acetazolamide", ["Diamox"]),
 ]
 
 
@@ -208,6 +210,65 @@ def test_at_most_three_suggestions_best_first(
         "Omeprazol",
         "esomeprazole",
     ]
+
+
+@pytest.mark.parametrize(
+    ("name", "aliases"),
+    [
+        ("novamin", ["Novaminsulfon", "Novalgin"]),
+        ("parace", ["paracetamol"]),
+        ("NOVAMINSULF", ["Novaminsulfon"]),
+        ("amox", ["Amoxil", "amoxicillin", "Diamox"]),
+    ],
+)
+def test_names_starting_with_the_input_are_suggested_first_shortest_first(
+    scope_service: CompoundService, name: str, aliases: list[str]
+) -> None:
+    resolution = scope_service.resolve(name)
+
+    assert resolution.status == "not_supported"
+    assert [suggestion.alias for suggestion in resolution.suggestions] == aliases
+
+
+def test_a_suggestion_by_its_beginning_keeps_the_generic_name(
+    scope_service: CompoundService,
+) -> None:
+    assert scope_service.resolve("parace").suggestions == [
+        Suggestion(alias="paracetamol", cid=1983, name="acetaminophen")
+    ]
+
+
+@pytest.mark.parametrize("name", ["nov", "par", "amo"])
+def test_three_letters_are_too_short_to_suggest_by_beginning(
+    scope_service: CompoundService, name: str
+) -> None:
+    assert scope_service.resolve(name).suggestions == []
+
+
+def test_beginnings_and_close_spellings_together_stay_at_three(
+    scope_store: CompoundStore, conformers: ConformerFiles
+) -> None:
+    # At 0.5 Panadol is close to "pant" too, but the three names starting with it come first.
+    service = CompoundService(scope_store, conformers, suggestion_cutoff=0.5)
+
+    resolution = service.resolve("pant")
+
+    assert [suggestion.alias for suggestion in resolution.suggestions] == [
+        "Pantozol",
+        "Pantoprazol",
+        "pantoprazole",
+    ]
+
+
+@pytest.mark.parametrize(("name", "cid"), [("Omeprazol", 4594), ("Novaminsulfon", 3111)])
+def test_a_full_name_still_resolves_although_longer_names_start_with_it(
+    scope_service: CompoundService, name: str, cid: int
+) -> None:
+    resolution = scope_service.resolve(name)
+
+    assert resolution.status == "found"
+    assert resolution.compound is not None
+    assert resolution.compound.cid == cid
 
 
 def test_cutoff_setting_decides_how_close_a_suggestion_must_be(

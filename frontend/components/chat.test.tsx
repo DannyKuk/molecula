@@ -16,6 +16,7 @@ import {
   IBUPROFEN_PROPERTIES,
   IMATINIB_COMPLEX,
   NAPROXEN_PROPERTIES,
+  TYLENOLL_NOT_SUPPORTED,
 } from "@/lib/test-tool-results";
 import type { StructureTarget } from "@/lib/tool-cards";
 
@@ -79,6 +80,19 @@ const IMATINIB_IN_3D =
     status: "found",
     result: IMATINIB_COMPLEX,
   });
+
+const TYLENOLL_LOOKUP =
+  status("Looking up Tylenoll") +
+  chatFrame({ type: "tool_call", id: "call_1", name: "resolve_drug", args: { name: "Tylenoll" } }) +
+  chatFrame({
+    type: "tool_result",
+    id: "call_1",
+    name: "resolve_drug",
+    status: "not_supported",
+    result: TYLENOLL_NOT_SUPPORTED,
+  });
+
+const DID_YOU_MEAN_TYLENOL = "Did you mean Tylenol (acetaminophen)?";
 
 describe("Chat", () => {
   it("streams the answer's tokens into the conversation as they arrive", async () => {
@@ -596,5 +610,52 @@ describe("Chat", () => {
     page.scrollTo.mockClear();
     page.grow();
     expect(page.scrollTo).not.toHaveBeenCalled();
+  });
+
+  it("asks again with a suggested name from a button under the answer", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does tylenoll work, and is Tylenoll safe?");
+    await streamed(() => stream.send(TYLENOLL_LOOKUP + token("I couldn't find Tylenoll.") + DONE));
+    fireEvent.click(await screen.findByRole("button", { name: DID_YOU_MEAN_TYLENOL }));
+
+    expect(stream.fetchMock).toHaveBeenCalledTimes(2);
+    expect(stream.sentMessages().at(-1)).toEqual({
+      role: "user",
+      content: "How does Tylenol work, and is Tylenol safe?",
+    });
+  });
+
+  it("shows no suggestion button while answering, nor under an answer without suggestions", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Tylenoll work?");
+    await streamed(() => stream.send(TYLENOLL_LOOKUP + token("I couldn't")));
+    expect(screen.queryByRole("button", { name: /Did you mean/ })).toBeNull();
+
+    await streamed(() => stream.send(DONE));
+    await screen.findByRole("button", { name: DID_YOU_MEAN_TYLENOL });
+
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(token("It blocks BCR-ABL.") + DONE));
+    await screen.findByText("It blocks BCR-ABL.");
+    expect(screen.getAllByRole("button", { name: /Did you mean/ })).toHaveLength(1);
+  });
+
+  it("disables the suggestion buttons of earlier answers while a new answer comes in", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Tylenoll work?");
+    await streamed(() => stream.send(TYLENOLL_LOOKUP + DONE));
+    const button = await screen.findByRole("button", { name: DID_YOU_MEAN_TYLENOL });
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(token("It blocks")));
+
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+    await streamed(() => stream.send(DONE));
+    expect((button as HTMLButtonElement).disabled).toBe(false);
   });
 });

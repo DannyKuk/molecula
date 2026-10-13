@@ -50,6 +50,8 @@ export function Chat({ initialQuestion }: { initialQuestion?: string }) {
               <ConversationTurn
                 key={index}
                 turn={turn}
+                onAsk={ask}
+                chatAnswering={answering}
                 onRetry={index === turns.length - 1 ? retry : undefined}
               />
             ))}

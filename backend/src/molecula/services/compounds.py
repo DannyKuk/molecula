@@ -15,6 +15,7 @@ from molecula.store.structures import ConformerFiles
 
 PUBCHEM_COMPOUND_URL = "https://pubchem.ncbi.nlm.nih.gov/compound/{cid}"
 MAX_SUGGESTIONS = 3
+MIN_PREFIX_LENGTH = 4
 
 # Prescriptions and openFDA name the salt or hydrate ("imatinib mesylate"), the store holds the
 # parent compound. Ester words like "acetate" are left out: medroxyprogesterone acetate is a
@@ -82,8 +83,9 @@ class CompoundService:
     def resolve(self, name: str) -> Resolution:
         """The supported drug a name, brand, alias or salt name refers to, ignoring case.
 
-        An unsupported name gets the closest scope names and aliases as suggestions, never as
-        the answer: look-alike drug names (Celexa, Celebrex) make a silent correction unsafe.
+        An unsupported name gets the scope names and aliases it starts or is close to as
+        suggestions, never as the answer: look-alike drug names (Celexa, Celebrex) make a silent
+        correction unsafe.
         """
         query = " ".join(name.split())
         candidates = name_candidates(query)
@@ -101,11 +103,22 @@ class CompoundService:
         return Resolution(query=query, status="not_supported", suggestions=suggestions)
 
     def _suggest(self, name: str) -> list[Suggestion]:
-        """Up to three scope names and aliases close to the name, best first."""
+        """Up to three scope names and aliases that start with the name or are close to it.
+
+        Spellings that start with the name come first, shortest first, from four letters on: a
+        typed beginning ("amox") says more than a similar spelling (Diamox, a different drug).
+        """
         spellings = self._scope_spellings()
-        matches = get_close_matches(
-            name.casefold(), list(spellings), n=MAX_SUGGESTIONS, cutoff=self._suggestion_cutoff
+        typed = name.casefold()
+        starting = (
+            sorted((spelling for spelling in spellings if spelling.startswith(typed)), key=len)
+            if len(typed) >= MIN_PREFIX_LENGTH
+            else []
         )
+        close = get_close_matches(
+            typed, list(spellings), n=MAX_SUGGESTIONS, cutoff=self._suggestion_cutoff
+        )
+        matches = list(dict.fromkeys([*starting, *close]))[:MAX_SUGGESTIONS]
         return [spellings[match] for match in matches]
 
     def _scope_spellings(self) -> dict[str, Suggestion]:
