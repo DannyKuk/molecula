@@ -37,7 +37,6 @@ from tool_fakes import (
 QUESTION = [ChatMessage(role="user", content="What does imatinib target?")]
 SIDE_EFFECTS = "What are the side effects of imatinib?"
 WARNINGS = "What are the warnings for imatinib?"
-DISCLAIMER = "Do not rely on openFDA to make decisions regarding medical care."
 IMATINIB_EDEMA = IMATINIB_SIDE_EFFECTS.model_copy(
     update={"id": "gleevec:adverse_reactions:1", "text": "Edema was reported in 60% of patients."}
 )
@@ -58,7 +57,6 @@ def agent(
     retriever: FakeLabelRetriever | None = None,
     max_steps: int = 5,
     timeout_seconds: float = 10.0,
-    disclaimer: str | None = None,
 ) -> ChatAgent:
     tools = build_tools(
         FakeCompoundService(),
@@ -67,13 +65,7 @@ def agent(
         extractor or FakeFilterExtractor(),
         retriever or FakeLabelRetriever(),
     )
-    return ChatAgent(
-        model,
-        tools,
-        max_steps=max_steps,
-        timeout_seconds=timeout_seconds,
-        disclaimer=disclaimer,
-    )
+    return ChatAgent(model, tools, max_steps=max_steps, timeout_seconds=timeout_seconds)
 
 
 def run(chat: ChatAgent, conversation: Sequence[ChatMessage] = QUESTION) -> list[ChatEvent]:
@@ -184,29 +176,6 @@ def test_sources_list_what_the_tools_returned_once_each() -> None:
             "https://www.ebi.ac.uk/chembl/explore/target/CHEMBL1862",
         )
     ]
-
-
-def test_an_answer_that_uses_label_text_comes_with_the_disclaimer() -> None:
-    model = ScriptedChatModel(
-        script=[
-            tool_call_message("search_labels", {"question": SIDE_EFFECTS}),
-            answer_message("Nausea is common [1]."),
-        ]
-    )
-    chat = agent(model, retriever=label_retriever(), disclaimer=DISCLAIMER)
-
-    assert sources_event(run(chat)).disclaimer == DISCLAIMER
-
-
-def test_an_answer_without_label_text_has_no_disclaimer() -> None:
-    model = ScriptedChatModel(
-        script=[
-            tool_call_message("get_targets", {"drug": "imatinib"}),
-            answer_message("Imatinib blocks the ABL1 kinase."),
-        ]
-    )
-
-    assert sources_event(run(agent(model, disclaimer=DISCLAIMER))).disclaimer is None
 
 
 def test_the_system_prompt_and_the_conversation_reach_the_model() -> None:

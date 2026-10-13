@@ -115,7 +115,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             tools,
             max_steps=settings.chat_max_steps,
             timeout_seconds=settings.chat_timeout_seconds,
-            disclaimer=app.state.label_service.disclaimer(),
         )
         app.state.chat = GuardedChat(
             ChatModelInputCheck(chat_model),

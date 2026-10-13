@@ -79,9 +79,10 @@ def index_model(index_dir: Path) -> str:
 
 
 def copy_without_raw_cache(source: Path, target: Path) -> None:
-    """Copy every table of the store at `source` into a new store at `target`, except the rows
-    of the raw HTTP cache. The empty table stays, so the copy is a complete store an ingest
-    step can run on."""
+    """Copy every table of the store at `source` that the current schema has into a new store
+    at `target`, except the rows of the raw HTTP cache. The empty table stays, so the copy is a
+    complete store an ingest step can run on. A table the schema no longer creates, such as
+    `source_disclaimer` (#180), is left behind."""
     with closing(sqlite3.connect(target.resolve().as_uri(), uri=True)) as conn:
         ensure_schema(conn)
         conn.execute("ATTACH DATABASE ? AS built", (f"{source.resolve().as_uri()}?mode=ro",))
@@ -92,7 +93,7 @@ def copy_without_raw_cache(source: Path, target: Path) -> None:
                 "Export it with the code it was built with, or upgrade it with an ingest step."
             )
         with conn:
-            for table in table_names(conn, "built"):
+            for table in table_names(conn):
                 if table == RAW_CACHE_TABLE:
                     continue
                 columns = ", ".join(

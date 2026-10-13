@@ -88,6 +88,9 @@ CREATE TABLE complex_candidate (
     FOREIGN KEY (cid, ligand_code) REFERENCES ligand_code (cid, code) ON DELETE CASCADE
 );
 """,
+    # Stores built before #180 also have a `source_disclaimer` table, which nothing reads any
+    # more. It was dropped from here rather than in a new version, so opening such a store
+    # changes nothing in it.
     4: """
 CREATE TABLE label (
     set_id TEXT PRIMARY KEY,
@@ -112,12 +115,6 @@ CREATE TABLE label_section (
     text TEXT NOT NULL,
     sensitive INTEGER NOT NULL,
     PRIMARY KEY (set_id, section)
-);
-
-CREATE TABLE source_disclaimer (
-    source TEXT PRIMARY KEY,
-    text TEXT NOT NULL,
-    fetched_at TEXT NOT NULL
 );
 """,
     # SQLite can't change a CHECK constraint, so label_section is rebuilt with the new groups.

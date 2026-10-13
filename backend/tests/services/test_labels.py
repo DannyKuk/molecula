@@ -16,7 +16,6 @@ from store_records import MOTRIN, compound_record
 FETCHED_AT = datetime(2026, 10, 12, tzinfo=UTC)
 IBUPROFEN_CID = 3672
 METAMIZOLE_CID = 3111
-DISCLAIMER = "Do not rely on openFDA to make decisions regarding medical care."
 
 
 OTC = LabelRecord(
@@ -85,31 +84,8 @@ def test_label_carries_its_metadata_sections_and_dailymed_link(service: LabelSer
     assert drug.labels[1].brand is None
 
 
-def test_labels_come_with_the_stored_disclaimer(service: LabelService, store: LabelStore) -> None:
-    store.save_disclaimer("openfda", DISCLAIMER, FETCHED_AT)
-
-    drug = service.get_labels(IBUPROFEN_CID)
-
-    assert drug is not None
-    assert drug.disclaimer == DISCLAIMER
-    assert service.disclaimer() == DISCLAIMER
-
-
-def test_disclaimer_is_none_before_the_labels_step_stored_one(service: LabelService) -> None:
-    drug = service.get_labels(IBUPROFEN_CID)
-
-    assert drug is not None
-    assert drug.disclaimer is None
-
-
-def test_supported_drug_without_a_us_label_has_an_empty_list(
-    service: LabelService, store: LabelStore
-) -> None:
-    store.save_disclaimer("openfda", DISCLAIMER, FETCHED_AT)
-
-    assert service.get_labels(METAMIZOLE_CID) == DrugLabels(
-        cid=METAMIZOLE_CID, labels=[], disclaimer=DISCLAIMER
-    )
+def test_supported_drug_without_a_us_label_has_an_empty_list(service: LabelService) -> None:
+    assert service.get_labels(METAMIZOLE_CID) == DrugLabels(cid=METAMIZOLE_CID, labels=[])
 
 
 def test_unknown_cid_is_none(service: LabelService) -> None:

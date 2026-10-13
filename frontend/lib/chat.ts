@@ -23,7 +23,7 @@ export type ChatEvent =
   | { type: "token"; text: string }
   | { type: "tool_call"; id: string; name: string; args: Record<string, unknown> }
   | { type: "tool_result"; id: string; name: string; status: string | null; result: unknown }
-  | { type: "sources"; sources: Source[]; unknown_refs: number[]; disclaimer: string | null }
+  | { type: "sources"; sources: Source[]; unknown_refs: number[] }
   | { type: "done"; step_limit_reached: boolean }
   | { type: "error"; message: string }
   // Read but not shown yet: the retrieval trace comes with #41.

@@ -36,7 +36,6 @@ OTC = LabelRecord(
     url="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=otc-set-id",
     sections=(LabelSection("purpose", "otc_consumer", "Pain reliever/fever reducer", False),),
 )
-DISCLAIMER = "Do not rely on openFDA to make decisions regarding medical care."
 
 
 @pytest.fixture
@@ -103,29 +102,6 @@ def test_deleting_the_compound_deletes_its_labels(
 
     assert store.get(3672) == ()
     assert conn.execute("SELECT count(*) FROM label_section").fetchone() == (0,)
-
-
-def test_disclaimer_is_stored_once_per_source(store: LabelStore, conn: sqlite3.Connection) -> None:
-    store.save_disclaimer("openfda", DISCLAIMER, FIRST_FETCH)
-    changes = conn.total_changes
-
-    store.save_disclaimer("openfda", DISCLAIMER, LATER_FETCH)
-
-    assert store.disclaimer("openfda") == DISCLAIMER
-    assert conn.total_changes == changes
-    assert conn.execute("SELECT count(*) FROM source_disclaimer").fetchone() == (1,)
-
-
-def test_a_changed_disclaimer_replaces_the_old(store: LabelStore) -> None:
-    store.save_disclaimer("openfda", DISCLAIMER, FIRST_FETCH)
-
-    store.save_disclaimer("openfda", "New wording.", LATER_FETCH)
-
-    assert store.disclaimer("openfda") == "New wording."
-
-
-def test_unknown_source_has_no_disclaimer(store: LabelStore) -> None:
-    assert store.disclaimer("openfda") is None
 
 
 def test_a_stored_effective_time_reads_as_a_date() -> None:

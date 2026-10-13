@@ -68,9 +68,7 @@ class ExampleLabelService:
     def __init__(self) -> None:
         self.drugs = {
             5291: examples.IMATINIB_LABELS,
-            METAMIZOLE_CID: DrugLabels(
-                cid=METAMIZOLE_CID, labels=[], disclaimer=examples.IMATINIB_LABELS.disclaimer
-            ),
+            METAMIZOLE_CID: DrugLabels(cid=METAMIZOLE_CID, labels=[]),
         }
         self.asked: list[int] = []
 
@@ -382,7 +380,7 @@ def test_labels_list_each_label_with_its_sections_and_dailymed_link(client: Test
         "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid="
     )
     assert {section["section_group"] for section in label["sections"]} >= {"dosing", "indications"}
-    assert body["disclaimer"]
+    assert "disclaimer" not in body
 
 
 def test_labels_of_a_supported_drug_without_a_us_label_is_an_empty_list(
@@ -391,9 +389,7 @@ def test_labels_of_a_supported_drug_without_a_us_label_is_an_empty_list(
     response = client.get(f"/drugs/{METAMIZOLE_CID}/labels")
 
     assert response.status_code == 200
-    body = response.json()
-    assert (body["cid"], body["labels"]) == (METAMIZOLE_CID, [])
-    assert body["disclaimer"] == examples.IMATINIB_LABELS.disclaimer
+    assert response.json() == {"cid": METAMIZOLE_CID, "labels": []}
 
 
 def test_labels_of_an_unsupported_cid_is_404(client: TestClient) -> None:

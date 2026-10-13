@@ -24,7 +24,7 @@ Known limits, and how the app handles them:
 | Query translation | brand / non-US name → US generic; German → English; multi-query | name layer verified (PubChem) |
 | Structured retrieval | chunk metadata `{substance, section_group, product_type, source}` with self-query filters; SQL tables for properties and targets | metadata verified in every label |
 | Agent tools | PubChem (properties, 3D), ChEMBL (mechanism → target), RCSB (complex), own contact calculation | verified |
-| Safety | openFDA disclaimer; `overdosage` indexed as sensitive, answers put emergency help first; no personal dosing | design decision (§5.5, #92) |
+| Safety | "not medical advice" under the question box; `overdosage` indexed as sensitive, answers put emergency help first; no personal dosing | design decision (§5.5, #92, #100) |
 | Sources in the UI | every chunk has `set_id`, `effective_time` and a DailyMed link | verified |
 | Hybrid search | BM25 next to embeddings: drug names, "QT prolongation", "CYP3A4" need exact matches | design decision |
 | Tools as an MCP server | the data services exposed through FastMCP (§4) | design decision |
@@ -73,7 +73,7 @@ Known limits, and how the app handles them:
 - The release is tagged `store-YYYY-MM-DD`, and the settings pin the tag as `STORE_RELEASE`, so code and data versions match. `python -m molecula.ingest fetch` downloads the pinned release, checks the SHA-256 and the schema version and unpacks it into `data/build/`; Docker runs it when the store is missing (#118). The first release is #119.
 - **The embedding model comes from Hugging Face, not from the release** (decided 2026-10-13 in #35). Each release asset must be under 2 GiB ([GitHub](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)), and bge-m3's weights alone are one 2,271,145,830-byte file. `fetch` downloads `LOCAL_EMBEDDING_MODEL` into `data/build/models/`, pinned to a revision and checked by hash, and with `OFFLINE=1` and no model it exits with a message, as it does without a store (#118). The manifest names the model because the index refuses queries from another one. Splitting the weights into parts would work but adds joining code to `fetch`; fp16 weights (~1.1 GB) would fit, but they change the vectors, so the index would have to be rebuilt and its recall measured again.
 - Not the other options from #34: an ingest on every clone (minutes, NCBI's block), committing the conformers only (no database), or committing the store (growing binary data in the git history). Git LFS counts every clone against its bandwidth quota.
-- **First export** (2026-10-13, the store from §5, 3.5 s): a 79 MB archive (78,950,603 bytes), 149.9 MB unpacked: `molecula.db` 13.8 MB (2.0 GB with the HTTP cache), the bge-m3 index 135.1 MB, conformers 0.9 MB. Rows: 134 compounds, 4,343 synonyms, 190 targets, 104 ligand codes, 317 complex candidates, 156 labels, 3,126 label sections, 1 disclaimer.
+- **First export** (2026-10-13, the store from §5, 3.5 s): a 79 MB archive (78,950,603 bytes), 149.9 MB unpacked: `molecula.db` 13.8 MB (2.0 GB with the HTTP cache), the bge-m3 index 135.1 MB, conformers 0.9 MB. Rows: 134 compounds, 4,343 synonyms, 190 targets, 104 ligand codes, 317 complex candidates, 156 labels, 3,126 label sections, 1 disclaimer (a table later exports leave out, #180).
 
 ---
 
@@ -231,7 +231,7 @@ Tables (schema version 5; version 5 widened the `section_group` check for #92):
 
 - `label(set_id, cid, substance, brand, product_type, effective_time, url, source, fetched_at)`, one row per (`cid`, `product_type`); `product_type` is `rx` or `otc`, `substance` the label's own (often a salt), `url` the DailyMed page `https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid={set_id}`.
 - `label_section(set_id, section, section_group, text, sensitive)`.
-- `source_disclaimer(source, text, fetched_at)`: openFDA's `meta.disclaimer`, stored once for the UI.
+- openFDA's `meta.disclaimer` is not stored. Stores built before #180 have it in a `source_disclaimer` table, which nothing reads; new stores don't create it, and the export leaves it out. openFDA's [terms](https://open.fda.gov/terms/) only ask for credit, which the chat shows under answers that used label text.
 
 A pruned compound takes its labels and sections with it (`ON DELETE CASCADE`). A drug that fails is reported and skipped; the run stops when openFDA stops answering. Re-running is served from the HTTP cache and leaves the rows untouched.
 
@@ -279,7 +279,7 @@ For each drug in scope, query openFDA with `effective_time:[{last_run} TO *]`. I
 |---|---|---|
 | Scope grows faster than the core gets finished | high | core features first; 3D polish last |
 | Label text is long and legalistic, so answers read dry | medium | prompt for plain language with citations; optionally Wikipedia pharmacology sections for the hero drugs (CC BY-SA, attributed) as a second source |
-| Interaction answers read as medical advice | medium | quote labels with citations; show the openFDA disclaimer; no verdicts |
+| Interaction answers read as medical advice | medium | quote labels with citations; "not medical advice" under the question box; no verdicts |
 | Community PubChem MCP goes offline | low | used only as the remote-MCP option; local tools are the default |
 | Local 8B models are unreliable at tool calling | medium | measured in the benchmarks; cloud model stays the default |
 | PubChem / RCSB flakiness | low | local store, retries, `OFFLINE=1` |

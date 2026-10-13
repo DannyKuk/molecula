@@ -91,7 +91,27 @@ def test_upgrades_a_version_3_store_and_adds_the_label_tables(tmp_path: Path) ->
 
     assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
     tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-    assert {"label", "label_section", "source_disclaimer"} <= tables
+    assert {"label", "label_section"} <= tables
+    assert "source_disclaimer" not in tables
+
+
+def test_opens_a_store_from_before_180_without_changing_it(tmp_path: Path) -> None:
+    path = tmp_path / "molecula.db"
+    old = sqlite3.connect(path)
+    old.executescript("".join(MIGRATIONS[version] for version in range(1, SCHEMA_VERSION + 1)))
+    old.execute(
+        "CREATE TABLE source_disclaimer (source TEXT PRIMARY KEY, text TEXT NOT NULL,"
+        " fetched_at TEXT NOT NULL)"
+    )
+    old.execute("INSERT INTO source_disclaimer VALUES ('openfda', 'Do not rely on openFDA.', '')")
+    old.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+    old.commit()
+    old.close()
+    before = path.read_bytes()
+
+    connect(path).close()
+
+    assert path.read_bytes() == before
 
 
 def test_upgrades_a_version_4_store_keeping_its_labels_and_allowing_the_new_groups(

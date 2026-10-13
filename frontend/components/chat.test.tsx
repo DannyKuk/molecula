@@ -9,7 +9,6 @@ import {
   DONE,
   IMATINIB_LABEL_SEARCH,
   IMATINIB_SOURCES_EVENT,
-  OPENFDA_DISCLAIMER,
   stubChatStream,
 } from "@/lib/test-fixtures";
 import { IBUPROFEN_PROPERTIES, NAPROXEN_PROPERTIES } from "@/lib/test-tool-results";
@@ -327,7 +326,7 @@ describe("Chat", () => {
     askQuestion("How does imatinib work?");
     await streamed(() => stream.send(IMATINIB_LABEL_SEARCH + token("It blocks BCR-ABL [1][2].")));
     expect(await screen.findByText("It blocks BCR-ABL [1][2].")).toBeDefined();
-    expect(screen.queryByText(OPENFDA_DISCLAIMER)).toBeNull();
+    expect(screen.queryByText(/Data provided by the U.S. Food and Drug Administration/)).toBeNull();
 
     await streamed(() => stream.send(IMATINIB_SOURCES_EVENT + DONE));
 
@@ -337,7 +336,7 @@ describe("Chat", () => {
       }),
     ).toBeDefined();
     expect(screen.queryByText(/\[1\]/)).toBeNull();
-    expect(screen.getByText(OPENFDA_DISCLAIMER)).toBeDefined();
+    expect(screen.getByRole("link", { name: "openFDA" })).toBeDefined();
   });
 
   it("opens the help guide from the ? button and sends an example asked from it", async () => {

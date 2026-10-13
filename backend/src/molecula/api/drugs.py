@@ -174,8 +174,8 @@ def get_drug_targets(cid: CidParam, service: TargetServiceDep) -> DrugTargets:
     },
 )
 def get_drug_labels(cid: CidParam, service: LabelServiceDep) -> DrugLabels:
-    """The drug's canonical US labels (prescription, then OTC) with their sections and the
-    openFDA disclaimer. A supported drug without a US label has an empty list."""
+    """The drug's canonical US labels (prescription, then OTC) with their sections. A supported
+    drug without a US label has an empty list."""
     labels = service.get_labels(cid)
     if labels is None:
         raise unsupported_cid(cid)
