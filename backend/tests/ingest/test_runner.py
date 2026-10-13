@@ -94,8 +94,12 @@ def test_an_error_the_step_does_not_catch_propagates() -> None:
         run_step(ITEMS, Step({"caffeine": KeyError("bug")}), StepReport())
 
 
+def offline_settings(tmp_path: Path) -> Settings:
+    return Settings(_env_file=None, data_dir=tmp_path, offline=True)
+
+
 def test_store_and_sources_close_when_the_step_ends(tmp_path: Path) -> None:
-    with store_and_sources(Settings(data_dir=tmp_path, offline=True)) as (conn, http):
+    with store_and_sources(offline_settings(tmp_path)) as (conn, http):
         conn.execute("SELECT 1")
         with pytest.raises(OfflineError):
             http.get("https://example.org")
@@ -107,7 +111,7 @@ def test_store_and_sources_close_when_the_step_ends(tmp_path: Path) -> None:
 def test_store_and_sources_close_when_the_step_raises(tmp_path: Path) -> None:
     with (
         pytest.raises(StepError),
-        store_and_sources(Settings(data_dir=tmp_path, offline=True)) as (conn, _),
+        store_and_sources(offline_settings(tmp_path)) as (conn, _),
     ):
         raise StepError
 
