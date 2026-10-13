@@ -184,6 +184,28 @@ describe("createScene", () => {
     expect(viewer.spin).toHaveBeenLastCalledWith("y", expect.any(Number));
   });
 
+  it("keeps the camera on the drug when the binding plays after an earlier grab", () => {
+    const { lib, viewer, models } = fakeThreeDmol();
+    const element = document.createElement("div");
+    const scene = createScene(lib, element, { kind: "complex", complex: SMALL_COMPLEX }, options);
+    const drug = models[1].atoms;
+    element.firstChild!.dispatchEvent(new Event("pointerdown"));
+    scene.setMode("molecule", false);
+
+    scene.setMode("site", true);
+    frames.shift()!(performance.now());
+    const center = centerOf(drug);
+
+    expect(center.x).toBeGreaterThan(11 + 10);
+    expect(viewer.getView().slice(0, 3)).toEqual([-center.x, -center.y, -center.z]);
+
+    runFrames(100);
+    const docked = centerOf(drug);
+
+    expect(viewer.getView().slice(0, 3)).toEqual([-docked.x, -docked.y, -docked.z]);
+    expect(viewer.spin).toHaveBeenLastCalledWith("y", expect.any(Number));
+  });
+
   it("leaves the camera alone once the user grabs the view during the binding", () => {
     const { lib, viewer } = fakeThreeDmol();
     const element = document.createElement("div");
