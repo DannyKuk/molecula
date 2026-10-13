@@ -5,13 +5,10 @@ from molecula.rag.retriever import LabelRetriever
 from molecula.schemas.labels import SectionGroup
 from molecula.schemas.retrieval import LabelFilter
 from molecula.schemas.tools import LabelDrugsNotSupported, LabelPassages, SearchLabelsArgs
-from molecula.services.compounds import CompoundService
 from molecula.tools.base import build_tool, not_supported
 
 
-def search_labels_tool(
-    extractor: FilterExtractor, retriever: LabelRetriever, compounds: CompoundService
-) -> StructuredTool:
+def search_labels_tool(extractor: FilterExtractor, retriever: LabelRetriever) -> StructuredTool:
     def search_labels(
         question: str, drug: str | None = None, section: SectionGroup | None = None
     ) -> LabelPassages | LabelDrugsNotSupported:

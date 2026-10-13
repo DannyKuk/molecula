@@ -22,6 +22,6 @@ def build_tools(
         resolve_drug_tool(compounds),
         get_properties_tool(compounds),
         get_targets_tool(compounds, targets),
-        search_labels_tool(extractor, retriever, compounds),
+        search_labels_tool(extractor, retriever),
         compare_drugs_tool(compounds),
     ]

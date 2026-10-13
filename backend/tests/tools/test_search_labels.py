@@ -19,7 +19,6 @@ from tool_fakes import (
     IMATINIB,
     IMATINIB_LOW_SCORE,
     IMATINIB_SIDE_EFFECTS,
-    FakeCompoundService,
     FakeFilterExtractor,
     FakeLabelRetriever,
     call_tool,
@@ -38,10 +37,9 @@ GLEEVEC_FILTER = LabelFilter(
 def tool(
     extractor: FakeFilterExtractor,
     retriever: FakeLabelRetriever,
-    compounds: FakeCompoundService,
 ) -> StructuredTool:
     extractor.filters[SIDE_EFFECTS] = GLEEVEC_FILTER
-    return search_labels_tool(extractor, retriever, compounds)
+    return search_labels_tool(extractor, retriever)
 
 
 def test_a_question_gets_label_passages_with_their_citations(tool: StructuredTool) -> None:
@@ -87,7 +85,7 @@ def test_the_agents_drug_and_section_reach_the_filter(
 
 
 def test_a_question_naming_only_unsupported_drugs_is_not_supported(
-    tool: StructuredTool, extractor: FakeFilterExtractor, compounds: FakeCompoundService
+    tool: StructuredTool, extractor: FakeFilterExtractor
 ) -> None:
     question = "What are the side effects of Gleevek?"
     extractor.filters[question] = LabelFilter(
@@ -107,11 +105,10 @@ def test_a_question_naming_only_unsupported_drugs_is_not_supported(
     )
     assert message.artifact.retrieval.chunks == []
     assert IMATINIB_SIDE_EFFECTS.text not in str(message.content)
-    assert compounds.resolved == []
 
 
 def test_an_unsupported_drug_beside_a_supported_one_is_listed_with_the_passages(
-    tool: StructuredTool, extractor: FakeFilterExtractor, compounds: FakeCompoundService
+    tool: StructuredTool, extractor: FakeFilterExtractor
 ) -> None:
     question = "Can I take Gleevec with Celexa?"
     extractor.filters[question] = GLEEVEC_FILTER.model_copy(
@@ -123,7 +120,6 @@ def test_an_unsupported_drug_beside_a_supported_one_is_listed_with_the_passages(
     assert isinstance(message.artifact, LabelPassages)
     assert message.artifact.unsupported == [DrugNotSupported(query="Celexa", suggestions=[])]
     assert message.artifact.passages == [IMATINIB_SIDE_EFFECTS]
-    assert compounds.resolved == []
 
 
 def test_a_supported_drug_without_a_label_finds_nothing_and_says_so(

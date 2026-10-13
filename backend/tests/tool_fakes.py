@@ -104,6 +104,10 @@ class FakeTargetService:
         self.asked.append(cid)
         return self.drugs.get(cid)
 
+    def targets_of(self, compound: Compound) -> DrugTargets:
+        self.asked.append(compound.cid)
+        return self.drugs.get(compound.cid, DrugTargets(cid=compound.cid, targets=[]))
+
 
 IMATINIB_SIDE_EFFECTS = RetrievedChunk(
     id="gleevec:adverse_reactions:0",

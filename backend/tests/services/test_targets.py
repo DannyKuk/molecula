@@ -12,6 +12,7 @@ from molecula.services.targets import TargetService
 from molecula.store.compounds import CompoundRecord, CompoundStore
 from molecula.store.targets import DrugTargets as StoredTargets
 from molecula.store.targets import TargetRecord, TargetStore
+from tool_fakes import IMATINIB
 
 FETCHED_AT = datetime(2026, 10, 11, tzinfo=UTC)
 FLUTICASONE_CID = 5311101
@@ -122,6 +123,10 @@ def test_supported_drug_without_targets_has_an_empty_list(service: TargetService
 
 def test_unknown_cid_is_none(service: TargetService) -> None:
     assert service.get_targets(1) is None
+
+
+def test_a_resolved_drug_has_its_targets(service: TargetService) -> None:
+    assert service.targets_of(IMATINIB) == service.get_targets(5291)
 
 
 def test_service_has_no_source_client() -> None:
