@@ -7,9 +7,12 @@ import pytest
 from fastapi.testclient import TestClient
 
 from fake_llm import ScriptedChatModel, answer_message, tool_call_message
+from guard_fakes import FakeCheck
 from molecula.agent.agent import ChatAgent
 from molecula.agent.tool_registry import build_tools
-from molecula.api.dependencies import chat_agent
+from molecula.api.dependencies import chat
+from molecula.guard.chat import GuardedChat
+from molecula.guard.safety import fixed_answer
 from molecula.main import app
 from molecula.schemas.chat import (
     MAX_ANSWER_LENGTH,
@@ -29,11 +32,14 @@ from tool_fakes import (
 QUESTION = {"messages": [{"role": "user", "content": "What does imatinib target?"}]}
 
 
-def agent(script: list[Any]) -> ChatAgent:
+def agent(script: list[Any], check: FakeCheck | None = None) -> GuardedChat:
+    """The scripted agent behind a guard that lets every message through, or sorts it with
+    `check`."""
     tools = build_tools(
         FakeCompoundService(), FakeTargetService(), FakeFilterExtractor(), FakeLabelRetriever()
     )
-    return ChatAgent(ScriptedChatModel(script=script), tools, max_steps=5, timeout_seconds=10)
+    chat_agent = ChatAgent(ScriptedChatModel(script=script), tools, max_steps=5, timeout_seconds=10)
+    return GuardedChat(check or FakeCheck(), chat_agent, timeout_seconds=5)
 
 
 @pytest.fixture
@@ -42,8 +48,8 @@ def client() -> Iterator[TestClient]:
     app.dependency_overrides.clear()
 
 
-def use(chat: ChatAgent) -> None:
-    app.dependency_overrides[chat_agent] = lambda: chat
+def use(guarded: GuardedChat) -> None:
+    app.dependency_overrides[chat] = lambda: guarded
 
 
 def test_chat_streams_the_agents_events_as_server_sent_events(client: TestClient) -> None:
@@ -62,11 +68,12 @@ def test_chat_streams_the_agents_events_as_server_sent_events(client: TestClient
     assert response.headers["content-type"].startswith("text/event-stream")
     events = server_sent_events(response.text)
     names = [name for name, _ in events]
-    assert names[:3] == ["status", "tool_call", "tool_result"]
+    assert names[:4] == ["status", "status", "tool_call", "tool_result"]
     assert names[-2:] == ["sources", "done"]
     assert all(data["type"] == name for name, data in events)
     assert "".join(data["text"] for name, data in events if name == "token") == "It blocks ABL1."
-    assert events[1][1]["args"] == {"drug": "imatinib"}
+    assert events[2][1]["args"] == {"drug": "imatinib"}
+    assert events[-1][1]["category"] == "ok"
 
 
 def test_a_provider_error_arrives_as_an_error_event(client: TestClient) -> None:
@@ -76,7 +83,7 @@ def test_a_provider_error_arrives_as_an_error_event(client: TestClient) -> None:
     response = client.post("/chat", json=QUESTION)
 
     assert response.status_code == 200
-    [(name, data)] = server_sent_events(response.text)
+    [_, (name, data)] = server_sent_events(response.text)
     assert name == "error"
     assert "rate limit" in data["message"]
 
@@ -88,7 +95,7 @@ class BrokenAgent:
 
 
 def test_an_unexpected_failure_ends_the_stream_with_an_error_event(client: TestClient) -> None:
-    app.dependency_overrides[chat_agent] = BrokenAgent
+    app.dependency_overrides[chat] = BrokenAgent
 
     response = client.post("/chat", json=QUESTION)
 
@@ -171,7 +178,7 @@ def test_the_longest_allowed_conversation_is_answered(client: TestClient) -> Non
 
 
 def test_chat_without_an_agent_answers_503(client: TestClient) -> None:
-    app.state.chat_agent = None
+    app.state.chat = None
 
     response = client.post("/chat", json=QUESTION)
 
@@ -190,3 +197,14 @@ def test_an_earlier_answer_may_be_longer_than_a_question(client: TestClient) -> 
     response = client.post("/chat", json={"messages": messages})
 
     assert server_sent_events(response.text)[-1][0] == "done"
+
+
+def test_a_lethal_dose_question_gets_the_crisis_response_and_no_answer(client: TestClient) -> None:
+    use(agent([], FakeCheck("lethal_dose")))
+
+    response = client.post("/chat", json=QUESTION)
+
+    events = server_sent_events(response.text)
+    assert [name for name, _ in events] == ["status", "token", "sources", "done"]
+    assert events[1][1]["text"] == fixed_answer("lethal_dose")
+    assert events[-1][1]["category"] == "lethal_dose"

@@ -1,0 +1,1 @@
+Molecula only answers questions about medicines: how a drug works, what it is used for, its side effects, warnings and interactions, its targets and its chemical structure. Ask about a medicine, for example: "How does metformin lower blood sugar?"

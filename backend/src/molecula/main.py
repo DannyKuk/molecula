@@ -14,6 +14,8 @@ from molecula.agent.llm import LLMConfigError, get_chat_model
 from molecula.agent.tool_registry import build_tools
 from molecula.api import chat, drugs, health
 from molecula.config import Settings, get_settings
+from molecula.guard.chat import GuardedChat
+from molecula.guard.safety import ChatModelInputCheck
 from molecula.guard.validation import readable_validation_error
 from molecula.rag.embeddings import embedding_model_id, get_embeddings
 from molecula.rag.filters import FilterExtractor
@@ -87,6 +89,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.label_retriever = None
     app.state.filter_extractor = None
     app.state.chat_agent = None
+    app.state.chat = None
     index = open_label_index(settings)
     chat_model = open_chat_model(settings) if index is not None else None
     if index is not None and chat_model is not None:
@@ -111,6 +114,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             tools,
             max_steps=settings.chat_max_steps,
             timeout_seconds=settings.chat_timeout_seconds,
+            disclaimer=app.state.label_service.disclaimer(),
+        )
+        app.state.chat = GuardedChat(
+            ChatModelInputCheck(chat_model),
+            app.state.chat_agent,
+            timeout_seconds=settings.llm_timeout_seconds,
         )
     yield
     conn.close()

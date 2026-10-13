@@ -92,6 +92,7 @@ def test_labels_come_with_the_stored_disclaimer(service: LabelService, store: La
 
     assert drug is not None
     assert drug.disclaimer == DISCLAIMER
+    assert service.disclaimer() == DISCLAIMER
 
 
 def test_disclaimer_is_none_before_the_labels_step_stored_one(service: LabelService) -> None:

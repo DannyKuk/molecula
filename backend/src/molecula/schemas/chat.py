@@ -11,6 +11,7 @@ from pydantic import (
 )
 
 from molecula.guard.validation import has_control_characters
+from molecula.schemas.guard import InputCategory
 from molecula.schemas.retrieval import LabelFilter, RetrievedChunk, Widening
 
 # Earlier turns travel as question and answer text only, so ten messages stay around 15k
@@ -75,6 +76,13 @@ class Usage(BaseModel):
     output_tokens: int = 0
     total_tokens: int = 0
 
+    def __add__(self, other: Usage) -> Usage:
+        return Usage(
+            input_tokens=self.input_tokens + other.input_tokens,
+            output_tokens=self.output_tokens + other.output_tokens,
+            total_tokens=self.total_tokens + other.total_tokens,
+        )
+
 
 class Source(BaseModel):
     """Where a fact the tools returned comes from: a label passage on DailyMed (`kind`
@@ -137,11 +145,13 @@ class TokenEvent(BaseModel):
 class SourcesEvent(BaseModel):
     """Where the answer's facts come from. A citation is `[n]` or, from some models, `【n】`.
     `unknown_refs` are numbers the answer cites that no source has: show them as plain text,
-    not as a link."""
+    not as a link. `disclaimer` is openFDA's, set whenever a source is a label passage: show
+    it with the answer."""
 
     type: Literal["sources"] = "sources"
     sources: list[Source]
     unknown_refs: list[int] = []
+    disclaimer: str | None = None
 
 
 class RetrievalTraceEvent(BaseModel):
@@ -164,11 +174,13 @@ class RetrievalTraceEvent(BaseModel):
 
 class DoneEvent(BaseModel):
     """The answer is complete. `step_limit_reached` means the agent had to answer without
-    further tool calls."""
+    further tool calls. `category` is how the guard sorted the question; anything but `ok` and
+    `overdose_emergency` got a fixed answer. It is None from an agent without a guard."""
 
     type: Literal["done"] = "done"
     usage: Usage
     step_limit_reached: bool
+    category: InputCategory | None = None
 
 
 class ErrorEvent(BaseModel):
