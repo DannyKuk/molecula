@@ -34,7 +34,7 @@ describe("HelpGuide", () => {
     expect(text).toContain("How much of a medicine you personally should take");
     expect(text).toContain("Doses meant to harm someone");
     expect(text).toContain("How to make a drug");
-    expect(text).toContain("call your local emergency number or poison control");
+    expect(text).toContain("call your local emergency number (911 in the US, 112 in the EU)");
     for (const source of ["FDA drug labels", "PubChem", "ChEMBL", "Protein Data Bank"]) {
       expect(text).toContain(source);
     }

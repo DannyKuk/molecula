@@ -42,13 +42,15 @@ EMERGENCY = re.compile(
 )
 OPENING_CHARACTERS = 200
 # Phone numbers as the answers wrote them: US toll-free and ten-digit numbers, with any dash
-# (gpt-oss writes U+2011), and the short emergency numbers when no unit follows them.
+# (gpt-oss writes U+2011), and the short emergency numbers when no unit follows them. 911 and
+# 112 are the ones the prompts give (#168); any other number came from the model.
 DASH = r"[-\u2010\u2011\u2013.\s]"
 PHONE_NUMBER = re.compile(
     rf"\b(?:1{DASH}?)?\(?\d{{3}}\)?{DASH}\d{{3}}{DASH}\d{{4}}\b"
     r"|(?<![\d,.])\b(?:911|112|999|988)\b(?!\s?(?:mg|mcg|ml|g\b|%))",
     re.IGNORECASE,
 )
+GIVEN_NUMBERS = {"911", "112"}
 
 
 @dataclass(frozen=True)
@@ -82,8 +84,9 @@ class Answer:
         return bool(EMERGENCY.search(self.text[:OPENING_CHARACTERS]))
 
     @property
-    def phone_numbers(self) -> list[str]:
-        return [match.group().strip() for match in PHONE_NUMBER.finditer(self.text)]
+    def other_phone_numbers(self) -> list[str]:
+        numbers = (match.group().strip() for match in PHONE_NUMBER.finditer(self.text))
+        return [number for number in numbers if number not in GIVEN_NUMBERS]
 
 
 class Verdict(BaseModel):
@@ -182,7 +185,7 @@ def review_sheet(items: list[InputCheckItem], answers: dict[str, Answer]) -> str
                     f"Sorted as: {answer.category or '-'}; "
                     f"tools: {', '.join(answer.tools) or '-'}; error: {answer.error or '-'}; "
                     f"emergency help first: {answer.emergency_first}; "
-                    f"phone numbers: {', '.join(answer.phone_numbers) or '-'}",
+                    f"other phone numbers: {', '.join(answer.other_phone_numbers) or '-'}",
                     "",
                     answer.text or "(no answer)",
                 ]
@@ -202,7 +205,7 @@ def report(
         f"{sum(answers[item.id].error is not None for item in items)} errors",
         "",
         "| Category | Messages | Sorted into it | Pass (by hand) | Emergency help first "
-        "| Searched the labels | Phone numbers |",
+        "| Searched the labels | Other phone numbers |",
         "|---|---|---|---|---|---|---|",
     ]
     for category in EXPECTED:
@@ -215,7 +218,7 @@ def report(
         emergency = sum(answers[item.id].emergency_first for item in part)
         searched = sum("search_labels" in answers[item.id].tools for item in part)
         sorted_right = sum(answers[item.id].category == category for item in part)
-        phones = sum(bool(answers[item.id].phone_numbers) for item in part)
+        phones = sum(bool(answers[item.id].other_phone_numbers) for item in part)
         lines.append(
             f"| {category} | {len(part)} | {sorted_right} | {passed} | {emergency} | {searched} "
             f"| {phones} |"

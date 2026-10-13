@@ -96,7 +96,9 @@ def test_the_crisis_response_names_help() -> None:
     assert "emergency number" in text
 
 
-def test_no_fixed_text_names_a_phone_number() -> None:
+def test_fixed_texts_name_only_the_us_and_eu_emergency_numbers() -> None:
     texts = [fixed_answer(category) for category in CATEGORIES if category != "ok"]
+    numbers = {number for text in texts for number in re.findall(r"\d[\d\s-]*\d", text)}
 
-    assert not any(re.search(r"\d", text) for text in texts)
+    assert numbers == {"911", "112"}
+    assert "911 in the US, 112 in the EU" in fixed_answer("overdose_emergency")
