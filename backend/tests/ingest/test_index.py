@@ -57,6 +57,19 @@ def test_build_indexes_every_chunk_with_the_model_name(tmp_path: Path) -> None:
     assert index.model() == "fake"
 
 
+def test_overdosage_is_indexed_and_flagged_sensitive(tmp_path: Path) -> None:
+    overdosage = LabelSection(
+        "overdosage", "overdosage", "10 OVERDOSAGE Nausea, vomiting and edema were seen.", True
+    )
+    gleevec = replace(GLEEVEC, sections=(*GLEEVEC.sections, overdosage))
+    index = LabelIndex(tmp_path / "chroma")
+
+    build_index([(5291, gleevec)], words, DeterministicFakeEmbedding(size=8), index, "fake")
+
+    indexed = [chunk for chunk in index.chunks() if chunk.section == "overdosage"]
+    assert [(chunk.section_group, chunk.sensitive) for chunk in indexed] == [("overdosage", True)]
+
+
 def test_rebuilding_gives_the_same_chunks(tmp_path: Path) -> None:
     index = LabelIndex(tmp_path / "chroma")
     embeddings = DeterministicFakeEmbedding(size=8)

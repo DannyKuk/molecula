@@ -1,8 +1,16 @@
 from datetime import date
 from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
+from molecula.guard.validation import has_control_characters
 from molecula.schemas.retrieval import LabelFilter, RetrievedChunk, Widening
 
 # Earlier turns travel as question and answer text only, so ten messages stay around 15k
@@ -15,17 +23,23 @@ MAX_ANSWER_LENGTH = 8000
 
 
 class ChatMessage(BaseModel):
+    """One message. The rules raise sentences the chat shows as they are (`guard/validation.py`)."""
+
     model_config = ConfigDict(frozen=True)
 
     role: Literal["user", "assistant"]
-    content: Annotated[
-        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_ANSWER_LENGTH)
-    ]
+    content: Annotated[str, StringConstraints(strip_whitespace=True)]
 
     @model_validator(mode="after")
-    def questions_are_shorter(self) -> Self:
+    def content_is_readable_text(self) -> Self:
+        if not self.content:
+            raise ValueError("A message can't be empty.")
+        if has_control_characters(self.content):
+            raise ValueError("A message can't contain control characters.")
         if self.role == "user" and len(self.content) > MAX_MESSAGE_LENGTH:
-            raise ValueError(f"a user message must have at most {MAX_MESSAGE_LENGTH} characters")
+            raise ValueError(f"A message can have at most {MAX_MESSAGE_LENGTH} characters.")
+        if len(self.content) > MAX_ANSWER_LENGTH:
+            raise ValueError(f"An earlier answer can have at most {MAX_ANSWER_LENGTH} characters.")
         return self
 
 
@@ -33,12 +47,24 @@ class ChatRequest(BaseModel):
     """The conversation so far, oldest first, ending with the user's new message. A longer
     conversation is sent as its latest messages."""
 
-    messages: Annotated[list[ChatMessage], Field(min_length=1, max_length=MAX_MESSAGES)]
+    messages: list[ChatMessage]
+
+    @field_validator("messages", mode="before")
+    @classmethod
+    def has_one_to_ten_messages(cls, messages: Any) -> Any:
+        """Counted before the messages are read, so a huge conversation costs nothing."""
+        if isinstance(messages, list) and not messages:
+            raise ValueError("A conversation needs at least one message.")
+        if isinstance(messages, list) and len(messages) > MAX_MESSAGES:
+            raise ValueError(
+                f"A conversation can have at most {MAX_MESSAGES} messages: send the latest ones."
+            )
+        return messages
 
     @model_validator(mode="after")
     def ends_with_the_user(self) -> Self:
         if self.messages[-1].role != "user":
-            raise ValueError("the last message must be the user's")
+            raise ValueError("The last message must be the user's.")
         return self
 
 
