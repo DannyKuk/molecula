@@ -22,11 +22,15 @@ HTTP 204 with an empty body, so it has no fixture file.
 """
 
 import json
+from contextlib import closing
 from pathlib import Path
 
 import httpx2
 
-from molecula.sources.rcsb import ChemComp
+from molecula.sources.http import SourceClient
+from molecula.sources.rcsb import RcsbClient
+from molecula.store.db import connect
+from molecula.store.http_cache import HttpCache
 
 FIXTURES = Path(__file__).parent / "fixtures" / "rcsb"
 IMATINIB_INCHIKEY = "KTUFNOKKBVMGRW-UHFFFAOYSA-N"
@@ -109,9 +113,15 @@ def recorded_structure(pdb_id: str) -> str:
 
 def recorded_smiles(code: str) -> str:
     """The SMILES `RcsbClient.ligand_smiles` reads from the recorded chem-comp."""
-    chem_comp = ChemComp.model_validate_json((FIXTURES / f"chemcomp_{code}.json").read_bytes())
-    assert chem_comp.descriptor is not None
-    return chem_comp.descriptor.smiles_stereo or chem_comp.descriptor.smiles or ""
+    with (
+        closing(connect(Path(":memory:"))) as conn,
+        closing(
+            SourceClient(HttpCache(conn), offline=False, transport=httpx2.MockTransport(Replay()))
+        ) as http,
+    ):
+        smiles = RcsbClient(http).ligand_smiles(code)
+    assert smiles is not None
+    return smiles
 
 
 def describe(request: httpx2.Request) -> str:

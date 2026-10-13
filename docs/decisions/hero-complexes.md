@@ -59,7 +59,7 @@ The top-ranked candidate was often not the right one:
 
 - The papers were not read. Pocket residues were compared with residues known from the literature; numbering offsets (mouse COX-2, erlotinib's mature numbering, the VKOR-GFP fusion) were inferred from residue patterns.
 - Contacts come from the deposited model, not the biological assembly.
-- Metal ions and cofactors are dropped with the waters, also where they are part of the binding: the zinc in carbonic anhydrase (3HS4) and ACE (1O86), the magnesium ions of the integrase and gyrase complexes, the heme iron fluconazole binds (4WMZ) and the NADPH next to methotrexate (1U72).
+- Metal ions and cofactors are dropped with the waters, also where they are part of the binding: the zinc in carbonic anhydrase (3HS4) and ACE (1O86), the magnesium ions of the integrase and gyrase complexes, the heme iron fluconazole binds (4WMZ) and the NADPH next to methotrexate (1U72) (#144).
 - Spironolactone's S810L is the mutation that makes spironolactone an agonist (from the literature, not measured here).
 
 ## Reproduce

@@ -6,6 +6,7 @@ hero set shows imatinib in 2HYY; 1IEP is the entry the contacts were verified on
 review (#7) run on cropped hero entries (`rcsb_replay.CROPPED`).
 """
 
+import io
 import sqlite3
 from collections import Counter
 from collections.abc import Callable
@@ -13,6 +14,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import biotite.structure.io.pdbx as pdbx
 import httpx2
 import pytest
 from rdkit import Chem
@@ -228,8 +230,11 @@ def test_nucleotides_are_traced_at_their_p_atom_without_secondary_structure(azit
 
 
 def test_trace_leaves_out_chains_outside_the_pocket(azithromycin) -> None:
+    cif = pdbx.CIFFile.read(io.StringIO(recorded_structure("8E42")))
+    recorded_chains = set(pdbx.get_structure(cif, model=1, use_author_fields=True).chain_id)
+
     # The cropped entry also holds ribosomal proteins of chains M and N, near but not touching.
-    assert "M" in recorded_structure("8E42")
+    assert {"I", "M", "N", "P"} <= recorded_chains
     assert {residue.chain for residue in azithromycin.trace} == {"I", "P"}
 
 
@@ -397,3 +402,14 @@ def test_incomplete_run_removes_nothing(ingest, files: ComplexFiles) -> None:
 
     assert report.pruned == []
     assert files.read(2244) == "{}"
+
+
+def test_chem_comp_without_a_smiles_is_reported(ingest, files: ComplexFiles) -> None:
+    without_descriptor = httpx2.Response(200, json={"chem_comp": {"id": "ZMR"}})
+
+    report = ingest(
+        [ZANAMIVIR_HERO], Replay({"GET /rest/v1/core/chemcomp/ZMR": without_descriptor})
+    )
+
+    assert report.failures == {"Zanamivir": "the chem-comp record of ZMR has no SMILES"}
+    assert files.read(60855) is None
