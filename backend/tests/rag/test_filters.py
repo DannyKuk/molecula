@@ -9,6 +9,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from fake_llm import ScriptedChatModel, answer_message, tool_call_message
 from molecula import prompts
 from molecula.rag.filters import SECTION_GROUPS, FilterExtractor
+from molecula.schemas.compounds import Resolution
 from molecula.schemas.retrieval import DrugFilter, LabelQuery
 from molecula.services.compounds import CompoundService
 from molecula.services.labels import LabelService
@@ -207,7 +208,7 @@ def test_a_drug_outside_the_store_is_listed_as_unsupported(services: Services) -
 
     found = filters.check(LabelQuery(substances=["Celexa", "Gleevec", " "]))
 
-    assert found.unsupported == ["Celexa"]
+    assert [resolution.query for resolution in found.unsupported] == ["Celexa"]
     assert [drug.cid for drug in found.drugs] == [IMATINIB]
 
 
@@ -279,13 +280,36 @@ def test_an_unknown_product_name_with_a_supported_drug_in_it_searches_that_drug(
     assert found.unsupported == []
 
 
+def test_each_name_is_resolved_once_and_an_unsupported_one_keeps_its_suggestions(
+    services: Services, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    compounds, _ = services
+    resolve = compounds.resolve
+    resolved: list[str] = []
+
+    def counting_resolve(name: str) -> Resolution:
+        resolved.append(name)
+        return resolve(name)
+
+    monkeypatch.setattr(compounds, "resolve", counting_resolve)
+    filters, _ = extractor(services)
+    names = ["Gleevek", "Seacall diclofenac gel", "Advil"]
+
+    found = filters.check(LabelQuery(substances=names))
+
+    assert resolved == names
+    [gleevek] = found.unsupported
+    assert (gleevek.query, gleevek.suggestions[0].alias) == ("Gleevek", "Gleevec")
+    assert [drug.cid for drug in found.drugs] == [DICLOFENAC, IBUPROFEN]
+
+
 def test_an_unknown_name_with_two_drugs_in_it_stays_unsupported(services: Services) -> None:
     filters, _ = extractor(services)
 
     found = filters.check(LabelQuery(substances=["ibuprofen warfarin kit"]))
 
     assert found.drugs == []
-    assert found.unsupported == ["ibuprofen warfarin kit"]
+    assert [resolution.query for resolution in found.unsupported] == ["ibuprofen warfarin kit"]
 
 
 def test_a_brand_from_a_label_finds_its_drug(services: Services) -> None:

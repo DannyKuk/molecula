@@ -20,8 +20,6 @@ from molecula.schemas.retrieval import (
 from molecula.schemas.targets import DrugTargets, Target
 
 FLUTICASONE_CID = 5311101
-# A compound whose targets the fake target service has lost, to test a resolve/targets mismatch.
-ORPHAN_CID = 999
 
 
 def compound(cid: int, name: str) -> Compound:
@@ -48,7 +46,6 @@ def compound(cid: int, name: str) -> Compound:
 IMATINIB = compound(5291, "imatinib")
 IBUPROFEN = compound(3672, "ibuprofen")
 FLUTICASONE = compound(FLUTICASONE_CID, "fluticasone")
-ORPHAN = compound(ORPHAN_CID, "orphan")
 ABL1 = Target(
     target_chembl_id="CHEMBL1862",
     name="Tyrosine-protein kinase ABL1",
@@ -75,7 +72,6 @@ class FakeCompoundService:
             "advil": (IBUPROFEN, "Advil", "alias"),
             "fluticasone": (FLUTICASONE, "fluticasone", "name"),
             "xhance": (FLUTICASONE, "Xhance", "brand"),
-            "orphan": (ORPHAN, "orphan", "name"),
         }
         self.suggestions = {"gleevek": [GLEEVEC_SUGGESTION]}
         self.resolved: list[str] = []
@@ -107,6 +103,10 @@ class FakeTargetService:
     def get_targets(self, cid: int) -> DrugTargets | None:
         self.asked.append(cid)
         return self.drugs.get(cid)
+
+    def targets_of(self, compound: Compound) -> DrugTargets:
+        self.asked.append(compound.cid)
+        return self.drugs.get(compound.cid, DrugTargets(cid=compound.cid, targets=[]))
 
 
 IMATINIB_SIDE_EFFECTS = RetrievedChunk(

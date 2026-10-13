@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from molecula.schemas.compounds import DrugMention, Suggestion, SupportedDrug
+from molecula.schemas.compounds import DrugMention, Match, Suggestion, SupportedDrug
 from molecula.services import compounds
 from molecula.services.compounds import CompoundService, name_candidates
 from molecula.store.compounds import CompoundRecord, CompoundStore, ConformerSource, Synonym
@@ -118,6 +118,7 @@ def test_alias_resolves_in_any_case(service: CompoundService, name: str) -> None
     assert resolution.compound is not None
     assert resolution.compound.name == "ibuprofen"
     assert (resolution.matched_alias, resolution.match_kind) == ("Ibuflam", "alias")
+    assert resolution.match == Match(compound=resolution.compound, alias="Ibuflam", kind="alias")
     assert resolution.query == name.strip()
     assert resolution.suggestions == []
 
@@ -157,6 +158,7 @@ def test_name_outside_the_store_is_not_supported(service: CompoundService, name:
     assert resolution.status == "not_supported"
     assert resolution.compound is None
     assert resolution.matched_alias is None
+    assert resolution.match is None
     assert resolution.suggestions == []
 
 

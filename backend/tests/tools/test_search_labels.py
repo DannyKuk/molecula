@@ -4,6 +4,7 @@ from typing import Any
 import pytest
 from langchain_core.tools import StructuredTool
 
+from molecula.schemas.compounds import Resolution
 from molecula.schemas.retrieval import LabelFilter, LabelQuery
 from molecula.schemas.tools import (
     DrugNotSupported,
@@ -18,7 +19,6 @@ from tool_fakes import (
     IMATINIB,
     IMATINIB_LOW_SCORE,
     IMATINIB_SIDE_EFFECTS,
-    FakeCompoundService,
     FakeFilterExtractor,
     FakeLabelRetriever,
     call_tool,
@@ -37,10 +37,9 @@ GLEEVEC_FILTER = LabelFilter(
 def tool(
     extractor: FakeFilterExtractor,
     retriever: FakeLabelRetriever,
-    compounds: FakeCompoundService,
 ) -> StructuredTool:
     extractor.filters[SIDE_EFFECTS] = GLEEVEC_FILTER
-    return search_labels_tool(extractor, retriever, compounds)
+    return search_labels_tool(extractor, retriever)
 
 
 def test_a_question_gets_label_passages_with_their_citations(tool: StructuredTool) -> None:
@@ -86,11 +85,14 @@ def test_the_agents_drug_and_section_reach_the_filter(
 
 
 def test_a_question_naming_only_unsupported_drugs_is_not_supported(
-    tool: StructuredTool, extractor: FakeFilterExtractor, retriever: FakeLabelRetriever
+    tool: StructuredTool, extractor: FakeFilterExtractor
 ) -> None:
     question = "What are the side effects of Gleevek?"
     extractor.filters[question] = LabelFilter(
-        extracted=LabelQuery(substances=["Gleevek"]), unsupported=["Gleevek"]
+        extracted=LabelQuery(substances=["Gleevek"]),
+        unsupported=[
+            Resolution(query="Gleevek", status="not_supported", suggestions=[GLEEVEC_SUGGESTION])
+        ],
     )
 
     message = call_tool(tool, {"question": question})
@@ -109,7 +111,9 @@ def test_an_unsupported_drug_beside_a_supported_one_is_listed_with_the_passages(
     tool: StructuredTool, extractor: FakeFilterExtractor
 ) -> None:
     question = "Can I take Gleevec with Celexa?"
-    extractor.filters[question] = GLEEVEC_FILTER.model_copy(update={"unsupported": ["Celexa"]})
+    extractor.filters[question] = GLEEVEC_FILTER.model_copy(
+        update={"unsupported": [Resolution(query="Celexa", status="not_supported")]}
+    )
 
     message = call_tool(tool, {"question": question})
 

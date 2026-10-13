@@ -35,7 +35,7 @@ docs/              architecture, data plan, decisions/, evals/, spikes/
 docker-compose.yaml
 ```
 
-Dependencies point one way: `api`, `tools`, `mcp` → `services` → `sources`, `store`. Services never import from `api`, `tools` or `agent`.
+Dependencies point one way: `api` → `agent` → `tools` → `rag` → `services` → `sources`, `store`; `api` and `mcp` also call `services` directly, and `rag` also reads `store`. Services never import from `api`, `tools`, `agent` or `rag`.
 
 ## Prompts: one structure, no exceptions
 

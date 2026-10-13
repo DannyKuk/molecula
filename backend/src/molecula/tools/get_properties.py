@@ -8,9 +8,10 @@ from molecula.tools.base import build_tool, not_supported
 def drug_properties(compounds: CompoundService, drug: str) -> DrugProperties | DrugNotSupported:
     """The properties of the supported drug a name refers to, or why there are none."""
     resolution = compounds.resolve(drug)
-    if resolution.compound is None:
+    match = resolution.match
+    if match is None:
         return not_supported(resolution)
-    return DrugProperties(query=resolution.query, compound=resolution.compound)
+    return DrugProperties(query=resolution.query, compound=match.compound)
 
 
 def get_properties_tool(compounds: CompoundService) -> StructuredTool:

@@ -81,6 +81,16 @@ class DrugMention(BaseModel):
     name: str
 
 
+class Match(BaseModel):
+    """The supported drug a name refers to, and the stored name or alias it matched."""
+
+    model_config = ConfigDict(frozen=True)
+
+    compound: Compound
+    alias: str
+    kind: MatchKind
+
+
 class Resolution(BaseModel):
     """Which supported drug a name refers to. `not_supported` means it isn't in the local data.
 
@@ -96,6 +106,13 @@ class Resolution(BaseModel):
     matched_alias: str | None = None
     match_kind: MatchKind | None = None
     suggestions: list[Suggestion] = []
+
+    @property
+    def match(self) -> Match | None:
+        """The drug a found name refers to; None when the name isn't supported."""
+        if self.compound is None or self.matched_alias is None or self.match_kind is None:
+            return None
+        return Match(compound=self.compound, alias=self.matched_alias, kind=self.match_kind)
 
 
 class Structure(BaseModel):

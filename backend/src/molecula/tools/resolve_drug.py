@@ -20,20 +20,17 @@ def resolve_drug_tool(compounds: CompoundService) -> StructuredTool:
         the input; offer them to the user to pick, never answer as if one of them was meant.
         """
         resolution = compounds.resolve(name)
-        if (
-            resolution.compound is None
-            or resolution.matched_alias is None
-            or resolution.match_kind is None
-        ):
+        match = resolution.match
+        if match is None:
             return not_supported(resolution)
         return ResolvedDrug(
             query=resolution.query,
-            cid=resolution.compound.cid,
-            name=resolution.compound.name,
-            matched_alias=resolution.matched_alias,
-            match_kind=resolution.match_kind,
-            source=resolution.compound.source,
-            source_url=resolution.compound.source_url,
+            cid=match.compound.cid,
+            name=match.compound.name,
+            matched_alias=match.alias,
+            match_kind=match.kind,
+            source=match.compound.source,
+            source_url=match.compound.source_url,
         )
 
     return build_tool(resolve_drug, ResolveDrugArgs)
