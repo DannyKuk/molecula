@@ -70,8 +70,8 @@ export function HelpGuide({ onAsk }: { onAsk: (question: string) => void }) {
           ))}
         </ul>
         <p className="font-medium">
-          If someone may have taken too much of a medicine, call your local emergency number
-          (911 in the US, 112 in the EU) or poison control now.
+          If someone may have taken too much of a medicine, call your local emergency number (911 in
+          the US, 112 in the EU) or poison control now.
         </p>
       </section>
       <section className="flex flex-col gap-2 text-zinc-700 dark:text-zinc-300">
