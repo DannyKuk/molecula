@@ -2,6 +2,16 @@
 
 from datetime import date
 
+from molecula.schemas.complexes import (
+    Atom,
+    Bond,
+    Complex,
+    Contact,
+    Ligand,
+    PocketResidue,
+    Residue,
+    TraceResidue,
+)
 from molecula.schemas.compounds import Compound, Resolution, Suggestion, SupportedDrug
 from molecula.schemas.labels import DrugLabels, Label, LabelSection
 from molecula.schemas.targets import DrugTargets, Target
@@ -114,6 +124,61 @@ IMATINIB_LABELS = DrugLabels(
     disclaimer="Do not rely on openFDA to make decisions regarding medical care. While we make"
     " every effort to ensure that data is accurate, you should assume all results are unvalidated."
     " We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+)
+
+MET318 = Residue(chain="A", number=318, name="MET")
+
+# Imatinib's hero complex cut down to one pocket residue and five ligand atoms; the real one has
+# 263 trace residues, 23 pocket residues and 37 ligand atoms.
+IMATINIB_COMPLEX = Complex(
+    pdb_id="2HYY",
+    ligand=Ligand(
+        code="STI",
+        chain="A",
+        number=600,
+        atoms=[
+            Atom(name="C1", element="C", xyz=(22.827, 11.725, 13.78)),
+            Atom(name="C6", element="C", xyz=(22.036, 12.177, 14.839)),
+            Atom(name="C5", element="C", xyz=(20.668, 11.809, 14.959)),
+            Atom(name="C4", element="C", xyz=(20.14, 11.001, 13.947)),
+            Atom(name="N3", element="N", xyz=(20.892, 10.57, 12.904)),
+        ],
+        bonds=[
+            Bond(atoms=(0, 1), order="aromatic"),
+            Bond(atoms=(1, 2), order="aromatic"),
+            Bond(atoms=(2, 3), order="aromatic"),
+            Bond(atoms=(3, 4), order="aromatic"),
+        ],
+    ),
+    trace=[
+        TraceResidue(chain="A", number=317, name="PHE", sse="sheet", xyz=(18.655, 7.862, 11.634)),
+        TraceResidue(chain="A", number=318, name="MET", sse="sheet", xyz=(20.028, 10.404, 9.18)),
+        TraceResidue(chain="A", number=319, name="THR", sse="coil", xyz=(23.289, 9.376, 7.45)),
+    ],
+    pocket=[
+        PocketResidue(
+            chain="A",
+            number=318,
+            name="MET",
+            atoms=[
+                Atom(name="N", element="N", xyz=(19.652, 9.668, 10.399)),
+                Atom(name="CA", element="C", xyz=(20.028, 10.404, 9.18)),
+                Atom(name="C", element="C", xyz=(21.52, 10.344, 8.9)),
+                Atom(name="O", element="O", xyz=(22.317, 10.826, 9.705)),
+                Atom(name="CB", element="C", xyz=(19.45, 11.818, 9.212)),
+                Atom(name="CG", element="C", xyz=(17.912, 11.763, 9.312)),
+                Atom(name="SD", element="S", xyz=(17.241, 12.123, 7.721)),
+                Atom(name="CE", element="C", xyz=(16.827, 10.502, 7.029)),
+            ],
+        )
+    ],
+    contacts=[
+        Contact(kind="hbond", residue=MET318, residue_atom="N", ligand_atom=4, distance=2.94),
+        Contact(kind="contact", residue=MET318, residue_atom="N", ligand_atom=4, distance=2.94),
+    ],
+    target="ABL1 (BCR-ABL)",
+    organism="Homo sapiens",
+    showcase=True,
 )
 
 SDF = """5291

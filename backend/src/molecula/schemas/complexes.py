@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, computed_field
 
 type Coordinates = tuple[float, float, float]
 type SecondaryStructure = Literal["helix", "sheet", "coil"]
@@ -103,6 +103,7 @@ class Complex(BaseModel):
     caption: str | None = None
     showcase: bool = False
 
+    @computed_field
     @property
     def source_url(self) -> str:
         return RCSB_ENTRY_URL.format(pdb_id=self.pdb_id)

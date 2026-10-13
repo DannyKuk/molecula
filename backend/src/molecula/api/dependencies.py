@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, Request
 
 from molecula.guard.chat import GuardedChat
+from molecula.services.complexes import ComplexService
 from molecula.services.compounds import CompoundService
 from molecula.services.labels import LabelService
 from molecula.services.targets import TargetService
@@ -30,6 +31,14 @@ def label_service(request: Request) -> LabelService:
 
 
 LabelServiceDep = Annotated[LabelService, Depends(label_service)]
+
+
+def complex_service(request: Request) -> ComplexService:
+    """The app's one complex service, built at startup. Tests replace it with an override."""
+    return request.app.state.complex_service
+
+
+ComplexServiceDep = Annotated[ComplexService, Depends(complex_service)]
 
 
 def chat(request: Request) -> GuardedChat:

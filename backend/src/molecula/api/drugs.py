@@ -3,7 +3,13 @@ from typing import Annotated, Any
 from fastapi import APIRouter, HTTPException, Path, Query, Response
 
 from molecula.api import examples
-from molecula.api.dependencies import CompoundServiceDep, LabelServiceDep, TargetServiceDep
+from molecula.api.dependencies import (
+    ComplexServiceDep,
+    CompoundServiceDep,
+    LabelServiceDep,
+    TargetServiceDep,
+)
+from molecula.schemas.complexes import Complex
 from molecula.schemas.compounds import Cid, Compound, DrugName, Resolution, SupportedDrug
 from molecula.schemas.errors import ErrorDetail
 from molecula.schemas.labels import DrugLabels
@@ -110,6 +116,41 @@ def get_drug_structure(cid: CidParam, service: CompoundServiceDep) -> SdfRespons
     if structure is None:
         raise HTTPException(status_code=404, detail=f"{compound.name} has no 3D structure.")
     return SdfResponse(content=structure.sdf)
+
+
+@router.get(
+    "/{cid}/complex",
+    responses={
+        200: json_example(examples.IMATINIB_COMPLEX.model_dump(mode="json")),
+        404: {
+            "model": ErrorDetail,
+            "description": "The drug isn't supported or has no reviewed complex.",
+            **json_example(
+                {
+                    "detail": "acetaminophen has no reviewed complex with its target; "
+                    "the 3D view shows the molecule alone."
+                }
+            ),
+        },
+    },
+)
+def get_drug_complex(
+    cid: CidParam, compounds: CompoundServiceDep, complexes: ComplexServiceDep
+) -> Complex:
+    """The drug bound to its target, ready for the 3D view: the protein's backbone trace, the
+    pocket residues with their atoms, the ligand with its bonds, and the hydrogen bonds and
+    contacts between them, in Å from the PDB entry. Only the reviewed hero drugs have one."""
+    compound = compounds.get_compound(cid)
+    if compound is None:
+        raise unsupported_cid(cid)
+    complex_ = complexes.get_complex(cid)
+    if complex_ is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"{compound.name} has no reviewed complex with its target; "
+            "the 3D view shows the molecule alone.",
+        )
+    return complex_
 
 
 @router.get(

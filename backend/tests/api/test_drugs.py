@@ -5,8 +5,14 @@ import pytest
 from fastapi.testclient import TestClient
 
 from molecula.api import examples
-from molecula.api.dependencies import compound_service, label_service, target_service
+from molecula.api.dependencies import (
+    complex_service,
+    compound_service,
+    label_service,
+    target_service,
+)
 from molecula.main import app
+from molecula.schemas.complexes import Complex
 from molecula.schemas.compounds import Compound, Resolution, Structure, SupportedDrug
 from molecula.schemas.labels import DrugLabels
 from molecula.schemas.targets import DrugTargets
@@ -73,6 +79,17 @@ class ExampleLabelService:
         return self.drugs.get(cid)
 
 
+class ExampleComplexService:
+    """Knows imatinib's complex only; records the CIDs it was asked."""
+
+    def __init__(self) -> None:
+        self.asked: list[int] = []
+
+    def get_complex(self, cid: int) -> Complex | None:
+        self.asked.append(cid)
+        return examples.IMATINIB_COMPLEX if cid == 5291 else None
+
+
 @pytest.fixture
 def service() -> Iterator[ExampleCompoundService]:
     fake = ExampleCompoundService()
@@ -96,8 +113,18 @@ def labels(service: ExampleCompoundService) -> ExampleLabelService:
 
 
 @pytest.fixture
+def complexes(service: ExampleCompoundService) -> ExampleComplexService:
+    fake = ExampleComplexService()
+    app.dependency_overrides[complex_service] = lambda: fake
+    return fake
+
+
+@pytest.fixture
 def client(
-    service: ExampleCompoundService, targets: ExampleTargetService, labels: ExampleLabelService
+    service: ExampleCompoundService,
+    targets: ExampleTargetService,
+    labels: ExampleLabelService,
+    complexes: ExampleComplexService,
 ) -> TestClient:
     return TestClient(app)
 
@@ -245,6 +272,62 @@ def test_structure_rejects_an_invalid_cid(client: TestClient) -> None:
     assert messages == ["Input should be greater than 0"]
 
 
+def test_complex_returns_the_stored_complex_with_its_rcsb_link(client: TestClient) -> None:
+    response = client.get("/drugs/5291/complex")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body == examples.IMATINIB_COMPLEX.model_dump(mode="json")
+    assert (body["pdb_id"], body["target"], body["ligand"]["code"]) == (
+        "2HYY",
+        "ABL1 (BCR-ABL)",
+        "STI",
+    )
+    assert body["source_url"] == "https://www.rcsb.org/structure/2HYY"
+    hbond = body["contacts"][0]
+    assert (hbond["kind"], hbond["residue"]["number"], hbond["residue_atom"]) == ("hbond", 318, "N")
+
+
+def test_complex_of_a_supported_drug_without_one_is_404_with_the_reason(
+    client: TestClient,
+) -> None:
+    response = client.get("/drugs/56843331/complex")
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": "semaglutide has no reviewed complex with its target; "
+        "the 3D view shows the molecule alone."
+    }
+
+
+def test_complex_of_an_unsupported_cid_is_404(
+    client: TestClient, complexes: ExampleComplexService
+) -> None:
+    response = client.get("/drugs/1/complex")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "CID 1 is not a supported drug."}
+    assert complexes.asked == []
+
+
+@pytest.mark.parametrize(
+    ("cid", "message"),
+    [
+        ("0", "Input should be greater than 0"),
+        ("-5", "Input should be greater than 0"),
+        ("imatinib", "Input should be a valid integer"),
+        ("1" * 30, "Input should be less than or equal to"),
+    ],
+)
+def test_complex_rejects_an_invalid_cid(
+    client: TestClient, complexes: ExampleComplexService, cid: str, message: str
+) -> None:
+    messages = validation_messages(client.get(f"/drugs/{cid}/complex"))
+
+    assert any(message in text for text in messages)
+    assert complexes.asked == []
+
+
 def test_targets_lists_each_target_with_its_mechanism_and_chembl_link(client: TestClient) -> None:
     response = client.get("/drugs/5291/targets")
 
@@ -345,6 +428,7 @@ def test_labels_rejects_an_invalid_cid(
         ("/drugs/resolve", "application/json"),
         ("/drugs/{cid}", "application/json"),
         ("/drugs/{cid}/structure", "chemical/x-mdl-sdfile"),
+        ("/drugs/{cid}/complex", "application/json"),
         ("/drugs/{cid}/targets", "application/json"),
         ("/drugs/{cid}/labels", "application/json"),
     ],
