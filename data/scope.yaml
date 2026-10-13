@@ -16,7 +16,7 @@ drugs:
     aliases: [Lipitor, Sortis]
     hero: true
   - name: ibuprofen
-    aliases: [Advil, Motrin, Nurofen, Ibuflam]
+    aliases: [Advil, Motrin, Nurofen, Ibuflam, Ibu]
     hero: true
   - name: celecoxib
     aliases: [Celebrex]
