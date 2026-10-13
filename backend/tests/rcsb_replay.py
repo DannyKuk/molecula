@@ -7,7 +7,8 @@ searches and entries were recorded on 2026-10-12: RLT is bound only to foamy vir
 influenza and transposase proteins, no HIV-1 integrase; DLU to foamy virus, SIV and HIV-1 integrase,
 the HIV-1 entries named `pol` or only `gag-pol`. The acyclovir (AC2) search and entries were
 recorded on 2026-10-12 for 2KI5, HSV-1 thymidine kinase, whose lineage names the species
-"Herpes simplex virus 1".
+"Herpes simplex virus 1". The 1IEP mmCIF and the STI chem-comp were recorded on 2026-10-13 for the
+complex processing (`tests/ingest/test_complexes.py`).
 
 Search and GraphQL requests are POSTs to one URL, so they are told apart by their JSON body:
 `describe` turns a request into a short readable key. The ibuprofen InChIKey search answered
@@ -59,6 +60,8 @@ RECORDED: dict[str, tuple[int, str | None]] = {
     ),
     "GET /rest/v1/core/chemcomp/IBP": (200, "chemcomp_IBP.json"),
     "GET /rest/v1/core/chemcomp/IZP": (200, "chemcomp_IZP.json"),
+    "GET /rest/v1/core/chemcomp/STI": (200, "chemcomp_STI.json"),
+    "GET /download/1IEP.cif": (200, "1IEP.cif"),
     LIGAND_SEARCH.format("STI"): (200, "search_entries_STI.json"),
     STI_ENTRY_DETAILS: (200, "graphql_entries_STI.json"),
     INCHIKEY_SEARCH.format(ACETAMINOPHEN_INCHIKEY): (200, "search_inchikey_acetaminophen.json"),

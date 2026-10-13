@@ -104,6 +104,46 @@ def test_ligand_inchikey_comes_from_the_chem_comp(rcsb) -> None:
     assert rcsb().ligand_inchikey("IBP") == "HEFNNWSXXWATRW-JTQLQIEISA-N"
 
 
+def test_ligand_smiles_comes_from_the_chem_comp(rcsb) -> None:
+    assert (
+        rcsb().ligand_smiles("STI") == "Cc1ccc(cc1Nc2nccc(n2)c3cccnc3)NC(=O)c4ccc(cc4)CN5CCN(CC5)C"
+    )
+
+
+def test_ligand_smiles_prefers_the_stereo_smiles(rcsb) -> None:
+    descriptor = {"SMILES": "CC(N)C(=O)O", "SMILES_stereo": "C[C@H](N)C(=O)O"}
+    handler = Replay(
+        {
+            "GET /rest/v1/core/chemcomp/IBP": httpx2.Response(
+                200, json={"rcsb_chem_comp_descriptor": descriptor}
+            )
+        }
+    )
+
+    assert rcsb(handler).ligand_smiles("IBP") == "C[C@H](N)C(=O)O"
+
+
+def test_ligand_smiles_is_none_without_descriptors(rcsb) -> None:
+    handler = Replay({"GET /rest/v1/core/chemcomp/IBP": chem_comp(None)})
+
+    assert rcsb(handler).ligand_smiles("IBP") is None
+
+
+def test_structure_is_the_mmcif_from_the_file_server(rcsb) -> None:
+    handler = Replay()
+
+    mmcif = rcsb(handler).structure("1iep")
+
+    assert mmcif.startswith("data_1IEP\n")
+    assert str(handler.requests[0].url) == "https://files.rcsb.org/download/1IEP.cif"
+
+
+def test_structure_is_served_from_the_cache_offline(rcsb) -> None:
+    mmcif = rcsb().structure("1IEP")
+
+    assert rcsb(offline=True).structure("1IEP") == mmcif
+
+
 def test_sti_with_abl1_finds_1iep_through_uniprot_gene_names(rcsb) -> None:
     # 1IEP has no depositor gene name, so a gene-name search on RCSB misses it.
     complexes = rcsb().complexes("STI", ["ABL1"])

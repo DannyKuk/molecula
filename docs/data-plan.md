@@ -169,6 +169,7 @@ Molecule-only (no candidate): paracetamol, cetirizine, omeprazole. Of the 134 co
 - Drop waters, ions and buffer molecules (GOL, EDO, SO4, …).
 - Contacts: pocket residues ≤ 4.0 Å, H-bonds between N/O atoms ≤ 3.3 Å. This reproduces the published imatinib–ABL contacts (Ile360, Thr315, Met318, Asp381, Glu286, His361).
 - Output: one compact JSON per complex (CA trace with secondary structure, pocket atoms, ligand atoms and bonds, contacts), so the frontend never parses mmCIF.
+- Built for one complex in `ingest/complexes.py` (`build_complex`, #126), schema in `schemas/complexes.py`. Measured on the 1IEP mmCIF recorded 2026-10-13: chain A's copy (A/201) gives Ile360 O 2.67, Thr315 OG1 2.88, Met318 N 2.90, Asp381 N 2.90, Glu286 OE2 3.00 and His361 O 3.19 Å; chain B's copy (B/202) gives Ile360 2.74, Asp381 2.89, Thr315 2.93, Met318 2.94 and Glu286 3.03 Å, no His361. The pocket is 21 residues of chain A, the trace 274 residues, imatinib's bonds 24 aromatic, 16 single and the amide C=O double, and the JSON 44 KB.
 
 ### 5.5 Labels → knowledge base (`ingest labels`)
 
