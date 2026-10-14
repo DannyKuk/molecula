@@ -36,6 +36,10 @@ Each change to the citation prompt, the tool description or the citation parsing
 | Baseline: the prompt asks for a Markdown DailyMed link | `main` before #129 | 0.38 |
 | Passages carry `ref`, the prompt and the tool description ask for `[n]` | #129 | 0.74 |
 | `cited_refs` and the chat also read `【n】` (cached answers re-scored) | #129 | **0.96** |
+| main's prompt on main a4823ae (the guard's prompts, the emergency numbers and every tool's `ref` since #129) | main a4823ae | 0.96 |
+| The owner's citation-first prompt: a sentence about a drug needs a `ref` from any tool or is deleted | #208 | 0.96 |
+
+- **#208 changes nothing measurable here.** Main → #208: every citation valid 0.96 → 0.96, no invalid number in either run, the passage that answers the question cited in 72 of 76 → 75 of 77 answers where it was returned, 1.9 → 1.5 citations per answer, 8.9 → 8.5 s at the median. Strict `[n]` fell from 0.83 to 0.74 because more answers used `【n】` (13 → 20), which `cited_refs` and the chat read. Both runs leave 4 answers uncited, each one saying the labels don't answer. The main run used a worktree at a4823ae with its `src` first on `PYTHONPATH`.
 
 ## Reproduce
 
