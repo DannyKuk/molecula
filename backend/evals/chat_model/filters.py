@@ -22,6 +22,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from time import perf_counter
 
+from evals.chat_model.citations import model_label
 from evals.retrieval.dataset import Question, load_questions
 from evals.retrieval.filters import first_hit_rank, gold_filter, labels_by_drug, mrr, recall
 from langchain_core.callbacks import get_usage_metadata_callback
@@ -104,9 +105,10 @@ def main() -> int:
 
 
 def cache_path(settings: Settings, model_name: str) -> Path:
+    name = model_label(settings, model_name)
     prompt = prompts.load("rag/extract_filters")
-    key = hashlib.sha256(f"{model_name}\n{prompt}".encode()).hexdigest()[:12]
-    slug = model_name.replace("/", "_")
+    key = hashlib.sha256(f"{name}\n{prompt}".encode()).hexdigest()[:12]
+    slug = name.replace("/", "_")
     return settings.build_dir / "eval" / "filters" / f"{slug}-{key}.jsonl"
 
 

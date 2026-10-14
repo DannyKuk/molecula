@@ -25,7 +25,7 @@ from typing import Any, Literal
 
 import httpx
 import yaml
-from evals.chat_model.citations import tool_descriptions
+from evals.chat_model.citations import model_label, tool_descriptions
 from evals.safety.dataset import EXPECTED, InputCheckItem, load_items
 from pydantic import BaseModel
 
@@ -162,9 +162,10 @@ def cache_path(
 ) -> Path:
     """Where an eval's answers are cached, keyed by the model, every prompt file and the tools."""
     prompt_files = sorted(PROMPTS.rglob("*.md"))
-    setup = [model_name, descriptions, *(path.read_text("utf-8") for path in prompt_files)]
+    name = model_label(settings, model_name)
+    setup = [name, descriptions, *(path.read_text("utf-8") for path in prompt_files)]
     key = hashlib.sha256("\n".join(setup).encode()).hexdigest()[:12]
-    return settings.build_dir / "eval" / eval_name / f"{model_name.replace('/', '_')}-{key}.jsonl"
+    return settings.build_dir / "eval" / eval_name / f"{name.replace('/', '_')}-{key}.jsonl"
 
 
 def read_cache(cache: Path) -> dict[str, Answer]:

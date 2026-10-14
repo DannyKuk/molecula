@@ -43,6 +43,7 @@ def get_chat_model(settings: Settings) -> BaseChatModel:
         temperature=settings.llm_temperature,
         timeout=settings.llm_timeout_seconds,
         max_retries=settings.llm_max_retries,
+        reasoning_effort=settings.llm_reasoning_effort,
         streaming=True,
         # LangChain leaves streamed usage off for any base URL other than OpenAI's own.
         stream_usage=True,
