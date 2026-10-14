@@ -132,9 +132,9 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 
 | Folder | Contents |
 |---|---|
-| `backend/src/molecula/` | `api/` (routes), `services/`, `sources/` (one client per API plus `http.py`), `store/` (SQLite, schema, HTTP cache, files), `ingest/` (build steps), `agent/` (LLM factory, tool registry), `tools/` (one module per agent tool), `guard/` (input validation, the input check and the guarded chat), `prompts/` (loader and `.md` prompts), `schemas/` |
+| `backend/src/molecula/` | `api/` (routes), `services/`, `sources/` (one client per API plus `http.py`), `store/` (SQLite, schema, HTTP cache, files), `ingest/` (build steps), `agent/` (LLM factory, tool registry), `tools/` (one module per agent tool), `guard/` (input validation, the input check, the guarded chat, and the source check that judges an answer's claims against its tool results), `prompts/` (loader and `.md` prompts), `schemas/` |
 | `backend/tests/` | pytest, mirroring `src/molecula/`; `fixtures/` holds recorded API responses; fake chat model in `fake_llm.py`, fake services for the tool tests in `tool_fakes.py` |
-| `backend/evals/` | Eval runners and datasets with real models: `retrieval/` compares embedding models on `datasets/retrieval_questions.yaml`, `chat_model/` measures a chat model's filter extraction and the agent's citations on the same questions, and how the chat answers about a drug without a label (`datasets/no_label_questions.yaml`), `safety/` asks the chat the messages of `datasets/input_check.yaml` and reports what it did with each category |
+| `backend/evals/` | Eval runners and datasets with real models: `retrieval/` compares embedding models on `datasets/retrieval_questions.yaml`, `chat_model/` measures a chat model's filter extraction and the agent's citations on the same questions, and how the chat answers about a drug without a label (`datasets/no_label_questions.yaml`), and how well a source check judges hand-labelled claims (`datasets/source_check_claims.yaml`), `safety/` asks the chat the messages of `datasets/input_check.yaml` and reports what it did with each category |
 | `frontend/` | Next.js app: `app/` (pages), `components/`, `lib/` (typed API client, chat stream, search) |
 | `data/` | `scope.yaml`, `hero_set.yaml`, and the built store in `build/` (gitignored) |
 | `docs/` | `architecture.md`, `data-plan.md`, `decisions/`, `evals/` (eval reports), and `spikes/` (the scripts behind their numbers) |
@@ -154,3 +154,5 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 | [Safety eval](evals/safety.md) | What does the chat do with unsafe questions, and what does the guard change? |
 | [Drug without a label](evals/no-label-2026-10-14.md) | How does the chat answer about metamizole, which has no US label? Three fixes tried, none beat main; gpt-5-mini passes with no change, gpt-oss-20b at more reasoning doesn't |
 | [Answers from memory](evals/from-memory-2026-10-14.md) | Do answers about drugs with a label add facts no passage holds, and does more reasoning change it? About one in five does; medium effort doesn't help |
+| [Answer check](decisions/answer-check.md) | How do only claims the sources back reach the user, and can gpt-oss-20b check them? Go: it catches 85% of unsupported claims and wrongly rejects 3%, but only 6 or 7 of 17 that carry a citation |
+| [Source check eval](evals/source-check-2026-10-14.md) | How well does gpt-oss-20b judge 181 hand-labelled claims, with two prompts and at medium effort? |
