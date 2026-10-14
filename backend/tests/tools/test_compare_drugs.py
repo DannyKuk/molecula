@@ -92,3 +92,13 @@ def test_sources_are_the_compared_drugs_pubchem_pages(tool: StructuredTool) -> N
         Source(kind="pubchem", name="ibuprofen", url=IBUPROFEN.source_url),
         Source(kind="pubchem", name="imatinib", url=IMATINIB.source_url),
     ]
+
+
+def test_renumbering_gives_each_found_drug_its_pages_number(tool: StructuredTool) -> None:
+    message = call_tool(tool, {"drugs": ["Advil", "Gleevek", "imatinib"]})
+    refs = {IMATINIB.source_url: 1, IBUPROFEN.source_url: 2}
+
+    numbered = message.artifact.renumbered(refs.__getitem__)
+
+    assert [getattr(drug, "ref", None) for drug in numbered.drugs] == [2, None, 1]
+    assert [source.ref for source in numbered.sources()] == [2, 1]

@@ -1,13 +1,7 @@
 import type { ReactNode } from "react";
 
 import type { Source } from "@/lib/chat";
-import { citedRefs } from "@/lib/citations";
-
-const SITE_NAMES: Record<string, string> = {
-  pubchem: "PubChem",
-  chembl: "ChEMBL",
-  rcsb: "RCSB PDB",
-};
+import { citedRefs, isLabel, sourceLabel } from "@/lib/citations";
 const OPENFDA_URL = "https://open.fda.gov";
 
 /**
@@ -16,12 +10,12 @@ const OPENFDA_URL = "https://open.fda.gov";
  * asks for when it used label text.
  */
 export function AnswerSources({ answer, sources }: { answer: string; sources: Source[] }) {
-  const passages = sources.filter((source) => source.ref !== null);
+  const passages = sources.filter(isLabel);
   const cited = new Set(citedRefs(answer));
   const uncitedLabels = passages.some((source) => cited.has(source.ref!))
     ? []
     : uniqueByUrl(passages);
-  const pages = uniqueByUrl(sources.filter((source) => source.ref === null));
+  const pages = uniqueByUrl(sources.filter((source) => !isLabel(source)));
   if (passages.length === 0 && pages.length === 0) return null;
 
   return (
@@ -39,7 +33,7 @@ export function AnswerSources({ answer, sources }: { answer: string; sources: So
         <SourceLinks title={passages.length > 0 ? "Also from" : "From"}>
           {pages.map((source) => (
             <SourceLink key={source.url} href={source.url}>
-              {SITE_NAMES[source.kind] ?? source.kind} · {source.name}
+              {sourceLabel(source)}
             </SourceLink>
           ))}
         </SourceLinks>

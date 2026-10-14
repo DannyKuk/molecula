@@ -20,6 +20,13 @@ export function citedRefs(answer: string): number[] {
   return [...new Set((answer.match(CITATION_RUN) ?? []).flatMap(runRefs))];
 }
 
+/** The sites of the sources that aren't labels, by `kind`. */
+const SITE_NAMES: Record<string, string> = {
+  pubchem: "PubChem",
+  chembl: "ChEMBL",
+  rcsb: "RCSB PDB",
+};
+
 /** A label passage the answer can cite, as the label search returned it. */
 export type Passage = { ref: number; text: string };
 
@@ -36,14 +43,25 @@ export function sectionName(section: string | null): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-/** The cited label sources of a run of citations; numbers that point at nothing are left out. */
+/** The cited sources of a run of citations; numbers that point at nothing are left out. */
 export function citedSources(refs: number[], sources: Source[]): Source[] {
   return refs.flatMap((ref) => sources.filter((source) => source.ref === ref));
 }
 
-/** "Gleevec · Mechanism of action". */
+export function isLabel(source: Source): boolean {
+  return source.kind === "dailymed";
+}
+
+/** "PubChem", or the source's kind when the site isn't known. */
+export function siteName(source: Source): string {
+  return SITE_NAMES[source.kind] ?? source.kind;
+}
+
+/** "Gleevec · Mechanism of action" for a label passage, "PubChem · imatinib" for a page. */
 export function sourceLabel(source: Source): string {
-  return `${source.name} · ${sectionName(source.section)}`;
+  return isLabel(source)
+    ? `${source.name} · ${sectionName(source.section)}`
+    : `${siteName(source)} · ${source.name}`;
 }
 
 /** "2026-07-13" → "Jul 13, 2026". */

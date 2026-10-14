@@ -3,7 +3,7 @@ from typing import Any
 import pytest
 from langchain_core.tools import StructuredTool
 
-from molecula.schemas.tools import DrugNotSupported, DrugTargetList, InvalidArguments
+from molecula.schemas.tools import CitedTarget, DrugNotSupported, DrugTargetList, InvalidArguments
 from molecula.tools.get_targets import get_targets_tool
 from tool_fakes import (
     ABL1,
@@ -25,7 +25,7 @@ def test_brand_gets_the_targets_with_mechanism_and_chembl_source(tool: Structure
 
     assert message.status == "success"
     assert message.artifact == DrugTargetList(
-        query="Gleevec", cid=5291, name="imatinib", targets=[ABL1]
+        query="Gleevec", cid=5291, name="imatinib", targets=[CitedTarget(**ABL1.model_dump())]
     )
     [target] = message.artifact.targets
     assert (target.mechanism, target.action_type) == (

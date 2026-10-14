@@ -2,7 +2,7 @@ from typing import Any
 
 from langchain_core.tools import StructuredTool
 
-from molecula.schemas.tools import DrugArgs, DrugNotSupported, DrugTargetList
+from molecula.schemas.tools import CitedTarget, DrugArgs, DrugNotSupported, DrugTargetList
 from molecula.services.compounds import CompoundService
 from molecula.services.targets import TargetService
 from molecula.tools.base import build_tool, not_supported
@@ -33,7 +33,7 @@ def get_targets_tool(compounds: CompoundService, targets: TargetService) -> Stru
             query=resolution.query,
             cid=match.compound.cid,
             name=match.compound.name,
-            targets=found.targets,
+            targets=[CitedTarget(**target.model_dump()) for target in found.targets],
         )
 
     return build_tool(get_targets, DrugArgs, finding_targets)

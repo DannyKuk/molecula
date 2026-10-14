@@ -311,7 +311,7 @@ def test_chat_describes_the_stored_complex_offline(
         script=[
             tool_call_message("SortedMessage", {"category": "ok"}),
             tool_call_message("get_complex", {"drug": "imatinib"}),
-            answer_message("The 3D view shows imatinib in ABL1."),
+            answer_message("The 3D view shows imatinib in ABL1 [1]."),
         ]
     )
     monkeypatch.setattr(main, "get_embeddings", lambda settings: UnitEmbeddings())
@@ -322,7 +322,12 @@ def test_chat_describes_the_stored_complex_offline(
 
     events = dict(server_sent_events(response.text))
     result = events["tool_result"]["result"]
-    assert (result["status"], result["pdb_id"], result["target"]) == ("found", "2HYY", "ABL1")
+    assert (result["status"], result["pdb_id"], result["target"], result["ref"]) == (
+        "found",
+        "2HYY",
+        "ABL1",
+        1,
+    )
     assert events["sources"]["sources"] == [
         {
             "kind": "rcsb",
@@ -330,7 +335,8 @@ def test_chat_describes_the_stored_complex_offline(
             "url": "https://www.rcsb.org/structure/2HYY",
             "section": None,
             "effective_time": None,
-            "ref": None,
+            "ref": 1,
         }
     ]
+    assert events["sources"]["unknown_refs"] == []
     assert "disclaimer" not in events["sources"]

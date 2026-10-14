@@ -6,10 +6,11 @@
 Asks the agent every question in `datasets/retrieval_questions.yaml`, one single-turn
 conversation each, through `ChatAgent.stream` as the app wires it. Scores only the chat events,
 so the same runner measures an older checkout of the agent too (put its `src` first on
-PYTHONPATH). A citation is valid when it points at a passage `search_labels` returned in that
-answer: `[n]` or `【n】` with the passage's `ref`, or a Markdown link to the passage's DailyMed
-page (the style before #129). `【n】` is gpt-oss's own citation style; it is counted apart, as
-"square" (`[n]` and links only) next to "any", to show what accepting it adds. An answer cites
+PYTHONPATH). A citation is valid when it points at a source a tool returned in that answer:
+`[n]` or `【n】` with the `ref` of a label passage (or, since #207, of a PubChem, ChEMBL or PDB
+source), or a Markdown link to a passage's DailyMed page (the style before #129). `【n】` is
+gpt-oss's own citation style; it is counted apart, as "square" (`[n]` and links only) next to
+"any", to show what accepting it adds. An answer cites
 the evidence when a passage it cites holds the question's evidence; a link only names a label,
 so for links that is checked per label, not per passage.
 Each answer is cached in data/build/eval/citations/, keyed by model, system prompt and tool
@@ -157,13 +158,14 @@ def score(question: Question, answer: Answer) -> Scored:
     for passage in passages:
         by_url.setdefault(passage["url"], []).append(passage)
 
+    refs = tool_refs(e["result"] for e in events if e["type"] == "tool_result")
     square = numbers(SQUARE, text)
     full_width = numbers(FULL_WIDTH, text)
     urls = [url for url in LINK.findall(text) if "dailymed" in url]
     cited = [by_ref[ref] for ref in square + full_width if ref in by_ref]
     cited += [p for url in urls if url in by_url for p in by_url[url]]
-    valid_square = sum(ref in by_ref for ref in square) + sum(url in by_url for url in urls)
-    valid = valid_square + sum(ref in by_ref for ref in full_width)
+    valid_square = sum(ref in refs for ref in square) + sum(url in by_url for url in urls)
+    valid = valid_square + sum(ref in refs for ref in full_width)
     citations = len(square) + len(full_width) + len(urls)
     done = next((e for e in events if e["type"] == "done"), None)
     return Scored(
@@ -182,6 +184,21 @@ def score(question: Question, answer: Answer) -> Scored:
         seconds=answer.seconds,
         output_tokens=done["usage"]["output_tokens"] if done else None,
     )
+
+
+def tool_refs(results: Iterable[Any]) -> set[int]:
+    """Every `ref` in the tool results: label passages, and since #207 PubChem, ChEMBL and PDB."""
+    found: set[int] = set()
+    pending = list(results)
+    while pending:
+        value = pending.pop()
+        if isinstance(value, dict):
+            if isinstance(value.get("ref"), int):
+                found.add(value["ref"])
+            pending.extend(value.values())
+        elif isinstance(value, list):
+            pending.extend(value)
+    return found
 
 
 def numbers(pattern: re.Pattern[str], text: str) -> list[int]:

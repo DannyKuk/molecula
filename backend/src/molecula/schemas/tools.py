@@ -40,9 +40,17 @@ class SearchLabelsArgs(BaseModel):
 
 
 class ToolResult(BaseModel):
-    """What a tool returns. `sources` are where its facts come from, for the user to check."""
+    """What a tool returns. `sources` are where its facts come from, for the user to check.
+
+    A result whose facts an answer can state carries a `ref` for each source, the number the
+    answer cites it with as `[ref]`; `renumbered` sets them from one counter per answer.
+    """
 
     model_config = ConfigDict(frozen=True)
+
+    def renumbered(self, ref_of: Callable[[str], int]) -> Self:
+        """The same result with the reference numbers `ref_of` gives its sources' keys."""
+        return self
 
     def sources(self) -> list[Source]:
         return []
@@ -80,9 +88,13 @@ class ResolvedDrug(ToolResult):
     match_kind: MatchKind
     source: str
     source_url: str
+    ref: int | None = None
+
+    def renumbered(self, ref_of: Callable[[str], int]) -> Self:
+        return self.model_copy(update={"ref": ref_of(self.source_url)})
 
     def sources(self) -> list[Source]:
-        return [Source(kind=self.source, name=self.name, url=self.source_url)]
+        return [Source(kind=self.source, name=self.name, url=self.source_url, ref=self.ref)]
 
 
 class DrugProperties(ToolResult):
@@ -91,10 +103,22 @@ class DrugProperties(ToolResult):
     status: Literal["found"] = "found"
     query: str
     compound: Compound
+    ref: int | None = None
+
+    def renumbered(self, ref_of: Callable[[str], int]) -> Self:
+        return self.model_copy(update={"ref": ref_of(self.compound.source_url)})
 
     def sources(self) -> list[Source]:
         compound = self.compound
-        return [Source(kind=compound.source, name=compound.name, url=compound.source_url)]
+        return [
+            Source(kind=compound.source, name=compound.name, url=compound.source_url, ref=self.ref)
+        ]
+
+
+class CitedTarget(Target):
+    """A target with `ref`, the number an answer cites its ChEMBL mechanism with as `[ref]`."""
+
+    ref: int | None = None
 
 
 class DrugTargetList(ToolResult):
@@ -105,11 +129,17 @@ class DrugTargetList(ToolResult):
     query: str
     cid: int
     name: str
-    targets: list[Target]
+    targets: list[CitedTarget]
+
+    def renumbered(self, ref_of: Callable[[str], int]) -> Self:
+        targets = [
+            target.model_copy(update={"ref": ref_of(target.source_url)}) for target in self.targets
+        ]
+        return self.model_copy(update={"targets": targets})
 
     def sources(self) -> list[Source]:
         return [
-            Source(kind=target.source, name=target.name, url=target.source_url)
+            Source(kind=target.source, name=target.name, url=target.source_url, ref=target.ref)
             for target in self.targets
         ]
 
@@ -118,6 +148,9 @@ class DrugComparison(ToolResult):
     """The drugs in the order asked, each with its properties or as not supported."""
 
     drugs: list[DrugProperties | DrugNotSupported]
+
+    def renumbered(self, ref_of: Callable[[str], int]) -> Self:
+        return self.model_copy(update={"drugs": [drug.renumbered(ref_of) for drug in self.drugs]})
 
     def sources(self) -> list[Source]:
         return [source for drug in self.drugs for source in drug.sources()]
@@ -161,9 +194,13 @@ class DrugComplex(ToolResult):
     hydrogen_bonds: list[HydrogenBond]
     contacts: list[ResidueContact]
     source_url: str
+    ref: int | None = None
+
+    def renumbered(self, ref_of: Callable[[str], int]) -> Self:
+        return self.model_copy(update={"ref": ref_of(self.source_url)})
 
     def sources(self) -> list[Source]:
-        return [Source(kind="rcsb", name=self.pdb_id, url=self.source_url)]
+        return [Source(kind="rcsb", name=self.pdb_id, url=self.source_url, ref=self.ref)]
 
 
 class NoComplex(ToolResult):

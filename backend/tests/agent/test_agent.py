@@ -390,6 +390,44 @@ def test_two_label_searches_in_one_model_turn_never_share_a_number() -> None:
     assert {s.ref for s in sources_event(events).sources} == {1, 2, 3}
 
 
+def call(name: str, args: dict[str, object], call_id: str) -> ToolCall:
+    return {"name": name, "args": args, "id": call_id}
+
+
+def test_every_tools_sources_are_numbered_from_one_counter() -> None:
+    model = ScriptedChatModel(
+        script=[
+            AIMessage(content="", tool_calls=[search(SIDE_EFFECTS, "call_1")]),
+            AIMessage(content="", tool_calls=[call("get_properties", {"drug": "imatinib"}, "c2")]),
+            AIMessage(content="", tool_calls=[call("get_targets", {"drug": "Gleevec"}, "c3")]),
+            AIMessage(
+                content="",
+                tool_calls=[call("compare_drugs", {"drugs": ["imatinib", "Advil"]}, "c4")],
+            ),
+            AIMessage(content="", tool_calls=[call("get_complex", {"drug": "imatinib"}, "c5")]),
+            answer_message("Nausea [1]; 100 g/mol [3]; ABL1 [4]; ibuprofen [5]; 2HYY [6]."),
+        ]
+    )
+
+    events = run(agent(model, retriever=label_retriever(), max_steps=6))
+
+    results = {e.name: e.result for e in events if isinstance(e, ToolResultEvent)}
+    assert results["get_properties"]["ref"] == 3
+    assert [t["ref"] for t in results["get_targets"]["targets"]] == [4]
+    assert [d["ref"] for d in results["compare_drugs"]["drugs"]] == [3, 5]
+    assert results["get_complex"]["ref"] == 6
+    sources = sources_event(events)
+    assert [(s.kind, s.ref) for s in sources.sources] == [
+        ("dailymed", 1),
+        ("dailymed", 2),
+        ("pubchem", 3),
+        ("chembl", 4),
+        ("pubchem", 5),
+        ("rcsb", 6),
+    ]
+    assert sources.unknown_refs == []
+
+
 def test_a_cited_number_no_passage_has_is_flagged() -> None:
     model = ScriptedChatModel(
         script=[

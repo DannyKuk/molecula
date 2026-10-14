@@ -78,6 +78,21 @@ describe("AnswerSources", () => {
     expect(screen.queryByText(/openFDA/)).toBeNull();
   });
 
+  it("doesn't count a cited PubChem page as citing the labels", () => {
+    render(<AnswerSources answer="Imatinib weighs 493.6 g/mol [4]." sources={IMATINIB_SOURCES} />);
+
+    expect(screen.getByText("Based on")).toBeDefined();
+    expect(links()[0]).toEqual(["Gleevec label", IMATINIB_SOURCES[0].url]);
+  });
+
+  it("gives no openFDA credit for numbered pages without label text", () => {
+    render(<AnswerSources answer="Sildenafil binds PDE5A [1]." sources={[{ ...PDE5A, ref: 1 }]} />);
+
+    expect(links()).toEqual([["ChEMBL · cGMP-specific 3',5'-cyclic phosphodiesterase", PDE5A.url]]);
+    expect(screen.queryByText("Based on")).toBeNull();
+    expect(credit()).toBeNull();
+  });
+
   it("shows nothing for an answer without sources", () => {
     const { container } = render(
       <AnswerSources answer="Molecula only answers questions about medicines." sources={[]} />,

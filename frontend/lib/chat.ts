@@ -7,8 +7,8 @@ export type ChatMessage = {
   content: string;
 };
 
-/** Where a fact comes from: a label passage on DailyMed, cited as `[ref]`, or a PubChem,
- * ChEMBL or RCSB page, which has no `ref` (`Source` in `backend/src/molecula/schemas/chat.py`). */
+/** Where a fact comes from: a label passage on DailyMed, or a PubChem, ChEMBL or RCSB page, each
+ * cited as `[ref]` (`Source` in `backend/src/molecula/schemas/chat.py`). */
 export type Source = {
   kind: string;
   name: string;
