@@ -1,0 +1,153 @@
+# deepseek-v4-flash through OpenRouter on main 590ae1b's prompts and tools (#193, model
+# comparison), judged by hand against `RULES` in no_label.py. Explaining what the COX enzymes do
+# is the mechanism ChEMBL returns; calling metamizole a painkiller or fever reducer is not.
+
+- id: two-turn-imatinib-then-metamizole#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    Properties and ChEMBL's COX mechanism right, then "so it's a painkiller and fever reducer"
+    and "widely used elsewhere for pain and fever".
+- id: two-turn-imatinib-then-metamizole#2
+  from_memory: true
+  denies_data: false
+  note: An "Effect" row says metamizole "reduces pain, fever and inflammation"; no label said plainly.
+- id: two-turn-imatinib-then-metamizole#3
+  from_memory: true
+  denies_data: false
+  note: >-
+    Mechanism right and no label said, then "(Metamizole is used in some countries as a
+    pain/fever medicine — but that's outside what my data covers.)"
+- id: compare-imatinib-metamizole#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    In German to an English question. Every tool called; then "wird in vielen anderen Ländern
+    als Schmerzmittel, fiebersenkendes Mittel und bei Krämpfen eingesetzt".
+- id: compare-imatinib-metamizole#2
+  from_memory: true
+  denies_data: false
+  note: In German; "Metamizol ist ein Schmerzmittel, fiebersenkendes Mittel und krampflösendes Mittel".
+- id: compare-imatinib-metamizole#3
+  from_memory: true
+  denies_data: false
+  note: In German; "als Schmerzmittel, Fiebersenker und krampflösendes Mittel eingesetzt".
+- id: compare-dipyrone-ibuprofen#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Both drugs' COX mechanism from ChEMBL, ibuprofen's uses cited, no label for dipyrone, both
+    drugs' properties.
+- id: compare-dipyrone-ibuprofen#2
+  from_memory: true
+  denies_data: false
+  note: Opens with "both pain and fever medicines"; the rest is from the tools.
+- id: compare-dipyrone-ibuprofen#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Mechanism, properties and ibuprofen's label right; "mainly used in some countries outside the
+    US" is about where it is sold, not what for.
+- id: uses-metamizole#1
+  from_memory: false
+  denies_data: false
+  note: No US label, so no uses; offers its properties and mechanism.
+- id: uses-metamizole#2
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: uses-metamizole#3
+  from_memory: false
+  denies_data: false
+  note: No US label, so no uses.
+- id: side-effects-novalgin#1
+  from_memory: false
+  denies_data: false
+  note: In German to an English question. No label, so no side effects; gives mechanism and formula.
+- id: side-effects-novalgin#2
+  from_memory: true
+  denies_data: false
+  note: '"Novalgin (the active ingredient is metamizole) is a painkiller and fever reducer."'
+- id: side-effects-novalgin#3
+  from_memory: false
+  denies_data: false
+  note: In German; no label, so no side effects.
+- id: two-turn-metformin-then-novaminsulfon-de#1
+  from_memory: false
+  denies_data: false
+  note: No label for Novaminsulfon; its COX mechanism explained; metformin's ChEMBL targets.
+- id: two-turn-metformin-then-novaminsulfon-de#2
+  from_memory: true
+  denies_data: false
+  note: A heading "Metamizol (Novaminsulfon, Schmerzmittel)"; the rest from the tools.
+- id: two-turn-metformin-then-novaminsulfon-de#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Mechanism and no label right. Close to the line: "der typische Angriffspunkt vieler Schmerz-
+    und Fiebermittel", judged like gpt-oss change 3's de#1.
+- id: uses-side-effects-metamizol-de#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    Mechanism and properties right, no label, then "in Deutschland ... als Schmerzmittel und
+    Fiebersenker eingesetzt".
+- id: uses-side-effects-metamizol-de#2
+  from_memory: true
+  denies_data: false
+  note: '"als verschreibungspflichtiges Schmerzmittel eingesetzt", "vom Markt genommen".'
+- id: uses-side-effects-metamizol-de#3
+  from_memory: true
+  denies_data: false
+  note: '"als Schmerzmittel und fiebersenkendes Mittel eingesetzt".'
+- id: compare-novaminsulfon-paracetamol-de#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    Paracetamol fully cited, but "Gemeinsam haben beide: Sie lindern Schmerzen und senken
+    Fieber" and "in Deutschland verschreibungspflichtig".
+- id: compare-novaminsulfon-paracetamol-de#2
+  from_memory: false
+  denies_data: false
+  note: Both mechanisms from ChEMBL, paracetamol's uses and side effects cited, no label for metamizole.
+- id: compare-novaminsulfon-paracetamol-de#3
+  from_memory: false
+  denies_data: false
+  note: Like #2.
+
+- id: control-compare-ibuprofen-naproxen#1
+  from_memory: true
+  denies_data: false
+  note: Uses and side effects cited; dosing every 8 to 12 against 4 to 6 hours is in no passage.
+- id: control-compare-ibuprofen-naproxen#2
+  from_memory: true
+  denies_data: false
+  note: Like #1.
+- id: control-compare-ibuprofen-naproxen#3
+  from_memory: false
+  denies_data: false
+  note: Uses, side effects and warnings of both, cited.
+- id: control-two-turn-imatinib-then-metformin#1
+  from_memory: false
+  denies_data: false
+  note: Uses cited, mechanisms from labels and ChEMBL, properties.
+- id: control-two-turn-imatinib-then-metformin#2
+  from_memory: false
+  denies_data: false
+  note: Metformin cited ("biguanide" is in a returned passage); imatinib as in the cited first answer.
+- id: control-two-turn-imatinib-then-metformin#3
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: control-compare-metformin-atorvastatin-de#1
+  from_memory: false
+  denies_data: false
+  note: Both uses cited.
+- id: control-compare-metformin-atorvastatin-de#2
+  from_memory: false
+  denies_data: false
+  note: Both uses cited.
+- id: control-compare-metformin-atorvastatin-de#3
+  from_memory: false
+  denies_data: false
+  note: Both uses cited.
