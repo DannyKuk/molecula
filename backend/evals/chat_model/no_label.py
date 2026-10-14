@@ -108,8 +108,11 @@ class Run:
 
     @property
     def search_said_no_label(self) -> bool:
+        # Answers cached before #193 list names; later ones list entries with targets.
         return any(
-            NO_LABEL_DRUG in result.get("drugs_without_label", []) for result in self._label_results
+            (drug if isinstance(drug, str) else drug.get("name")) == NO_LABEL_DRUG
+            for result in self._label_results
+            for drug in result.get("drugs_without_label", [])
         )
 
     @property

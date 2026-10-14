@@ -124,7 +124,7 @@ class DrugComparison(ToolResult):
 
 
 class HydrogenBond(BaseModel):
-    """A hydrogen bond between a pocket residue's atom and a ligand atom, in Å."""
+    """A hydrogen bond between a pocket residue's atom and a ligand atom, in Ã…."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -136,7 +136,7 @@ class HydrogenBond(BaseModel):
 
 
 class ResidueContact(BaseModel):
-    """A pocket residue and its closest heavy-atom distance to the ligand, in Å."""
+    """A pocket residue and its closest heavy-atom distance to the ligand, in Ã…."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -181,19 +181,29 @@ class CitedPassage(RetrievedChunk):
     ref: int
 
 
+class DrugWithoutLabel(BaseModel):
+    """A supported drug that has no US label, with what ChEMBL records it acting on."""
+
+    model_config = ConfigDict(frozen=True)
+
+    name: str
+    cid: int
+    targets: list[Target]
+
+
 class LabelPassages(ToolResult):
     """The label passages a search found, best first, each with what to cite.
 
     `drugs` are the generic names searched, `drugs_without_label` the supported drugs that have
-    no US label, and `unsupported` the named drugs outside the store. `retrieval` is the whole
-    search (filter, widening, dropped candidates) for the retrieval trace; it is left out of the
-    JSON the model reads.
+    no US label, with their targets, and `unsupported` the named drugs outside the store.
+    `retrieval` is the whole search (filter, widening, dropped candidates) for the retrieval
+    trace; it is left out of the JSON the model reads.
     """
 
     status: Literal["found"] = "found"
     question: str
     drugs: list[str]
-    drugs_without_label: list[str]
+    drugs_without_label: list[DrugWithoutLabel]
     unsupported: list[DrugNotSupported]
     passages: list[CitedPassage]
     retrieval: Retrieval = Field(exclude=True)
@@ -206,7 +216,7 @@ class LabelPassages(ToolResult):
         return self.model_copy(update={"passages": passages})
 
     def sources(self) -> list[Source]:
-        return [
+        labels = [
             Source(
                 kind="dailymed",
                 name=passage.brand or passage.substance.lower(),
@@ -217,6 +227,12 @@ class LabelPassages(ToolResult):
             )
             for passage in self.passages
         ]
+        targets = [
+            Source(kind=target.source, name=target.name, url=target.source_url)
+            for drug in self.drugs_without_label
+            for target in drug.targets
+        ]
+        return labels + targets
 
 
 class LabelDrugsNotSupported(ToolResult):
