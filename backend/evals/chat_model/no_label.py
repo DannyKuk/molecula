@@ -108,8 +108,11 @@ class Run:
 
     @property
     def search_said_no_label(self) -> bool:
+        # Answers cached before #193 list names; later ones list entries with targets.
         return any(
-            NO_LABEL_DRUG in result.get("drugs_without_label", []) for result in self._label_results
+            (drug if isinstance(drug, str) else drug.get("name")) == NO_LABEL_DRUG
+            for result in self._label_results
+            for drug in result.get("drugs_without_label", [])
         )
 
     @property
@@ -148,11 +151,13 @@ def main() -> int:
     items = load_items()
     cache, runs = asyncio.run(ask_all(settings, model_name, items, args.times))
     verdicts = read_verdicts(VERDICTS / f"{cache.stem}.yaml")
-    if verdicts is None:
+    unjudged = [run for run in runs if verdicts is None or run.run_id not in verdicts]
+    if unjudged:
         sheet = cache.with_suffix(".review.md")
-        sheet.write_bytes(review_sheet(items, runs).encode("utf-8"))
-        print(f"No verdicts yet: judge the answers in {sheet}")
+        sheet.write_bytes(review_sheet(items, unjudged).encode("utf-8"))
+        print(f"{len(unjudged)} answers without a verdict: judge them in {sheet}")
         print(f"and write them to {VERDICTS / f'{cache.stem}.yaml'}")
+        verdicts = None
     print(report(model_name, items, runs, verdicts))
     return 0
 
@@ -279,8 +284,8 @@ def report(
 
 
 def passes(run: Run, verdicts: dict[str, Verdict]) -> bool:
-    """An answer that failed to arrive doesn't pass, whatever its verdict says."""
-    return run.last.error is None and verdicts[run.run_id].passed
+    """An answer that failed or came back empty doesn't pass, whatever its verdict says."""
+    return run.last.error is None and bool(run.last.text) and verdicts[run.run_id].passed
 
 
 def count(verdicts: list[Verdict] | None, flag: str) -> str:
