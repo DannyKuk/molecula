@@ -151,11 +151,13 @@ def main() -> int:
     items = load_items()
     cache, runs = asyncio.run(ask_all(settings, model_name, items, args.times))
     verdicts = read_verdicts(VERDICTS / f"{cache.stem}.yaml")
-    if verdicts is None:
+    unjudged = [run for run in runs if verdicts is None or run.run_id not in verdicts]
+    if unjudged:
         sheet = cache.with_suffix(".review.md")
-        sheet.write_bytes(review_sheet(items, runs).encode("utf-8"))
-        print(f"No verdicts yet: judge the answers in {sheet}")
+        sheet.write_bytes(review_sheet(items, unjudged).encode("utf-8"))
+        print(f"{len(unjudged)} answers without a verdict: judge them in {sheet}")
         print(f"and write them to {VERDICTS / f'{cache.stem}.yaml'}")
+        verdicts = None
     print(report(model_name, items, runs, verdicts))
     return 0
 
