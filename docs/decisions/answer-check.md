@@ -1,6 +1,6 @@
-# Answer check: only claims the sources back reach the user
+# Answer check: each claim of an answer judged against its sources
 
-> **Answer:** the chat answers through a tool, `submit_answer(text)`. A `SourceCheck` splits the answer into claims and judges each against the tool results it cites. The agent rewrites what it rejects, and after two rejections the user gets only the claims that passed. The first checker is gpt-oss-20b with structured output (`guard/source_check.py`). On 181 hand-labelled claims it catches 85% of the unsupported ones and wrongly rejects 3% of the supported ones, which passes the proposed bar: **go**. That 85% is mostly uncited facts (31 of 32). Of the 17 additions that carry a citation, it catches only 6 or 7 at the default effort, 10 at medium effort. The design is #205; the measurement is #212.
+> **Answer:** after the answer has streamed, a `SourceCheck` splits it into claims and judges each against the tool results it cites, and the chat gets a `source_check` event that marks each claim `supported`, `unsupported` or `not_a_claim`. Nothing is hidden or rewritten: the user sees what comes from the sources and what doesn't. The checker is gpt-oss-20b with structured output (`guard/source_check.py`) at its own reasoning effort, medium. On 181 hand-labelled claims it catches 85% of the unsupported ones and wrongly marks 3% of the supported ones. That 85% is mostly uncited facts (31 of 32); of the 17 additions that carry a citation it catches only 6 or 7 at the default effort, 10 at medium. A first design that let only checked answers through, with a rewrite on a rejection (#205), was built and measured in #213 and dropped: it cut answers from memory (5 of 84 against 4 of 28 on main, a rough comparison) but fell back to a partial answer in half the answers, lost the answering sentence in one in five, and took 38 s per answer. The design is #205, the checker's measurement #212, the loop's #213.
 
 ## Question
 
@@ -30,13 +30,29 @@ Of the 28 single-drug answers in the set, 8 have an addition. After the check, 4
 - **Go for #213, with that limit stated.** The bar as proposed is met, a false rejection costs one rewrite, and without a check every addition reaches the user. The check halves the answers that carry one. It is not a guarantee that every cited sentence says what its source says, and the docs and the app shouldn't claim that.
 - **Medium effort is worth trying for the check alone.** It caught 10 of 17 cited additions against 6 or 7, for 5 seconds more per answer and twice the output tokens. The writer gained nothing from medium effort (#206), so #213 should give the checker its own effort setting rather than raise it for every call. 17 claims are too few to call this a measured gain.
 
+## The submit loop, built and dropped (#213)
+
+The first design let an answer reach the user only through a tool, `submit_answer`, which ran the check; the agent rewrote what it rejected, and after two rejections the user got only the claims that passed with "Part of this answer couldn't be verified against Molecula's sources." It was built (branch `feat/213-submit-answer`) and asked the 28 from-memory questions three times each with gpt-oss-20b, the check at medium effort. The 84 answers were judged by hand against the from-memory rules (`backend/evals/chat_model/from_memory_verdicts/openai_gpt-oss-20b-check-medium-bbfca19608c5.yaml`).
+
+| Setup | Answers | From memory | Rewritten | Fell back | Lost the answer | Seconds p50 | p95 |
+|---|---|---|---|---|---|---|---|
+| main, citation-first prompt (#208) | 28 | 4 | - | - | - | 7.2 | - |
+| submit loop, check at medium | 84 | 5 | 64 | 43 | 16 | 38.4 | 71.5 |
+
+- **It cut answers from memory, at a price no answer should pay.** 5 of 84 (6%) against 4 of 28 (14%), but the main run asked each question once, so that comparison is rough. 43 answers fell back to the claims that passed, and in 16 the sentence that answered the question was dropped ("Yes, ciprofloxacin is approved for plague", "do not use with an MAOI"). An answer took 5 times as long.
+- **The check was mostly right; the rewrite was the problem.** 83 of the 98 claims rejected on a first submit were uncited, nearly all true facts from a returned passage, and 16 of the 55 rejected on the second submit were the same sentence again. gpt-oss-20b doesn't fix its citations when told which sentence lacks one.
+- **Two rewrites came back as garbage** ("Tamiz?", and a line of dots with leaked channel text); the check passed "Tamiz?" as not a claim.
+- **LM Studio failed one call in five with `tool_choice: auto`.** gpt-oss-20b sometimes wrote the `submit_answer` call on its final channel, which LM Studio's parser rejects with a 500 (2 of 10 replays of one request, 0 of 10 with `"required"`). A named tool choice is refused.
+- **Dropped for the check after the answer.** It costs one check call after the answer is already on screen, removes nothing, and shows the reader which sentence comes from which source. Only the from-memory eval was run for the loop; the rest of the planned before → after (no-label, citations, safety) was stopped once these numbers were in, by the owner's call.
+
 ## Decided along the way
 
 - **No model call only for refs no tool returned.** #205 says a claim about a drug without a returned `[ref]` is rejected outright. Telling a drug fact from advice or "Molecula doesn't cover this" needs the model, and a rule by drug name would reject both, so an uncited sentence goes to the model, and the prompt says an uncited drug fact is `unsupported`. Only a claim whose refs no tool returned is rejected without a call.
 - **One call per answer, not per claim.** It runs in the live chat, where a call per claim would multiply the wait. The model sees each claim's refs and only the cited results. One call per claim, with only that claim's results, is the obvious next thing to try for cited additions.
 - **Claims are labelled against the results they cite.** An uncited fact is `unsupported` even when another returned result holds it, because the chat's rule is a ref on every drug sentence (#208). The set records which returned result holds it (`held_by`), so additions and citation misses are counted apart.
 - **Statements about coverage are not claims.** "Molecula's data doesn't include X" is judged by the no-label eval, not by this check, even when it is wrong.
-- **The protocol lives in `schemas/source_check.py`**, so the tool in #213, the guard and the evals share it without `tools/` importing `guard/`. Kev and Jev (#215) replace the checker in one line.
+- **The protocol lives in `schemas/source_check.py`**, so the guard and the evals share it. Kev and Jev (#215) replace the checker in one line.
+- **A failing check leaves the answer unmarked, not hidden** (#213). The answer is already on screen when the check runs, so `source_check` says `checked: false` and the chat shows nothing more.
 
 ## Limits
 

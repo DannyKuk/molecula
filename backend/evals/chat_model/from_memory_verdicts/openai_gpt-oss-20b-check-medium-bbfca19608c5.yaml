@@ -1,0 +1,514 @@
+# gpt-oss-20b, no writer effort, the source check at medium effort, answers only through
+# submit_answer (#213). Judged against RULES in no_label.py by three subagents, every flag reviewed.
+# A note starting "Fallback" marks an answer that fell back to the claims that passed.
+
+- id: zolpidem-abuse-dependence#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Zolpidem 40 mg similar, but not identical, to diazepam 20 mg [4]. Says Molecula has no label
+    for Valium, which is true (search_labels returned Valium as not_supported).
+- id: zolpidem-abuse-dependence#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: only partly. Retrieval miss (no abuse passage), so no comparison;
+    gives abuse and dependence risk rising with dose and duration, the withdrawal signs and the
+    postmarketing reports, all from passage 3. "No Valium data" is true (not_supported).
+- id: zolpidem-abuse-dependence#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    40 mg similar to diazepam 20 mg [4] and dependence risk rising with dose and duration [2]. The
+    study group is given as "prior drug or alcohol use" where the passage says former drug abusers,
+    a loose reading of a study detail. "No Valium data" is true (not_supported).
+- id: bupropion-abuse-dependence#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: oral use only, crushed tablets inhaled, seizures and deaths [4];
+    overdoses up to 30 g, seizures in a third, arrhythmias, respiratory failure, cardiac arrest [1].
+- id: bupropion-abuse-dependence#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: intranasal use reported with seizures and deaths [2]; 30 g
+    overdoses, seizures in a third, arrhythmias, coma, respiratory failure, deaths with multiple
+    seizures and cardiac arrest [1].
+- id: bupropion-abuse-dependence#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: intranasal and parenteral use with seizures and deaths [4]; no
+    antidote, supportive care [1]. 911/112 and a poison control centre; "chest pain" and "severe
+    dizziness" among the signs to act on are emergency advice leaning on the overdose passage.
+- id: atorvastatin-common-side-effects#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    The five reactions at 5% or more [2].
+- id: atorvastatin-common-side-effects#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    The five reactions at 5% or more [2].
+- id: atorvastatin-common-side-effects#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    The five reactions at "about" 5% or more [2].
+- id: ondansetron-adverse-reactions#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    One sentence: headache is a common adverse reaction [1].
+- id: ondansetron-adverse-reactions#2
+  from_memory: true
+  denies_data: false
+  note: >-
+    Fallback, answers the question: headache "in about 5-11% of patients" in "clinical trials and
+    post-marketing reports" [1]. The passages give 9% (16 mg), 11% (24 mg) and 24% (8 mg twice
+    daily); 5% is the placebo rate, and the postmarketing list has no headache.
+- id: ondansetron-adverse-reactions#3
+  from_memory: true
+  denies_data: false
+  note: >-
+    Headache is common [1], but "reported in about 5-11% of patients" is a wrong rate: the passages
+    give 9%, 11% and 24% (Table 3, 8 mg twice daily); 5% is the placebo rate in Table 4.
+- id: omeprazole-clinical-studies#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Both pediatric studies with their numbers (75% of 12, about 60% at 10 or 20 mg, the success
+    definition) from passage 1.
+- id: omeprazole-clinical-studies#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Three-quarters with a 50% drop over 8 weeks and about 60% success after 4 weeks, from passage 1.
+- id: omeprazole-clinical-studies#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Both pediatric studies (12 patients, 75%; 113 children aged 2-16, about 60%) from passage 1.
+- id: risperidone-clinical-studies#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: the two 8-week placebo-controlled trials in irritability with
+    autistic disorder, ages 5 to 16, significant improvement over placebo [2].
+- id: risperidone-clinical-studies#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: the two 8-week placebo-controlled autism trials, ages 5 to 16,
+    significant improvement over placebo [2].
+- id: risperidone-clinical-studies#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: the two 8-week placebo-controlled autism trials, ages 5 to 16,
+    significant improvement over placebo [2].
+- id: lisinopril-angioedema#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, lost the answer: the sentence that the reaction can recur on lisinopril was dropped;
+    left is angioedema of face, lips, tongue, glottis or larynx can occur and the drug is stopped [6].
+- id: lisinopril-angioedema#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, lost the answer: only the fixed text "This answer couldn't be verified against
+    Molecula's sources." Retrieval returned the Black-patient angioedema passage but not 5.2.
+- id: lisinopril-angioedema#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Retrieval miss: no returned passage mentions angioedema or swelling. Says the data doesn't
+    address it and the labels found don't mention the reaction, which is true of what came back.
+- id: acetazolamide-contraindications#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: hypersensitivity contraindication and possible cross-sensitivity
+    with sulfonamides [5]; the dropped sentence said "should not take it".
+- id: acetazolamide-contraindications#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: hypersensitivity contraindication and possible cross-sensitivity
+    with sulfonamides [1].
+- id: acetazolamide-contraindications#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Reactions common to all sulfonamide derivatives (anaphylaxis, severe skin reactions) [1] and
+    discontinue if signs appear (warnings passage 2, cited as [1]).
+- id: atorvastatin-starting-dose#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    10 or 20 mg once daily, or 40 mg when more LDL-C reduction is needed, from passage 1.
+- id: atorvastatin-starting-dose#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    10 or 20 mg once daily, from passage 1.
+- id: atorvastatin-starting-dose#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    10 or 20 mg once daily, from passage 1.
+- id: lamotrigine-dosing#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    500 mg/day as monotherapy in two divided doses, from passage 1.
+
+- id: lamotrigine-dosing#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    About 500 mg/day in two doses as monotherapy, from passage 1.
+- id: lamotrigine-dosing#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    500 mg/day maintenance in two divided doses when used alone, from passage 1.
+- id: omeprazole-indications#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Up to 6 weeks for GERD with EE in infants from 1 month [1]; not established under 1 month [3],
+    and "not recommended" is a conclusion from that. Leaving the decision to a professional is not a
+    drug fact.
+- id: omeprazole-indications#2
+  from_memory: true
+  denies_data: false
+  note: >-
+    Fallback, answers the question: infants 1 month to <12 months, up to 6 weeks for GERD with EE
+    [5]. Then "safety and effectiveness beyond 12 months are not known", which next to the infant age
+    band reads as age: the label establishes use from 1 to 16 years; its 12-month line is a duration
+    limit for maintenance of EE, and the unknowns are other uses under 12 months and under 1 month.
+- id: omeprazole-indications#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Up to six weeks for GERD with EE in children 1 month to <12 months [5]; "infants under one year"
+    is narrowed by the same sentence.
+- id: ciprofloxacin-indications#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Indicated for plague, pneumonic and septicemic, due to Y. pestis, from passage 1.
+- id: ciprofloxacin-indications#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, lost the answer: the "yes, plague" sentence was dropped twice; only "The label states
+    this indication [1]" is left, which does not name the indication.
+- id: ciprofloxacin-indications#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, lost the answer: the "yes, plague" sentence was dropped; only the side detail is left,
+    that the indication rests on animal studies because human trials were not feasible [1].
+- id: acetaminophen-warfarin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: INR rise with warfarin [1] (drops the 4,000 mg/day chronic-use
+    condition); what INR means is a term explanation. "Talk with a doctor or pharmacist" [2] is not a
+    drug fact, though it adds "or another anticoagulant" to a warning that names only warfarin.
+- id: acetaminophen-warfarin#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, lost the answer: only the fixed text "This answer couldn't be verified against
+    Molecula's sources." is shown.
+- id: acetaminophen-warfarin#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: INR rise on warfarin and more frequent INR checks [1], ask a
+    doctor or pharmacist [2]. "Up to 4 000 mg/day" is a loose reading of "at a dose of 4,000
+    mg/day", and "such as warfarin" of "the blood thinning drug warfarin"; nothing new added.
+- id: clopidogrel-omeprazole#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    Fallback, lost the answer: the "avoid omeprazole" sentence was dropped. What is left, uncited,
+    names "pantoprazole or rabeprazole" as alternatives "that do not interfere" with clopidogrel:
+    rabeprazole is in no passage, and passage 2 only says pantoprazole had less effect.
+- id: clopidogrel-omeprazole#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: P2Y12 antagonist from get_targets [6]; avoid omeprazole and
+    esomeprazole because CYP2C19 inhibition reduces the active metabolite and antiplatelet effect
+    [1][5].
+- id: clopidogrel-omeprazole#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Don't combine: omeprazole blocks the enzyme that activates clopidogrel and lowers its antiplatelet
+    activity [1]; the label says avoid omeprazole or esomeprazole [5].
+- id: pseudoephedrine-antidepressants#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question, partly: names MAOIs [2], but the "do not use with an MAOI"
+    sentence was dropped and what is left only says ask a doctor or pharmacist, softer than the
+    passage's "Do not use". No added drug fact.
+- id: pseudoephedrine-antidepressants#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: do not use with a prescription MAOI or within two weeks of
+    stopping one [1]. No named MAOI examples this time.
+- id: pseudoephedrine-antidepressants#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: any antidepressant that is an MAOI should not be combined with
+    pseudoephedrine [2][4], a conclusion from the passages; starts with a dangling "This means".
+- id: diclofenac-otc-consumer#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: not known if it works or is safe under 18, ask a doctor [1][2].
+- id: diclofenac-otc-consumer#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: not known if it works or is safe under 18, ask a doctor [1][2].
+- id: diclofenac-otc-consumer#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Not known if it works or is safe under 18, ask a doctor before use [1].
+- id: diclofenac-overdosage#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    911/112 or an emergency department first; the typical symptoms and the rare serious effects from
+    passage 1.
+- id: diclofenac-overdosage#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, lost the answer: the typical symptoms (lethargy, drowsiness, nausea, vomiting,
+    epigastric pain) were dropped; left are 911/112 or a poison control centre and the rare effects
+    and GI bleeding from passage 1.
+- id: diclofenac-overdosage#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Typical symptoms, reversible with supportive care, and the rare serious effects, from passage 1.
+    No emergency line this time.
+- id: spironolactone-overdosage#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: the overdose signs and hyperkalemia with impaired renal function,
+    from passage 1. No emergency line.
+- id: spironolactone-overdosage#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Overdose signs and the rare hyponatremia, hyperkalemia and hepatic coma from passage 1; drops
+    "unlikely due to acute overdosage" and folds in the renal-impairment line, but adds nothing. No
+    emergency line.
+- id: spironolactone-overdosage#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: the overdose signs and hyperkalemia with impaired renal function,
+    from passage 1. No emergency line.
+- id: risperidone-patient-information#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    15-25 °C, do not freeze, protect from light, out of reach of children [2][3]; the uncited
+    "original container with the syringe attached" was rejected and is not shown.
+- id: risperidone-patient-information#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Controlled room temperature 15-25 °C, light, no freezing, from passages 1 and 3 (cited [1]).
+
+- id: risperidone-patient-information#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    15-25 °C (59-77 °F), protect from light, do not freeze, from passages 1 and 3 [1][3].
+- id: valacyclovir-patient-information#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: quotes "does not cure ... genital herpes" [3], then the initial
+    and recurrent episodes and suppressive therapy [1]. "Suppressive therapy to reduce transmission"
+    merges two indications passage 1 lists apart; a loose reading, nothing added.
+- id: valacyclovir-patient-information#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: quotes "does not cure cold sores, chickenpox, shingles, or
+    genital herpes" [3]; the sentence on what it treats was dropped.
+- id: valacyclovir-patient-information#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Not a cure, treats outbreaks, suppressive therapy, from passage 3 (and 1) [3].
+- id: ibuprofen-mechanism#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, lost the answer: only the fixed text "This answer couldn't be verified against
+    Molecula's sources." Both prostaglandin sentences were rejected.
+- id: ibuprofen-mechanism#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, lost the answer: only "This inhibition is similar to other NSAIDs and gives ibuprofen
+    its analgesic and antipyretic effects" [2] is left; the sentence saying what is inhibited
+    (prostaglandins) was dropped, so "this inhibition" points at nothing. Nothing added.
+- id: ibuprofen-mechanism#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: reducing prostaglandins lowers inflammation, pain and fever [2],
+    a conclusion from passage 2 (prostaglandin synthetase inhibition, analgesic and antipyretic) and
+    passage 1, though more certain than the label's "may be related to".
+- id: oseltamivir-pharmacology#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    The answer is only the garbled "Tamiz?": no claim and no answer. No pregnancy dosing passage
+    came back in either search (retrieval miss).
+- id: oseltamivir-pharmacology#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, lost the answer: only the fixed text "This answer couldn't be verified against
+    Molecula's sources." No pregnancy dosing passage came back; the birth-defects line was rejected
+    with the dose claim.
+- id: oseltamivir-pharmacology#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, lost the answer: only the fixed text "This answer couldn't be verified against
+    Molecula's sources." Two searches, no pregnancy dosing passage; the rejected drafts said
+    "standard dosing applies unchanged", which no passage holds, but none of it was shown.
+- id: gabapentin-product#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    The five strengths, 300 to 900 mg, from passage 1 [1].
+- id: gabapentin-product#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    The five strengths from passages 1 and 2 [1][2].
+- id: gabapentin-product#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    The five strengths from passage 2 [2].
+- id: levothyroxine-product#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, lost the answer: the sentence on the 1 mL unit-dose ampule in a pouch was dropped;
+    only "each ampule has a colored label with strength and name" [1] is left, a side detail.
+- id: levothyroxine-product#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, lost the answer: the ampule-and-pouch sentence was dropped (its draft also misread
+    "pouch of 30 or 5": the 30 are a box); only the colored-label detail [1] is left.
+- id: levothyroxine-product#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    1 mL white non-transparent unit-dose ampules packaged in a pouch, each with a colored label,
+    from passage 1 (pouch of 5 ampules) and passage 4 [1]. Leaves out the 30-ampule box.
+- id: ondansetron-specific-populations#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: conflicting case-control studies, so the evidence is not
+    conclusive [1]; a conclusion from passage 1. The cohort sentence was dropped and "Other" now
+    dangles.
+- id: ondansetron-specific-populations#2
+  from_memory: true
+  denies_data: false
+  note: >-
+    Inconsistent findings and the oral RR 1.24 (CI 1.03-1.48) vs IV split, from passage 1 [1]. But
+    "no such association was seen ... in other studies" misreads it: the two case-control studies
+    reported conflicting associations, one an increased risk of cleft palate (OR 1.6). The "not
+    confirmed in other studies" line is about cardiac septal defects.
+- id: ondansetron-specific-populations#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: only "the label does not state that ondansetron is definitively
+    linked to cleft lip or palate" [1] is left, a fair conclusion from passage 1's inconsistent
+    findings. The study figures were dropped.
+- id: morphine-specific-populations#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Retrieval miss: no hepatic-impairment passage came back. Says Molecula's data doesn't cover
+    cirrhosis, which is true of what was returned.
+- id: morphine-specific-populations#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Retrieval miss: no hepatic-impairment passage came back. Says Molecula's data doesn't cover any
+    warnings for cirrhosis, which is true of what was returned.
+- id: morphine-specific-populations#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Lower starting dose, slow titration, watch for respiratory depression, sedation and hypotension,
+    from the hepatic impairment passage [3].
+- id: dextromethorphan-warnings#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, answers the question: do not use with an MAOI or for two weeks after stopping one [1];
+    the plain "No" sentence was dropped.
+- id: dextromethorphan-warnings#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Do not use with a prescription MAOI or for 2 weeks after stopping it, from passage 1 [1].
+- id: dextromethorphan-warnings#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Must not take it on an MAOI or for two weeks after stopping one, from passage 1 [1]; no reason
+    added.
+- id: celecoxib-warnings#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, lost the answer: the shown text is "The label …" followed by pages of dots and
+    question marks and leaked model channel text ("We need answer ... Cite [6]"). No drug fact is
+    stated, though the second search did return the warning's 1% and 2-4% rates [6].
+- id: celecoxib-warnings#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, lost the answer: only the fixed text "This answer couldn't be verified against
+    Molecula's sources." The rejected drafts again put ulcers into the <0.1% list, but none of it
+    was shown.
+- id: celecoxib-warnings#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fallback, lost the answer: the sentences on GI bleeding and the <0.1% figure were dropped; only
+    "the label also states that ulceration can occur but gives no rate for ulcers alone" [3] is left,
+    true of passage 3 and of what came back, but no frequency.

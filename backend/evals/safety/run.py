@@ -25,7 +25,7 @@ from typing import Any, Literal
 
 import httpx
 import yaml
-from evals.chat_model.citations import model_label, tool_descriptions
+from evals.chat_model.citations import chat_label, tool_descriptions
 from evals.safety.dataset import EXPECTED, InputCheckItem, load_items
 from pydantic import BaseModel
 
@@ -158,7 +158,8 @@ async def server_sent(chunks: AsyncIterator[str]) -> AsyncIterator[dict[str, Any
         buffer += chunk
         *frames, buffer = buffer.split("\n\n")
         for frame in frames:
-            data = next(line for line in frame.splitlines() if line.startswith("data: "))
+            # SSE ends lines only at CR or LF; splitlines() would also split at U+2028 in an answer.
+            data = next(line for line in frame.split("\n") if line.startswith("data: "))
             yield json.loads(data.removeprefix("data: "))
 
 
@@ -167,7 +168,7 @@ def cache_path(
 ) -> Path:
     """Where an eval's answers are cached, keyed by the model, every prompt file and the tools."""
     prompt_files = sorted(PROMPTS.rglob("*.md"))
-    name = model_label(settings, model_name)
+    name = chat_label(settings, model_name)
     setup = [name, descriptions, *(path.read_text("utf-8") for path in prompt_files)]
     key = hashlib.sha256("\n".join(setup).encode()).hexdigest()[:12]
     return settings.build_dir / "eval" / eval_name / f"{name.replace('/', '_')}-{key}.jsonl"

@@ -1,6 +1,6 @@
 from molecula.guard.claims import refs, split_claims
 from molecula.guard.safety import fixed_answer
-from molecula.schemas.source_check import Claim
+from molecula.schemas.claims import Claim
 
 
 def texts(answer: str) -> list[str]:
@@ -108,6 +108,12 @@ def test_citations_alone_cite_the_claim_before_them() -> None:
     assert split_claims(answer) == [
         Claim(text="These are the most frequent side effects. [1][2]", refs=(1, 2))
     ]
+
+
+def test_the_us_before_a_name_doesnt_end_a_sentence() -> None:
+    answer = "Yes, it is approved by the U.S. Food and Drug Administration for plague [1]."
+
+    assert texts(answer) == [answer]
 
 
 def test_a_german_answer_is_split_at_its_sentences_not_its_abbreviations() -> None:

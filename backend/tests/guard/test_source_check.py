@@ -2,6 +2,9 @@ import asyncio
 import json
 from typing import Any
 
+import httpx
+import openai
+import pytest
 from langchain_core.messages import AIMessage, SystemMessage
 
 from fake_llm import ScriptedChatModel, answer_message, tool_call_message
@@ -9,7 +12,8 @@ from molecula import prompts
 from molecula.guard.safety import fixed_answer
 from molecula.guard.source_check import ChatModelSourceCheck, cited_sources
 from molecula.schemas.chat import ToolResultEvent, Usage
-from molecula.schemas.source_check import CheckedAnswer, CheckedClaim
+from molecula.schemas.claims import CheckedClaim
+from molecula.schemas.source_check import CheckedAnswer, SourceCheckFailed
 
 PASSAGE = {
     "id": "set-1:adverse_reactions:0",
@@ -120,6 +124,13 @@ def test_only_claims_with_a_returned_ref_or_none_reach_the_model() -> None:
 
     assert [claim["id"] for claim in sent(model)["claims"]] == [2, 3]
     assert [claim.decided_by for claim in checked.claims] == ["unknown_refs", "model", "model"]
+
+
+def test_a_provider_error_fails_the_check() -> None:
+    timeout = openai.APITimeoutError(request=httpx.Request("POST", "http://llm.test/chat"))
+
+    with pytest.raises(SourceCheckFailed):
+        check("Headache is common [1].", timeout)
 
 
 def test_a_malformed_verdict_makes_every_claim_unsupported() -> None:
