@@ -1,6 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     llm_temperature: float = 0.2
     llm_timeout_seconds: float = 60.0
     llm_max_retries: int = 2
+    # Empty leaves the model's own default: gpt-oss-20b in LM Studio then reasons about as
+    # briefly as on "low", gpt-5-mini on OpenRouter longer than on "medium" (#193, #198).
+    llm_reasoning_effort: Literal["low", "medium", "high"] | None = None
     embedding_model: str = "local"
     # Multilingual and among the best CPU-sized models in docs/decisions/embeddings.md (#88).
     local_embedding_model: str = "BAAI/bge-m3"

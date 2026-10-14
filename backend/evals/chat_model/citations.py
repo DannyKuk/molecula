@@ -122,10 +122,17 @@ def tool_descriptions(app: FastAPI) -> str:
 
 
 def cache_path(settings: Settings, model_name: str, descriptions: str) -> Path:
-    setup = f"{model_name}\n{prompts.load('agent/system')}\n{descriptions}"
+    name = model_label(settings, model_name)
+    setup = f"{name}\n{prompts.load('agent/system')}\n{descriptions}"
     key = hashlib.sha256(setup.encode()).hexdigest()[:12]
-    slug = model_name.replace("/", "_")
+    slug = name.replace("/", "_")
     return settings.build_dir / "eval" / "citations" / f"{slug}-{key}.jsonl"
+
+
+def model_label(settings: Settings, model_name: str) -> str:
+    """The model and, when one is set, its reasoning effort: `openai/gpt-oss-20b-medium`."""
+    effort = settings.llm_reasoning_effort
+    return f"{model_name}-{effort}" if effort else model_name
 
 
 def read_cache(cache: Path) -> dict[str, Answer]:

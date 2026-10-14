@@ -14,6 +14,7 @@ LLM_FIELDS: dict[str, Any] = {
     "llm_model": None,
     "local_llm_base_url": None,
     "local_llm_model": None,
+    "llm_reasoning_effort": None,
 }
 
 
@@ -99,6 +100,18 @@ def test_temperature_timeout_and_retries_come_from_settings() -> None:
     assert model.temperature == 0.0
     assert model.request_timeout == 15.0
     assert model.max_retries == 5
+
+
+def test_reasoning_effort_reaches_the_request() -> None:
+    model = chat_openai(local_settings(llm_reasoning_effort="medium"))
+
+    assert model._default_params["reasoning_effort"] == "medium"
+
+
+def test_without_a_reasoning_effort_the_request_leaves_it_to_the_model() -> None:
+    model = chat_openai(local_settings())
+
+    assert "reasoning_effort" not in model._default_params
 
 
 def test_missing_key_without_a_local_server_names_the_settings_to_fill_in() -> None:
