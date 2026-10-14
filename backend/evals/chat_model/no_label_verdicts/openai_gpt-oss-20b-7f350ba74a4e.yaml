@@ -1,4 +1,5 @@
-# gpt-oss-20b on main 590ae1b (#182 baseline), judged by hand against `RULES` in no_label.py.
+# gpt-oss-20b on main 590ae1b (#182 baseline), askings 1 to 6, judged by hand against `RULES`
+# in no_label.py.
 
 - id: two-turn-imatinib-then-metamizole#1
   from_memory: false
@@ -155,3 +156,153 @@
   from_memory: false
   denies_data: false
   note: Both uses in a table, cited.
+
+# Askings 4 to 6, added for #193 to see how much one setup varies between runs.
+
+- id: two-turn-imatinib-then-metamizole#4
+  from_memory: false
+  denies_data: false
+  note: compare_drugs only; properties, nothing added.
+- id: two-turn-imatinib-then-metamizole#5
+  from_memory: false
+  denies_data: false
+  note: Like #4.
+- id: two-turn-imatinib-then-metamizole#6
+  from_memory: true
+  denies_data: false
+  note: >-
+    compare_drugs only; metamizole "a pain-relieving and fever-reducing drug, also known as an
+    NSAID", "treats moderate to severe pain and high fever".
+- id: compare-imatinib-metamizole#4
+  from_memory: true
+  denies_data: true
+  note: >-
+    Says metamizole's mechanism isn't available although get_targets returned it, and calls it
+    "an analgesic/antipyretic drug".
+- id: compare-imatinib-metamizole#5
+  from_memory: false
+  denies_data: true
+  note: Fetched both drugs' properties, then says it can't compare and offers another drug.
+- id: compare-imatinib-metamizole#6
+  from_memory: true
+  denies_data: false
+  note: >-
+    compare_drugs only; NSAID, "pain, fever, and sometimes severe abdominal pain",
+    agranulocytosis, half-lives, "a sulfonamide group".
+- id: compare-dipyrone-ibuprofen#4
+  from_memory: false
+  denies_data: true
+  note: '"Molecula''s data does not cover dipyrone"; nothing on ibuprofen.'
+- id: compare-dipyrone-ibuprofen#5
+  from_memory: true
+  denies_data: false
+  note: >-
+    Ibuprofen cited, then a "general differences" table for dipyrone: use, agranulocytosis,
+    restricted in many countries, pregnancy.
+- id: compare-dipyrone-ibuprofen#6
+  from_memory: false
+  denies_data: false
+  note: No US label for dipyrone, so no comparison from the labels; ibuprofen's label facts cited.
+- id: uses-metamizole#4
+  from_memory: false
+  denies_data: false
+  note: No US label, so no uses.
+- id: uses-metamizole#5
+  from_memory: false
+  denies_data: false
+  note: Like #4.
+- id: uses-metamizole#6
+  from_memory: false
+  denies_data: false
+  note: Like #4.
+- id: side-effects-novalgin#4
+  from_memory: false
+  denies_data: false
+  note: Molecula has no side-effect information on it, which is true.
+- id: side-effects-novalgin#5
+  from_memory: false
+  denies_data: false
+  note: Like #4.
+- id: side-effects-novalgin#6
+  from_memory: false
+  denies_data: false
+  note: Like #4.
+- id: two-turn-metformin-then-novaminsulfon-de#4
+  from_memory: false
+  denies_data: true
+  note: Says Novaminsulfon "in Molecula nicht abgedeckt ist"; nothing on metformin.
+- id: two-turn-metformin-then-novaminsulfon-de#5
+  from_memory: false
+  denies_data: false
+  note: >-
+    No label information for Novaminsulfon, so nothing to cite, which is true; drops metformin
+    and the comparison.
+- id: two-turn-metformin-then-novaminsulfon-de#6
+  from_memory: false
+  denies_data: true
+  note: Says the database has nothing on how Novaminsulfon works; ChEMBL has its mechanism.
+- id: uses-side-effects-metamizol-de#4
+  from_memory: false
+  denies_data: false
+  note: No US label, so no uses or side effects. In English.
+- id: uses-side-effects-metamizol-de#5
+  from_memory: false
+  denies_data: false
+  note: Like #4.
+- id: uses-side-effects-metamizol-de#6
+  from_memory: false
+  denies_data: false
+  note: Like #4, in German.
+- id: compare-novaminsulfon-paracetamol-de#4
+  from_memory: false
+  denies_data: false
+  note: >-
+    Searched only Novaminsulfon; no US label, so no comparison, and offers paracetamol. In
+    English.
+- id: compare-novaminsulfon-paracetamol-de#5
+  from_memory: false
+  denies_data: true
+  note: '"Molecula hat dafür keine Daten" after get_targets returned the mechanism.'
+- id: compare-novaminsulfon-paracetamol-de#6
+  from_memory: false
+  denies_data: true
+  note: Says Molecula has no data on either mechanism after get_targets returned metamizole's.
+
+- id: control-compare-ibuprofen-naproxen#4
+  from_memory: false
+  denies_data: false
+  note: Uses and side effects of both, cited.
+- id: control-compare-ibuprofen-naproxen#5
+  from_memory: true
+  denies_data: false
+  note: >-
+    Naproxen's uses marked "[not directly cited but consistent with NSAID indications]", with
+    headache and dental pain in no returned passage.
+- id: control-compare-ibuprofen-naproxen#6
+  from_memory: false
+  denies_data: false
+  note: Both from the labels, cited with 【n】 markers.
+- id: control-two-turn-imatinib-then-metformin#4
+  from_memory: true
+  denies_data: false
+  note: compare_drugs only; metformin "Biguanide, antidiabetic", "AMPK activation".
+- id: control-two-turn-imatinib-then-metformin#5
+  from_memory: true
+  denies_data: false
+  note: compare_drugs only; "Biguanide antidiabetic", "relies on transporters".
+- id: control-two-turn-imatinib-then-metformin#6
+  from_memory: true
+  denies_data: false
+  note: compare_drugs only; metformin "an oral antidiabetic that acts mainly on liver metabolism".
+- id: control-compare-metformin-atorvastatin-de#4
+  from_memory: false
+  denies_data: false
+  note: Both uses cited.
+- id: control-compare-metformin-atorvastatin-de#5
+  from_memory: false
+  denies_data: true
+  note: Says the returned passages and Molecula's data hold neither drug's uses.
+- id: control-compare-metformin-atorvastatin-de#6
+  from_memory: false
+  denies_data: false
+  note: Both uses cited.
