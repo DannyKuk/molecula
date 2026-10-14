@@ -1,0 +1,137 @@
+# gpt-oss-20b, no reasoning effort set (about "low"), main 5c8027f.
+# Judged against RULES in no_label.py. Restating, simplifying or drawing a conclusion from a
+# returned passage, or saying what a technical term means, is not from memory; a fact about a
+# drug that no returned passage holds is, also when it misreads one.
+- id: zolpidem-abuse-dependence#1
+  from_memory: false
+  denies_data: true
+  note: >-
+    Says only that Molecula has no data on Valium (true, it isn't stored), although the zolpidem
+    passages it got compare zolpidem 40 mg with diazepam 20 mg; Ambien isn't answered.
+- id: bupropion-abuse-dependence#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Seizures and deaths when snorted, oral use only: passage 4. "Neurological and
+    cardiovascular problems" leans on the overdose passage's cardiac events.
+- id: atorvastatin-common-side-effects#1
+  from_memory: false
+  denies_data: false
+  note: The five reactions are the label table's first five, at least 2% and above placebo.
+- id: ondansetron-adverse-reactions#1
+  from_memory: false
+  denies_data: false
+  note: Headache 9% after a single 16 mg dose and 11% after 24 mg, both in the passages.
+- id: omeprazole-clinical-studies#1
+  from_memory: false
+  denies_data: false
+  note: Both pediatric studies with their numbers, from passage 1.
+- id: risperidone-clinical-studies#1
+  from_memory: false
+  denies_data: false
+  note: Two 8-week placebo-controlled trials, ages 5 to 16, from the passages.
+- id: lisinopril-angioedema#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Draws "increased risk" from the passage on angioedema unrelated to ACE inhibitors; the
+    contraindication for a history with an ACE inhibitor wasn't returned. A stretch, not memory.
+- id: acetazolamide-contraindications#1
+  from_memory: false
+  denies_data: false
+  note: Sulfonamide derivative and cross-sensitivity, from the contraindications passage.
+- id: atorvastatin-starting-dose#1
+  from_memory: false
+  denies_data: false
+  note: 10 or 20 mg once daily, from passage 1.
+- id: lamotrigine-dosing#1
+  from_memory: false
+  denies_data: false
+  note: 500 mg/day in 2 divided doses, from passage 1.
+- id: omeprazole-indications#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    1 to 12 months, up to 6 weeks, GERD with EE, from passage 5. "Beyond 12 months in any age
+    group" bends the adult 12-month sentence but is in the passage.
+- id: ciprofloxacin-indications#1
+  from_memory: false
+  denies_data: false
+  note: Plague indication with pneumonic, septicemic and prophylaxis, from passage 1.
+- id: acetaminophen-warfarin#1
+  from_memory: false
+  denies_data: false
+  note: INR at 4,000 mg/day and "ask a doctor or pharmacist", from passages 1 and 2.
+- id: clopidogrel-omeprazole#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    "Lower its effectiveness in preventing heart attacks or strokes": no passage says what
+    clopidogrel prevents. Also turns "dexlansoprazole and pantoprazole had less effect" into
+    "preferred".
+- id: pseudoephedrine-antidepressants#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    Lists phenelzine, tranylcypromine, isocarboxazid and selegiline, explains what an MAOI does
+    and "dangerous increases in blood pressure", and says the label lists them. The passages
+    only say "a prescription MAOI".
+- id: diclofenac-otc-consumer#1
+  from_memory: false
+  denies_data: false
+  note: Under 18 not known safe, ask a doctor, from passage 1.
+- id: diclofenac-overdosage#1
+  from_memory: false
+  denies_data: false
+  note: Symptoms, the rare ones and activated charcoal, all in passage 1; 911 and 112 as the prompt gives them.
+- id: spironolactone-overdosage#1
+  from_memory: false
+  denies_data: false
+  note: The overdosage passage, sentence by sentence.
+- id: risperidone-patient-information#1
+  from_memory: false
+  denies_data: false
+  note: 59 to 77 °F, light, freezing, children, all in the passages.
+- id: valacyclovir-patient-information#1
+  from_memory: false
+  denies_data: false
+  note: Doesn't cure genital herpes, and the indications, from passages 1 and 3.
+- id: ibuprofen-mechanism#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    Cyclooxygenase, arachidonic acid, and prostaglandins sensitising nerves and raising
+    temperature: none is in a passage, which says the mode of action "is not completely
+    understood, but may be related to prostaglandin synthetase inhibition".
+- id: oseltamivir-pharmacology#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Says Molecula has nothing on a pregnancy dose; the search asked the dosing section and got
+    no pregnancy passage. A retrieval miss, honestly reported.
+- id: gabapentin-product#1
+  from_memory: false
+  denies_data: false
+  note: 300, 450, 600, 750 and 900 mg, from passage 1.
+- id: levothyroxine-product#1
+  from_memory: false
+  denies_data: false
+  note: Ampules, colours, boxes of 30 and pouches of 5, from passage 1 (drops the 75 mcg purple one).
+- id: ondansetron-specific-populations#1
+  from_memory: false
+  denies_data: false
+  note: The cohort's RRs and the conflicting case-control studies, from passage 1.
+- id: morphine-specific-populations#1
+  from_memory: false
+  denies_data: false
+  note: The hepatic impairment passage.
+- id: dextromethorphan-warnings#1
+  from_memory: false
+  denies_data: false
+  note: MAOI and 2 weeks after, from the passages.
+- id: celecoxib-warnings#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    "Stomach ulcers and GI bleeding in less than 0.1%": the <0.1% list holds GI bleeding and
+    perforation, not ulcers. A misreading; the warning's own rates weren't returned.

@@ -1,0 +1,32 @@
+# The questions of retrieval_questions.yaml that the from-memory eval asks (#197): two per section
+# group, drawn with random.Random(197).sample from each group in sorted order. Listed by id, so the
+# sample stays the same when the dataset grows.
+
+- zolpidem-abuse-dependence
+- bupropion-abuse-dependence
+- atorvastatin-common-side-effects
+- ondansetron-adverse-reactions
+- omeprazole-clinical-studies
+- risperidone-clinical-studies
+- lisinopril-angioedema
+- acetazolamide-contraindications
+- atorvastatin-starting-dose
+- lamotrigine-dosing
+- omeprazole-indications
+- ciprofloxacin-indications
+- acetaminophen-warfarin
+- clopidogrel-omeprazole
+- pseudoephedrine-antidepressants
+- diclofenac-otc-consumer
+- diclofenac-overdosage
+- spironolactone-overdosage
+- risperidone-patient-information
+- valacyclovir-patient-information
+- ibuprofen-mechanism
+- oseltamivir-pharmacology
+- gabapentin-product
+- levothyroxine-product
+- ondansetron-specific-populations
+- morphine-specific-populations
+- dextromethorphan-warnings
+- celecoxib-warnings
