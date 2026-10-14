@@ -1,0 +1,154 @@
+# gpt-oss-20b, #193 change 3: main's prompt; each `drugs_without_label` entry of a search_labels
+# result carries the drug's ChEMBL targets and mechanism, and the docstring says what it holds.
+# Judged by hand against `RULES` in no_label.py.
+
+- id: two-turn-imatinib-then-metamizole#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    compare_drugs only; metamizole "an analgesic/antipyretic", used for "fever, pain, and
+    inflammation", "a non-steroidal anti-inflammatory drug".
+- id: two-turn-imatinib-then-metamizole#2
+  from_memory: false
+  denies_data: false
+  note: Properties only, with a stray 【3】.
+- id: two-turn-imatinib-then-metamizole#3
+  from_memory: true
+  denies_data: false
+  note: >-
+    "Analgesic / antipyretic", and a made-up mechanism ("a prodrug metabolised to metamizole
+    N-oxide").
+- id: compare-imatinib-metamizole#1
+  from_memory: true
+  denies_data: false
+  note: compare_drugs only; a "Drug class" row calls metamizole an NSAID for pain and fever.
+- id: compare-imatinib-metamizole#2
+  from_memory: true
+  denies_data: false
+  note: Properties right, then "metamizole is an analgesic/antipyretic".
+- id: compare-imatinib-metamizole#3
+  from_memory: true
+  denies_data: false
+  note: Properties right, then "contains a sulfonamide group" (it is a sulfonate).
+- id: compare-dipyrone-ibuprofen#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    ChEMBL's COX mechanism given, but cited as [1], an ibuprofen passage, with "the label says";
+    then "restricted or banned in several countries", "agranulocytosis".
+- id: compare-dipyrone-ibuprofen#2
+  from_memory: true
+  denies_data: false
+  note: >-
+    Mechanism from ChEMBL right, then a "Drug class: NSAID" row for dipyrone and "converted to
+    active metabolites". ChEMBL cited as [1], an ibuprofen passage.
+- id: compare-dipyrone-ibuprofen#3
+  from_memory: true
+  denies_data: false
+  note: >-
+    No label and ChEMBL's COX mechanism said right, ibuprofen cited, but it opens with "both
+    pain-relieving drugs".
+- id: uses-metamizole#1
+  from_memory: false
+  denies_data: false
+  note: No US label, so no uses.
+- id: uses-metamizole#2
+  from_memory: false
+  denies_data: false
+  note: No US label; gives the ChEMBL mechanism, cited as [1] although no passage was returned.
+- id: uses-metamizole#3
+  from_memory: false
+  denies_data: false
+  note: Like #2.
+- id: side-effects-novalgin#1
+  from_memory: false
+  denies_data: false
+  note: No US label, so no side effects.
+- id: side-effects-novalgin#2
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: side-effects-novalgin#3
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: two-turn-metformin-then-novaminsulfon-de#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Metformin cited; no label for Novaminsulfon, ChEMBL's COX inhibition, explained as what COX
+    does. Close to the line: "a mechanism common in pain and fever medicines". ChEMBL cited as
+    [2], a metformin passage.
+- id: two-turn-metformin-then-novaminsulfon-de#2
+  from_memory: true
+  denies_data: false
+  note: Mechanism right, but opens with "ist ein Schmerz- und Fiebermittel".
+- id: two-turn-metformin-then-novaminsulfon-de#3
+  from_memory: true
+  denies_data: false
+  note: Mechanism right, then "Novaminsulfon lindert als COX-Inhibitor Schmerzen und Fieber".
+- id: uses-side-effects-metamizol-de#1
+  from_memory: false
+  denies_data: false
+  note: No US label, so no uses or side effects.
+- id: uses-side-effects-metamizol-de#2
+  from_memory: false
+  denies_data: true
+  note: Says Metamizol "in Molecula nicht abgedeckt ist" and asks for another drug.
+- id: uses-side-effects-metamizol-de#3
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: compare-novaminsulfon-paracetamol-de#1
+  from_memory: false
+  denies_data: true
+  note: >-
+    Searched only Novaminsulfon, then says it can't compare from its data; gives neither the
+    mechanism it got nor anything on paracetamol. In English.
+- id: compare-novaminsulfon-paracetamol-de#2
+  from_memory: false
+  denies_data: true
+  note: Like #1, in German.
+- id: compare-novaminsulfon-paracetamol-de#3
+  from_memory: false
+  denies_data: true
+  note: Like #2.
+
+- id: control-compare-ibuprofen-naproxen#1
+  from_memory: false
+  denies_data: false
+  note: Uses and side effects of both, cited.
+- id: control-compare-ibuprofen-naproxen#2
+  from_memory: true
+  denies_data: false
+  note: Cited lists, then a table with durations of action (6–8 h, 12 h) no passage gives.
+- id: control-compare-ibuprofen-naproxen#3
+  from_memory: true
+  denies_data: false
+  note: Same durations of action, and "headache, toothache" in no returned passage.
+- id: control-two-turn-imatinib-then-metformin#1
+  from_memory: false
+  denies_data: false
+  note: Properties only; the reading of XLogP follows from the numbers.
+- id: control-two-turn-imatinib-then-metformin#2
+  from_memory: true
+  denies_data: false
+  note: >-
+    Only imatinib's label searched; metformin's mechanism and "type-2 diabetes" with no source in
+    this turn.
+- id: control-two-turn-imatinib-then-metformin#3
+  from_memory: true
+  denies_data: false
+  note: Properties, then metformin "activates the AMPK pathway"; no tool says so.
+- id: control-compare-metformin-atorvastatin-de#1
+  from_memory: false
+  denies_data: false
+  note: Both uses from the labels, cited.
+- id: control-compare-metformin-atorvastatin-de#2
+  from_memory: false
+  denies_data: false
+  note: Both uses cited; "HMG-CoA-Reduktase-Inhibitor" is in a returned passage.
+- id: control-compare-metformin-atorvastatin-de#3
+  from_memory: false
+  denies_data: false
+  note: Like #2.
