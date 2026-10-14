@@ -135,7 +135,7 @@ export const IMATINIB_SOURCES: Source[] = [
     url: "https://pubchem.ncbi.nlm.nih.gov/compound/5291",
     section: null,
     effective_time: null,
-    ref: null,
+    ref: 4,
   },
 ];
 

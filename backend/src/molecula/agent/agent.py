@@ -11,7 +11,7 @@ from langchain_core.tools import BaseTool
 from molecula import prompts
 from molecula.agent.events import AgentRun
 from molecula.agent.llm import ChatModelError, describe_provider_error
-from molecula.agent.references import NumberPassages, References
+from molecula.agent.references import NumberSources, References
 from molecula.schemas.chat import ChatEvent, ChatMessage, ErrorEvent
 
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ class ChatAgent:
             model,
             tools,
             system_prompt=prompts.load("agent/system"),
-            middleware=[StepLimit(max_steps), NumberPassages()],
+            middleware=[StepLimit(max_steps), NumberSources()],
             context_schema=References,
         )
         self._tools = tools

@@ -4,7 +4,15 @@ import { createContext, useContext, type ReactNode } from "react";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Source } from "@/lib/chat";
-import { citedSources, labelDate, sectionName, sourceLabel, type Citations } from "@/lib/citations";
+import {
+  citedSources,
+  isLabel,
+  labelDate,
+  sectionName,
+  siteName,
+  sourceLabel,
+  type Citations,
+} from "@/lib/citations";
 
 /** The answer's sources and passages, or null while the answer is still streaming. */
 export const CitationsContext = createContext<Citations | null>(null);
@@ -12,9 +20,9 @@ export const CitationsContext = createContext<Citations | null>(null);
 const EXCERPT_LENGTH = 320;
 
 /**
- * A run of citations such as `[2][3]` as one chip naming the first label section it cites,
- * with "+1" for each other section. Its popover shows every cited passage with a link to the
- * label on DailyMed. While the answer streams the citation stays as written; a number that
+ * A run of citations such as `[2][3]` as one chip naming the first source it cites (a label
+ * section, or a PubChem, ChEMBL or RCSB page), with "+1" for each other one. Its popover shows
+ * every cited passage with a link to the label on DailyMed, and every cited page with its link. While the answer streams the citation stays as written; a number that
  * points at no passage is left out. `spaced` says a space stood before the citation; it is kept
  * with the chip and left out with it.
  */
@@ -50,7 +58,11 @@ export function CitationChip({
           <ol className="divide-y divide-border">
             {sources.map((source) => (
               <li key={source.ref} className="flex flex-col gap-1 p-3">
-                <CitedPassage source={source} text={citations.passages[source.ref!]?.text} />
+                {isLabel(source) ? (
+                  <CitedPassage source={source} text={citations.passages[source.ref!]?.text} />
+                ) : (
+                  <CitedPage source={source} />
+                )}
               </li>
             ))}
           </ol>
@@ -79,6 +91,22 @@ function CitedPassage({ source, text }: { source: Source; text?: string }) {
         className="font-medium underline underline-offset-4"
       >
         Open the label on DailyMed
+      </a>
+    </>
+  );
+}
+
+function CitedPage({ source }: { source: Source }) {
+  return (
+    <>
+      <p className="font-medium">{sourceLabel(source)}</p>
+      <a
+        href={source.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-medium underline underline-offset-4"
+      >
+        Open on {siteName(source)}
       </a>
     </>
   );

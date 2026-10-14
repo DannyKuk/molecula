@@ -43,6 +43,13 @@ describe("citations", () => {
     ]);
   });
 
+  it("names a page by its site and entry", () => {
+    expect(sourceLabel(IMATINIB_SOURCES[3])).toBe("PubChem · imatinib");
+    expect(sourceLabel({ ...IMATINIB_SOURCES[3], kind: "rcsb", name: "2HYY" })).toBe(
+      "RCSB PDB · 2HYY",
+    );
+  });
+
   it("names label sections as words", () => {
     expect(sectionName("ask_doctor_or_pharmacist")).toBe("Ask doctor or pharmacist");
     expect(sectionName(null)).toBe("Label");

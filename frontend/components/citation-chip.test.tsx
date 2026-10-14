@@ -55,6 +55,28 @@ describe("CitationChip", () => {
     expect(popover.getByText(/have been evaluated/)).toBeDefined();
   });
 
+  it("shows a cited PubChem page as a chip naming the site and the compound", async () => {
+    renderAnswer("Imatinib weighs 493.6 g/mol [4].");
+
+    expect(chips()).toEqual(["PubChem · imatinib"]);
+    const popover = await openChip("Sources: PubChem · imatinib");
+    expect(popover.getAllByRole("listitem")[0].textContent).toBe(
+      "PubChem · imatinibOpen on PubChem",
+    );
+    const link = popover.getByRole("link", { name: "Open on PubChem" });
+    expect(link.getAttribute("href")).toBe("https://pubchem.ncbi.nlm.nih.gov/compound/5291");
+    expect(link.getAttribute("target")).toBe("_blank");
+  });
+
+  it("joins a label passage and a page cited together into one chip", async () => {
+    renderAnswer("Imatinib blocks BCR-ABL and weighs 493.6 g/mol [1][4].");
+
+    expect(chips()).toEqual(["Gleevec · Mechanism of action +1"]);
+    const popover = await openChip(/Sources/);
+    expect(popover.getByRole("link", { name: "Open the label on DailyMed" })).toBeDefined();
+    expect(popover.getByRole("link", { name: "Open on PubChem" })).toBeDefined();
+  });
+
   it("reads gpt-oss's own brackets like the others", () => {
     renderAnswer("Imatinib blocks BCR-ABL【1】.");
 
