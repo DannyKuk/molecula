@@ -26,10 +26,10 @@ def get_properties_tool(compounds: CompoundService) -> StructuredTool:
         Returns `status: "found"` with the `compound`: PubChem CID, generic name, molecular
         formula, molecular weight (g/mol), XLogP, topological polar surface area (Å²),
         hydrogen bond donors and acceptors, rotatable bonds, heavy atoms, SMILES, InChIKey,
-        whether a 3D structure exists, and `source_url`, the PubChem page to cite. XLogP or
-        TPSA can be null when PubChem has no value. Returns `status: "not_supported"` with
-        `suggestions` when the drug isn't in Molecula's data: say so and offer the suggestions,
-        never pick one yourself.
+        whether a 3D structure exists, and `source_url`, its PubChem page; and `ref`, the number
+        to cite these properties with in square brackets, like `[2]`. XLogP or TPSA can be null
+        when PubChem has no value. Returns `status: "not_supported"` with `suggestions` when the
+        drug isn't in Molecula's data: say so and offer the suggestions, never pick one yourself.
         """
         return drug_properties(compounds, drug)
 

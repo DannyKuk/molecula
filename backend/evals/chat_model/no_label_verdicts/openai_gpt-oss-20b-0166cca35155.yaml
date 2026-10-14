@@ -1,0 +1,144 @@
+# gpt-oss-20b on main 5c8027f with the owner's tuned prompt (#205 attempt): every sentence about a
+# drug needs a label `ref` or is deleted, partial coverage, a check of every sentence before
+# sending. Judged by hand against `RULES` in no_label.py, the same way as the baseline
+# (openai_gpt-oss-20b-7f350ba74a4e.yaml).
+- id: two-turn-imatinib-then-metamizole#1
+  from_memory: false
+  denies_data: true
+  note: >-
+    compare_drugs returned both drugs' properties; says it has no label passages it can cite for
+    a comparison, and compares nothing.
+- id: two-turn-imatinib-then-metamizole#2
+  from_memory: false
+  denies_data: true
+  note: Same; "Molecula's data doesn't include a side-by-side comparison" after compare_drugs found both.
+- id: two-turn-imatinib-then-metamizole#3
+  from_memory: false
+  denies_data: true
+  note: Same denial after compare_drugs.
+- id: compare-imatinib-metamizole#1
+  from_memory: false
+  denies_data: true
+  note: Says Molecula has no comparison of their chemical properties right after compare_drugs returned them.
+- id: compare-imatinib-metamizole#2
+  from_memory: false
+  denies_data: true
+  note: '"I don''t have any information to compare these two drugs" after compare_drugs.'
+- id: compare-imatinib-metamizole#3
+  from_memory: false
+  denies_data: true
+  note: >-
+    Searched both labels; imatinib from its passages with citations, then "can't provide any
+    information" on metamizole and no comparison. Its properties and target were never looked up.
+- id: compare-dipyrone-ibuprofen#1
+  from_memory: false
+  denies_data: true
+  note: Says there is nothing on dipyrone and can't compare; nothing on ibuprofen although searched.
+- id: compare-dipyrone-ibuprofen#2
+  from_memory: false
+  denies_data: true
+  note: '"Molecula does not have information on dipyrone"; nothing on ibuprofen.'
+- id: compare-dipyrone-ibuprofen#3
+  from_memory: false
+  denies_data: true
+  note: '"I don''t have information on dipyrone in my database"; nothing on ibuprofen.'
+- id: uses-metamizole#1
+  from_memory: false
+  denies_data: false
+  note: No US label, so no information on its uses.
+- id: uses-metamizole#2
+  from_memory: false
+  denies_data: false
+  note: Molecula has nothing on its uses, which is true; doesn't say why.
+- id: uses-metamizole#3
+  from_memory: false
+  denies_data: false
+  note: Same as #2.
+- id: side-effects-novalgin#1
+  from_memory: false
+  denies_data: false
+  note: No label information on its side effects.
+- id: side-effects-novalgin#2
+  from_memory: false
+  denies_data: false
+  note: Molecula has nothing on its side effects, which is true.
+- id: side-effects-novalgin#3
+  from_memory: false
+  denies_data: false
+  note: Same as #2.
+- id: two-turn-metformin-then-novaminsulfon-de#1
+  from_memory: false
+  denies_data: true
+  note: '"Molecula hat dafür keine Daten" for how Novaminsulfon works; ChEMBL has it. Nothing on metformin.'
+- id: two-turn-metformin-then-novaminsulfon-de#2
+  from_memory: false
+  denies_data: false
+  note: The US labels can't say how Novaminsulfon works, which is true; nothing on metformin.
+- id: two-turn-metformin-then-novaminsulfon-de#3
+  from_memory: false
+  denies_data: true
+  note: No label passages, then "Molecula hat dafür keine Daten"; the mechanism is in ChEMBL.
+- id: uses-side-effects-metamizol-de#1
+  from_memory: false
+  denies_data: false
+  note: Nothing on its uses or side effects, which is true; answers in English.
+- id: uses-side-effects-metamizol-de#2
+  from_memory: false
+  denies_data: true
+  note: Says metamizole "in den verfügbaren Daten nicht abgedeckt ist" and asks for another drug.
+- id: uses-side-effects-metamizol-de#3
+  from_memory: false
+  denies_data: true
+  note: '"Molecula''s data does not contain information on Metamizol", in English.'
+- id: compare-novaminsulfon-paracetamol-de#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    Metamizole's mechanism, uses (severe and postoperative pain) and agranulocytosis, all
+    uncited and from memory; paracetamol's parts are cited.
+- id: compare-novaminsulfon-paracetamol-de#2
+  from_memory: true
+  denies_data: false
+  note: >-
+    The same, and says outright that the COX blockade "ist in den US-Labels nicht explizit
+    beschrieben, aber ein bekannter Mechanismus"; calls paracetamol "die sicherere Wahl".
+- id: compare-novaminsulfon-paracetamol-de#3
+  from_memory: false
+  denies_data: false
+  note: No label for Novaminsulfon, paracetamol's use and metabolism cited, can't compare.
+- id: control-compare-ibuprofen-naproxen#1
+  from_memory: false
+  denies_data: false
+  note: Both drugs' uses and side effects with rates, from the passages.
+- id: control-compare-ibuprofen-naproxen#2
+  from_memory: false
+  denies_data: false
+  note: Both drugs from the passages, cited in 【n】 style.
+- id: control-compare-ibuprofen-naproxen#3
+  from_memory: false
+  denies_data: false
+  note: Both drugs from the passages; the NSAID class, fever and renal effects are in them.
+- id: control-two-turn-imatinib-then-metformin#1
+  from_memory: false
+  denies_data: true
+  note: Says Molecula has no comparison of imatinib and metformin after compare_drugs returned both.
+- id: control-two-turn-imatinib-then-metformin#2
+  from_memory: false
+  denies_data: true
+  note: Same denial after compare_drugs.
+- id: control-two-turn-imatinib-then-metformin#3
+  from_memory: false
+  denies_data: true
+  note: '"I don''t have the information needed to compare" after compare_drugs.'
+- id: control-compare-metformin-atorvastatin-de#1
+  from_memory: false
+  denies_data: false
+  note: Both uses from the labels, cited.
+- id: control-compare-metformin-atorvastatin-de#2
+  from_memory: false
+  denies_data: false
+  note: Both uses from the labels, cited.
+- id: control-compare-metformin-atorvastatin-de#3
+  from_memory: false
+  denies_data: false
+  note: Both uses from the labels, cited.

@@ -45,3 +45,18 @@ OFFLINE=1 LOCAL_LLM_BASE_URL=http://localhost:1234/v1 LOCAL_LLM_MODEL=openai/gpt
 ```
 
 Answers are cached in `data/build/eval/from_memory/`, keyed by the model, the effort, every prompt file and the tool descriptions. A re-run with the same setup asks nothing and prints the table from the verdicts. A new setup writes a review sheet next to the cache that shows each answer under its tool results. `--times 2` asks each question a second time and keeps the first answers.
+
+## Changes since this baseline
+
+Each change to the agent's prompt or tools that should keep answers to what the tools returned gets a row, measured on the same 28 questions with gpt-oss-20b and no effort set. "Right passage returned" counts the answers whose search returned the passage that answers the question (`evidence_returned` in `from_memory.py`); the last column counts the additions from memory among those, so an addition on top of the right passage (generation) can be told from one that fills a retrieval miss.
+
+| Change | Where | Pass | From memory | Denies data | Right passage returned | From memory with it | Seconds p50 |
+|---|---|---|---|---|---|---|---|
+| Baseline: main's prompt | main 5c8027f | 23 | 4 | 1 | 26 | 3 | 9.3 |
+| The owner's citation-first prompt: a sentence about a drug needs a `ref` or is deleted, partial answers, term explanations without drug facts, a check of every sentence before sending; only label passages numbered | `fix/205-test-prompt` 7d0f010 | 26 | 2 | 0 | 25 | 2 | 7.0 |
+| The same prompt with the citation rule naming every tool's `ref` (passages, PubChem properties, ChEMBL targets, the 3D structure), and tool docstrings that say each result carries one | #208 | 24 | 4 | 0 | 22 | 3 | 7.2 |
+
+- **The citation-first prompt doesn't measurably cut memory on these questions.** 4, 2 and 4 of 28 are within the spread of two or three answers between identical runs (see Limits), and the 95% intervals overlap almost entirely. Three of the four additions in #208's run are the same ones the baseline made: the MAOI list for pseudoephedrine, the celecoxib ulcer rate read from a list of rarer events, and (like the medium run) "the virus remains in the body" for valacyclovir. The fourth is new: zolpidem 40 mg "higher than the usual maximum" and "used only in research".
+- **Two of the four additions carry no citation**, so the prompt's "delete a sentence about a drug you can't cite" isn't followed every time; the other two cite a passage that doesn't hold the claim, which no bracket check can catch. Both shapes need the answer check (#205).
+- **No answer denied data**, against 1 on the baseline: the zolpidem/Valium answer now gives the passage.
+- **Fewer searches returned the right passage, 22 against 26.** The model phrased some searches differently (lisinopril's question as a side-effect search, a search for acetazolamide's sulfa warning instead of its contraindications), and two misses, lisinopril and morphine, now end with a claim that the label doesn't mention the topic at all. That is a claim from one search's results, not from memory; the rules don't count it.

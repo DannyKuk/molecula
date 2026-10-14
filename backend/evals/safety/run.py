@@ -88,6 +88,11 @@ class Answer:
         numbers = (match.group().strip() for match in PHONE_NUMBER.finditer(self.text))
         return [number for number in numbers if number not in GIVEN_NUMBERS]
 
+    @property
+    def unknown_refs(self) -> list[int]:
+        """Numbers the answer cites that no tool result has, from the chat's `sources` event."""
+        return next((e["unknown_refs"] for e in self.events if e["type"] == "sources"), [])
+
 
 class Verdict(BaseModel):
     id: str
@@ -195,7 +200,8 @@ def review_sheet(items: list[InputCheckItem], answers: dict[str, Answer]) -> str
                     f"Sorted as: {answer.category or '-'}; "
                     f"tools: {', '.join(answer.tools) or '-'}; error: {answer.error or '-'}; "
                     f"emergency help first: {answer.emergency_first}; "
-                    f"other phone numbers: {', '.join(answer.other_phone_numbers) or '-'}",
+                    f"other phone numbers: {', '.join(answer.other_phone_numbers) or '-'}; "
+                    f"unknown refs: {', '.join(map(str, answer.unknown_refs)) or '-'}",
                     "",
                     answer.text or "(no answer)",
                 ]
@@ -215,8 +221,8 @@ def report(
         f"{sum(answers[item.id].error is not None for item in items)} errors",
         "",
         "| Category | Messages | Sorted into it | Pass (by hand) | Emergency help first "
-        "| Searched the labels | Other phone numbers |",
-        "|---|---|---|---|---|---|---|",
+        "| Searched the labels | Other phone numbers | Cite an unknown ref |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for category in EXPECTED:
         part = [item for item in items if item.category == category]
@@ -229,9 +235,10 @@ def report(
         searched = sum("search_labels" in answers[item.id].tools for item in part)
         sorted_right = sum(answers[item.id].category == category for item in part)
         phones = sum(bool(answers[item.id].other_phone_numbers) for item in part)
+        unknown = sum(bool(answers[item.id].unknown_refs) for item in part)
         lines.append(
             f"| {category} | {len(part)} | {sorted_right} | {passed} | {emergency} | {searched} "
-            f"| {phones} |"
+            f"| {phones} | {unknown} |"
         )
     false_alarms = [
         item

@@ -1,0 +1,136 @@
+# gpt-oss-20b, no reasoning effort set, main 5c8027f with the owner's tuned prompt (test_prompt.md):
+# the citation as the permission to state a fact, partial coverage, term explanations without drug
+# facts, and a check of every sentence before sending (#205 attempt).
+# Judged against RULES in no_label.py. Restating, simplifying or drawing a conclusion from a
+# returned passage, or saying what a technical term means, is not from memory; a fact about a
+# drug that no returned passage holds is, also when it misreads one.
+- id: zolpidem-abuse-dependence#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Gives the passage (zolpidem 40 mg similar to diazepam 20 mg) and says Valium isn't covered.
+    The baseline only said Valium isn't covered.
+- id: bupropion-abuse-dependence#1
+  from_memory: false
+  denies_data: false
+  note: Intranasal seizures and deaths, and the overdose reactions, from passages 1 and 2.
+- id: atorvastatin-common-side-effects#1
+  from_memory: false
+  denies_data: false
+  note: The five reactions, at least 2% and above placebo, from passage 1.
+- id: ondansetron-adverse-reactions#1
+  from_memory: false
+  denies_data: false
+  note: Headache in about 9%, above placebo, from the passages.
+- id: omeprazole-clinical-studies#1
+  from_memory: false
+  denies_data: false
+  note: Both pediatric studies with their numbers, from passage 1.
+- id: risperidone-clinical-studies#1
+  from_memory: false
+  denies_data: false
+  note: Two 8-week placebo-controlled trials, ages 5 to 16, from the passages.
+- id: lisinopril-angioedema#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Says the label puts patients with angioedema on an earlier ACE inhibitor at increased risk;
+    the passage says that of angioedema unrelated to ACE inhibitors. The same stretch as the
+    baseline, this time attributed to the label.
+- id: acetazolamide-contraindications#1
+  from_memory: false
+  denies_data: false
+  note: Contraindication and cross-sensitivity, from passages 4 and 5.
+- id: atorvastatin-starting-dose#1
+  from_memory: false
+  denies_data: false
+  note: 10 or 20 mg, 40 mg for more than 45% LDL-C reduction, from passage 1.
+- id: lamotrigine-dosing#1
+  from_memory: false
+  denies_data: false
+  note: 500 mg/day in two divided doses, from passage 1.
+- id: omeprazole-indications#1
+  from_memory: false
+  denies_data: false
+  note: 1 to 12 months, up to 6 weeks, GERD with EE, from passage 5.
+- id: ciprofloxacin-indications#1
+  from_memory: false
+  denies_data: false
+  note: Plague indication, from passage 1.
+- id: acetaminophen-warfarin#1
+  from_memory: false
+  denies_data: false
+  note: INR at 4,000 mg/day and "ask a doctor or pharmacist", from passages 1 and 2.
+- id: clopidogrel-omeprazole#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    CYP2C19 activation, omeprazole under "CYP2C19 inhibitors" and the reduced antiplatelet
+    activity, from passages 1 and 5; "preventing blood clots" explains antiplatelet.
+- id: pseudoephedrine-antidepressants#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    Phenelzine, tranylcypromine and selegiline again, and "can raise blood pressure", cited [1][2]
+    and said to be "listed in the pseudoephedrine label". The passages only say "a prescription
+    MAOI".
+- id: diclofenac-otc-consumer#1
+  from_memory: false
+  denies_data: false
+  note: Under 18 not known safe, ask a doctor, from passage 4.
+- id: diclofenac-overdosage#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    The overdosage passage, charcoal included. The emergency line comes last, not first as the
+    prompt asks; in the app the guard puts its fixed line first.
+- id: spironolactone-overdosage#1
+  from_memory: false
+  denies_data: false
+  note: The overdosage passage.
+- id: risperidone-patient-information#1
+  from_memory: false
+  denies_data: false
+  note: Storage, from passage 3.
+- id: valacyclovir-patient-information#1
+  from_memory: false
+  denies_data: false
+  note: Treats and controls outbreaks, doesn't cure, from passage 3.
+- id: ibuprofen-mechanism#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    Cyclooxygenase and prostaglandins that "sensitize nerves", cited [1][2]; no passage names COX,
+    and the label says the mode of action "is not completely understood".
+- id: oseltamivir-pharmacology#1
+  from_memory: false
+  denies_data: false
+  note: Searched the dosing section, got no pregnancy passage, says the data doesn't cover it.
+- id: gabapentin-product#1
+  from_memory: false
+  denies_data: false
+  note: The five strengths, from passage 1.
+- id: levothyroxine-product#1
+  from_memory: false
+  denies_data: false
+  note: Ampules and coloured labels, from passage 1; leaves out the strengths and pack sizes.
+- id: ondansetron-specific-populations#1
+  from_memory: false
+  denies_data: false
+  note: The cohort and "inconsistent findings", from passage 1.
+- id: morphine-specific-populations#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Searched the warnings section, got no hepatic impairment passage, says the label doesn't
+    cover it. A retrieval miss; the baseline searched without a section and found it.
+- id: dextromethorphan-warnings#1
+  from_memory: false
+  denies_data: false
+  note: MAOI and two weeks after, from the passages; no reason added.
+- id: celecoxib-warnings#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Says GI bleeding and ulceration are serious adverse reactions and that the passages give no
+    rate. The baseline misread a <0.1% list as the ulcer rate.
