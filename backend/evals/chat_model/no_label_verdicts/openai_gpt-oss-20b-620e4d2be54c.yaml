@@ -1,0 +1,182 @@
+# gpt-oss-20b, no reasoning effort set, the owner's citation-first prompt with the citation rule
+# naming every tool's ref and tool docstrings that say each result carries one (#208).
+# Judged against RULES in no_label.py.
+- id: two-turn-imatinib-then-metamizole#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    Properties from compare_drugs [1][2], but calls metamizole "a non-steroidal
+    analgesic/antipyretic", "a prodrug of 4-aminophenylsulfonamide" (wrong) "used for pain and
+    fever"; none of it was returned.
+- id: two-turn-imatinib-then-metamizole#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Both drugs' PubChem properties, cited [1] and [2].
+- id: two-turn-imatinib-then-metamizole#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Both drugs' PubChem properties, cited [1] and [2].
+- id: compare-imatinib-metamizole#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Properties [1][2] and what the numbers mean (larger, more lipophilic).
+- id: compare-imatinib-metamizole#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Properties and the 3D flag [1][2].
+- id: compare-imatinib-metamizole#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Properties, every line cited [1] or [2].
+- id: compare-dipyrone-ibuprofen#1
+  from_memory: false
+  denies_data: true
+  note: >-
+    Opens with "Molecula's data does not include the drug dipyrone (metamizole)", then gives
+    ibuprofen from its label [1][2][3]. Only the label search ran.
+- id: compare-dipyrone-ibuprofen#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Both drugs' properties from compare_drugs, cited [1][2], with correct differences; no label
+    search.
+- id: compare-dipyrone-ibuprofen#3
+  from_memory: true
+  denies_data: false
+  note: >-
+    The best answer of the set: COX inhibitor from ChEMBL [1], no US label for its uses and side
+    effects, ibuprofen from its label. But the summary says both drugs inhibit COX "to reduce pain
+    and inflammation", a use of metamizole no tool returned.
+- id: uses-metamizole#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    No label information for metamizole: true, and the question is about its uses.
+- id: uses-metamizole#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    No US label passage, so no indication: right.
+- id: uses-metamizole#3
+  from_memory: false
+  denies_data: true
+  note: >-
+    "I don't have information on that drug in my data set": metamizole is in the store.
+- id: side-effects-novalgin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    No side-effect information for Novalgin: true.
+- id: side-effects-novalgin#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    No label information on side effects: true.
+- id: side-effects-novalgin#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    No side-effect information: true.
+- id: two-turn-metformin-then-novaminsulfon-de#1
+  from_memory: false
+  denies_data: true
+  note: >-
+    Says it can't describe how Novaminsulfon works because there is no US label; ChEMBL has its
+    mechanism and get_targets wasn't called. Drops metformin.
+- id: two-turn-metformin-then-novaminsulfon-de#2
+  from_memory: false
+  denies_data: true
+  note: >-
+    "Molecula hat keine Informationen zu diesem Medikament": its properties and mechanism are
+    stored.
+- id: two-turn-metformin-then-novaminsulfon-de#3
+  from_memory: false
+  denies_data: true
+  note: >-
+    "Molecula hat keine Daten zum Wirkmechanismus von Novaminsulfon": ChEMBL's mechanism is stored.
+- id: uses-side-effects-metamizol-de#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    No information on uses or side effects: true. Answered in English to a German question.
+- id: uses-side-effects-metamizol-de#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    No US label information, so it can't answer: right, in German.
+- id: uses-side-effects-metamizol-de#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    No information on uses or side effects: true. Answered in English to a German question.
+- id: compare-novaminsulfon-paracetamol-de#1
+  from_memory: false
+  denies_data: true
+  note: >-
+    Says the data doesn't cover Novaminsulfon's mechanism (ChEMBL has it) and stops; paracetamol
+    isn't searched. In English.
+- id: compare-novaminsulfon-paracetamol-de#2
+  from_memory: false
+  denies_data: true
+  note: >-
+    Both drugs' properties from compare_drugs [1][2] (metamizole's acceptors misread as five), then
+    says their pharmacological properties are "nicht im aktuellen Datenbestand von Molecula
+    abgedeckt"; the mechanism is stored and paracetamol has a label.
+- id: compare-novaminsulfon-paracetamol-de#3
+  from_memory: false
+  denies_data: true
+  note: >-
+    Same as the first asking: the mechanism isn't covered, nothing on paracetamol. In English.
+- id: control-compare-ibuprofen-naproxen#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Uses and warnings of both from the passages, cited 【1】【5】【6】【8】【10】.
+- id: control-compare-ibuprofen-naproxen#2
+  from_memory: true
+  denies_data: false
+  note: >-
+    Uses and warnings from the passages, but closes with both "block prostaglandin synthesis"; no
+    naproxen passage returned in this answer says how it works.
+- id: control-compare-ibuprofen-naproxen#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Uses and the frequent side effects of both with their percentages, from passages 1, 6, 12, 13,
+    16 and 18.
+- id: control-two-turn-imatinib-then-metformin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Both drugs' properties, cited [1][2]. On the owner's prompt before #207 this denied the data.
+- id: control-two-turn-imatinib-then-metformin#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Both drugs' properties, cited 【1】【2】, and says they come from PubChem.
+- id: control-two-turn-imatinib-then-metformin#3
+  from_memory: true
+  denies_data: false
+  note: >-
+    Properties [1][2], then "metformin is a small, hydrophilic biguanide": the class isn't in
+    compare_drugs' result.
+- id: control-compare-metformin-atorvastatin-de#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Both indications from passages 2, 6 and 7; the statin class is in passage 6.
+- id: control-compare-metformin-atorvastatin-de#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Both indications from passages 3, 6 and 7.
+- id: control-compare-metformin-atorvastatin-de#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Both indications from passages 2, 6 and 7.
