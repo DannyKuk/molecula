@@ -1,0 +1,144 @@
+# gpt-oss-20b, reasoning effort "medium", main 5c8027f.
+# Judged against RULES in no_label.py. Restating, simplifying or drawing a conclusion from a
+# returned passage, or saying what a technical term means, is not from memory; a fact about a
+# drug that no returned passage holds is, also when it misreads one.
+- id: zolpidem-abuse-dependence#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Says Valium isn't in Molecula (true) and then gives the passage: zolpidem 40 mg similar to
+    diazepam 20 mg, 10 mg like placebo.
+- id: bupropion-abuse-dependence#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Intranasal seizures and deaths, overdose seizures in a third, arrhythmias, respiratory
+    failure: passages 2 and 4. "Chest pain" among the signs to act on leans on the arrhythmias.
+- id: atorvastatin-common-side-effects#1
+  from_memory: false
+  denies_data: false
+  note: The five reactions; "more than 5%" holds for each in the table's any-dose column.
+- id: ondansetron-adverse-reactions#1
+  from_memory: false
+  denies_data: false
+  note: Headache 9% after a single dose and 24% on 8 mg twice daily, both in the passages.
+- id: omeprazole-clinical-studies#1
+  from_memory: false
+  denies_data: false
+  note: Both pediatric studies with their numbers; "open-label" for the first study is a stretch.
+- id: risperidone-clinical-studies#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Two 8-week placebo-controlled trials in autism, and the long-term study. Calls them
+    double-blind, which the autism passage doesn't say; a study detail, not a drug fact.
+- id: lisinopril-angioedema#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    "A healthcare professional may consider an angiotensin-receptor blocker that does not carry
+    the same angioedema risk": no passage says so. The rest is from passage 5.
+- id: acetazolamide-contraindications#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Sulfonamide reactions and "discontinue if hypersensitivity occurs" from the warnings
+    passages; "generally not recommended" is its conclusion from them.
+- id: atorvastatin-starting-dose#1
+  from_memory: false
+  denies_data: false
+  note: 10 to 20 mg once daily, range and the 40 mg start, from passage 1.
+- id: lamotrigine-dosing#1
+  from_memory: false
+  denies_data: false
+  note: 500 mg/day in two doses, from passage 1.
+- id: omeprazole-indications#1
+  from_memory: false
+  denies_data: false
+  note: 1 month to under 12 months for EE, up to six weeks, not under one month, from passages 3 and 4.
+- id: ciprofloxacin-indications#1
+  from_memory: false
+  denies_data: false
+  note: Plague indication, from the passages.
+- id: acetaminophen-warfarin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    INR rise at 4,000 mg/day and "ask a doctor or pharmacist", from passages 1 and 2. "This can
+    increase bleeding risk" is a conclusion from the INR rise.
+- id: clopidogrel-omeprazole#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    Omeprazole "used to treat heartburn and stomach acid problems", clopidogrel "must keep
+    working to prevent heart attacks or strokes", and rabeprazole as an alternative: none is in
+    a passage (the label names dexlansoprazole, lansoprazole and pantoprazole).
+- id: pseudoephedrine-antidepressants#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    The same four MAOI names and blood pressure as without an effort, again said to be "listed in
+    the pseudoephedrine label".
+- id: diclofenac-otc-consumer#1
+  from_memory: false
+  denies_data: false
+  note: Arthritis pain, under 18 not known safe, ask a doctor, from the passages.
+- id: diclofenac-overdosage#1
+  from_memory: false
+  denies_data: false
+  note: The overdosage passage; 911 and 112 as the prompt gives them.
+- id: spironolactone-overdosage#1
+  from_memory: false
+  denies_data: false
+  note: The overdosage passage, with hepatic coma explained.
+- id: risperidone-patient-information#1
+  from_memory: false
+  denies_data: false
+  note: Storage, from passage 2.
+- id: valacyclovir-patient-information#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    "Doesn't cure" is passage 3, but "can shorten an outbreak if started early" and "the
+    underlying herpes simplex virus remains in the body" are in no passage.
+- id: ibuprofen-mechanism#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    "Blocks the enzymes that make prostaglandins" is the passage's prostaglandin synthetase
+    inhibition, said with more certainty than the label's "may be related to"; what
+    prostaglandins signal is the term explained.
+- id: oseltamivir-pharmacology#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Searched twice and found the patient information's pregnancy lines; says the label gives no
+    pregnancy dose change.
+- id: gabapentin-product#1
+  from_memory: false
+  denies_data: false
+  note: The five strengths, from passages 1 and 2.
+- id: levothyroxine-product#1
+  from_memory: false
+  denies_data: false
+  note: Ampules and coloured labels, from passage 1; leaves out the box and pouch sizes.
+- id: ondansetron-specific-populations#1
+  from_memory: false
+  denies_data: false
+  note: The cohort RRs and "inconsistent findings", from passages 1 and 3.
+- id: morphine-specific-populations#1
+  from_memory: false
+  denies_data: false
+  note: The hepatic impairment passage.
+- id: dextromethorphan-warnings#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    "Because the combination can cause high blood pressure or serotonin syndrome", cited to
+    [1][2]: neither passage says why.
+- id: celecoxib-warnings#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    The same misreading as without an effort: ulcers "in less than 0.1%", where the <0.1% list
+    holds GI bleeding and perforation, not ulcers.
