@@ -29,7 +29,7 @@ No errors and no empty answers in either run.
 
 ## Limits
 
-- One judge (the session that wrote the eval), 28 questions, one asking per effort. The rate is good for "common or rare", not for comparing efforts: a second asking would tighten it.
+- **Small sample.** One judge (the session that wrote the eval), 28 questions, one asking per effort. The 95% (Wilson) intervals are wide: 6% to 31% with no effort, 10% to 40% at medium, and 10% to 30% for both runs together, which is still optimistic because the two runs ask the same 28 questions. That is enough to say the habit exists and isn't rare, not to rank the efforts or to measure a fix. Measuring the answer check (#205) needs more questions and askings than a hand judge can read, so a model judge checked against these 56 hand verdicts first.
 - Single-drug questions only. The no-label eval's controls, where memory showed up most, are comparisons; this eval doesn't clear those.
 - The rules don't cover study details: answers that called the risperidone autism trials "double-blind" or an omeprazole study "open-label" without a passage saying so passed.
 - The guard is left out. It doesn't change an answer's content: it refuses a question or puts the fixed emergency line before an overdose answer.
