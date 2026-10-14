@@ -4,13 +4,10 @@ from typing import Any
 import pytest
 from langchain_core.tools import StructuredTool
 
-from molecula.schemas.chat import Source
 from molecula.schemas.compounds import Resolution
 from molecula.schemas.retrieval import LabelFilter, LabelQuery
-from molecula.schemas.targets import DrugTargets, Target
 from molecula.schemas.tools import (
     DrugNotSupported,
-    DrugWithoutLabel,
     InvalidArguments,
     LabelDrugsNotSupported,
     LabelPassages,
@@ -18,14 +15,12 @@ from molecula.schemas.tools import (
 from molecula.tools.search_labels import search_labels_tool
 from tool_fakes import (
     FLUTICASONE,
-    FLUTICASONE_CID,
     GLEEVEC_SUGGESTION,
     IMATINIB,
     IMATINIB_LOW_SCORE,
     IMATINIB_SIDE_EFFECTS,
     FakeFilterExtractor,
     FakeLabelRetriever,
-    FakeTargetService,
     call_tool,
     cited,
     drug_filter,
@@ -43,10 +38,9 @@ GLEEVEC_FILTER = LabelFilter(
 def tool(
     extractor: FakeFilterExtractor,
     retriever: FakeLabelRetriever,
-    targets: FakeTargetService,
 ) -> StructuredTool:
     extractor.filters[SIDE_EFFECTS] = GLEEVEC_FILTER
-    return search_labels_tool(extractor, retriever, targets)
+    return search_labels_tool(extractor, retriever)
 
 
 def test_a_question_gets_label_passages_with_their_citations(tool: StructuredTool) -> None:
@@ -144,64 +138,20 @@ def test_passages_are_numbered_from_one_best_first(
     ]
 
 
-FLUTICASONE_WARNINGS = "What are the warnings for fluticasone?"
-GLUCOCORTICOID_RECEPTOR = Target(
-    target_chembl_id="CHEMBL2034",
-    name="Glucocorticoid receptor",
-    target_type="SINGLE PROTEIN",
-    organism="Homo sapiens",
-    mechanism="Glucocorticoid receptor agonist",
-    action_type="AGONIST",
-    accessions=["P04150"],
-    gene_symbols=["NR3C1"],
-    source="chembl",
-    source_url="https://www.ebi.ac.uk/chembl/explore/target/CHEMBL2034",
-)
-
-
-@pytest.fixture
-def fluticasone_without_label(extractor: FakeFilterExtractor) -> None:
-    extractor.filters[FLUTICASONE_WARNINGS] = LabelFilter(
+def test_a_supported_drug_without_a_label_finds_nothing_and_says_so(
+    tool: StructuredTool, extractor: FakeFilterExtractor
+) -> None:
+    question = "What are the warnings for fluticasone?"
+    extractor.filters[question] = LabelFilter(
         extracted=LabelQuery(substances=["fluticasone"]),
         drugs=[drug_filter("fluticasone", FLUTICASONE, [])],
     )
 
-
-@pytest.mark.usefixtures("fluticasone_without_label")
-def test_a_supported_drug_without_a_label_finds_nothing_and_says_so(
-    tool: StructuredTool,
-) -> None:
-    message = call_tool(tool, {"question": FLUTICASONE_WARNINGS})
+    message = call_tool(tool, {"question": question})
 
     assert isinstance(message.artifact, LabelPassages)
     assert message.artifact.passages == []
-    assert message.artifact.drugs_without_label == [
-        DrugWithoutLabel(name="fluticasone", cid=FLUTICASONE_CID, targets=[])
-    ]
-
-
-@pytest.mark.usefixtures("fluticasone_without_label")
-def test_a_drug_without_a_label_comes_with_its_chembl_targets_to_answer_from(
-    tool: StructuredTool, targets: FakeTargetService
-) -> None:
-    targets.drugs[FLUTICASONE_CID] = DrugTargets(
-        cid=FLUTICASONE_CID, targets=[GLUCOCORTICOID_RECEPTOR]
-    )
-
-    message = call_tool(tool, {"question": FLUTICASONE_WARNINGS})
-
-    [entry] = json.loads(str(message.content))["drugs_without_label"]
-    assert entry["name"] == "fluticasone"
-    assert [target["mechanism"] for target in entry["targets"]] == [
-        "Glucocorticoid receptor agonist"
-    ]
-    assert message.artifact.sources() == [
-        Source(
-            kind="chembl",
-            name="Glucocorticoid receptor",
-            url="https://www.ebi.ac.uk/chembl/explore/target/CHEMBL2034",
-        )
-    ]
+    assert message.artifact.drugs_without_label == ["fluticasone"]
 
 
 @pytest.mark.parametrize(

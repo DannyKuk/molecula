@@ -6,21 +6,16 @@ from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
 from molecula.schemas.labels import SectionGroup
 from molecula.schemas.retrieval import LabelFilter
-from molecula.schemas.targets import Target
 from molecula.schemas.tools import (
     CitedPassage,
-    DrugWithoutLabel,
     LabelDrugsNotSupported,
     LabelPassages,
     SearchLabelsArgs,
 )
-from molecula.services.targets import TargetService
 from molecula.tools.base import build_tool, not_supported
 
 
-def search_labels_tool(
-    extractor: FilterExtractor, retriever: LabelRetriever, targets: TargetService
-) -> StructuredTool:
+def search_labels_tool(extractor: FilterExtractor, retriever: LabelRetriever) -> StructuredTool:
     def search_labels(
         question: str, drug: str | None = None, section: SectionGroup | None = None
     ) -> LabelPassages | LabelDrugsNotSupported:
@@ -46,12 +41,10 @@ def search_labels_tool(
         the EU, or a poison control centre, with no other phone number) and never turns it
         into a dose for a person. An empty `passages` list means the labels don't answer the
         question: say so rather than answering from memory. `drugs_without_label` are
-        supported drugs that have no US label, each with the `targets` and `mechanism` ChEMBL
-        records for it, as `get_targets` returns them; Molecula has nothing on what such a drug
-        is used for, its side effects or its warnings. `unsupported` lists named drugs that
-        aren't in Molecula's data, with `suggestions`. Returns `status: "not_supported"` when
-        every drug named is outside Molecula's data: say so and offer the suggestions, never
-        pick one yourself.
+        supported drugs that have no US label. `unsupported` lists named drugs that aren't in
+        Molecula's data, with `suggestions`. Returns `status: "not_supported"` when every drug
+        named is outside Molecula's data: say so and offer the suggestions, never pick one
+        yourself.
         """
         label_filter = extractor.filter_for(question, drug=drug, section=section)
         retrieval = retriever.retrieve(question, label_filter)
@@ -61,7 +54,7 @@ def search_labels_tool(
         return LabelPassages(
             question=question,
             drugs=[searched.generic for searched in label_filter.drugs],
-            drugs_without_label=without_label(label_filter, targets),
+            drugs_without_label=without_label(label_filter),
             unsupported=unsupported,
             passages=[
                 CitedPassage(**chunk.model_dump(), ref=ref)
@@ -79,16 +72,5 @@ def searching_labels(args: dict[str, Any]) -> str:
     return "Searching the drug labels"
 
 
-def without_label(label_filter: LabelFilter, targets: TargetService) -> list[DrugWithoutLabel]:
-    return [
-        DrugWithoutLabel(
-            name=searched.generic, cid=searched.cid, targets=targets_of(targets, searched.cid)
-        )
-        for searched in label_filter.drugs
-        if not searched.set_ids
-    ]
-
-
-def targets_of(targets: TargetService, cid: int) -> list[Target]:
-    found = targets.get_targets(cid)
-    return found.targets if found is not None else []
+def without_label(label_filter: LabelFilter) -> list[str]:
+    return [searched.generic for searched in label_filter.drugs if not searched.set_ids]
