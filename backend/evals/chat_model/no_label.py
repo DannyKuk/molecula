@@ -27,7 +27,7 @@ from typing import Any, Literal
 
 import httpx
 import yaml
-from evals.chat_model.citations import SQUARE, numbers, tool_descriptions
+from evals.chat_model.citations import SQUARE, numbers, tool_descriptions, tool_refs
 from evals.safety.run import Answer, cache_path, post_chat
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -128,7 +128,9 @@ class Run:
 
     @property
     def valid_citations(self) -> int:
-        refs = {passage.get("ref") for passage in self.passages}
+        """`[n]` citations of a label passage or, since #207, of any other tool result."""
+        results = (e["result"] for e in self.last.events if e["type"] == "tool_result")
+        refs = tool_refs(results)
         return sum(ref in refs for ref in numbers(SQUARE, self.last.text))
 
     @property
@@ -258,7 +260,7 @@ def report(
         f"{sum(run.last.error is not None for run in runs)} errors",
         "",
         "| Questions | Answers | Pass | From memory | Denies data | Unsourced terms "
-        "| Search said no label | Says no label | Cite a passage | Seconds p50 |",
+        "| Search said no label | Says no label | Cite a source | Seconds p50 |",
         "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for kind in ("no_label", "control"):

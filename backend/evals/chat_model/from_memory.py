@@ -10,7 +10,9 @@ the agent answers, and what is measured is what the agent adds to what its tools
 
 Each answer is judged by hand against the no-label eval's `RULES`. The verdicts live in
 `from_memory_verdicts/<cache name>.yaml`; without them the run writes a review sheet that shows
-each answer under every tool result it had.
+each answer under every tool result it had, with `*` on the passage that answers the question.
+The report also counts the answers whose search returned that passage, to tell an addition from
+memory on top of the right passage (generation) from one that fills a retrieval miss.
 """
 
 import argparse
@@ -22,7 +24,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from evals.chat_model.citations import Answer, ask, tool_descriptions
+from evals.chat_model.citations import Answer, ask, holds_evidence, tool_descriptions
 from evals.chat_model.no_label import RULES, Verdict, read_verdicts
 from evals.retrieval.dataset import Question, load_questions
 from evals.safety.run import cache_path
@@ -50,6 +52,15 @@ class Run:
     @property
     def results(self) -> list[tuple[str, Any]]:
         return [(e["name"], e["result"]) for e in self.answer.events if e["type"] == "tool_result"]
+
+    @property
+    def passages(self) -> list[dict[str, Any]]:
+        return [
+            passage
+            for name, result in self.results
+            if name == "search_labels" and isinstance(result, dict)
+            for passage in result.get("passages", [])
+        ]
 
     @property
     def error(self) -> str | None:
@@ -81,7 +92,7 @@ def main() -> int:
         print(f"{len(unjudged)} answers without a verdict: judge them in {sheet}")
         print(f"and write them to {VERDICTS / f'{cache.stem}.yaml'}")
         verdicts = None
-    print(report(cache.stem, runs, verdicts))
+    print(report(cache.stem, questions, runs, verdicts))
     return 0
 
 
@@ -134,9 +145,10 @@ def review_sheet(questions: list[Question], runs: list[Run]) -> str:
         sections += [
             f"\n## {run.run_id} ({question.drug}, {question.section_group})",
             f"> {question.question}",
-            f"Error: {run.error or '-'}",
+            f"Error: {run.error or '-'}; "
+            f"right passage returned: {evidence_returned(question, run)}",
             "",
-            *(describe(name, result) for name, result in run.results),
+            *(describe(question, name, result) for name, result in run.results),
             "",
             "**Answer:**",
             "",
@@ -145,10 +157,11 @@ def review_sheet(questions: list[Question], runs: list[Run]) -> str:
     return "\n".join(sections) + "\n"
 
 
-def describe(name: str, result: Any) -> str:
+def describe(question: Question, name: str, result: Any) -> str:
     if name == "search_labels" and isinstance(result, dict):
         passages = [
-            f"  [{p.get('ref')}] {p['substance']} {p['section']}: {p['text']}"
+            f"{' *' if holds_evidence(question, p) else '  '}[{p.get('ref')}] {p['substance']} "
+            f"{p['section']}: {p['text']}"
             for p in result.get("passages", [])
         ]
         header = {key: value for key, value in result.items() if key != "passages"}
@@ -156,20 +169,29 @@ def describe(name: str, result: Any) -> str:
     return f"- {name} {json.dumps(result, ensure_ascii=False)}"
 
 
-def report(name: str, runs: list[Run], verdicts: dict[str, Verdict] | None) -> str:
+def report(
+    name: str, questions: list[Question], runs: list[Run], verdicts: dict[str, Verdict] | None
+) -> str:
+    by_id = {question.id: question for question in questions}
+    returned = [run for run in runs if evidence_returned(by_id[run.run_id.split("#")[0]], run)]
     judged = [verdicts[run.run_id] for run in runs] if verdicts is not None else None
 
     def count(flag: str) -> str:
         return "-" if judged is None else str(sum(getattr(v, flag) for v in judged))
 
     passed = "-" if verdicts is None else str(sum(passes(run, verdicts) for run in runs))
+    memory_with_passage = (
+        "-" if verdicts is None else str(sum(verdicts[run.run_id].from_memory for run in returned))
+    )
     tokens = [run.output_tokens for run in runs if run.output_tokens is not None]
     lines = [
         f"{name}, {len(runs)} answers, {sum(run.error is not None for run in runs)} errors",
         "",
-        "| Answers | Pass | From memory | Denies data | Seconds p50 | Output tokens mean |",
-        "|---|---|---|---|---|---|",
+        "| Answers | Pass | From memory | Denies data | Right passage returned "
+        "| From memory with it | Seconds p50 | Output tokens mean |",
+        "|---|---|---|---|---|---|---|---|",
         f"| {len(runs)} | {passed} | {count('from_memory')} | {count('denies_data')} "
+        f"| {len(returned)} | {memory_with_passage} "
         f"| {statistics.median(run.answer.seconds for run in runs):.1f} "
         f"| {statistics.mean(tokens) if tokens else 0:.0f} |",
     ]
@@ -178,6 +200,11 @@ def report(name: str, runs: list[Run], verdicts: dict[str, Verdict] | None) -> s
         lines += ["", "Failed:"]
         lines += [f"- {run.run_id}: {verdicts[run.run_id].note}" for run in failed] or ["- none"]
     return "\n".join(lines)
+
+
+def evidence_returned(question: Question, run: Run) -> bool:
+    """Whether a search returned the passage that answers the question."""
+    return any(holds_evidence(question, passage) for passage in run.passages)
 
 
 def passes(run: Run, verdicts: dict[str, Verdict]) -> bool:

@@ -16,10 +16,11 @@ def resolve_drug_tool(compounds: CompoundService) -> StructuredTool:
         doesn't matter.
 
         Returns `status: "found"` with the drug's PubChem CID, its generic `name`, the stored
-        name or alias the input matched (`matched_alias`, `match_kind`) and its PubChem page as
-        `source_url`. Returns `status: "not_supported"` when the drug isn't in Molecula's data:
-        then say it isn't supported. `suggestions` holds up to three supported names close to
-        the input; offer them to the user to pick, never answer as if one of them was meant.
+        name or alias the input matched (`matched_alias`, `match_kind`), its PubChem page as
+        `source_url` and `ref`, the number to cite it with in square brackets, like `[2]`.
+        Returns `status: "not_supported"` when the drug isn't in Molecula's data: then say it
+        isn't supported. `suggestions` holds up to three supported names close to the input;
+        offer them to the user to pick, never answer as if one of them was meant.
         """
         resolution = compounds.resolve(name)
         match = resolution.match

@@ -33,7 +33,8 @@ def get_complex_tool(compounds: CompoundService, complexes: ComplexService) -> S
         what it shows: pass it on;
         `hydrogen_bonds`, each with the residue (three-letter name and number), its chain, the
         two atoms and the distance in Å; `contacts`, every residue within 4 Å of the drug with
-        its closest distance, closest first; and `source_url`, the entry's RCSB page to cite.
+        its closest distance, closest first; `source_url`, the entry's RCSB page; and `ref`,
+        the number to cite the structure with in square brackets, like `[2]`.
         Describe only these contacts; don't add binding details from memory. Returns
         `status: "no_complex"` when Molecula has no reviewed structure of this drug bound to
         its target: the 3D view shows the molecule alone. Returns `status: "not_supported"`

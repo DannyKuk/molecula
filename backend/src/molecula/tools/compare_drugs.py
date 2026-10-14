@@ -18,7 +18,8 @@ def compare_drugs_tool(compounds: CompoundService) -> StructuredTool:
         Returns `drugs` in the order asked. A supported drug has `status: "found"` and its
         `compound`: CID, generic name, molecular formula, molecular weight (g/mol), XLogP,
         topological polar surface area (Å²), hydrogen bond donors and acceptors, rotatable
-        bonds, heavy atoms, and `source_url`, the PubChem page to cite. A drug that isn't in
+        bonds, heavy atoms, and `source_url`, its PubChem page; and `ref`, the number to cite
+        that drug's properties with in square brackets, like `[2]`. A drug that isn't in
         Molecula's data has `status: "not_supported"` with `suggestions`: say it isn't
         supported, compare the others, and never substitute a suggestion yourself.
         """
