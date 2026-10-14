@@ -1,0 +1,147 @@
+# gpt-5-mini through OpenRouter on main 590ae1b's prompts and tools (#193, model comparison),
+# judged by hand against `RULES` in no_label.py. Explaining what the COX enzymes do is the
+# mechanism ChEMBL returns; calling metamizole a painkiller or fever reducer is not.
+
+- id: two-turn-imatinib-then-metamizole#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Mechanism from ChEMBL, properties, no label for metamizole, imatinib's side effects cited.
+    Close to the line: "inhibiting COX is how many pain- and fever-reducing drugs work".
+- id: two-turn-imatinib-then-metamizole#2
+  from_memory: false
+  denies_data: false
+  note: Imatinib cited, metamizole's ChEMBL mechanism and no label.
+- id: two-turn-imatinib-then-metamizole#3
+  from_memory: false
+  denies_data: false
+  note: Like #2, with properties and imatinib's uses cited.
+- id: compare-imatinib-metamizole#1
+  from_memory: false
+  denies_data: false
+  note: Imatinib's uses and side effects cited; metamizole's mechanism and no label.
+- id: compare-imatinib-metamizole#2
+  from_memory: false
+  denies_data: false
+  note: Like #1, with imatinib's warnings cited.
+- id: compare-imatinib-metamizole#3
+  from_memory: false
+  denies_data: false
+  note: Like #1; says the COX classification is from ChEMBL, not a label.
+- id: compare-dipyrone-ibuprofen#1
+  from_memory: false
+  denies_data: false
+  note: Both mechanisms from ChEMBL, ibuprofen's label cited, no label for dipyrone.
+- id: compare-dipyrone-ibuprofen#2
+  from_memory: false
+  denies_data: false
+  note: Like #1, with the properties compared.
+- id: compare-dipyrone-ibuprofen#3
+  from_memory: false
+  denies_data: false
+  note: Searched the labels only; ibuprofen cited, no label for dipyrone, offers its mechanism.
+- id: uses-metamizole#1
+  from_memory: false
+  denies_data: false
+  note: No US label, so no uses; offers properties and mechanism.
+- id: uses-metamizole#2
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: uses-metamizole#3
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: side-effects-novalgin#1
+  from_memory: false
+  denies_data: false
+  note: No US label, so no side effects; offers properties and mechanism.
+- id: side-effects-novalgin#2
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: side-effects-novalgin#3
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: two-turn-metformin-then-novaminsulfon-de#1
+  from_memory: false
+  denies_data: false
+  note: Metformin cited with its ChEMBL targets; Novaminsulfon's COX mechanism and no label.
+- id: two-turn-metformin-then-novaminsulfon-de#2
+  from_memory: true
+  denies_data: false
+  note: >-
+    No label for Novaminsulfon, then offers to compare metformin "mit einem anderen
+    Schmerzmittel" or give "eine allgemeine, nicht-labelgestützte Erklärung".
+- id: two-turn-metformin-then-novaminsulfon-de#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Mechanism from ChEMBL and no label. Close to the line: COX inhibition "führt üblicherweise
+    zu Schmerzlinderung und Fiebersenkung".
+- id: uses-side-effects-metamizol-de#1
+  from_memory: false
+  denies_data: false
+  note: No US label, so no uses or side effects; offers properties and mechanism.
+- id: uses-side-effects-metamizol-de#2
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: uses-side-effects-metamizol-de#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    No label; gives the ChEMBL mechanism and explains COX, says it may not name uses or side
+    effects from memory.
+- id: compare-novaminsulfon-paracetamol-de#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    Paracetamol cited, mechanisms from ChEMBL, but opens with "Beide Wirkstoffe wirken
+    schmerzlindernd und fiebersenkend".
+- id: compare-novaminsulfon-paracetamol-de#2
+  from_memory: true
+  denies_data: false
+  note: Like #1, "beides schmerzlindernde und fiebersenkende Wirkstoffe".
+- id: compare-novaminsulfon-paracetamol-de#3
+  from_memory: false
+  denies_data: false
+  note: Searched the labels only; paracetamol cited, no label for Novaminsulfon.
+
+- id: control-compare-ibuprofen-naproxen#1
+  from_memory: false
+  denies_data: false
+  note: Uses, side effects and warnings of both, cited.
+- id: control-compare-ibuprofen-naproxen#2
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: control-compare-ibuprofen-naproxen#3
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: control-two-turn-imatinib-then-metformin#1
+  from_memory: false
+  denies_data: false
+  note: Both mechanisms cited from the labels, ChEMBL targets, properties.
+- id: control-two-turn-imatinib-then-metformin#2
+  from_memory: false
+  denies_data: false
+  note: Like #1, with clearance cited.
+- id: control-two-turn-imatinib-then-metformin#3
+  from_memory: false
+  denies_data: false
+  note: Like #1, with both drugs' uses cited.
+- id: control-compare-metformin-atorvastatin-de#1
+  from_memory: false
+  denies_data: false
+  note: Both uses cited.
+- id: control-compare-metformin-atorvastatin-de#2
+  from_memory: false
+  denies_data: false
+  note: Both uses cited.
+- id: control-compare-metformin-atorvastatin-de#3
+  from_memory: false
+  denies_data: false
+  note: Both uses cited.

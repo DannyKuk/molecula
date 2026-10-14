@@ -284,8 +284,8 @@ def report(
 
 
 def passes(run: Run, verdicts: dict[str, Verdict]) -> bool:
-    """An answer that failed to arrive doesn't pass, whatever its verdict says."""
-    return run.last.error is None and verdicts[run.run_id].passed
+    """An answer that failed or came back empty doesn't pass, whatever its verdict says."""
+    return run.last.error is None and bool(run.last.text) and verdicts[run.run_id].passed
 
 
 def count(verdicts: list[Verdict] | None, flag: str) -> str:
