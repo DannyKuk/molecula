@@ -1,0 +1,149 @@
+# gpt-oss-20b, #182 change 2: change 1, plus `has_label` on the properties tools' results and
+# a prompt rule naming get_properties and get_targets and forbidding any description of a drug
+# without a label. Judged by hand against `RULES` in no_label.py.
+
+- id: two-turn-imatinib-then-metamizole#1
+  from_memory: true
+  denies_data: false
+  note: Says metamizole has no US label, then "in other countries it is used as a pain and fever reducer".
+- id: two-turn-imatinib-then-metamizole#2
+  from_memory: true
+  denies_data: false
+  note: >-
+    Properties and has_label used well, then "used in some other countries as a pain reliever
+    and fever reducer", also in the table.
+- id: two-turn-imatinib-then-metamizole#3
+  from_memory: true
+  denies_data: false
+  note: >-
+    Table row "Analgesic/antipyretic; mechanism involves inhibition of prostaglandin synthesis",
+    and "a sulfonamide group".
+- id: compare-imatinib-metamizole#1
+  from_memory: true
+  denies_data: false
+  note: Imatinib cited; calls metamizole "a sulfonamide" (it is a sulfonate). No label said plainly.
+- id: compare-imatinib-metamizole#2
+  from_memory: false
+  denies_data: false
+  note: Imatinib from its label with citations; metamizole's cells say the label is missing.
+- id: compare-imatinib-metamizole#3
+  from_memory: false
+  denies_data: false
+  note: Imatinib cited; metamizole has no US label. Leaves out its properties.
+- id: compare-dipyrone-ibuprofen#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    Ibuprofen cited, but a table row gives dipyrone's class as "Analgesic/antipyretic, not an
+    NSAID".
+- id: compare-dipyrone-ibuprofen#2
+  from_memory: false
+  denies_data: true
+  note: Says the only data are PubChem's properties (ChEMBL has its mechanism) and compares nothing.
+- id: compare-dipyrone-ibuprofen#3
+  from_memory: true
+  denies_data: false
+  note: >-
+    Dipyrone right; ibuprofen "used for pain relief, fever reduction" and "headache", words in
+    none of the returned passages.
+- id: uses-metamizole#1
+  from_memory: false
+  denies_data: false
+  note: No US label, so no uses.
+- id: uses-metamizole#2
+  from_memory: false
+  denies_data: false
+  note: No US label; PubChem properties.
+- id: uses-metamizole#3
+  from_memory: true
+  denies_data: false
+  note: Opens with "strong pain-relieving, fever-reducing and muscle relaxant effects", then no label.
+- id: side-effects-novalgin#1
+  from_memory: false
+  denies_data: false
+  note: No US label, so no side effects.
+- id: side-effects-novalgin#2
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: side-effects-novalgin#3
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: two-turn-metformin-then-novaminsulfon-de#1
+  from_memory: false
+  denies_data: true
+  note: Metformin cited; says Molecula can only say the label is missing (ChEMBL has its mechanism).
+- id: two-turn-metformin-then-novaminsulfon-de#2
+  from_memory: false
+  denies_data: false
+  note: Metformin cited; the label can't say how Novaminsulfon works, which is true.
+- id: two-turn-metformin-then-novaminsulfon-de#3
+  from_memory: false
+  denies_data: false
+  note: Metformin cited; says chemistry and targets exist but no pharmacological description.
+- id: uses-side-effects-metamizol-de#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    No label, right, but lists made-up properties (CID 5281, C10H13N2O4S, 247.3 g/mol) without
+    calling get_properties.
+- id: uses-side-effects-metamizol-de#2
+  from_memory: false
+  denies_data: false
+  note: No label; PubChem properties. In German.
+- id: uses-side-effects-metamizol-de#3
+  from_memory: false
+  denies_data: false
+  note: Like #2.
+- id: compare-novaminsulfon-paracetamol-de#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    Paracetamol cited, but opens with both being pain and fever medicines and ends with
+    metamizole "used in other countries as a pain medicine".
+- id: compare-novaminsulfon-paracetamol-de#2
+  from_memory: true
+  denies_data: false
+  note: In English; metamizole "is a pain-relieving drug"; the table gives its use as pain and fever.
+- id: compare-novaminsulfon-paracetamol-de#3
+  from_memory: true
+  denies_data: false
+  note: A table with metamizole's use, prescription status and agranulocytosis, all from memory.
+
+- id: control-compare-ibuprofen-naproxen#1
+  from_memory: true
+  denies_data: false
+  note: Ibuprofen cited; naproxen "marketed for pain relief and inflammation" with no passage.
+- id: control-compare-ibuprofen-naproxen#2
+  from_memory: false
+  denies_data: false
+  note: No answer; the model failed after four label searches.
+- id: control-compare-ibuprofen-naproxen#3
+  from_memory: true
+  denies_data: false
+  note: Naproxen "marketed as an over-the-counter pain reliever and fever reducer (e.g., Aleve)", cited to a passage that doesn't say so.
+- id: control-two-turn-imatinib-then-metformin#1
+  from_memory: false
+  denies_data: false
+  note: Both drugs from their labels with citations.
+- id: control-two-turn-imatinib-then-metformin#2
+  from_memory: false
+  denies_data: false
+  note: Both drugs cited.
+- id: control-two-turn-imatinib-then-metformin#3
+  from_memory: false
+  denies_data: false
+  note: Properties and both labels, cited.
+- id: control-compare-metformin-atorvastatin-de#1
+  from_memory: false
+  denies_data: false
+  note: Both uses cited.
+- id: control-compare-metformin-atorvastatin-de#2
+  from_memory: false
+  denies_data: false
+  note: Both uses cited.
+- id: control-compare-metformin-atorvastatin-de#3
+  from_memory: false
+  denies_data: false
+  note: Both uses cited.
