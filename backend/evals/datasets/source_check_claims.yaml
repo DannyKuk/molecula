@@ -1,0 +1,1655 @@
+# Claims labelled by hand for the source check eval (#212, `evals/chat_model/source_check.py`).
+#
+# 65 answers from gpt-oss-20b, all hand-judged before: the 28 of the from-memory eval at 620e4d2be54c
+# (#208's prompt), every answer that added a fact from memory in the from-memory runs 7f350ba74a4e,
+# 0166cca35155 and medium-90d54cf3d8e5, and 25 of the 33 no-label answers at 620e4d2be54c (eight
+# repeats of a one-sentence "no data" answer left out). Each answer's text and tool results are
+# read from `data/build/eval/<eval>/<cache>.jsonl`. `claims` is the answer as `guard/claims.py`
+# splits it, with the guard's emergency line left out; the runner stops if that changes.
+#
+# A claim is labelled against the results it cites (`refs`), never against what is known about
+# medicines:
+# - supported: every fact about a drug in it is held by its cited results. Restating, shortening,
+#   rounding, translating, a direct conclusion and saying what a technical term means count as
+#   held; so does loose wording of the same fact.
+# - unsupported: at least one fact about a drug (class, use, mechanism, effect, side effect,
+#   warning, dose, number, study result, structure, property, a comparison of values) that its
+#   cited results don't hold: uncited, held only by a result it doesn't cite, or a misreading that
+#   changes a number, a population or who a fact applies to. `held_by` lists the returned results
+#   that do hold it when it is only a citation miss; without `held_by` it is an addition no
+#   returned result holds. Every unsupported claim has a note.
+# - not_a_claim: no fact about a drug: "Yes." or "No." alone, a heading, an offer, advice to ask a
+#   doctor or call emergency services, and what Molecula's data does or doesn't cover, also when
+#   that is wrong (the no-label eval judges denials, not this check).
+#
+# First labelled by four subagents from review sheets, then every unsupported label and every
+# disagreement with the earlier verdicts checked against the passages. Claim-level labels found
+# misreadings the whole-answer verdicts passed: spironolactone-overdosage, atorvastatin-common-
+# side-effects, omeprazole-indications, bupropion-abuse-dependence (620e4d2be54c), and
+# compare-novaminsulfon-paracetamol-de#2 and control-compare-metformin-atorvastatin-de#2.
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: zolpidem-abuse-dependence#1
+  claims:
+  - text: In studies of people who had previously abused drugs, a single high dose of zolpidem (Ambien)
+      at 40 mg produced effects that were similar to but not identical with diazepam (Valium) 20 mg [2].
+    refs:
+    - 2
+    label: supported
+  - text: The label notes that the 40‑mg dose is higher than the usual maximum recommended dose and was
+      used only in research settings.
+    refs: []
+    label: unsupported
+    note: Uncited. Passage 3 says 10 mg is the highest recommended dose, but 'used only in research settings'
+      is in no returned passage.
+  - text: Molecula’s data do not include a direct comparison of high‑dose Ambien with Valium, so I can’t
+      provide further details on that side of the comparison.
+    refs: []
+    label: not_a_claim
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: bupropion-abuse-dependence#1
+  claims:
+  - text: Snorting crushed bupropion tablets can be very dangerous.
+    refs: []
+    label: unsupported
+    held_by:
+    - 4
+    note: Uncited; passage 4 holds that inhaling crushed tablets has been reported with seizures and deaths.
+  - text: The label notes that intranasal use (and injection) has been reported and is associated with
+      seizures, serious reactions, and even death [4].
+    refs:
+    - 4
+    label: supported
+    note: 'Close: passage 4 says seizures and/or death; ''serious reactions'' is a loose gloss of those.'
+  - text: In addition, large overdoses of bupropion alone have caused seizures, cardiac problems, respiratory
+      failure, and fatalities; supportive care is the only treatment because no antidote exists [1].
+    refs:
+    - 1
+    label: unsupported
+    note: Passage 1 says respiratory failure was reported mainly when bupropion was part of multiple drug
+      overdoses; the claim attributes it to overdoses of bupropion alone.
+  - text: If you or someone else has snorted bupropion and is showing symptoms such as seizures, severe
+      dizziness, chest pain, breathing difficulty, or altered consciousness, call emergency services (911
+      in the U.S. or 112 in the EU) right away or go to an emergency department.
+    refs: []
+    label: not_a_claim
+    note: Advice to call emergency services, naming symptoms to watch for.
+  - text: A poison‑control centre can also provide guidance; you may contact a local poison‑control centre
+      for help.
+    refs: []
+    label: not_a_claim
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: atorvastatin-common-side-effects#1
+  claims:
+  - text: 'The label lists several adverse reactions that occur in at least about 2 % of patients taking
+      Lipitor, with the highest rates for:
+
+      - Nasopharyngitis (≈ 8 %)
+
+      - Arthralgia (≈ 6–12 %)
+
+      - Diarrhea (≈ 5–14 %)
+
+      - Pain in extremity (≈ 3–10 %)
+
+      - Urinary‑tract infection (≈ 4–6 %)'
+    refs: []
+    label: unsupported
+    note: 'Uncited, and two ranges misread Table 1 in passage 1: arthralgia runs 4.3-11.7% across doses
+      (not 6-12%) and urinary tract infection 4.1-8.0% (not 4-6%). The five reactions themselves are in
+      passages 1 and 2.'
+  - text: These are the most frequently reported side effects that exceed placebo rates. [1][2]
+    refs:
+    - 1
+    - 2
+    label: supported
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: ondansetron-adverse-reactions#1
+  claims:
+  - text: Headache is listed as a common side effect of ondansetron [1]
+    refs:
+    - 1
+    label: supported
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: omeprazole-clinical-studies#1
+  claims:
+  - text: Omeprazole was shown to reduce reflux symptoms in pediatric patients.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    note: Uncited; passage 1 holds the two pediatric GERD studies where omeprazole reduced symptoms.
+  - text: In one study, 75 % of the 12 children had vomiting or regurgitation episodes fall by at least
+      50 % after an 8‑week course of omeprazole (0.5–1.5 mg/kg) [1].
+    refs:
+    - 1
+    label: supported
+  - text: A second study with 113 children aged 2–16 years reported success rates of about 60 % for both
+      the 10‑mg and 20‑mg doses, defined as no moderate or severe episodes during the last four days of
+      treatment [1].
+    refs:
+    - 1
+    label: supported
+    note: 'Close: ''about 60% for both'' rounds the label''s 60% (10 mg) and 59% (20 mg).'
+  - text: Thus, the label reports that omeprazole helped a substantial proportion of children with reflux
+      in these studies.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    note: Uncited conclusion; passage 1 holds the study results it summarises.
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: risperidone-clinical-studies#1
+  claims:
+  - text: Yes.
+    refs: []
+    label: not_a_claim
+  - text: The FDA label for Risperdal states that its efficacy and safety in treating irritability associated
+      with autistic disorder were established in two 8‑week, double‑blind, placebo‑controlled trials involving
+      children and adolescents aged 5 to 16 years [1].
+    refs:
+    - 1
+    label: supported
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: lisinopril-angioedema#1
+  claims:
+  - text: I’m not able to find any label information that specifically addresses whether a person who
+      experienced facial or lip swelling with one ACE‑inhibitor can safely use lisinopril.
+    refs: []
+    label: not_a_claim
+  - text: The adverse‑reaction section of the lisinopril label does not list facial/lip edema as a reported
+      reaction, but it also does not mention cross‑reactivity with other drugs in that class.
+    refs: []
+    label: not_a_claim
+    note: 'Close call: a negative statement about what the retrieved label text lists (no facial/lip edema,
+      no cross-reactivity), so judged as a coverage statement, not a drug fact. No returned passage contradicts
+      it.'
+  - text: Therefore, Molecula’s data does not cover this question.
+    refs: []
+    label: not_a_claim
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: acetazolamide-contraindications#1
+  claims:
+  - text: Acetazolamide is a sulfonamide derivative, and the label warns that people who are allergic
+      to sulfonamides may experience serious hypersensitivity reactions such as anaphylaxis, rash, Stevens‑Johnson
+      syndrome, or toxic epidermal necrolysis.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    - 2
+    - 5
+    note: Uncited; passages 1 and 5 (same text) name acetazolamide among sulfonamide derivatives with
+      anaphylaxis, rash, SJS and TEN, and passage 2 holds the severe sulfonamide reactions and that sensitizations
+      may recur.
+  - text: Because of this risk, a person with a known sulfa allergy should not take acetazolamide unless
+      a healthcare professional determines it is absolutely necessary and has taken all precautions to
+      monitor for allergic reactions [2][5].
+    refs:
+    - 2
+    - 5
+    label: supported
+    note: 'Close call: the label doesn''t say ''unless absolutely necessary''; read as a direct conclusion
+      from passage 2 (sensitizations may recur, discontinue on hypersensitivity) and passage 5 (watch
+      for early signs).'
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: atorvastatin-starting-dose#1
+  claims:
+  - text: The label recommends a starting dose of 10 mg or 20 mg once daily for adults, with the range
+      up to 80 mg once daily if needed. [1]
+    refs:
+    - 1
+    label: supported
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: lamotrigine-dosing#1
+  claims:
+  - text: The label says that when lamotrigine (SUBVENITE) is used alone for epilepsy, the usual maintenance
+      dose is **500 mg per day**, typically split into two doses [1].
+    refs:
+    - 1
+    label: supported
+    note: Passage 1 gives 500 mg/day in 2 divided doses as the recommended monotherapy maintenance dose.
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: omeprazole-indications#1
+  claims:
+  - text: Babies (infants) may receive omeprazole (Prilosec) for certain conditions, but the label notes
+      that its safety and effectiveness beyond 12 months of age are not established.
+    refs: []
+    label: unsupported
+    note: 'Uncited, and misread: passage 5 says it is not known if Prilosec is safe and effective when
+      used longer than 12 months (a treatment duration), not beyond 12 months of age. That infants may
+      receive it is in passage 5.'
+  - text: For infants younger than one month, use is only described for up to six weeks to treat gastro‑oesophageal
+      reflux with erosive oesophagitis; it is not known if it is safe or effective for other uses in this
+      age group [5].
+    refs:
+    - 5
+    label: unsupported
+    note: 'Population misread: passage 5 gives the up-to-6-weeks GERD-with-EE use for children 1 month
+      to less than 12 months; for children under 1 month it says only that safety and effectiveness are
+      not known.'
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: ciprofloxacin-indications#1
+  claims:
+  - text: Yes.
+    refs: []
+    label: not_a_claim
+  - text: The label states that ciprofloxacin is indicated for the treatment of plague, including pneumonic
+      and septicemic forms caused by *Yersinia pestis*, and for prophylaxis against plague in adults and
+      children [1].
+    refs:
+    - 1
+    label: supported
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: acetaminophen-warfarin#1
+  claims:
+  - text: Tylenol (acetaminophen) can affect blood‑thinning medications such as warfarin.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    note: Uncited; passage 1 holds the INR rise with warfarin (passages 2 and 3 also say to ask a doctor
+      if taking warfarin).
+  - text: Chronic use of acetaminophen at doses up to 4 000 mg per day has been shown to increase the
+      international normalized ratio (INR), which measures how long it takes for blood to clot, in some
+      patients who are taking sodium warfarin [1].
+    refs:
+    - 1
+    label: supported
+    note: 'Close: ''doses up to 4,000 mg'' slightly widens the label''s ''a dose of 4,000 mg/day''; the
+      INR explanation is a term explanation.'
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: clopidogrel-omeprazole#1
+  claims:
+  - text: Clopidogrel (Plavix) should **not** be taken together with omeprazole to treat heartburn.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    - 5
+    note: Uncited; passages 1 and 5 say to avoid using Plavix with omeprazole.
+  - text: The drug label states that omeprazole reduces clopidogrel’s antiplatelet activity and advises
+      avoiding their concomitant use [1][5].
+    refs:
+    - 1
+    - 5
+    label: supported
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: pseudoephedrine-antidepressants#1
+  claims:
+  - text: The label for pseudoephedrine states that it must **not** be used if you are taking a prescription
+      monoamine oxidase inhibitor (MAOI) or within two weeks of stopping one [1].
+    refs:
+    - 1
+    label: supported
+  - text: Therefore, any antidepressant that is an MAOI should not be combined with a pseudoephedrine
+      decongestant.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    - 3
+    note: Uncited; passages 1 and 3 say do not use with a prescription MAOI (certain drugs for depression),
+      which this restates.
+  - text: 'Common MAOIs include:
+
+      - **Phenelzine**
+
+      - **Tranylcypromine**
+
+      - **Isocarboxazid**
+
+      - **Selegiline** (when used as an antidepressant, not the lower‑dose formulation for Parkinson’s
+      disease)'
+    refs: []
+    label: unsupported
+    note: Uncited; phenelzine, tranylcypromine, isocarboxazid and selegiline and the Parkinson's dose
+      remark are in no returned passage.
+  - text: These drugs inhibit the enzyme monoamine oxidase, and combining them with pseudoephedrine can
+      lead to dangerous increases in blood pressure or other serious effects.
+    refs: []
+    label: unsupported
+    note: Uncited; the MAO mechanism and dangerous blood pressure increases are in no returned passage.
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: diclofenac-otc-consumer#1
+  claims:
+  - text: Teenagers (under 18 years old) should **not** use Voltaren Arthritis Pain Gel unless a doctor
+      or pharmacist specifically advises it.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    - 4
+    note: Uncited; passages 1 and 4 say to ask a doctor before use if under 18 and that safety under 18
+      is unknown. 'Should not use unless a doctor advises' is read as a direct conclusion from that, a
+      close call.
+  - text: The label states that the safety and effectiveness of diclofenac in people younger than 18 are
+      unknown, and it recommends asking a health professional before use if you are under age 18 [1][4].
+    refs:
+    - 1
+    - 4
+    label: supported
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: diclofenac-overdosage#1
+  claims:
+  - text: If someone has taken an excessive amount of diclofenac, the label says that the most common
+      signs are feeling very sleepy or drowsy, nausea and vomiting, and pain in the upper stomach area
+      (epigastric pain) [1].
+    refs:
+    - 1
+    label: supported
+    note: '''Most common'' restates the label''s ''typically limited to''.'
+  - text: In rare cases, more serious effects such as high blood pressure, sudden kidney failure, breathing
+      problems, or unconsciousness can occur, but these are uncommon [1].
+    refs:
+    - 1
+    label: supported
+  - text: If you suspect an overdose, call emergency services right away (911 in the U.S. or 112 in Europe)
+      and seek help from a poison‑control centre.
+    refs: []
+    label: not_a_claim
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: spironolactone-overdosage#1
+  claims:
+  - text: Signs of an acute Aldactone (spironolactone) overdose include drowsiness, mental confusion,
+      a rash that is maculopapular or erythematous, nausea, vomiting, dizziness, and diarrhea [1].
+    refs:
+    - 1
+    label: supported
+  - text: In rare cases, especially in people with severe liver disease or impaired kidney function, it
+      can also cause low sodium (hyponatremia), high potassium (hyperkalemia) or even hepatic coma [1].
+    refs:
+    - 1
+    label: unsupported
+    note: Passage 1 says hyponatremia, hyperkalemia and hepatic coma in severe liver disease are 'unlikely
+      due to acute overdosage'; the claim presents them as overdose effects, and ties impaired kidney
+      function to all three where the passage ties it only to hyperkalemia.
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: risperidone-patient-information#1
+  claims:
+  - text: Store the RISPERDAL® Oral Solution at room temperature between 59 °F and 77 °F (15 °C to 25 °C).
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    - 2
+    - 4
+    note: Uncited; passages 1 and 2 (and 4 in Spanish) give room temperature 15-25 C (59-77 F) for the
+      oral solution.
+  - text: Protect it from light, do not freeze it, and keep it out of reach of children【2】.
+    refs:
+    - 2
+    label: supported
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: valacyclovir-patient-information#1
+  claims:
+  - text: Valtrex (valacyclovir) is not a cure for genital herpes; it treats outbreaks and can reduce
+      transmission, but the virus remains in the body after treatment ends【1】【3】
+    refs:
+    - 1
+    - 3
+    label: unsupported
+    note: Not a cure, treats outbreaks and reduces transmission are in passages 1 and 3; 'the virus remains
+      in the body after treatment ends' is in no returned passage.
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: ibuprofen-mechanism#1
+  claims:
+  - text: Ibuprofen is a non‑steroidal anti‑inflammatory drug (NSAID).
+    refs: []
+    label: unsupported
+    held_by:
+    - 2
+    - 5
+    note: Uncited; passage 5 calls ibuprofen an NSAID and passage 2 says 'like that of other NSAIDs'.
+  - text: It lowers pain and fever by blocking the production of prostaglandins, which are chemicals that
+      promote inflammation, pain signals and raise body temperature in response to injury or infection
+      [1][2].
+    refs:
+    - 1
+    - 2
+    label: supported
+    note: 'Close: the label says the mechanism ''may be related to'' / is ''probably'' prostaglandin synthesis
+      inhibition; the claim drops the hedge. What prostaglandins do is a term explanation.'
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: oseltamivir-pharmacology#1
+  claims:
+  - text: I’m sorry, but Molecula’s data do not include any information about whether the dosage of Tamiflu
+      (oseltamivir) should be changed during pregnancy.
+    refs: []
+    label: not_a_claim
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: gabapentin-product#1
+  claims:
+  - text: Gralise tablets are available in five different strengths: 300 mg, 450 mg, 600 mg, 750 mg and 900 mg [2]
+    refs:
+    - 2
+    label: supported
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: levothyroxine-product#1
+  claims:
+  - text: Tirosint‑SOL is supplied as a clear, colorless to slightly yellow oral solution in a 1 mL white,
+      non‑transparent unit‑dose ampule.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    - 2
+    note: Uncited; passages 1 and 2 both describe the clear, colorless to slightly yellow solution in
+      a 1 mL white, non-transparent unit-dose ampule.
+  - text: Each ampule bears a colored label that identifies the dosage strength and the product name (TIROSINT‑SOL)
+      [1].
+    refs:
+    - 1
+    label: supported
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: ondansetron-specific-populations#1
+  claims:
+  - text: The label for ondansetron notes that studies on pregnancy have found inconsistent results regarding
+      oral clefts (cleft lip or palate).
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    note: Uncited; passage 1 holds the inconsistent oral-cleft findings.
+  - text: One large cohort study reported a modestly increased risk of oral clefts when oral ondansetron
+      was used in the first trimester, but no such association was seen with intravenous use.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    note: Uncited; passage 1 holds the Medicaid cohort (oral RR 1.24, IV RR 0.95).
+  - text: Other case‑control studies showed conflicting findings, and animal studies did not demonstrate
+      clear developmental toxicity for clefts.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    note: Uncited; passage 1 holds the conflicting case-control studies and the animal studies with no
+      significant effects on offspring.
+  - text: Thus, the label indicates that an association has been observed in some human studies but is
+      not consistently confirmed across all research [1].
+    refs:
+    - 1
+    label: supported
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: morphine-specific-populations#1
+  claims:
+  - text: I’m not able to find any information in the FDA label for MS Contin that specifically addresses
+      use in people with liver cirrhosis.
+    refs: []
+    label: not_a_claim
+  - text: The label’s warnings and cautions do not mention hepatic impairment, so Molecula’s data does
+      not cover this question.
+    refs: []
+    label: not_a_claim
+    note: 'Close: it also states a negative about the label''s warnings (no mention of hepatic impairment),
+      but it is a statement of what the data doesn''t cover, which the source check doesn''t judge.'
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: dextromethorphan-warnings#1
+  claims:
+  - text: No. The label for Delsym (dextromethorphan) says you should not use it while taking a prescription
+      monoamine oxidase inhibitor (MAOI) or within two weeks after stopping an MAOI drug [1].
+    refs:
+    - 1
+    label: supported
+- eval: from_memory
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: celecoxib-warnings#1
+  claims:
+  - text: Stomach ulcers and gastrointestinal bleeding are listed as serious adverse events for celecoxib.
+    refs: []
+    label: unsupported
+    note: Uncited. Passage 1's list of serious adverse events holds GI bleeding but not stomach ulcers;
+      passage 3 only names 'GI Bleeding, Ulceration and Perforation' among reactions discussed elsewhere,
+      not as serious adverse events. Close call on held_by.
+  - text: In the label, these events occurred in fewer than 0.1 % of patients treated with the drug [1].
+    refs:
+    - 1
+    label: unsupported
+    note: 'Misreading: passage 1''s <0.1% list holds GI bleeding and perforation, not stomach ulcers,
+      so ''these events'' (ulcers and bleeding) at <0.1% is not held.'
+- eval: from_memory
+  cache: openai_gpt-oss-20b-7f350ba74a4e
+  run_id: clopidogrel-omeprazole#1
+  claims:
+  - text: Clopidogrel (Plavix) is a blood‑thinner that works by blocking a platelet receptor called P2Y12.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    - 4
+    note: Uncited; passage 4 says P2Y12 inhibitors including Plavix inhibit platelet aggregation, passage
+      1 calls it an oral P2Y12 inhibitor with antiplatelet activity.
+  - text: When it is taken together with the proton‑pump inhibitor omeprazole, the label says that omeprazole
+      **reduces the antiplatelet activity of clopidogrel** and can lower its effectiveness in preventing
+      heart attacks or strokes [2][4].
+    refs:
+    - 2
+    - 4
+    label: unsupported
+    note: Passages 2 and 4 hold the reduced antiplatelet activity, but 'lower its effectiveness in preventing
+      heart attacks or strokes' is in no returned passage.
+  - text: Because of this interaction many clinicians avoid giving both drugs at the same time.
+    refs: []
+    label: unsupported
+    note: Uncited; passages 2 and 4 say to avoid concomitant use, but what 'many clinicians' do is in
+      no returned passage.
+  - text: If a patient needs acid‑reduction therapy, other PPIs such as dexlansoprazole or pantoprazole
+      are preferred because they have less effect on clopidogrel’s activity.
+    refs: []
+    label: unsupported
+    note: Passage 1 holds 'less effect', but that dexlansoprazole or pantoprazole are 'preferred' is in
+      no returned passage.
+  - text: So, if you’re taking clopidogrel for heart disease, it is usually better **not** to combine
+      it with omeprazole unless a doctor specifically says otherwise.
+    refs: []
+    label: unsupported
+    held_by:
+    - 2
+    - 4
+    note: 'Uncited; passages 2 and 4 say to avoid clopidogrel with omeprazole. Close: ''for heart disease''
+      is only a condition, not asserted as a fact.'
+  - text: The decision should be made by your prescribing clinician.
+    refs: []
+    label: not_a_claim
+- eval: from_memory
+  cache: openai_gpt-oss-20b-7f350ba74a4e
+  run_id: pseudoephedrine-antidepressants#1
+  claims:
+  - text: Pseudoephedrine decongestants are contraindicated in people who are taking a monoamine oxidase
+      inhibitor (MAOI) – a class of antidepressants that blocks the enzyme monoamine oxidase, which normally
+      breaks down certain brain chemicals.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    - 2
+    note: 'Uncited; passages 1 and 2 say not to use it with a prescription MAOI (drugs for depression
+      and other conditions). Close: ''blocks monoamine oxidase, which breaks down brain chemicals'' is
+      taken as explaining the term MAOI.'
+  - text: Mixing an MAOI with pseudoephedrine can cause dangerous increases in blood pressure and other
+      serious reactions.
+    refs: []
+    label: unsupported
+    note: '''Dangerous increases in blood pressure and other serious reactions'' is in no returned passage.'
+  - text: '**Antidepressants that are MAOIs (and therefore should not be combined with pseudoephedrine):**
+
+      - **Phenelzine**
+
+      - **Tranylcypromine**
+
+      - **Isocarboxazid**
+
+      - **Selegiline** (when used as an antidepressant, not the lower‑dose formulation for Parkinson’s
+      disease)'
+    refs: []
+    label: unsupported
+    note: Uncited, and no returned passage names phenelzine, tranylcypromine, isocarboxazid or selegiline.
+  - text: These drugs are listed in the label warning that pseudoephedrine should not be taken with any
+      prescription MAOI. [2]
+    refs:
+    - 2
+    label: unsupported
+    note: Passage 2 only says 'a prescription MAOI'; it lists none of these drugs.
+- eval: from_memory
+  cache: openai_gpt-oss-20b-7f350ba74a4e
+  run_id: ibuprofen-mechanism#1
+  claims:
+  - text: Ibuprofen is a non‑steroidal anti‑inflammatory drug (NSAID).
+    refs: []
+    label: unsupported
+    held_by:
+    - 2
+    - 5
+    note: Uncited; passage 5 calls ibuprofen tablets a nonsteroidal anti-inflammatory drug (NSAID).
+  - text: Its main way of working is to block the enzyme **cyclooxygenase** (COX), which normally turns
+      arachidonic acid into prostaglandins.
+    refs: []
+    label: unsupported
+    note: Uncited; cyclooxygenase and arachidonic acid are in no returned passage, which only says the
+      mode of action may be related to prostaglandin synthetase inhibition.
+  - text: Prostaglandins are chemicals that make nerves more sensitive to pain and raise body temperature,
+      so when COX is inhibited, less prostaglandin is made.
+    refs: []
+    label: unsupported
+    note: Uncited; that prostaglandins sensitise nerves to pain and raise body temperature is in no returned
+      passage.
+  - text: This reduces the signals that cause pain and lowers the fever‑raising effect of inflammation
+      [1][2].
+    refs:
+    - 1
+    - 2
+    label: unsupported
+    note: 'Close call: passages 1 and 2 hold analgesic and antipyretic activity and a probable prostaglandin-synthesis
+      mechanism, but not the ''fever-raising effect of inflammation'' or pain signals; passage 2 says
+      the mode of action is not completely understood.'
+- eval: from_memory
+  cache: openai_gpt-oss-20b-7f350ba74a4e
+  run_id: celecoxib-warnings#1
+  claims:
+  - text: Stomach ulcers and gastrointestinal (GI) bleeding are listed as serious adverse events that
+      occurred in **less than 0.1 % of patients** treated with celecoxib in the clinical trials cited
+      in its label【1】.
+    refs:
+    - 1
+    label: unsupported
+    note: 'Misreading: passage 1''s <0.1% serious adverse event list holds GI bleeding and perforation,
+      not stomach ulcers.'
+- eval: from_memory
+  cache: openai_gpt-oss-20b-0166cca35155
+  run_id: pseudoephedrine-antidepressants#1
+  claims:
+  - text: Antidepressants that are monoamine‑oxidase inhibitors (MAOIs) must **not** be taken together
+      with a pseudoephedrine decongestant, because the combination can raise blood pressure and cause
+      other serious reactions.
+    refs: []
+    label: unsupported
+    note: The MAOI warning is in passages 1 and 2 (uncited), but 'can raise blood pressure and cause other
+      serious reactions' is in no returned passage.
+  - text: 'Examples of MAOI antidepressants include:
+
+      - **Phenelzine**
+
+      - **Tranylcypromine**
+
+      - **Selegiline (in its high‑dose form)**'
+    refs: []
+    label: unsupported
+    note: Uncited; no returned passage names phenelzine, tranylcypromine or selegiline.
+  - text: These drugs are listed in the pseudoephedrine label as “prescription monoamine oxidase inhibitor”
+      and the warning states that they should not be used with pseudoephedrine or for two weeks after
+      stopping an MAOI. [1][2]
+    refs:
+    - 1
+    - 2
+    label: unsupported
+    note: Passages 1 and 2 hold the MAOI warning and the 2-week rule, but they don't list 'these drugs'
+      (phenelzine, tranylcypromine, selegiline); they say only 'a prescription MAOI'.
+- eval: from_memory
+  cache: openai_gpt-oss-20b-0166cca35155
+  run_id: ibuprofen-mechanism#1
+  claims:
+  - text: Ibuprofen lowers pain and fever by blocking the production of prostaglandins, chemicals that
+      sensitize nerves to pain and raise body temperature.
+    refs: []
+    label: unsupported
+    note: Uncited; passages 1 and 2 hold prostaglandin synthesis inhibition as the probable mechanism,
+      but 'prostaglandins sensitize nerves to pain and raise body temperature' is in no returned passage.
+  - text: By inhibiting the enzyme cyclo‑oxygenase (COX), which is needed for prostaglandin synthesis,
+      ibuprofen reduces inflammation, pain signals and the fever‑raising effect of these molecules [1][2].
+    refs:
+    - 1
+    - 2
+    label: unsupported
+    note: No returned passage names cyclo-oxygenase (COX); passage 2 says the mode of action is not completely
+      understood.
+- eval: from_memory
+  cache: openai_gpt-oss-20b-medium-90d54cf3d8e5
+  run_id: lisinopril-angioedema#1
+  claims:
+  - text: If a person had facial or lip swelling (angioedema) while taking one ACE inhibitor, the FDA
+      label for lisinopril states that angioedema is a known and potentially serious side effect of all
+      drugs in this class.
+    refs: []
+    label: unsupported
+    held_by:
+    - 5
+    note: Uncited; passage 5 holds that angioedema occurs with ACE inhibitors as a class ('potentially
+      serious' read loosely).
+  - text: The risk is not limited to a single drug; it applies to any ACE inhibitor, including lisinopril
+      [5].
+    refs:
+    - 5
+    label: supported
+    note: Direct conclusion from passage 5, which describes angioedema risk for ACE inhibitors as a class.
+  - text: Because of this, a person who experienced swelling with another ACE inhibitor would be at increased
+      risk if they were started on lisinopril.
+    refs: []
+    label: unsupported
+    note: Uncited; no returned passage says a prior angioedema on another ACE inhibitor raises the risk
+      on lisinopril. Passage 5 only describes angioedema with ACE inhibitors as a class.
+  - text: A healthcare professional may consider an alternative antihypertensive class (for example, an
+      angiotensin‑receptor blocker) that does not carry the same angioedema risk.
+    refs: []
+    label: unsupported
+    note: Uncited; considering an angiotensin-receptor blocker without the same angioedema risk is in
+      no returned passage.
+  - text: The label also notes higher rates of angioedema in Black patients and when ACE inhibitors are
+      combined with certain other drugs such as mTOR or neprilysin inhibitors [5].
+    refs:
+    - 5
+    label: supported
+- eval: from_memory
+  cache: openai_gpt-oss-20b-medium-90d54cf3d8e5
+  run_id: clopidogrel-omeprazole#1
+  claims:
+  - text: Clopidogrel (the active ingredient in Plavix) is a blood‑thinning drug that works by blocking
+      a protein on platelets called P2Y12.
+    refs: []
+    label: unsupported
+    held_by:
+    - 5
+    note: Uncited; passage 5 calls Plavix (clopidogrel) a P2Y12 inhibitor that inhibits platelet aggregation.
+  - text: Omeprazole is a proton‑pump inhibitor (PPI) used to treat heartburn and stomach acid problems.
+    refs: []
+    label: unsupported
+    note: Uncited; passage 4 holds that omeprazole is a PPI, but 'used to treat heartburn and stomach
+      acid problems' is in no returned passage.
+  - text: 'The U.S. label for clopidogrel says:
+
+      * “Avoid concomitant use of omeprazole or esomeprazole because both significantly reduce the antiplatelet
+      activity of Plavix”【1】.'
+    refs:
+    - 1
+    label: supported
+    note: 'The quoted wording is passage 5''s, but passage 1 holds the same facts: avoid omeprazole or
+      esomeprazole, both reduce Plavix''s antiplatelet activity.'
+  - text: 'The U.S. label for clopidogrel says:
+
+      * The warning section also notes that this interaction can diminish clopidogrel’s effectiveness
+      and is a reason to avoid it【5】.'
+    refs:
+    - 5
+    label: supported
+  - text: Because clopidogrel must keep working to prevent heart attacks or strokes, taking omeprazole
+      at the same time can make it less effective.
+    refs: []
+    label: unsupported
+    note: Uncited; reduced effect with omeprazole is in passages 1 and 5, but clopidogrel preventing heart
+      attacks or strokes is in no returned passage (passage 5 only says stopping early raises the risk
+      of cardiovascular events).
+  - text: Therefore, you should **not** combine clopidogrel with omeprazole for heartburn.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    - 5
+    note: Uncited; passages 1 and 5 say to avoid using Plavix with omeprazole.
+  - text: If you need a PPI while on clopidogrel, talk to your doctor about alternatives that have less
+      effect on clopidogrel, such as pantoprazole or rabeprazole.
+    refs: []
+    label: unsupported
+    note: Uncited; passage 2 holds pantoprazole having less effect, but rabeprazole is in no returned
+      passage.
+  - text: Always follow the advice of your healthcare provider; they can choose the safest option for
+      you.
+    refs: []
+    label: not_a_claim
+- eval: from_memory
+  cache: openai_gpt-oss-20b-medium-90d54cf3d8e5
+  run_id: pseudoephedrine-antidepressants#1
+  claims:
+  - text: Pseudoephedrine should **not** be taken while you are on a monoamine‑oxidase inhibitor (MAOI)
+      antidepressant because the combination can cause dangerous increases in blood pressure and other
+      serious reactions.
+    refs: []
+    label: unsupported
+    note: The MAOI warning is in passages 1 and 2 (uncited), but 'dangerous increases in blood pressure
+      and other serious reactions' is in no returned passage.
+  - text: 'Common MAOI antidepressants that fall into this category include:
+
+      - Phenelzine
+
+      - Tranylcypromine
+
+      - Isocarboxazid
+
+      - Selegiline (at higher doses used as an antidepressant)'
+    refs: []
+    label: unsupported
+    note: Uncited; no returned passage names phenelzine, tranylcypromine, isocarboxazid or selegiline.
+  - text: These drugs are specifically listed in the pseudoephedrine label’s warning section, which advises
+      against use with any prescription MAOI for at least two weeks after stopping the MAOI drug [1][2].
+    refs:
+    - 1
+    - 2
+    label: unsupported
+    note: Passages 1 and 2 say only 'a prescription MAOI'; they don't specifically list these drugs, and
+      say '2 weeks', not 'at least two weeks'.
+  - text: If you’re unsure whether your antidepressant is an MAOI, ask a doctor or pharmacist before using
+      a pseudoephedrine decongestant.
+    refs: []
+    label: not_a_claim
+- eval: from_memory
+  cache: openai_gpt-oss-20b-medium-90d54cf3d8e5
+  run_id: valacyclovir-patient-information#1
+  claims:
+  - text: Valtrex is a medicine that helps control and reduce the frequency of genital‑herpes outbreaks,
+      but it does **not** cure the infection.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    - 3
+    note: Uncited; passage 3 holds 'control genital herpes outbreaks' and 'does not cure', passage 1 holds
+      suppressive therapy of recurrent episodes.
+  - text: 'The label states: “VALTREX does not cure cold sores, chickenpox, shingles, or genital herpes”【3】.'
+    refs:
+    - 3
+    label: supported
+  - text: It can shorten an outbreak if started early and can be used as long‑term suppressive therapy
+      to lower the chance of spreading the virus, but the underlying herpes simplex virus remains in the
+      body.
+    refs: []
+    label: unsupported
+    note: '''Shortens an outbreak if started early'' and ''the virus remains in the body'' are in no returned
+      passage.'
+- eval: from_memory
+  cache: openai_gpt-oss-20b-medium-90d54cf3d8e5
+  run_id: dextromethorphan-warnings#1
+  claims:
+  - text: No. The label for Delsym (dextromethorphan) specifically says you should **not** take it if
+      you are currently on a monoamine oxidase inhibitor (MAOI) antidepressant, or within two weeks of
+      stopping an MAOI.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    - 2
+    note: Uncited; passages 1 and 2 hold the MAOI-or-within-2-weeks warning.
+  - text: This is because the combination can cause serious side‑effects such as high blood pressure or
+      serotonin syndrome [1][2].
+    refs:
+    - 1
+    - 2
+    label: unsupported
+    note: Neither passage 1 nor 2 gives a reason; high blood pressure and serotonin syndrome are in no
+      returned passage.
+  - text: If you’re unsure whether your medication contains an MAOI, ask a doctor or pharmacist before
+      using Delsym.
+    refs: []
+    label: not_a_claim
+- eval: from_memory
+  cache: openai_gpt-oss-20b-medium-90d54cf3d8e5
+  run_id: celecoxib-warnings#1
+  claims:
+  - text: Stomach ulcers and the bleeding they can cause are listed in celecoxib’s label as part of “serious
+      gastrointestinal adverse events.”
+    refs: []
+    label: unsupported
+    note: Uncited. Passage 1's serious adverse event list holds GI bleeding, not stomach ulcers, and no
+      passage uses the quoted 'serious gastrointestinal adverse events'; passage 5 lists ulceration only
+      among reactions discussed elsewhere.
+  - text: In clinical studies, these serious GI events—including ulceration that leads to bleeding—occurred
+      in **less than 0.1 % of patients** taking the drug [1].
+    refs:
+    - 1
+    label: unsupported
+    note: 'Misreading: passage 1''s <0.1% list holds GI bleeding and perforation, not ulceration.'
+  - text: That means fewer than one person in a thousand experienced such an event while on celecoxib.
+    refs: []
+    label: unsupported
+    note: Uncited restatement of the misread <0.1% rate for ulcers with bleeding; passage 1 gives <0.1%
+      for GI bleeding only.
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: two-turn-imatinib-then-metamizole#1
+  claims:
+  - text: '**Imatinib (CID 5291)** – a protein‑tyrosine kinase inhibitor that blocks BCR‑ABL, PDGF, and
+      c‑Kit receptors; used mainly for chronic myeloid leukemia and certain gastrointestinal stromal tumors.'
+    refs: []
+    label: unsupported
+    note: Uncited; imatinib's kinase targets (BCR-ABL, PDGF, c-Kit) and uses (CML, GIST) are in no returned
+      source; only PubChem properties were returned.
+  - text: Its molecular weight is 493.6 g/mol, XLogP 3.5, TPSA 86.3 Å², with 2 hydrogen‑bond donors and
+      7 acceptors [1].
+    refs:
+    - 1
+    label: supported
+  - text: '**Metamizole (CID 3111)** – a non‑steroidal analgesic/antipyretic that is a prodrug of the
+      active metabolite 4‑aminophenylsulfonamide; used for pain and fever.'
+    refs: []
+    label: unsupported
+    note: Uncited; metamizole's class, prodrug/metabolite and use for pain and fever are in no returned
+      source.
+  - text: Its molecular weight is 311.36 g/mol, XLogP 0.0, TPSA 89.5 Å², with 1 hydrogen‑bond donor and
+      6 acceptors [2].
+    refs:
+    - 2
+    label: supported
+  - text: The two drugs differ in mechanism of action (kinase inhibition vs. analgesic/antipyretic), therapeutic
+      use, and physicochemical properties such as size and lipophilicity.
+    refs: []
+    label: unsupported
+    note: Uncited; the size and lipophilicity differences are in sources 1 and 2, but the mechanisms and
+      therapeutic uses are in no returned source.
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: two-turn-imatinib-then-metamizole#2
+  claims:
+  - text: '**Imatinib (CID 5291)**
+
+      - Formula: C₂₉H₃₁N₇O
+
+      - Molecular weight: 493.6 g/mol
+
+      - XLogP: 3.5
+
+      - TPSA: 86.3 Å²
+
+      - H‑bond donors: 2; acceptors: 7
+
+      - Rotatable bonds: 7
+
+      - Heavy atoms: 37 [1]'
+    refs:
+    - 1
+    label: supported
+  - text: '**Metamizole (CID 3111)**
+
+      - Formula: C₁₃H₁₇N₃O₄S
+
+      - Molecular weight: 311.36 g/mol
+
+      - XLogP: 0.0
+
+      - TPSA: 89.5 Å²
+
+      - H‑bond donors: 1; acceptors: 6
+
+      - Rotatable bonds: 4
+
+      - Heavy atoms: 21 [2]'
+    refs:
+    - 2
+    label: supported
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: two-turn-imatinib-then-metamizole#3
+  claims:
+  - text: '**Imatinib (CID 5291)**
+
+      - Formula: C₂₉H₃₁N₇O
+
+      - Molecular weight: 493.6 g/mol
+
+      - XLogP: 3.5
+
+      - TPSA: 86.3 Å²
+
+      - H‑bond donors: 2; acceptors: 7
+
+      - Rotatable bonds: 7
+
+      - Heavy atoms: 37 [1]'
+    refs:
+    - 1
+    label: supported
+  - text: '**Metamizole (CID 3111)**
+
+      - Formula: C₁₃H₁₇N₃O₄S
+
+      - Molecular weight: 311.36 g/mol
+
+      - XLogP: 0.0
+
+      - TPSA: 89.5 Å²
+
+      - H‑bond donors: 1; acceptors: 6
+
+      - Rotatable bonds: 4
+
+      - Heavy atoms: 21 [2]'
+    refs:
+    - 2
+    label: supported
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: compare-imatinib-metamizole#1
+  claims:
+  - text: '**Imatinib (CID 5291)** – molecular weight ≈ 493.6 g/mol, XLogP 3.5, TPSA 86.3 Å², 2 H‑bond
+      donors, 7 acceptors, 7 rotatable bonds, 37 heavy atoms [1].'
+    refs:
+    - 1
+    label: supported
+  - text: '**Metamizole (CID 3111)** – molecular weight ≈ 311.4 g/mol, XLogP 0.0, TPSA 89.5 Å², 1 H‑bond
+      donor, 6 acceptors, 4 rotatable bonds, 21 heavy atoms [2].'
+    refs:
+    - 2
+    label: supported
+  - text: Imatinib is larger and more lipophilic than metamizole, with a higher number of rotatable bonds
+      and hydrogen‑bond acceptors.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    - 2
+    note: Uncited comparison; sources 1 and 2 hold MW 493.6 vs 311.36, XLogP 3.5 vs 0.0, rotatable bonds
+      7 vs 4, acceptors 7 vs 6.
+  - text: Metamizole has fewer heavy atoms and a lower molecular weight, and its XLogP indicates it is
+      less hydrophobic.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    - 2
+    note: Uncited comparison; sources 1 and 2 hold heavy atoms 21 vs 37, MW 311.36 vs 493.6, XLogP 0.0
+      vs 3.5.
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: compare-imatinib-metamizole#2
+  claims:
+  - text: '**Imatinib (CID 5291)**
+
+      - Formula: C₂₉H₃₁N₇O; molecular weight 493.6 g/mol.
+
+      - XLogP 3.5, TPSA 86.3 Å², 2 H‑bond donors and 7 acceptors.
+
+      - 7 rotatable bonds, 37 heavy atoms.
+
+      - Has a PubChem 3D structure available. [1]'
+    refs:
+    - 1
+    label: supported
+  - text: '**Metamizole (CID 3111)**
+
+      - Formula: C₁₃H₁₇N₃O₄S; molecular weight 311.36 g/mol.
+
+      - XLogP 0.0, TPSA 89.5 Å², 1 H‑bond donor and 6 acceptors.
+
+      - 4 rotatable bonds, 21 heavy atoms.
+
+      - Has a PubChem 3D structure available. [2]'
+    refs:
+    - 2
+    label: supported
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: compare-imatinib-metamizole#3
+  claims:
+  - text: '**Imatinib**
+
+      - Molecular weight: 493.6 g/mol [1]
+
+      - Formula: C₂₉H₃₁N₇O [1]
+
+      - XLogP (lipophilicity): 3.5 [1]
+
+      - Topological polar surface area: 86.3 Å² [1]
+
+      - Hydrogen‑bond donors: 2; acceptors: 7 [1]
+
+      - Rotatable bonds: 7 [1]'
+    refs:
+    - 1
+    label: supported
+  - text: '**Metamizole**
+
+      - Molecular weight: 311.36 g/mol [2]
+
+      - Formula: C₁₃H₁₇N₃O₄S [2]
+
+      - XLogP (lipophilicity): 0.0 [2]
+
+      - Topological polar surface area: 89.5 Å² [2]
+
+      - Hydrogen‑bond donors: 1; acceptors: 6 [2]
+
+      - Rotatable bonds: 4 [2]'
+    refs:
+    - 2
+    label: supported
+  - text: These values show that imatinib is larger, more lipophilic, and has more rotatable bonds than
+      metamizole.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    - 2
+    note: Uncited comparison of values; results 1 and 2 hold the weights, XLogP and rotatable bonds it
+      compares.
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: compare-dipyrone-ibuprofen#1
+  claims:
+  - text: I’m sorry, but Molecula’s data does not include the drug dipyrone (metamizole).
+    refs: []
+    label: not_a_claim
+  - text: I can share what the U.S. label says for ibuprofen.
+    refs: []
+    label: not_a_claim
+  - text: '**Ibuprofen**
+
+      - It is used to relieve mild‑to‑moderate pain and inflammation in conditions such as rheumatoid
+      arthritis, osteoarthritis, and dysmenorrhea [2].'
+    refs:
+    - 2
+    label: supported
+    note: '''Inflammation'' read as the signs and symptoms of rheumatoid arthritis and osteoarthritis
+      in passage 2.'
+  - text: '**Ibuprofen**
+
+      - The label warns that ibuprofen may cause severe allergic reactions, especially in people who are
+      allergic to aspirin. Symptoms include hives, facial swelling, asthma, shock, skin reddening, rash,
+      or blisters; if an allergic reaction occurs, use should be stopped immediately and medical help
+      sought [1].'
+    refs:
+    - 1
+    label: supported
+  - text: '**Ibuprofen**
+
+      - Ibuprofen can increase the risk of stomach bleeding, heart attack, stroke, and other serious cardiovascular
+      events, especially when taken in higher doses or for longer periods. The label advises caution in
+      people with a history of stomach problems, high blood pressure, heart disease, liver cirrhosis,
+      kidney disease, asthma, or previous strokes [1][3].'
+    refs:
+    - 1
+    - 3
+    label: supported
+  - text: '**Ibuprofen**
+
+      - Because ibuprofen can interfere with the antiplatelet effect of aspirin, it is not generally recommended
+      to use both drugs together unless carefully managed [3].'
+    refs:
+    - 3
+    label: supported
+    note: 'Close call: passage 3 holds the aspirin interference and ''not generally recommended''; it
+      gives the reason as increased adverse effects and describes dose timing, which ''unless carefully
+      managed'' loosely restates.'
+  - text: Molecula does not have label information for dipyrone, so I cannot provide a direct comparison.
+    refs: []
+    label: not_a_claim
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: compare-dipyrone-ibuprofen#2
+  claims:
+  - text: 'Dipyrone (metamizole) and ibuprofen differ in several basic chemical characteristics:
+
+      - **Molecular size**: Dipyrone has a molecular weight of 311 g/mol, about 105 g/mol heavier than
+      ibuprofen’s 206 g/mol [1][2].
+
+      - **Formula**: Dipyrone is C₁₃H₁₇N₃O₄S; ibuprofen is C₁₃H₁₈O₂. The extra nitrogen, oxygen, and sulfur
+      atoms give dipyrone a more polar structure [1][2].
+
+      - **Lipophilicity**: Dipyrone’s XLogP is 0.0, indicating it is relatively hydrophilic, whereas ibuprofen’s
+      XLogP of 3.5 shows it is much more lipophilic [1][2].
+
+      - **Polar surface area (TPSA)**: Dipyrone has a TPSA of 89.5 Å², higher than ibuprofen’s 37.3 Å²,
+      reflecting greater potential for hydrogen‑bonding interactions [1][2].
+
+      - **Hydrogen bonding**: Both have one H‑bond donor; dipyrone offers six acceptors compared to ibuprofen’s
+      two, again indicating a more polar profile [1][2].
+
+      - **Rotatable bonds and heavy atoms**: Each has four rotatable bonds, but dipyrone contains 21 heavy
+      atoms versus ibuprofen’s 15, contributing to its larger size [1][2].'
+    refs:
+    - 1
+    - 2
+    label: supported
+    note: Interpretations (more polar, hydrophilic, hydrogen-bonding potential) explain what the cited
+      values mean; all numbers match sources 1 and 2.
+  - text: These differences suggest that dipyrone is generally less lipophilic and more polar than ibuprofen,
+      which can influence how each drug is absorbed, distributed, and metabolized in the body.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    - 2
+    note: Uncited; sources 1 and 2 hold the lower XLogP and higher TPSA. 'Can influence absorption, distribution
+      and metabolism' is read as explaining what lipophilicity means, a close call.
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: compare-dipyrone-ibuprofen#3
+  claims:
+  - text: Both drugs act on the same family of enzymes that make prostaglandins, which are chemicals that
+      promote pain and inflammation.
+    refs: []
+    label: unsupported
+    held_by:
+    - 1
+    - 4
+    note: Uncited; source 1 has metamizole as a cyclooxygenase inhibitor and passage 4 ties ibuprofen
+      to prostaglandin synthetase inhibition; what the enzymes and prostaglandins do is a term explanation.
+  - text: Dipyrone (metamizole) is a cyclooxygenase inhibitor [1].
+    refs:
+    - 1
+    label: supported
+  - text: Ibuprofen is also a cyclooxygenase inhibitor; its label describes it as an NSAID that blocks
+      prostaglandin synthesis to relieve pain and fever [5][6].
+    refs:
+    - 5
+    - 6
+    label: unsupported
+    held_by:
+    - 4
+    note: Passages 5 and 6 hold neither COX/prostaglandin inhibition, 'NSAID' nor fever; uncited passage
+      4 holds them (analgesic and antipyretic, like other NSAIDs, prostaglandin synthetase inhibition).
+  - text: '**Uses**
+
+      - Dipyrone: The U.S. drug label database does not contain a US label for dipyrone, so the official
+      indications are not available in Molecula’s data.
+
+      - Ibuprofen: It is indicated for relief of mild‑to‑moderate pain, rheumatoid arthritis and osteoarthritis,
+      and primary dysmenorrhea [5].'
+    refs:
+    - 5
+    label: supported
+    note: The dipyrone line is a statement about the data; the ibuprofen indications are all in passage
+      5.
+  - text: '**Side effects & warnings**
+
+      - Dipyrone: No U.S. label information is available in the database; therefore side‑effect details
+      are not covered by Molecula.
+
+      - Ibuprofen: Common adverse reactions include gastrointestinal irritation, ulcers, bleeding, skin
+      rashes, and rare severe allergic reactions such as Stevens–Johnson syndrome or toxic epidermal necrolysis
+      [6]. The label also warns about increased risk of heart attack, stroke, kidney problems, and fetal
+      ductus arteriosus closure in late pregnancy [2][3].'
+    refs:
+    - 2
+    - 3
+    - 6
+    label: unsupported
+    note: 'Misreading: passage 2 says ibuprofen ''rarely'' causes serious GI side effects such as ulcers
+      and bleeding, while the claim lists ulcers and bleeding as common adverse reactions.'
+  - text: Both drugs inhibit cyclooxygenase enzymes to reduce pain and inflammation.
+    refs: []
+    label: unsupported
+    note: That metamizole is used to reduce pain and inflammation is in no returned source; source 1 gives
+      only cyclooxygenase inhibition.
+  - text: Ibuprofen’s U.S. label provides detailed indications, side‑effect profiles, and warnings, while
+      dipyrone lacks a U.S. label in Molecula’s data, so its specific uses and safety information are
+      not available here.
+    refs: []
+    label: not_a_claim
+    note: Statement about what Molecula's data covers.
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: uses-metamizole#1
+  claims:
+  - text: I’m sorry, but Molecula does not have label information for metamizole.
+    refs: []
+    label: not_a_claim
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: uses-metamizole#3
+  claims:
+  - text: I’m sorry, but I don’t have information on that drug in my data set.
+    refs: []
+    label: not_a_claim
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: side-effects-novalgin#1
+  claims:
+  - text: I’m sorry, but Molecula’s data does not include information on the side effects of Novalgin.
+    refs: []
+    label: not_a_claim
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: two-turn-metformin-then-novaminsulfon-de#2
+  claims:
+  - text: Ich kann die Wirkungsweise von Novaminsulfon (Metamizol) nicht aus den verfügbaren US‑Labeldaten
+      nachschlagen.
+    refs: []
+    label: not_a_claim
+  - text: Molecula hat keine Informationen zu diesem Medikament.
+    refs: []
+    label: not_a_claim
+    note: A denial of data; judged by the denial eval, not here.
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: uses-side-effects-metamizol-de#2
+  claims:
+  - text: Molecula hat keine US‑Label‑Informationen zu Metamizol, daher kann ich die Frage nicht beantworten.
+    refs: []
+    label: not_a_claim
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: compare-novaminsulfon-paracetamol-de#1
+  claims:
+  - text: Molecula’s data does not cover the mechanism of action for Novaminsulfon (Metamizole).
+    refs: []
+    label: not_a_claim
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: compare-novaminsulfon-paracetamol-de#2
+  claims:
+  - text: 'Novaminsulfon (Metamizole) und Paracetamol unterscheiden sich vor allem chemisch:
+
+      * Novaminsulfon hat die Summenformel C₁₃H₁₇N₃O₄S, ein Molekulargewicht von 311,36 g/mol und einen
+      XLogP‑Wert von 0,0. Es besitzt fünf Wasserstoff‑Bindungsakzeptoren, einen Donor, vier rotierbare
+      Bindungen und 21 schwere Atome. [1]'
+    refs:
+    - 1
+    label: unsupported
+    note: 'Misreading: source 1 gives 6 hydrogen-bond acceptors, not five; the other values match.'
+  - text: 'Novaminsulfon (Metamizole) und Paracetamol unterscheiden sich vor allem chemisch:
+
+      * Paracetamol hat die Summenformel C₈H₉NO₂, ein Molekulargewicht von 151,16 g/mol und einen XLogP‑Wert
+      von 0,5. Es besitzt zwei Wasserstoff‑Bindungsakzeptoren, zwei Donoren, eine rotierbare Bindung und
+      11 schwere Atome. [2]'
+    refs:
+    - 2
+    label: supported
+  - text: Diese Unterschiede in der chemischen Struktur führen zu unterschiedlichen pharmakologischen
+      Eigenschaften, die jedoch nicht im aktuellen Datenbestand von Molecula abgedeckt sind.
+    refs: []
+    label: not_a_claim
+    note: 'Close call: besides the coverage statement it only says different structures lead to different
+      pharmacological properties, with no specific drug fact.'
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: control-compare-ibuprofen-naproxen#1
+  claims:
+  - text: '**Ibuprofen**
+
+      - **Uses** – Relief of rheumatoid arthritis, osteoarthritis, mild‑to‑moderate pain, and primary
+      dysmenorrhea【1】.'
+    refs:
+    - 1
+    label: supported
+  - text: '**Ibuprofen**
+
+      - **Common side‑effects / warnings** – Gastrointestinal irritation or bleeding, allergic reactions
+      (hives, swelling), heart‑attack or stroke risk when used long‑term or in high doses【5】.'
+    refs:
+    - 5
+    label: supported
+    note: 'Close: passage 5 has stomach bleeding, stomach upset, the allergy symptoms and a heart attack/stroke
+      risk that is higher with more or longer use.'
+  - text: '**Naproxen**
+
+      - **Uses** – Treatment of rheumatoid arthritis, osteoarthritis, ankylosing spondylitis, tendinitis,
+      bursitis, acute gout, primary dysmenorrhea and mild‑to‑moderate pain【6】.'
+    refs:
+    - 6
+    label: supported
+  - text: '**Naproxen**
+
+      - **Common side‑effects / warnings** – Similar to ibuprofen: gastrointestinal bleeding or ulceration,
+      allergic reactions, increased risk of heart attack or stroke with prolonged use【8】【10】.'
+    refs:
+    - 8
+    - 10
+    label: supported
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: control-compare-ibuprofen-naproxen#2
+  claims:
+  - text: '**Ibuprofen**
+
+      - **Uses** – Relief of rheumatoid arthritis, osteoarthritis, mild‑to‑moderate pain, and primary
+      dysmenorrhea【1】.'
+    refs:
+    - 1
+    label: supported
+  - text: '**Ibuprofen**
+
+      - **Common side‑effects / warnings** – Gastrointestinal irritation or bleeding, allergic reactions
+      (hives, swelling), heart‑attack or stroke risk with prolonged use, and possible interference with
+      aspirin’s antiplatelet effect【5】.'
+    refs:
+    - 5
+    label: supported
+    note: 'Close: passage 5 says ibuprofen may decrease aspirin''s heart-attack/stroke benefit and to
+      take it with food if stomach upset occurs; ''antiplatelet effect'' and ''GI irritation'' are read
+      as glosses of those.'
+  - text: '**Naproxen**
+
+      - **Uses** – Treatment of rheumatoid arthritis, osteoarthritis, ankylosing spondylitis, tendinitis,
+      bursitis, acute gout, primary dysmenorrhea, and mild‑to‑moderate pain【6】.'
+    refs:
+    - 6
+    label: supported
+  - text: '**Naproxen**
+
+      - **Common side‑effects / warnings** – Similar to ibuprofen: gastrointestinal bleeding or ulceration,
+      allergic reactions (hives, swelling), increased heart‑attack or stroke risk with long‑term use,
+      and possible reduction of aspirin’s benefit【8】【10】.'
+    refs:
+    - 8
+    - 10
+    label: unsupported
+    held_by:
+    - 9
+    note: Passages 8 and 10 don't hold 'possible reduction of aspirin's benefit'; passage 9 (uncited)
+      does.
+  - text: Both drugs are non‑steroidal anti‑inflammatory agents that block prostaglandin synthesis; their
+      side‑effect profiles overlap largely, especially regarding stomach irritation and cardiovascular
+      risks.
+    refs: []
+    label: unsupported
+    note: Uncited; the NSAID class is in passages 2, 5, 6 and 8, but no returned passage says naproxen
+      blocks prostaglandin synthesis.
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: control-compare-ibuprofen-naproxen#3
+  claims:
+  - text: '**Ibuprofen**
+
+      - **Uses** – The label says it is used to relieve the signs and symptoms of rheumatoid arthritis
+      and osteoarthritis, mild‑to‑moderate pain, and primary dysmenorrhea [1][6].'
+    refs:
+    - 1
+    - 6
+    label: supported
+    note: Passage 1 holds every ibuprofen use; the extra cite of passage 6 (naproxen) adds no wrong fact.
+  - text: '**Ibuprofen**
+
+      - **Common side effects** – Gastrointestinal complaints (nausea, heartburn, diarrhea) are reported
+      in 4 %–16 % of patients; other frequent events include headache and dizziness. Serious GI bleeding
+      or ulceration can occur, especially at higher doses [12][13].'
+    refs:
+    - 12
+    - 13
+    label: supported
+    note: 'Close call: ''especially at higher doses'' rests on passage 12''s ''reported side effects were
+      higher at doses of 3200 mg/day''; headache and dizziness are listed in passage 13.'
+  - text: '**Naproxen**
+
+      - **Uses** – The label lists treatment of rheumatoid arthritis, osteoarthritis, ankylosing spondylitis,
+      tendinitis, bursitis, acute gout, primary dysmenorrhea, and relief of mild‑to‑moderate pain [6].'
+    refs:
+    - 6
+    label: supported
+  - text: '**Naproxen**
+
+      - **Common side effects** – Headache (≈15 %), dyspepsia (≈14 %) and flu‑like symptoms are the most
+      frequent. Gastrointestinal events such as nausea, diarrhea, constipation, abdominal pain, heartburn,
+      and stomatitis also occur; other reported adverse reactions include tinnitus, dizziness, and mild
+      edema [18][16].'
+    refs:
+    - 16
+    - 18
+    label: supported
+    note: 'Close call: passage 18 lists edema and peripheral edema without a severity, so ''mild'' is
+      a loose qualifier; ''flu-like symptoms'' restates flu syndrome.'
+  - text: These statements come directly from the FDA drug labels that Molecula uses.
+    refs: []
+    label: not_a_claim
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: control-two-turn-imatinib-then-metformin#1
+  claims:
+  - text: '**Imatinib (CID 5291)** – molecular weight 493.6 g/mol, XLogP 3.5, TPSA 86.3 Å², 2 H‑bond donors,
+      7 acceptors, 7 rotatable bonds, 37 heavy atoms [1].'
+    refs:
+    - 1
+    label: supported
+  - text: '**Metformin (CID 4091)** – molecular weight 129.16 g/mol, XLogP –1.3, TPSA 91.5 Å², 3 H‑bond
+      donors, 1 acceptor, 2 rotatable bonds, 9 heavy atoms [2].'
+    refs:
+    - 2
+    label: supported
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: control-two-turn-imatinib-then-metformin#2
+  claims:
+  - text: '**Imatinib (CID 5291)**
+
+      - Formula: C₂₉H₃₁N₇O
+
+      - Molecular weight: 493.6 g/mol
+
+      - XLogP: 3.5
+
+      - TPSA: 86.3 Å²
+
+      - H‑bond donors: 2, acceptors: 7
+
+      - Rotatable bonds: 7, heavy atoms: 37【1】'
+    refs:
+    - 1
+    label: supported
+  - text: '**Metformin (CID 4091)**
+
+      - Formula: C₄H₁₁N₅
+
+      - Molecular weight: 129.16 g/mol
+
+      - XLogP: –1.3
+
+      - TPSA: 91.5 Å²
+
+      - H‑bond donors: 3, acceptors: 1
+
+      - Rotatable bonds: 2, heavy atoms: 9【2】'
+    refs:
+    - 2
+    label: supported
+  - text: These values come directly from PubChem and are listed side by side for comparison.
+    refs: []
+    label: not_a_claim
+    note: Says where the values come from (PubChem, as the sources record), not a fact about a drug.
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: control-two-turn-imatinib-then-metformin#3
+  claims:
+  - text: '**Imatinib (CID 5291)**
+
+      - Formula: C₂₉H₃₁N₇O
+
+      - Molecular weight: 493.6 g/mol
+
+      - XLogP: 3.5 – moderately lipophilic
+
+      - TPSA: 86.3 Å²
+
+      - H‑bond donors: 2; acceptors: 7
+
+      - Rotatable bonds: 7
+
+      - Heavy atoms: 37 [1]'
+    refs:
+    - 1
+    label: supported
+    note: '''Moderately lipophilic'' is read as a direct conclusion from XLogP 3.5.'
+  - text: '**Metformin (CID 4091)**
+
+      - Formula: C₄H₁₁N₅
+
+      - Molecular weight: 129.16 g/mol
+
+      - XLogP: –1.3 – highly hydrophilic
+
+      - TPSA: 91.5 Å²
+
+      - H‑bond donors: 3; acceptors: 1
+
+      - Rotatable bonds: 2
+
+      - Heavy atoms: 9 [2]'
+    refs:
+    - 2
+    label: supported
+    note: '''Highly hydrophilic'' is read as a direct conclusion from XLogP -1.3.'
+  - text: '**Key differences**
+
+      - Imatinib is a large, lipophilic kinase inhibitor with many rotatable bonds and several heteroatoms
+      that allow protein binding.
+
+      - Metformin is a small, hydrophilic biguanide with few rotatable bonds and only one hydrogen‑bond
+      acceptor, making it highly water‑soluble.'
+    refs: []
+    label: unsupported
+    note: Uncited; 'kinase inhibitor', 'biguanide', 'allow protein binding' and 'highly water-soluble'
+      are in no returned result.
+  - text: These properties explain their very different pharmacokinetics and therapeutic uses.
+    refs: []
+    label: unsupported
+    note: Uncited; nothing returned says anything about either drug's pharmacokinetics or therapeutic
+      uses.
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: control-compare-metformin-atorvastatin-de#1
+  claims:
+  - text: Metformin wird zur Verbesserung der Blutzuckerkontrolle bei Typ‑2‑Diabetes eingesetzt, als Ergänzung
+      zu Ernährung und Bewegung [2].
+    refs:
+    - 2
+    label: supported
+  - text: Atorvastatin ist ein HMG‑CoA‑Reduktase‑Inhibitor (Statin) und wird verwendet, um das Risiko
+      von Herzinfarkt, Schlaganfall und anderen kardiovaskulären Ereignissen bei Erwachsenen mit Risikofaktoren
+      für koronare Herzerkrankung zu senken sowie zur Senkung des LDL‑Cholesterins bei Hyperlipidämie,
+      familiärer Hypercholesterinämie und verwandten Lipoproteinstörungen [6][7].
+    refs:
+    - 6
+    - 7
+    label: supported
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: control-compare-metformin-atorvastatin-de#2
+  claims:
+  - text: Metformin wird als Ergänzung zu Ernährung und Bewegung zur Verbesserung der Blutzuckerkontrolle
+      bei Erwachsenen und Kindern ab 10 Jahren mit Typ‑2‑Diabetes mellitus eingesetzt [3].
+    refs:
+    - 3
+    label: supported
+  - text: Atorvastatin (Lipitor) ist ein HMG‑CoA‑Reduktase‑Inhibitor, der zur Senkung des LDL‑Cholesterins
+      verwendet wird.
+    refs: []
+    label: unsupported
+    held_by:
+    - 6
+    note: Uncited; passage 6 calls Lipitor an HMG-CoA reductase inhibitor (statin) used to reduce LDL-C.
+  - text: Es wird sowohl bei Erwachsenen und Kindern ab 10 Jahren mit primärer Hyperlipidämie als auch
+      bei Personen mit heterozygoter familiärer Hypercholesterinämie eingesetzt [6][7].
+    refs:
+    - 6
+    - 7
+    label: unsupported
+    note: 'Population misreading: passages 6 and 7 give primary hyperlipidemia for adults only and the
+      10-years-and-older age for HeFH, not for primary hyperlipidemia.'
+- eval: no_label
+  cache: openai_gpt-oss-20b-620e4d2be54c
+  run_id: control-compare-metformin-atorvastatin-de#3
+  claims:
+  - text: Metformin wird als Zusatz zur Ernährung und Bewegung bei Typ‑2‑Diabetes eingesetzt, um die Blutzuckerkontrolle
+      zu verbessern [2].
+    refs:
+    - 2
+    label: supported
+  - text: Atorvastatin ist ein HMG‑CoA‑Reduktase‑Inhibitor (Statin) und wird verwendet, um das LDL‑Cholesterin
+      zu senken und das Risiko von Herzinfarkt, Schlaganfall und anderen kardiovaskulären Ereignissen
+      bei Erwachsenen mit Risikofaktoren oder bereits vorhandener koronärer Herzerkrankung sowie bei Patienten
+      mit Typ‑2‑Diabetes [6][7].
+    refs:
+    - 6
+    - 7
+    label: supported
