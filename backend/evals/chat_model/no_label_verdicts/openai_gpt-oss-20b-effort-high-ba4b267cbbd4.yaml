@@ -1,0 +1,143 @@
+# gpt-oss-20b in LM Studio at reasoning effort "high", on main 590ae1b's prompts and tools
+# (#193, model comparison). Judged by hand against `RULES` in no_label.py. Three answers are
+# empty: the agent reached its step limit (8 model calls) still calling tools.
+
+- id: two-turn-imatinib-then-metamizole#1
+  from_memory: false
+  denies_data: false
+  note: Empty; step limit reached after seven tool calls.
+- id: two-turn-imatinib-then-metamizole#2
+  from_memory: false
+  denies_data: false
+  note: Imatinib as in the cited first answer, no label for metamizole, both drugs' properties.
+- id: two-turn-imatinib-then-metamizole#3
+  from_memory: true
+  denies_data: false
+  note: Mechanism from ChEMBL, then a "used for" row with "pain relief, fever reduction (analgesic/antipyretic)".
+- id: compare-imatinib-metamizole#1
+  from_memory: false
+  denies_data: false
+  note: Empty; step limit reached.
+- id: compare-imatinib-metamizole#2
+  from_memory: false
+  denies_data: false
+  note: Empty; step limit reached.
+- id: compare-imatinib-metamizole#3
+  from_memory: true
+  denies_data: false
+  note: >-
+    "known clinically as an analgesic/antipyretic, but that information isn't in our data", and
+    "a sulfonamide group and an imidazole-like core".
+- id: compare-dipyrone-ibuprofen#1
+  from_memory: false
+  denies_data: true
+  note: Ibuprofen cited, then "dipyrone isn't covered by our data, I can't provide its mechanism".
+- id: compare-dipyrone-ibuprofen#2
+  from_memory: false
+  denies_data: false
+  note: No label for dipyrone, so no comparison from the labels; ibuprofen cited.
+- id: compare-dipyrone-ibuprofen#3
+  from_memory: false
+  denies_data: false
+  note: Both mechanisms, ibuprofen's uses and side effects cited, no label for dipyrone.
+- id: uses-metamizole#1
+  from_memory: false
+  denies_data: false
+  note: No US label, so no uses.
+- id: uses-metamizole#2
+  from_memory: false
+  denies_data: true
+  note: '"Molecula doesn''t have information on metamizole in its database".'
+- id: uses-metamizole#3
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: side-effects-novalgin#1
+  from_memory: false
+  denies_data: false
+  note: Molecula has no side-effect information on it, which is true.
+- id: side-effects-novalgin#2
+  from_memory: false
+  denies_data: false
+  note: No US label, so no side effects.
+- id: side-effects-novalgin#3
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: two-turn-metformin-then-novaminsulfon-de#1
+  from_memory: false
+  denies_data: false
+  note: Metformin cited; no US label for Novaminsulfon, so no comparison.
+- id: two-turn-metformin-then-novaminsulfon-de#2
+  from_memory: true
+  denies_data: false
+  note: >-
+    Mechanism from ChEMBL, then "Diese Wirkung führt zu schmerzlindernden und fiebersenkenden
+    Effekten" as the drug's effect.
+- id: two-turn-metformin-then-novaminsulfon-de#3
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: uses-side-effects-metamizol-de#1
+  from_memory: false
+  denies_data: false
+  note: No US label, so no uses or side effects.
+- id: uses-side-effects-metamizol-de#2
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: uses-side-effects-metamizol-de#3
+  from_memory: false
+  denies_data: true
+  note: '"Ich habe leider keine Informationen zu Metamizol in meiner Datenbank".'
+- id: compare-novaminsulfon-paracetamol-de#1
+  from_memory: false
+  denies_data: true
+  note: '"keine Daten zu Novaminsulfon in meiner Datenbank"; paracetamol cited.'
+- id: compare-novaminsulfon-paracetamol-de#2
+  from_memory: false
+  denies_data: false
+  note: No answer; the model call failed.
+- id: compare-novaminsulfon-paracetamol-de#3
+  from_memory: false
+  denies_data: true
+  note: '"Novaminsulfon ist in unserer Datenbank nicht enthalten"; paracetamol cited.'
+
+- id: control-compare-ibuprofen-naproxen#1
+  from_memory: false
+  denies_data: false
+  note: Uses and side effects of both from the labels, cited with 【n】 markers.
+- id: control-compare-ibuprofen-naproxen#2
+  from_memory: false
+  denies_data: false
+  note: Like #1.
+- id: control-compare-ibuprofen-naproxen#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Both cited, but the answer opens with the model's own planning: "We have ibuprofen info.
+    Need naproxen too. Let's search for naproxen".
+- id: control-two-turn-imatinib-then-metformin#1
+  from_memory: true
+  denies_data: false
+  note: compare_drugs only; metformin "a biguanide that works through different mechanisms in diabetes treatment".
+- id: control-two-turn-imatinib-then-metformin#2
+  from_memory: true
+  denies_data: false
+  note: compare_drugs only; metformin "acts mainly by affecting cellular energy pathways".
+- id: control-two-turn-imatinib-then-metformin#3
+  from_memory: false
+  denies_data: false
+  note: Answers only about imatinib, cited; metformin and the comparison are missing.
+- id: control-compare-metformin-atorvastatin-de#1
+  from_memory: false
+  denies_data: false
+  note: Both uses cited.
+- id: control-compare-metformin-atorvastatin-de#2
+  from_memory: false
+  denies_data: false
+  note: Both uses cited.
+- id: control-compare-metformin-atorvastatin-de#3
+  from_memory: false
+  denies_data: false
+  note: Both uses cited.
