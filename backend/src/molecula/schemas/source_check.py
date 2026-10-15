@@ -26,8 +26,8 @@ class SourceCheckFailed(Exception):
 
 class SourceCheck(Protocol):
     async def check(self, answer: str, results: Sequence[ToolResultEvent]) -> CheckedAnswer:
-        """Splits the answer into claims and judges each against the tool results it cites.
-        Raises SourceCheckFailed when it can't."""
+        """Splits the answer into claims and judges each against the tool results it cites,
+        then against the others. Raises SourceCheckFailed when it can't."""
         ...
 
 
@@ -39,6 +39,7 @@ class ClaimJudgement(BaseModel):
     id: int
     reason: str
     verdict: ClaimLabel
+    held_by: list[int] = []
 
 
 class ClaimJudgements(BaseModel):

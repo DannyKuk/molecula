@@ -47,13 +47,19 @@ TARGETS = ToolResultEvent(
 )
 
 
-def judged(*judgements: tuple[int, str]) -> AIMessage:
+def judged(*judgements: tuple[int, str] | tuple[int, str, list[int]]) -> AIMessage:
+    """The model's verdicts: (claim, verdict) or (claim, verdict, the refs that hold it)."""
     return tool_call_message(
         "ClaimJudgements",
         {
             "judgements": [
-                {"id": number, "reason": f"Because of claim {number}.", "verdict": verdict}
-                for number, verdict in judgements
+                {
+                    "id": judgement[0],
+                    "reason": f"Because of claim {judgement[0]}.",
+                    "verdict": judgement[1],
+                    "held_by": list(judgement[2]) if len(judgement) == 3 else [],
+                }
+                for judgement in judgements
             ]
         },
     )
@@ -150,17 +156,79 @@ def test_a_claim_the_model_skipped_is_unsupported() -> None:
     ]
 
 
-def test_the_model_reads_the_prompt_and_only_the_cited_sources_as_data() -> None:
+def test_the_model_reads_the_prompt_and_every_returned_source_as_data() -> None:
     _, model = check("Metamizole inhibits cyclooxygenase [2].", judged((1, "supported")))
 
     assert model.received[0][0] == SystemMessage(prompts.load("guard/source_check"))
     assert sent(model)["sources"] == [
         {
+            "ref": 1,
+            "text": "The most common adverse reaction is headache.",
+            "substance": "ONDANSETRON",
+            "brand": "Zofran",
+            "section": "adverse_reactions",
+        },
+        {
             "ref": 2,
             "name": "Cyclooxygenase",
             "mechanism": "Cyclooxygenase inhibitor",
             "drug": "metamizole",
-        }
+        },
+    ]
+
+
+def test_a_fact_another_returned_source_holds_is_held_elsewhere_and_passes() -> None:
+    checked, _ = check(
+        "Metamizole inhibits cyclooxygenase [1].", judged((1, "held_elsewhere", [2]))
+    )
+
+    assert checked.claims == [
+        CheckedClaim(
+            text="Metamizole inhibits cyclooxygenase [1].",
+            refs=(1,),
+            label="held_elsewhere",
+            decided_by="model",
+            reason="Because of claim 1.",
+            held_by=(2,),
+        )
+    ]
+    assert checked.passed
+
+
+def test_an_uncited_fact_a_returned_source_holds_is_held_elsewhere() -> None:
+    checked, _ = check("Headache is common.", judged((1, "held_elsewhere", [1])))
+
+    assert [(c.label, c.held_by) for c in checked.claims] == [("held_elsewhere", (1,))]
+
+
+def test_held_by_keeps_only_returned_refs_the_claim_doesnt_cite() -> None:
+    answer = "Headache is common [1]. Metamizole inhibits cyclooxygenase. It is cheap [1]."
+
+    checked, _ = check(
+        answer,
+        judged(
+            (1, "held_elsewhere", [1, 2, 9]),
+            (2, "held_elsewhere", [9]),
+            (3, "held_elsewhere", [1]),
+        ),
+    )
+
+    assert [(c.label, c.held_by) for c in checked.claims] == [
+        ("held_elsewhere", (2,)),
+        ("unsupported", ()),
+        ("supported", ()),
+    ]
+
+
+def test_held_by_is_ignored_unless_the_fact_is_held_elsewhere() -> None:
+    checked, _ = check(
+        "Headache is common [1]. Ondansetron is cheap [1].",
+        judged((1, "supported", [2]), (2, "unsupported", [2])),
+    )
+
+    assert [(c.label, c.held_by) for c in checked.claims] == [
+        ("supported", ()),
+        ("unsupported", ()),
     ]
 
 

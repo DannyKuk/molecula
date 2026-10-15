@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
-type ClaimLabel = Literal["not_a_claim", "supported", "unsupported"]
+type ClaimLabel = Literal["not_a_claim", "supported", "held_elsewhere", "unsupported"]
 
 
 class Claim(BaseModel):
@@ -17,7 +17,8 @@ class Claim(BaseModel):
 
 class CheckedClaim(Claim):
     """A claim and the check's verdict on it: `supported` when the results it cites hold it,
-    `not_a_claim` when it states nothing about a drug.
+    `held_elsewhere` when they don't but other returned results do (`held_by`), `unsupported`
+    when no returned result holds it, `not_a_claim` when it states nothing about a drug.
 
     `decided_by` says where the verdict comes from: the model, with its `reason`;
     `unknown_refs` for a claim whose refs no tool returned; `no_verdict` when the model gave
@@ -27,3 +28,4 @@ class CheckedClaim(Claim):
     label: ClaimLabel
     decided_by: Literal["model", "unknown_refs", "no_verdict"]
     reason: str = ""
+    held_by: tuple[int, ...] = ()

@@ -24,15 +24,18 @@ const EXCERPT_LENGTH = 320;
  * section, or a PubChem, ChEMBL or RCSB page), with "+1" for each other one. Its popover shows
  * every cited passage with a link to the label on DailyMed, and every cited page with its link. While the answer streams the citation stays as written; a number that
  * points at no passage is left out. `spaced` says a space stood before the citation; it is kept
- * with the chip and left out with it.
+ * with the chip and left out with it. A `found` chip is one the answer didn't write: the source
+ * check found these results hold the sentence before it (#220).
  */
 export function CitationChip({
   refs,
   spaced,
+  found = false,
   children,
 }: {
   refs: number[];
   spaced: boolean;
+  found?: boolean;
   children: ReactNode;
 }) {
   const citations = useContext(CitationsContext);
@@ -48,13 +51,18 @@ export function CitationChip({
         <PopoverTrigger
           openOnHover
           delay={150}
-          aria-label={`Sources: ${labels.join(", ")}`}
+          aria-label={`${found ? "Found by the source check" : "Sources"}: ${labels.join(", ")}`}
           className="mx-0.5 inline-flex max-w-full items-center rounded-full border border-zinc-300 bg-zinc-100 px-2 py-0.5 align-middle text-xs font-medium hover:bg-zinc-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
         >
           <span className="truncate">{labels[0]}</span>
           {others}
         </PopoverTrigger>
         <PopoverContent align="start" className="max-h-96 w-80 gap-0 overflow-y-auto p-0">
+          {found && (
+            <p className="px-3 pt-3 text-xs text-muted-foreground">
+              The answer didn&apos;t cite this; the source check found the sentence here.
+            </p>
+          )}
           <ol className="divide-y divide-border">
             {sources.map((source) => (
               <li key={source.ref} className="flex flex-col gap-1 p-3">
