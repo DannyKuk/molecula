@@ -54,10 +54,12 @@ Rejected = labelled the claim `unsupported`.
 ```
 cd backend
 OFFLINE=1 LOCAL_LLM_BASE_URL=http://localhost:1234/v1 LOCAL_LLM_MODEL=openai/gpt-oss-20b \
-    uv run python -m evals.chat_model.source_check
+    SOURCE_CHECK_REASONING_EFFORT=default uv run python -m evals.chat_model.source_check
 OFFLINE=1 LOCAL_LLM_BASE_URL=http://localhost:1234/v1 LOCAL_LLM_MODEL=openai/gpt-oss-20b \
-    LLM_REASONING_EFFORT=medium uv run python -m evals.chat_model.source_check
+    SOURCE_CHECK_REASONING_EFFORT=medium uv run python -m evals.chat_model.source_check
 ```
+
+The runs above set `LLM_REASONING_EFFORT`; since #213 the check has its own setting, `SOURCE_CHECK_REASONING_EFFORT` (medium unless set), and the cache names are the same.
 
 The run needs the from-memory and no-label caches in `data/build/eval/` and stops if an answer no longer splits into its labelled claims. Checks are cached in `data/build/eval/source_check/`, keyed by the model, the effort and the checker's prompt: `openai_gpt-oss-20b-e1d7c7553d62.jsonl` (first prompt), `…-25a5986caf0f.jsonl` (revised prompt) and `…-medium-89949973d5c1.jsonl`. For the repeat, the first revised-prompt cache was moved aside; the second run is `…-25a5986caf0f.run2.jsonl`. The table splits cited from uncited additions, and the answer counts come from those caches.
 

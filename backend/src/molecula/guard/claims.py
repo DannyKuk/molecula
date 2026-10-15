@@ -9,7 +9,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Literal
 
-from molecula.schemas.source_check import Claim
+from molecula.schemas.claims import Claim
 
 CITATION = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]|【(\d+(?:\s*,\s*\d+)*)】")
 ITEM = re.compile(r"^\s*(?:[-*+•]|\d+[.)])\s+")
@@ -25,7 +25,7 @@ WORD_BEFORE = re.compile(r"([\w.]+)\.[^\w]*$")
 # Words a period follows inside a sentence. Single letters ("z. B.", "d. h.") are caught apart.
 ABBREVIATIONS = frozenset(
     {"e.g", "i.e", "vs", "approx", "ca", "cf", "dr", "nr", "no", "fig", "bzw", "ggf", "evtl"}
-    | {"inkl", "max", "min", "mind", "usw", "z.b", "d.h", "u.a", "st"}
+    | {"inkl", "max", "min", "mind", "usw", "z.b", "d.h", "u.a", "st", "u.s"}
 )
 
 

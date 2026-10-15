@@ -6,15 +6,16 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from molecula import prompts
+from molecula.agent.llm import ChatModelError
 from molecula.guard.claims import split_claims
 from molecula.guard.safety import fixed_answer, usage_of
 from molecula.schemas.chat import ToolResultEvent, Usage
+from molecula.schemas.claims import CheckedClaim, Claim
 from molecula.schemas.source_check import (
     CheckedAnswer,
-    CheckedClaim,
-    Claim,
     ClaimJudgement,
     ClaimJudgements,
+    SourceCheckFailed,
 )
 
 # Fields of a cited result that say nothing a claim could state: ids, links, scores, flags.
@@ -40,7 +41,7 @@ UNSTATED_FIELDS = frozenset(
 
 class ChatModelSourceCheck:
     """Judges an answer's claims by asking the chat model for `ClaimJudgements`, in one call
-    per answer. Provider errors are raised as they come, like the input check's."""
+    per answer. A provider error is raised as SourceCheckFailed."""
 
     def __init__(self, model: BaseChatModel) -> None:
         self._model = model
@@ -86,12 +87,15 @@ class ChatModelSourceCheck:
         structured = self._model.with_structured_output(ClaimJudgements, include_raw=True)
         # The answer and the results go in their own message, never into the prompt: the
         # results hold label text, which is untrusted.
-        result = await structured.ainvoke(
-            [
-                SystemMessage(prompts.load("guard/source_check")),
-                HumanMessage(json.dumps(data, ensure_ascii=False)),
-            ]
-        )
+        try:
+            result = await structured.ainvoke(
+                [
+                    SystemMessage(prompts.load("guard/source_check")),
+                    HumanMessage(json.dumps(data, ensure_ascii=False)),
+                ]
+            )
+        except ChatModelError as error:
+            raise SourceCheckFailed(repr(error)) from error
         usage = usage_of(result["raw"])
         parsed = result["parsed"]
         if not isinstance(parsed, ClaimJudgements):

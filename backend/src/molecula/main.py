@@ -10,12 +10,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.language_models import BaseChatModel
 
 from molecula.agent.agent import ChatAgent
-from molecula.agent.llm import LLMConfigError, get_chat_model
+from molecula.agent.llm import LLMConfigError, get_chat_model, get_source_check_model
 from molecula.agent.tool_registry import build_tools
 from molecula.api import chat, drugs, health
 from molecula.config import Settings, get_settings
 from molecula.guard.chat import GuardedChat
 from molecula.guard.safety import ChatModelInputCheck
+from molecula.guard.source_check import ChatModelSourceCheck
 from molecula.guard.validation import readable_validation_error
 from molecula.rag.embeddings import embedding_model_id, get_embeddings
 from molecula.rag.filters import FilterExtractor
@@ -119,6 +120,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.chat = GuardedChat(
             ChatModelInputCheck(chat_model),
             app.state.chat_agent,
+            ChatModelSourceCheck(get_source_check_model(settings)),
             timeout_seconds=settings.llm_timeout_seconds,
         )
     yield

@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     # Empty leaves the model's own default: gpt-oss-20b in LM Studio then reasons about as
     # briefly as on "low", gpt-5-mini on OpenRouter longer than on "medium" (#193, #198).
     llm_reasoning_effort: Literal["low", "medium", "high"] | None = None
+    # The source check's own effort, so the writer keeps its fast default (#206, #213).
+    # "default" leaves the model's own default, as an empty LLM_REASONING_EFFORT does.
+    source_check_reasoning_effort: Literal["default", "low", "medium", "high"] = "medium"
     embedding_model: str = "local"
     # Multilingual and among the best CPU-sized models in docs/decisions/embeddings.md (#88).
     local_embedding_model: str = "BAAI/bge-m3"

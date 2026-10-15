@@ -136,6 +136,12 @@ def model_label(settings: Settings, model_name: str) -> str:
     return f"{model_name}-{effort}" if effort else model_name
 
 
+def chat_label(settings: Settings, model_name: str) -> str:
+    """The model label and the source check's effort, for evals that ask `POST /chat`, where
+    the check runs after each answer: `openai/gpt-oss-20b-check-medium`."""
+    return f"{model_label(settings, model_name)}-check-{settings.source_check_reasoning_effort}"
+
+
 def read_cache(cache: Path) -> dict[str, Answer]:
     if not cache.exists():
         return {}

@@ -34,6 +34,17 @@ def get_chat_model(settings: Settings) -> BaseChatModel:
     The model streams. Every AIMessage it returns, and the last chunk of a stream, carries the
     call's token counts in `usage_metadata`. Raises LLMConfigError when a setting is missing.
     """
+    return _chat_model(settings, settings.llm_reasoning_effort)
+
+
+def get_source_check_model(settings: Settings) -> BaseChatModel:
+    """The same model at the source check's own reasoning effort,
+    SOURCE_CHECK_REASONING_EFFORT."""
+    effort = settings.source_check_reasoning_effort
+    return _chat_model(settings, None if effort == "default" else effort)
+
+
+def _chat_model(settings: Settings, reasoning_effort: str | None) -> BaseChatModel:
     endpoint = _resolve_endpoint(settings)
     return ChatOpenAI(
         base_url=endpoint.base_url,
@@ -43,7 +54,7 @@ def get_chat_model(settings: Settings) -> BaseChatModel:
         temperature=settings.llm_temperature,
         timeout=settings.llm_timeout_seconds,
         max_retries=settings.llm_max_retries,
-        reasoning_effort=settings.llm_reasoning_effort,
+        reasoning_effort=reasoning_effort,
         streaming=True,
         # LangChain leaves streamed usage off for any base URL other than OpenAI's own.
         stream_usage=True,

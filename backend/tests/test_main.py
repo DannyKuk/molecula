@@ -6,6 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 from langchain_core.embeddings import Embeddings, FakeEmbeddings
 from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import AIMessage
 
 from fake_llm import ScriptedChatModel, answer_message, tool_call_message
 from molecula import main
@@ -148,6 +149,21 @@ def build_index(settings: Settings, model: str) -> None:
     LabelIndex(settings.index_dir).rebuild([CHUNK], [[1.0, 0.0, 0.0]], model)
 
 
+def judged_supported() -> AIMessage:
+    """The source check's verdict on a one-claim answer: supported."""
+    return tool_call_message(
+        "ClaimJudgements",
+        {"judgements": [{"id": 1, "reason": "The passage says so.", "verdict": "supported"}]},
+    )
+
+
+def use_models(monkeypatch: pytest.MonkeyPatch, model: ScriptedChatModel) -> None:
+    """The scripted model sorts the message, answers it and checks the answer."""
+    monkeypatch.setattr(main, "get_embeddings", lambda settings: UnitEmbeddings())
+    monkeypatch.setattr(main, "get_chat_model", lambda settings: model)
+    monkeypatch.setattr(main, "get_source_check_model", lambda settings: model)
+
+
 @pytest.fixture
 def loaded_models(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     """Fakes the embedding and chat models and records which ones startup loaded."""
@@ -161,8 +177,13 @@ def loaded_models(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         loaded.append("chat")
         return ScriptedChatModel(script=[])
 
+    def source_check_model(settings: Settings) -> BaseChatModel:
+        loaded.append("source check")
+        return ScriptedChatModel(script=[])
+
     monkeypatch.setattr(main, "get_embeddings", embeddings)
     monkeypatch.setattr(main, "get_chat_model", chat_model)
+    monkeypatch.setattr(main, "get_source_check_model", source_check_model)
     return loaded
 
 
@@ -188,7 +209,7 @@ def test_startup_builds_the_label_search_over_a_matching_index(
         assert isinstance(app.state.chat_agent, ChatAgent)
         assert isinstance(app.state.chat, GuardedChat)
 
-    assert loaded_models == ["chat", "embeddings"]
+    assert loaded_models == ["chat", "embeddings", "source check"]
 
 
 def test_without_a_chat_model_the_label_search_is_off_and_the_routes_still_work(
@@ -267,10 +288,10 @@ def test_chat_answers_from_the_stored_labels_offline(
                 },
             ),
             answer_message("It blocks the BCR-ABL kinase."),
+            judged_supported(),
         ]
     )
-    monkeypatch.setattr(main, "get_embeddings", lambda settings: UnitEmbeddings())
-    monkeypatch.setattr(main, "get_chat_model", lambda settings: model)
+    use_models(monkeypatch, model)
 
     with TestClient(app) as client:
         response = client.post("/chat", json=QUESTION)
@@ -293,6 +314,8 @@ def test_chat_answers_from_the_stored_labels_offline(
     assert "disclaimer" not in events["sources"]
     assert events["done"]["step_limit_reached"] is False
     assert events["done"]["category"] == "ok"
+    assert events["source_check"]["checked"] is True
+    assert [c["label"] for c in events["source_check"]["claims"]] == ["supported"]
 
 
 def test_chat_describes_the_stored_complex_offline(
@@ -312,10 +335,10 @@ def test_chat_describes_the_stored_complex_offline(
             tool_call_message("SortedMessage", {"category": "ok"}),
             tool_call_message("get_complex", {"drug": "imatinib"}),
             answer_message("The 3D view shows imatinib in ABL1 [1]."),
+            judged_supported(),
         ]
     )
-    monkeypatch.setattr(main, "get_embeddings", lambda settings: UnitEmbeddings())
-    monkeypatch.setattr(main, "get_chat_model", lambda settings: model)
+    use_models(monkeypatch, model)
 
     with TestClient(app) as client:
         response = client.post("/chat", json=QUESTION)

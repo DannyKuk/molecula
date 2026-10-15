@@ -12,7 +12,8 @@ splitter.
 `ChatModelSourceCheck` with the configured chat model checks each answer once. The report gives
 the unsupported claims it catches (additions with and without a citation, and citation misses),
 the supported claims and non-claims it wrongly rejects, who decided each rejection, and the
-seconds per answer. Checks are cached per model, reasoning effort and prompt.
+seconds per answer. Checks are cached per model, the check's reasoning effort
+(`SOURCE_CHECK_REASONING_EFFORT`, medium unless set) and prompt.
 """
 
 import argparse
@@ -28,18 +29,18 @@ from pathlib import Path
 from typing import Literal, Self
 
 import yaml
-from evals.chat_model.citations import model_label
 from evals.chat_model.no_label import read_verdicts
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from molecula import prompts
-from molecula.agent.llm import ChatModelError, get_chat_model
+from molecula.agent.llm import get_source_check_model
 from molecula.config import Settings, get_settings
 from molecula.guard.claims import split_claims
 from molecula.guard.safety import fixed_answer
 from molecula.guard.source_check import ChatModelSourceCheck
 from molecula.schemas.chat import ToolResultEvent
-from molecula.schemas.source_check import CheckedAnswer, CheckedClaim, ClaimLabel
+from molecula.schemas.claims import CheckedClaim, ClaimLabel
+from molecula.schemas.source_check import CheckedAnswer, SourceCheckFailed
 
 DATASET = Path(__file__).resolve().parents[1] / "datasets" / "source_check_claims.yaml"
 VERDICTS = Path(__file__).resolve().parent
@@ -111,7 +112,7 @@ def main() -> int:
     if mismatched:
         raise SystemExit(f"These answers no longer split into their labelled claims: {mismatched}")
     checks = asyncio.run(check_all(settings, model_name, labelled, answers))
-    print(report(model_label(settings, model_name), labelled, checks))
+    print(report(check_label(settings, model_name), labelled, checks))
     return 0
 
 
@@ -165,7 +166,7 @@ async def check_all(
     labelled: list[LabelledAnswer],
     answers: dict[str, CachedAnswer],
 ) -> list[Check]:
-    source_check = ChatModelSourceCheck(get_chat_model(settings))
+    source_check = ChatModelSourceCheck(get_source_check_model(settings))
     cache = cache_path(settings, model_name)
     cached = read_cache(cache)
     cache.parent.mkdir(parents=True, exist_ok=True)
@@ -176,7 +177,7 @@ async def check_all(
             start = time.perf_counter()
             try:
                 checked = await source_check.check(cached_answer.text, cached_answer.results)
-            except ChatModelError as error:
+            except SourceCheckFailed as error:
                 checks.append(Check(answer.key, None, time.perf_counter() - start, repr(error)))
                 print(f"{answer.key}: {error!r}", flush=True)
                 continue
@@ -189,12 +190,18 @@ async def check_all(
 
 
 def cache_path(settings: Settings, model_name: str) -> Path:
-    """Keyed by the model, its reasoning effort and the checker's prompt."""
-    name = model_label(settings, model_name)
+    """Keyed by the model, the check's reasoning effort and the checker's prompt."""
+    name = check_label(settings, model_name)
     key = hashlib.sha256(f"{name}\n{prompts.load('guard/source_check')}".encode()).hexdigest()
     return (
         settings.build_dir / "eval" / "source_check" / f"{name.replace('/', '_')}-{key[:12]}.jsonl"
     )
+
+
+def check_label(settings: Settings, model_name: str) -> str:
+    """The model and the check's effort, named as #212's runs were: `openai/gpt-oss-20b-medium`."""
+    effort = settings.source_check_reasoning_effort
+    return model_name if effort == "default" else f"{model_name}-{effort}"
 
 
 def read_cache(cache: Path) -> dict[str, Check]:

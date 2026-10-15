@@ -26,8 +26,9 @@ export type ChatEvent =
   | { type: "sources"; sources: Source[]; unknown_refs: number[] }
   | { type: "done"; step_limit_reached: boolean }
   | { type: "error"; message: string }
-  // Read but not shown yet: the retrieval trace comes with #41.
-  | { type: "retrieval_trace" };
+  // Read but not shown yet: the retrieval trace comes with #41, the source check with #214.
+  | { type: "retrieval_trace" }
+  | { type: "source_check" };
 
 export const CHAT_UNAVAILABLE = "The chat is currently unavailable. Try again later.";
 export const CHAT_FAILED = "Something went wrong while answering. Try again.";

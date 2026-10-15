@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from fake_llm import ScriptedChatModel, answer_message, tool_call_message
-from guard_fakes import FakeCheck
+from guard_fakes import FakeCheck, FakeSourceCheck
 from molecula.agent.agent import ChatAgent
 from molecula.agent.tool_registry import build_tools
 from molecula.api.dependencies import chat
@@ -44,7 +44,7 @@ def agent(script: list[Any], check: FakeCheck | None = None) -> GuardedChat:
         FakeLabelRetriever(),
     )
     chat_agent = ChatAgent(ScriptedChatModel(script=script), tools, max_steps=5, timeout_seconds=10)
-    return GuardedChat(check or FakeCheck(), chat_agent, timeout_seconds=5)
+    return GuardedChat(check or FakeCheck(), chat_agent, FakeSourceCheck(), timeout_seconds=5)
 
 
 @pytest.fixture
@@ -74,7 +74,7 @@ def test_chat_streams_the_agents_events_as_server_sent_events(client: TestClient
     events = server_sent_events(response.text)
     names = [name for name, _ in events]
     assert names[:4] == ["status", "status", "tool_call", "tool_result"]
-    assert names[-2:] == ["sources", "done"]
+    assert names[-4:] == ["sources", "status", "source_check", "done"]
     assert all(data["type"] == name for name, data in events)
     assert "".join(data["text"] for name, data in events if name == "token") == "It blocks ABL1."
     assert events[2][1]["args"] == {"drug": "imatinib"}

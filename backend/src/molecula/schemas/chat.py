@@ -11,6 +11,7 @@ from pydantic import (
 )
 
 from molecula.guard.validation import has_control_characters
+from molecula.schemas.claims import CheckedClaim
 from molecula.schemas.guard import InputCategory
 from molecula.schemas.retrieval import LabelFilter, RetrievedChunk, Widening
 
@@ -170,6 +171,17 @@ class RetrievalTraceEvent(BaseModel):
     candidates: list[Candidate]
 
 
+class SourceCheckEvent(BaseModel):
+    """The source check's verdict on the answer just sent, one entry per claim in the answer's
+    order: `supported` when the results it cites hold it, `unsupported` when they don't,
+    `not_a_claim` when it states nothing about a drug. The answer is shown either way; this
+    only marks it. `checked` is false when the check failed, and then there are no claims."""
+
+    type: Literal["source_check"] = "source_check"
+    checked: bool
+    claims: list[CheckedClaim] = []
+
+
 class DoneEvent(BaseModel):
     """The answer is complete. `step_limit_reached` means the agent had to answer without
     further tool calls. `category` is how the guard sorted the question; anything but `ok` and
@@ -195,6 +207,7 @@ type ChatEvent = Annotated[
     | TokenEvent
     | SourcesEvent
     | RetrievalTraceEvent
+    | SourceCheckEvent
     | DoneEvent
     | ErrorEvent,
     Field(discriminator="type"),

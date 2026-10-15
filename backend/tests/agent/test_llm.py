@@ -6,7 +6,7 @@ import pytest
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
 
-from molecula.agent.llm import LLMConfigError, get_chat_model
+from molecula.agent.llm import LLMConfigError, get_chat_model, get_source_check_model
 from molecula.config import Settings
 
 LLM_FIELDS: dict[str, Any] = {
@@ -15,6 +15,7 @@ LLM_FIELDS: dict[str, Any] = {
     "local_llm_base_url": None,
     "local_llm_model": None,
     "llm_reasoning_effort": None,
+    "source_check_reasoning_effort": "medium",
 }
 
 
@@ -111,6 +112,23 @@ def test_reasoning_effort_reaches_the_request() -> None:
 def test_without_a_reasoning_effort_the_request_leaves_it_to_the_model() -> None:
     model = chat_openai(local_settings())
 
+    assert "reasoning_effort" not in model._default_params
+
+
+def test_the_source_check_reasons_at_its_own_effort() -> None:
+    model = get_source_check_model(
+        local_settings(llm_reasoning_effort="low", source_check_reasoning_effort="high")
+    )
+
+    assert isinstance(model, ChatOpenAI)
+    assert model._default_params["reasoning_effort"] == "high"
+    assert model.model_name == "qwen3:8b"
+
+
+def test_a_source_check_effort_of_default_leaves_it_to_the_model() -> None:
+    model = get_source_check_model(local_settings(source_check_reasoning_effort="default"))
+
+    assert isinstance(model, ChatOpenAI)
     assert "reasoning_effort" not in model._default_params
 
 
