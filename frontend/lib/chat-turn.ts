@@ -1,4 +1,10 @@
-import { CHAT_FAILED, type ChatEvent, type ChatMessage, type Source } from "./chat";
+import {
+  CHAT_FAILED,
+  type ChatEvent,
+  type ChatMessage,
+  type Source,
+  type SourceCheck,
+} from "./chat";
 import type { Passage } from "./citations";
 import type { Step } from "./tool-cards";
 
@@ -6,7 +12,8 @@ import type { Step } from "./tool-cards";
  * One question and the answer to it, with the steps Molecula took on the way and what their
  * tools returned. `sources` is null until the answer's `sources` event arrives, after its last
  * token; `passages` are the label passages the label search returned, by the number the answer
- * cites them with.
+ * cites them with. `sourceCheck` is the source check's verdict, which arrives after `sources`; a
+ * fixed answer and a stopped one have none.
  */
 export type Turn = {
   question: string;
@@ -16,6 +23,7 @@ export type Turn = {
   error?: string;
   sources: Source[] | null;
   passages: Record<number, Passage>;
+  sourceCheck: SourceCheck | null;
 };
 
 export function startTurn(question: string): Turn {
@@ -26,6 +34,7 @@ export function startTurn(question: string): Turn {
     state: "answering",
     sources: null,
     passages: {},
+    sourceCheck: null,
   };
 }
 
@@ -45,6 +54,8 @@ export function applyEvent(turn: Turn, event: ChatEvent): Turn {
     }
     case "sources":
       return { ...turn, sources: event.sources };
+    case "source_check":
+      return { ...turn, sourceCheck: { checked: event.checked, claims: event.claims } };
     case "done":
       return { ...turn, state: "done" };
     case "error":

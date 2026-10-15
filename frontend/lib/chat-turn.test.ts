@@ -8,6 +8,26 @@ function toolResult(name: string, result: unknown) {
 }
 
 describe("applyEvent", () => {
+  it("keeps the source check's verdict", () => {
+    const claims = [
+      {
+        text: "It blocks BCR-ABL [1].",
+        refs: [1],
+        label: "supported" as const,
+        decided_by: "model" as const,
+        reason: "Passage 1 says so.",
+      },
+    ];
+
+    const turn = applyEvent(startTurn("How does imatinib work?"), {
+      type: "source_check",
+      checked: true,
+      claims,
+    });
+
+    expect(turn.sourceCheck).toEqual({ checked: true, claims });
+  });
+
   it("keeps the label search's passages by the number the answer cites them with", () => {
     const passages = Object.values(IMATINIB_PASSAGES).map((passage) => ({
       ...passage,

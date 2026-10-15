@@ -52,7 +52,7 @@ The first design let an answer reach the user only through a tool, `submit_answe
 - **Claims are labelled against the results they cite.** An uncited fact is `unsupported` even when another returned result holds it, because the chat's rule is a ref on every drug sentence (#208). The set records which returned result holds it (`held_by`), so additions and citation misses are counted apart.
 - **Statements about coverage are not claims.** "Molecula's data doesn't include X" is judged by the no-label eval, not by this check, even when it is wrong.
 - **The protocol lives in `schemas/source_check.py`**, so the guard and the evals share it. Kev and Jev (#215) replace the checker in one line.
-- **A failing check leaves the answer unmarked, not hidden** (#213). The answer is already on screen when the check runs, so `source_check` says `checked: false` and the chat shows nothing more.
+- **A failing check leaves the answer unmarked, not hidden** (#213). The answer is already on screen when the check runs, so `source_check` says `checked: false` and the chat says "Not checked against the sources" under it (#214).
 
 ## Limits
 

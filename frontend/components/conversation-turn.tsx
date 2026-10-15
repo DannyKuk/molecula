@@ -1,11 +1,13 @@
 import type { Turn } from "@/lib/chat-turn";
 import { didYouMeanOf } from "@/lib/did-you-mean";
+import { checkingAnswer } from "@/lib/source-check";
 import { structuresOf } from "@/lib/tool-cards";
 
 import { AnswerMarkdown } from "./answer-markdown";
 import { AnswerSources } from "./answer-sources";
 import { DidYouMeanButtons } from "./did-you-mean";
 import { ProgressSteps } from "./progress-steps";
+import { SourceCheckBadge } from "./source-check-badge";
 import { StructurePanel } from "./structure/structure-panel";
 
 type ConversationTurnProps = {
@@ -41,8 +43,10 @@ export function ConversationTurn({ turn, onAsk, chatAnswering, onRetry }: Conver
         <AnswerMarkdown
           text={turn.answer}
           citations={turn.sources && { sources: turn.sources, passages: turn.passages }}
+          sourceCheck={turn.sourceCheck}
         />
       )}
+      {turn.answer && <SourceCheckBadge check={turn.sourceCheck} checking={checkingAnswer(turn)} />}
       {turn.sources && <AnswerSources answer={turn.answer} sources={turn.sources} />}
       {offers.length > 0 && (
         <DidYouMeanButtons offers={offers} onAsk={onAsk} disabled={chatAnswering} />
