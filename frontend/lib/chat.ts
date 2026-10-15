@@ -18,17 +18,30 @@ export type Source = {
   ref: number | null;
 };
 
+/** One claim of the answer and the source check's verdict on it (`CheckedClaim` in
+ * `backend/src/molecula/schemas/claims.py`). `reason` is empty unless the model decided. */
+export type CheckedClaim = {
+  text: string;
+  refs: number[];
+  label: "supported" | "unsupported" | "not_a_claim";
+  decided_by: "model" | "unknown_refs" | "no_verdict";
+  reason: string;
+};
+
+/** The source check's verdict on the whole answer; `checked` is false when the check failed. */
+export type SourceCheck = { checked: boolean; claims: CheckedClaim[] };
+
 export type ChatEvent =
   | { type: "status"; message: string }
   | { type: "token"; text: string }
   | { type: "tool_call"; id: string; name: string; args: Record<string, unknown> }
   | { type: "tool_result"; id: string; name: string; status: string | null; result: unknown }
   | { type: "sources"; sources: Source[]; unknown_refs: number[] }
+  | ({ type: "source_check" } & SourceCheck)
   | { type: "done"; step_limit_reached: boolean }
   | { type: "error"; message: string }
-  // Read but not shown yet: the retrieval trace comes with #41, the source check with #214.
-  | { type: "retrieval_trace" }
-  | { type: "source_check" };
+  // Read but not shown yet: the retrieval trace comes with #41.
+  | { type: "retrieval_trace" };
 
 export const CHAT_UNAVAILABLE = "The chat is currently unavailable. Try again later.";
 export const CHAT_FAILED = "Something went wrong while answering. Try again.";

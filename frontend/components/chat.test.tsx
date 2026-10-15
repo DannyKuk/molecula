@@ -385,6 +385,51 @@ describe("Chat", () => {
     expect(screen.getByRole("link", { name: "openFDA" })).toBeDefined();
   });
 
+  it("underlines what the sources don't back once the source check arrives", async () => {
+    const stream = stubChatStream();
+    const { container } = render(<Chat />);
+
+    askQuestion("How does imatinib work?");
+    await streamed(() =>
+      stream.send(
+        IMATINIB_LABEL_SEARCH +
+          token("It blocks BCR-ABL [1]. It was approved in 2001.") +
+          IMATINIB_SOURCES_EVENT +
+          status("Checking the answer against the sources"),
+      ),
+    );
+    expect(container.querySelector("mark")).toBeNull();
+    expect(screen.getByRole("status").textContent).toBe("Checking the answer against the sources…");
+
+    await streamed(() =>
+      stream.send(
+        chatFrame({
+          type: "source_check",
+          checked: true,
+          claims: [
+            {
+              text: "It blocks BCR-ABL [1].",
+              refs: [1],
+              label: "supported",
+              decided_by: "model",
+              reason: "",
+            },
+            {
+              text: "It was approved in 2001.",
+              refs: [],
+              label: "unsupported",
+              decided_by: "model",
+              reason: "Uncited.",
+            },
+          ],
+        }) + DONE,
+      ),
+    );
+
+    expect(container.querySelector("mark")?.textContent).toBe("It was approved in 2001.");
+    expect(screen.getByRole("status").textContent).toMatch(/1 of 2 facts backed/);
+  });
+
   it("opens the help guide from the ? button and sends an example asked from it", async () => {
     const stream = stubChatStream();
     render(<Chat />);
