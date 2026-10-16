@@ -16,6 +16,10 @@ from molecula.schemas.chat import ChatEvent, ChatMessage, ErrorEvent
 
 logger = logging.getLogger(__name__)
 
+# A model at a high reasoning effort can spend the last allowed call on a tool call, which
+# StepLimit drops, leaving no answer text (#199).
+NO_ANSWER = "Molecula couldn't finish this answer. Ask again, or ask a narrower question."
+
 
 class ChatAgent:
     """The tool-calling agent behind the chat: it answers a conversation and reports each step
@@ -42,8 +46,8 @@ class ChatAgent:
 
     async def stream(self, conversation: Sequence[ChatMessage]) -> AsyncIterator[ChatEvent]:
         """Status, tool calls and results, answer tokens and retrieval traces as they happen,
-        then the sources and `done`; or an `error` event when the model fails or runs out of
-        time."""
+        then the sources and `done`; or an `error` event when the model fails, runs out of
+        time or ends without answer text."""
         run = AgentRun(self._max_steps, self._tools)
         try:
             async with asyncio.timeout(self._timeout_seconds):
@@ -63,6 +67,10 @@ class ChatAgent:
         except ChatModelError as error:
             logger.warning("Chat model call failed: %r", error)
             yield ErrorEvent(message=describe_provider_error(error))
+            return
+        if not run.answer.strip():
+            logger.warning("The model gave no answer text after %d calls", run.model_calls)
+            yield ErrorEvent(message=NO_ANSWER)
             return
         for event in run.finish():
             yield event
