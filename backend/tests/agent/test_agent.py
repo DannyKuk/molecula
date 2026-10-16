@@ -198,6 +198,38 @@ def test_the_system_prompt_and_the_conversation_reach_the_model() -> None:
     ]
 
 
+def test_the_answer_streams_without_the_channel_markers_gpt_oss_writes() -> None:
+    model = ScriptedChatModel(
+        script=[
+            AIMessage(content="", tool_calls=[search(SIDE_EFFECTS, "call_1")]),
+            answer_message(
+                "Nausea is common【1】 and edema [2]. It binds through van der Waals "
+                "interactions 【commentary: get_complex】."
+            ),
+        ]
+    )
+
+    events = run(agent(model, retriever=label_retriever()))
+
+    assert answer(events) == (
+        "Nausea is common【1】 and edema [2]. It binds through van der Waals interactions."
+    )
+    assert sources_event(events).unknown_refs == []
+
+
+def test_earlier_answers_reach_the_model_without_channel_markers() -> None:
+    model = ScriptedChatModel(script=[answer_message("It is a tablet.")])
+    conversation = [
+        ChatMessage(role="user", content="How does imatinib bind?"),
+        ChatMessage(role="assistant", content="Into the pocket【commentary: get_complex】 [1]."),
+        ChatMessage(role="user", content="Is it a pill?"),
+    ]
+
+    run(agent(model), conversation)
+
+    assert model.received[0][2].text == "Into the pocket [1]."
+
+
 def test_a_provider_error_becomes_an_error_event_and_ends_the_stream() -> None:
     model = ScriptedChatModel(script=[provider_error(openai.RateLimitError, 429)])
 
