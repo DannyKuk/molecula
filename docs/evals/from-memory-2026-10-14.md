@@ -34,6 +34,19 @@ No errors and no empty answers in either run.
 - The rules don't cover study details: answers that called the risperidone autism trials "double-blind" or an omeprazole study "open-label" without a passage saying so passed.
 - The guard is left out. It doesn't change an answer's content: it refuses a question or puts the fixed emergency line before an overdose answer.
 
+## Cloud models (#98)
+
+The same 28 questions, once each, with main's prompt and tools on OpenRouter at the default reasoning effort, judged by the same rules ([chat model](../decisions/chat-model.md)):
+
+| Model | Pass | From memory | Denies data | Right passage returned | From memory with it | Seconds p50 | Output tokens mean |
+|---|---|---|---|---|---|---|---|
+| gpt-oss-20b, LM Studio (#208's row above) | 24 | 4 | 0 | 22 | 3 | 7.2 | - |
+| gpt-6-luna | 27 | 1 | 0 | 26 | 1 | 5.8 | 217 |
+| claude-haiku-5.5 | 25 | 0 | 3 | 27 | 0 | 4.7 | 741 |
+
+- **gpt-6-luna's one addition is gpt-oss-20b's old misreading:** low sodium given as a spironolactone overdose sign, which the label calls unlikely in overdose. It got the MAOI, celecoxib and omeprazole questions right.
+- **claude-haiku-5.5's three denials are about drugs it never searched:** "Molecula's data doesn't cover other blood thinners", "…doesn't include specific MAOIs or other antidepressant drugs", and that it can't say whether other acid reducers suit heartburn. Those drugs are stored.
+
 ## Reproduce
 
 ```
