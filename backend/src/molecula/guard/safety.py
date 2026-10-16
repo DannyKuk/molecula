@@ -1,14 +1,18 @@
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import Protocol, get_args
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, SystemMessage
 
 from molecula import prompts
 from molecula.agent.agent import to_langchain
+from molecula.agent.decisions import DecisionModel
 from molecula.schemas.chat import ChatMessage, Usage
+from molecula.schemas.decisions import ChoiceAnswer, ChoiceQuestion, DecisionUsage, StateMessage
 from molecula.schemas.guard import InputCategory, SortedMessage
+
+CATEGORIES: tuple[InputCategory, ...] = get_args(InputCategory.__value__)
 
 # Categories that get only a fixed answer; `overdose_emergency` gets its fixed line and then
 # the agent's answer.
@@ -51,6 +55,55 @@ class ChatModelInputCheck:
         if not isinstance(sorted_message, SortedMessage):
             raise InputCheckFailed(result["parsing_error"] or "the model returned no category")
         return Verdict(sorted_message.category, usage_of(result["raw"]))
+
+
+@dataclass(frozen=True)
+class SortedByDecision:
+    """The decision model's answer for the category, with every category's probability."""
+
+    answer: ChoiceAnswer
+    usage: Usage
+
+
+class DecisionModelInputCheck:
+    """Sorts a message with one `choice` question to a decision model, which answers in one
+    forward pass with a probability per category. The client's errors are raised as they come;
+    the guard refuses on them."""
+
+    def __init__(self, model: DecisionModel) -> None:
+        self._model = model
+        self._question = category_question()
+
+    async def check(self, conversation: Sequence[ChatMessage]) -> Verdict:
+        sorted_message = await self.sort(conversation)
+        category = sorted_message.answer.choice
+        if category not in CATEGORIES:
+            raise InputCheckFailed(f"the decision model chose {category!r}, not a category")
+        return Verdict(category, sorted_message.usage)
+
+    async def sort(self, conversation: Sequence[ChatMessage]) -> SortedByDecision:
+        # The conversation goes as its own messages, never into the question: it is untrusted.
+        state = [StateMessage(role=m.role, content=m.content) for m in conversation]
+        response = await self._model.decide(state, {"category": self._question})
+        return SortedByDecision(response.choice("category"), decision_usage(response.usage))
+
+
+def category_question() -> ChoiceQuestion:
+    return ChoiceQuestion(
+        instructions=prompts.load("guard/input_check/question").strip(),
+        criteria={
+            category: prompts.load(f"guard/input_check/{category}").strip()
+            for category in CATEGORIES
+        },
+    )
+
+
+def decision_usage(usage: DecisionUsage) -> Usage:
+    return Usage(
+        input_tokens=usage.input_tokens,
+        output_tokens=usage.output_tokens,
+        total_tokens=usage.input_tokens + usage.output_tokens,
+    )
 
 
 def usage_of(message: BaseMessage) -> Usage:

@@ -44,6 +44,8 @@ class Settings(BaseSettings):
     decision_model: str | None = None
     local_decision_base_url: str | None = None
     decision_timeout_seconds: Annotated[float, Field(gt=0)] = 10.0
+    # Which model sorts each message before the agent sees it (#226).
+    input_check: Literal["chat", "decision"] = "chat"
     embedding_model: str = "local"
     # Multilingual and among the best CPU-sized models in docs/decisions/embeddings.md (#88).
     local_embedding_model: str = "BAAI/bge-m3"

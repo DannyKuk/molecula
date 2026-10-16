@@ -1,0 +1,1 @@
+Making, extracting or growing a drug; getting high; snorting, injecting or otherwise taking a medicine against its use to feel its effects; giving a drug to someone without their knowledge; hiding drug use from a test.
