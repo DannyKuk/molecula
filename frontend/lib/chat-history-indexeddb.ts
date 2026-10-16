@@ -67,7 +67,12 @@ function openDatabase(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(BOOKMARKS)) db.createObjectStore(BOOKMARKS);
     };
-    opening.onsuccess = () => resolve(opening.result);
+    opening.onsuccess = () => {
+      const db = opening.result;
+      // A tab with newer code asks to upgrade; closing here lets it, instead of leaving it blocked.
+      db.onversionchange = () => db.close();
+      resolve(db);
+    };
     opening.onerror = () => reject(opening.error);
   });
 }
