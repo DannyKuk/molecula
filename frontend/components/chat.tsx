@@ -92,12 +92,17 @@ function useConversation(initialQuestion?: string) {
   const answer = useCallback(async (question: string, earlier: Turn[]) => {
     const controller = new AbortController();
     controllerRef.current = controller;
+    // Each update sets the whole list rather than changing the current one: hydrated inside a
+    // Suspense boundary, the chat starts the linked question at idle priority, and React renders
+    // the stream's updates before that start (#218).
+    let latest = startTurn(question);
     const updateLatest = (change: (turn: Turn) => Turn) => {
       if (controllerRef.current !== controller) return;
-      setTurns((current) => [...current.slice(0, -1), change(current[current.length - 1])]);
+      latest = change(latest);
+      setTurns([...earlier, latest]);
     };
 
-    setTurns([...earlier, startTurn(question)]);
+    setTurns([...earlier, latest]);
     setSent((count) => count + 1);
     try {
       const messages = requestMessages(conversationWith(earlier, question));

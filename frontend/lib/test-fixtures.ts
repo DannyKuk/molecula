@@ -29,15 +29,17 @@ export const DONE = chatFrame({
 
 /**
  * Replaces `fetch` with a chat backend whose latest stream the test writes one chunk at a time.
- * Like a real fetch, aborting the request breaks its stream.
+ * Like a real fetch, aborting the request breaks its stream. Each stream starts with `opening`,
+ * which reaches the chat as soon as the request is made.
  */
-export function stubChatStream() {
+export function stubChatStream(opening = "") {
   const encoder = new TextEncoder();
   const streams: ReadableStreamDefaultController<Uint8Array>[] = [];
   const fetchMock = vi.fn(async (_url: string, init: RequestInit) => {
     const body = new ReadableStream<Uint8Array>({
       start(controller) {
         streams.push(controller);
+        if (opening) controller.enqueue(encoder.encode(opening));
         init.signal?.addEventListener("abort", () =>
           controller.error(new DOMException("The request was aborted.", "AbortError")),
         );
