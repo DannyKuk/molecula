@@ -14,6 +14,9 @@ verdicts live in `no_label_verdicts/<cache name>.yaml`, tied to the answers they
 one the run writes a review sheet. The script counts what helps the judging: words about
 metamizole's uses and effects that appear in no returned passage, whether a label search said
 metamizole has no label, whether the answer says so, and its valid citations.
+
+Kept as the record of #192 and #193. Metamizole left the store in #196, so its questions now get
+"not supported" and a new run doesn't measure what this eval was written for.
 """
 
 import argparse

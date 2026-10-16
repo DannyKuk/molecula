@@ -3,18 +3,19 @@
 # `alias (name)`, checked on main 74aebb0. The answer should say the name wasn't found and offer
 # the suggestions as written, or ask which drug is meant when there are none, and never say a
 # suggested drug has no data or name a drug the tools didn't return. `turns` are the user's
-# messages in order; the last answer is scored.
+# messages in order; the last answer is scored. Since #196 the store has no metamizole, so
+# Novaminsuflon gets no suggestion and the answer should ask which drug is meant.
 
 - id: compare-imatinib-novaminsuflon
   turns: ["Can you compare imatinib to Novaminsuflon?"]
   typed: Novaminsuflon
-  suggestions: ["Novaminsulfon (metamizole)"]
+  suggestions: []
   language: en
   source: "#181, the reported question"
 - id: novaminsuflon-alone
   turns: ["Novaminsuflon"]
   typed: Novaminsuflon
-  suggestions: ["Novaminsulfon (metamizole)"]
+  suggestions: []
   language: en
   source: "#190"
 - id: side-effects-tylenoll

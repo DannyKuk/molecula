@@ -237,7 +237,7 @@ A pruned compound takes its labels and sections with it (`ON DELETE CASCADE`). A
 
 **First full run (2026-10-12, with an API key):** 134 compounds, 361 requests, 4 min 24 s. Later runs, including the one with the route rule, made no request and took 5 s.
 
-- **129 compounds have an Rx label, 27 an OTC label.** OTC only: aspirin, dextromethorphan, fexofenadine, pseudoephedrine. **No US label: metamizole** (not approved in the US; 404).
+- **129 compounds have an Rx label, 27 an OTC label.** OTC only: aspirin, dextromethorphan, fexofenadine, pseudoephedrine. **No US label: metamizole** (not approved in the US; 404). It was removed from the scope in #196, so all 133 drugs now have a label ([drugs without a label](decisions/drugs-without-label.md)).
 - **5,662,726 characters** in 1,404 sections: Rx 5,588,740 (941 to 108,933 per label, mean 43k), OTC 73,986 (499 to 5,742). By group: warnings 1.59M, pharmacology 1.42M, adverse reactions 1.17M, dosing 0.68M, interactions 0.49M, indications 0.21M, contraindications 0.08M, OTC consumer 0.02M. No `overdosage` or `*_table` section is stored. That is a bit over half the estimate above, because many canonical labels are short PLR labels and most drugs have no OTC label.
 - **The HTTP cache is large.** The 361 openFDA pages are 1.97 GB of response bodies; the store grew from 3.0 MB to 1.98 GB. Only the ~5.7 MB of kept sections is needed after the run.
 - **Another form used:** fluticasone (propionate Rx, furoate OTC). Escitalopram oxalate matches directly since "oxalate" joined the salt words.
@@ -256,7 +256,7 @@ Canonical labels (Rx / OTC, with route; generic labels are named by their brand 
 | dexamethasone | Hemady (oral) | Seacall Dexamethasone Ointment (topical) |
 | ibuprofen | Ibuprofen tablets (oral) | Advil Menstrual Pain (oral) |
 | imatinib | Gleevec (oral) | — |
-| metamizole | — | — |
+| metamizole (removed in #196) | — | — |
 
 The run logs the chosen labels of every drug with their `set_id` and size. Why labels are chosen this way: [decisions/drug-labels.md](decisions/drug-labels.md).
 
