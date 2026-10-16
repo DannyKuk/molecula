@@ -106,8 +106,9 @@ export function failTurn(turn: Turn, error: string): Turn {
   return { ...turn, state: "failed", error };
 }
 
+/** The turn once its stream was aborted; an answer that had already finished stays as it is. */
 export function stopTurn(turn: Turn): Turn {
-  return { ...turn, state: "stopped" };
+  return turn.state === "answering" ? { ...turn, state: "stopped" } : turn;
 }
 
 /** The earlier turns and a new question as the messages of a chat request. */

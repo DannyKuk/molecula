@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { applyEvent, startTurn } from "./chat-turn";
+import { applyEvent, startTurn, stopTurn } from "./chat-turn";
 import { IMATINIB_PASSAGES, IMATINIB_SOURCES } from "./test-fixtures";
 
 function toolResult(name: string, result: unknown) {
@@ -126,5 +126,17 @@ describe("applyEvent", () => {
 
   it("has no sources while the answer streams", () => {
     expect(startTurn("How does imatinib work?").sources).toBeNull();
+  });
+});
+
+describe("stopTurn", () => {
+  it("stops an answer that is streaming", () => {
+    expect(stopTurn(startTurn("How does imatinib work?")).state).toBe("stopped");
+  });
+
+  it("leaves an answer that had finished before its stream was aborted", () => {
+    const done = { ...startTurn("How does imatinib work?"), state: "done" as const };
+
+    expect(stopTurn(done)).toBe(done);
   });
 });
