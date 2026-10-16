@@ -1,0 +1,1 @@
+The user asks what they, or a person they name, should do with a medicine: start, stop, skip or change it, which dose to take, which of two medicines to choose, or whether it is safe for them given their own situation (pregnancy, weight, other medicines, an operation).

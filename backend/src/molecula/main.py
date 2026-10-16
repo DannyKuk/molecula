@@ -10,12 +10,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.language_models import BaseChatModel
 
 from molecula.agent.agent import ChatAgent
+from molecula.agent.decisions import DecisionConfigError, DecisionModel, get_decision_model
 from molecula.agent.llm import LLMConfigError, get_chat_model, get_source_check_model
 from molecula.agent.tool_registry import build_tools
 from molecula.api import chat, drugs, health
 from molecula.config import Settings, get_settings
 from molecula.guard.chat import GuardedChat
-from molecula.guard.safety import ChatModelInputCheck
+from molecula.guard.safety import ChatModelInputCheck, DecisionModelInputCheck, InputCheck
 from molecula.guard.source_check import ChatModelSourceCheck
 from molecula.guard.validation import readable_validation_error
 from molecula.rag.embeddings import embedding_model_id, get_embeddings
@@ -74,6 +75,25 @@ def open_chat_model(settings: Settings) -> BaseChatModel | None:
         return None
 
 
+def open_input_check(settings: Settings, chat_model: BaseChatModel) -> InputCheck:
+    """The decision model sorts messages online (Jev on OpenRouter by default), the chat model
+    offline or when no decision model is configured (#226)."""
+    decision_model = input_check_decision_model(settings)
+    if decision_model is None:
+        return ChatModelInputCheck(chat_model)
+    return DecisionModelInputCheck(decision_model)
+
+
+def input_check_decision_model(settings: Settings) -> DecisionModel | None:
+    if settings.offline:
+        return None
+    try:
+        return get_decision_model(settings)
+    except DecisionConfigError as error:
+        logger.warning("The chat model sorts messages: %s", error)
+        return None
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
@@ -118,7 +138,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             timeout_seconds=settings.chat_timeout_seconds,
         )
         app.state.chat = GuardedChat(
-            ChatModelInputCheck(chat_model),
+            open_input_check(settings, chat_model),
             app.state.chat_agent,
             ChatModelSourceCheck(get_source_check_model(settings)),
             timeout_seconds=settings.llm_timeout_seconds,
