@@ -7,7 +7,7 @@ import pytest
 
 from fake_llm import ScriptedChatModel, answer_message, tool_call_message
 from guard_fakes import CHECK_USAGE, SOURCE_CHECK_USAGE, FakeCheck, FakeSourceCheck
-from molecula.agent.agent import ChatAgent
+from molecula.agent.agent import NO_ANSWER, ChatAgent
 from molecula.agent.decisions import DecisionModelMissing, DecisionModelUnreachable
 from molecula.agent.tool_registry import build_tools
 from molecula.guard.chat import CHECK_FAILED, CHECKING, GuardedChat
@@ -149,6 +149,20 @@ def test_a_failing_or_slow_source_check_leaves_the_answer_unchecked() -> None:
         assert done(events).usage == CHECK_USAGE + Usage(
             input_tokens=12, output_tokens=8, total_tokens=20
         )
+
+
+def test_an_agent_that_gives_no_answer_ends_with_its_error_and_no_source_check() -> None:
+    chat_agent, _ = agent(
+        tool_call_message("get_targets", {"drug": "imatinib"}),
+        answer_message(""),
+    )
+    source_check = FakeSourceCheck()
+
+    events = run(GuardedChat(FakeCheck("ok"), chat_agent, source_check, timeout_seconds=5))
+
+    assert events[-1] == ErrorEvent(message=NO_ANSWER)
+    assert not any(isinstance(event, DoneEvent | SourceCheckEvent) for event in events)
+    assert source_check.checked == []
 
 
 def test_a_possible_overdose_gets_the_emergency_line_first_and_then_the_agents_answer() -> None:
