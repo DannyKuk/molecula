@@ -276,9 +276,6 @@ drugs:
     aliases: [torasemide, Torasemid, Demadex, Torem]
   - name: tapentadol
     aliases: [Nucynta, Palexia]
-  - name: metamizole
-    aliases: [Metamizol, dipyrone, Novalgin, Novaminsulfon]
-    note: not approved in the US, so openFDA has no label; molecule data only
 
   # Common OTC
   - name: loratadine
