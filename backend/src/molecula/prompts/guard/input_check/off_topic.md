@@ -1,1 +1,1 @@
-Not about medicines: writing, coding, recipes, travel, weather, general knowledge, and health questions without a medicine, such as a diet, a workout or a symptom alone.
+Not about medicines: writing, coding, recipes, travel, weather, general knowledge, and health questions without a medicine, such as a diet, a workout or a symptom alone. A name that may be a medicine, even an unknown or misspelled one, is about medicines.
