@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { type ConversationSummary, groupByDay, reopenedTurns, withTurns } from "./chat-history";
+import {
+  type ConversationSummary,
+  groupByDay,
+  groupChats,
+  reopenedTurns,
+  withTurns,
+} from "./chat-history";
 import { startTurn, type Turn } from "./chat-turn";
 
 function doneTurn(question: string, answer: string): Turn {
@@ -75,5 +81,31 @@ describe("groupByDay", () => {
     const groups = groupByDay([summary("last week", new Date(2026, 9, 9))], now);
 
     expect(groups.map((group) => group.label)).toEqual(["Earlier"]);
+  });
+});
+
+describe("groupChats", () => {
+  const now = new Date(2026, 9, 16, 9, 30);
+  const conversations = [
+    summary("this morning", new Date(2026, 9, 16, 8, 0)),
+    summary("yesterday", new Date(2026, 9, 15, 12, 0)),
+    summary("last week", new Date(2026, 9, 9, 12, 0)),
+  ];
+
+  it("puts the bookmarked conversations on top in bookmark order and out of their days", () => {
+    const groups = groupChats(conversations, ["last week", "this morning"], now);
+
+    expect(
+      groups.map(({ label, conversations }) => [label, conversations.map((c) => c.id)]),
+    ).toEqual([
+      ["Bookmarked", ["last week", "this morning"]],
+      ["Yesterday", ["yesterday"]],
+    ]);
+  });
+
+  it("skips a bookmark whose conversation is gone and leaves out an empty Bookmarked group", () => {
+    const groups = groupChats(conversations, ["deleted elsewhere"], now);
+
+    expect(groups.map((group) => group.label)).toEqual(["Today", "Yesterday", "Earlier"]);
   });
 });

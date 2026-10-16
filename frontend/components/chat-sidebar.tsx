@@ -6,8 +6,14 @@ import { type ComponentProps, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { SheetContent } from "@/components/ui/sheet";
-import { type ConversationSummary, groupByDay } from "@/lib/chat-history";
+import { bookmarkedOf, type ConversationSummary, groupChats } from "@/lib/chat-history";
 import { useSidebarExpanded } from "@/lib/use-sidebar-expanded";
 
 import { HistoryRow } from "./history-row";
@@ -16,12 +22,21 @@ export type ChatListProps = {
   /** Null until the history has loaded, false when the browser doesn't keep it. */
   available: boolean | null;
   conversations: ConversationSummary[];
+  /** The bookmarked conversations' ids, in the order they were bookmarked. */
+  bookmarks: string[];
   activeId: string | null;
+  /** The bookmark removed last, which Undo puts back, for a few seconds after its removal. */
+  removedBookmark: { title: string; onUndo: () => void } | null;
   onOpen: (id: string) => void;
   onNew: () => void;
   onRename: (id: string, title: string) => void;
   onDelete: (id: string) => void;
+  onBookmark: (id: string) => void;
+  onUnbookmark: (id: string) => void;
 };
+
+const RAIL_BOOKMARKS = 5;
+const OUTLINED = "border-zinc-500 text-foreground dark:border-zinc-400";
 
 const SIDEBAR_CLASSES =
   "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-zinc-200 bg-zinc-50 md:flex dark:border-zinc-800 dark:bg-[oklch(0.17_0.004_286)]";
@@ -42,6 +57,7 @@ export function ChatSidebar(props: ChatListProps) {
         <IconButton label="Chat history" onClick={() => setExpanded(true)}>
           <History />
         </IconButton>
+        <RailBookmarks {...props} />
       </nav>
     );
   }
@@ -55,6 +71,66 @@ export function ChatSidebar(props: ChatListProps) {
       </div>
       <ChatList {...props} />
     </aside>
+  );
+}
+
+/**
+ * The first bookmarks as numbered buttons, and the rest behind "+N", which lists them all. The open
+ * chat's number is outlined, or "+N" when the open chat is past the numbers.
+ */
+function RailBookmarks({ conversations, bookmarks, activeId, onOpen }: ChatListProps) {
+  const bookmarked = bookmarkedOf(conversations, bookmarks);
+  if (bookmarked.length === 0) return null;
+  const numbered = bookmarked.slice(0, RAIL_BOOKMARKS);
+  const more = bookmarked.length - numbered.length;
+  const activeIsMore = bookmarked.findIndex(({ id }) => id === activeId) >= RAIL_BOOKMARKS;
+
+  return (
+    <div
+      role="group"
+      aria-label="Bookmarks"
+      className="mt-2 flex flex-col items-center gap-1 border-t border-zinc-200 pt-3 dark:border-zinc-800"
+    >
+      {numbered.map(({ id, title }, index) => (
+        <IconButton
+          key={id}
+          label={title}
+          aria-current={id === activeId ? "page" : undefined}
+          onClick={() => onOpen(id)}
+          className={cn("text-[13px] tabular-nums", id === activeId && OUTLINED)}
+        >
+          {index + 1}
+        </IconButton>
+      ))}
+      {more > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <IconButton
+                label={`All ${bookmarked.length} bookmarks`}
+                className={cn("text-[13px] tabular-nums", activeIsMore && OUTLINED)}
+              />
+            }
+          >
+            +{more}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="right" align="start" className="max-w-72">
+            {bookmarked.map(({ id, title }, index) => (
+              <DropdownMenuItem
+                key={id}
+                onClick={() => onOpen(id)}
+                className={cn(id === activeId && "font-medium")}
+              >
+                <span aria-hidden className="w-4 shrink-0 text-xs text-zinc-500 tabular-nums">
+                  {index + 1}
+                </span>
+                <span className="truncate">{title}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
   );
 }
 
@@ -86,8 +162,11 @@ export function ChatDrawer(props: ChatListProps) {
   );
 }
 
-/** "New chat", the saved chats by day, newest first, and what to know about where they are kept. */
-function ChatList({ onNew, ...props }: ChatListProps) {
+/**
+ * "New chat", the bookmarked chats, the others by day, newest first, and what to know about where
+ * they are kept.
+ */
+function ChatList({ onNew, removedBookmark, ...props }: ChatListProps) {
   return (
     <>
       <div className="px-3 pt-2 pb-2">
@@ -99,6 +178,7 @@ function ChatList({ onNew, ...props }: ChatListProps) {
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
         <ChatGroups {...props} />
       </div>
+      {removedBookmark && <UndoBar {...removedBookmark} />}
       {props.available !== false && (
         <p className="border-t border-zinc-200 px-4 py-3 text-xs text-zinc-500 dark:border-zinc-800">
           Saved in this browser only.
@@ -111,11 +191,10 @@ function ChatList({ onNew, ...props }: ChatListProps) {
 function ChatGroups({
   available,
   conversations,
+  bookmarks,
   activeId,
-  onOpen,
-  onRename,
-  onDelete,
-}: Omit<ChatListProps, "onNew">) {
+  ...actions
+}: Omit<ChatListProps, "onNew" | "removedBookmark">) {
   if (available === false) return <HistoryOff />;
   if (available === null) return null;
   if (conversations.length === 0) {
@@ -127,7 +206,7 @@ function ChatGroups({
       </div>
     );
   }
-  return groupByDay(conversations, new Date()).map((group) => (
+  return groupChats(conversations, bookmarks, new Date()).map((group) => (
     <section key={group.label} aria-label={group.label}>
       <h2 className="px-2 pt-3 pb-1 text-xs font-medium text-zinc-500">{group.label}</h2>
       <ul className="flex flex-col">
@@ -136,14 +215,37 @@ function ChatGroups({
             key={conversation.id}
             conversation={conversation}
             active={conversation.id === activeId}
-            onOpen={onOpen}
-            onRename={onRename}
-            onDelete={onDelete}
+            bookmarked={group.label === "Bookmarked"}
+            {...actions}
           />
         ))}
       </ul>
     </section>
   ));
+}
+
+function UndoBar({ title, onUndo }: { title: string; onUndo: () => void }) {
+  return (
+    <div
+      role="status"
+      className="mx-2 mb-2 flex items-center gap-1 rounded-md bg-zinc-900 py-1.5 pr-1.5 pl-3 text-[13px] text-zinc-50 dark:bg-zinc-100 dark:text-zinc-900"
+    >
+      <p className="min-w-0 flex-1 truncate">
+        Removed &apos;
+        <span className="inline-block max-w-28 truncate align-bottom">{title}</span>
+        &apos; from bookmarks
+      </p>
+      <span aria-hidden>·</span>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onUndo}
+        className="font-semibold text-inherit hover:bg-white/15 hover:text-inherit dark:hover:bg-black/10"
+      >
+        Undo
+      </Button>
+    </div>
+  );
 }
 
 function HistoryOff() {

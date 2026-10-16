@@ -61,7 +61,46 @@ describe("indexedDbHistory", () => {
     expect(await history.get("c1")).toBeUndefined();
     expect((await history.list()).map((c) => c.id)).toEqual(["c2"]);
   });
+
+  it("has no bookmarks at first and keeps them in order when the page opens it again", async () => {
+    expect(await indexedDbHistory().bookmarks()).toEqual([]);
+
+    await indexedDbHistory().putBookmarks(["c2", "c1"]);
+
+    expect(await indexedDbHistory().bookmarks()).toEqual(["c2", "c1"]);
+  });
+
+  it("keeps the conversations of a database from before bookmarks", async () => {
+    await createVersion1Database([conversation("c1", "How does imatinib work?")]);
+
+    const history = indexedDbHistory();
+
+    expect(await history.get("c1")).toEqual(conversation("c1", "How does imatinib work?"));
+    expect(await history.bookmarks()).toEqual([]);
+    await history.putBookmarks(["c1"]);
+    expect(await history.bookmarks()).toEqual(["c1"]);
+  });
 });
+
+/** The database as #243 made it: version 1, with only the conversations. */
+function createVersion1Database(conversations: Conversation[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const opening = indexedDB.open("molecula", 1);
+    opening.onupgradeneeded = () =>
+      opening.result.createObjectStore("conversations", { keyPath: "id" });
+    opening.onsuccess = () => {
+      const db = opening.result;
+      const transaction = db.transaction("conversations", "readwrite");
+      conversations.forEach((saved) => transaction.objectStore("conversations").put(saved));
+      transaction.oncomplete = () => {
+        db.close();
+        resolve();
+      };
+      transaction.onerror = () => reject(transaction.error);
+    };
+    opening.onerror = () => reject(opening.error);
+  });
+}
 
 describe("indexedDbHistory without IndexedDB", () => {
   it("rejects every call instead of throwing", async () => {
