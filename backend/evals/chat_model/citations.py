@@ -36,7 +36,7 @@ from molecula import prompts
 from molecula.agent.agent import ChatAgent
 from molecula.agent.tool_registry import build_tools
 from molecula.config import Settings, get_settings
-from molecula.main import lifespan
+from molecula.main import input_check_decision_model, lifespan
 from molecula.schemas.chat import ChatMessage
 
 SQUARE = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
@@ -138,8 +138,11 @@ def model_label(settings: Settings, model_name: str) -> str:
 
 def chat_label(settings: Settings, model_name: str) -> str:
     """The model label and the source check's effort, for evals that ask `POST /chat`, where
-    the check runs after each answer: `openai/gpt-oss-20b-check-medium`."""
-    return f"{model_label(settings, model_name)}-check-{settings.source_check_reasoning_effort}"
+    the check runs after each answer: `openai/gpt-oss-20b-check-medium`. When a decision model
+    sorts the messages (online, #226) it is named too: `…-check-medium-input-jev-1.13`."""
+    label = f"{model_label(settings, model_name)}-check-{settings.source_check_reasoning_effort}"
+    decision_model = input_check_decision_model(settings)
+    return label if decision_model is None else f"{label}-input-{decision_model.model}"
 
 
 def read_cache(cache: Path) -> dict[str, Answer]:

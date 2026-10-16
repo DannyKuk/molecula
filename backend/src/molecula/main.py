@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.language_models import BaseChatModel
 
 from molecula.agent.agent import ChatAgent
-from molecula.agent.decisions import get_decision_model
+from molecula.agent.decisions import DecisionConfigError, DecisionModel, get_decision_model
 from molecula.agent.llm import LLMConfigError, get_chat_model, get_source_check_model
 from molecula.agent.tool_registry import build_tools
 from molecula.api import chat, drugs, health
@@ -76,11 +76,22 @@ def open_chat_model(settings: Settings) -> BaseChatModel | None:
 
 
 def open_input_check(settings: Settings, chat_model: BaseChatModel) -> InputCheck:
-    """The chat model's input check, or the decision model's with INPUT_CHECK=decision. A
-    decision model the settings don't describe stops the start (DecisionConfigError)."""
-    if settings.input_check == "decision":
-        return DecisionModelInputCheck(get_decision_model(settings))
-    return ChatModelInputCheck(chat_model)
+    """The decision model sorts messages online (Jev on OpenRouter by default), the chat model
+    offline or when no decision model is configured (#226)."""
+    decision_model = input_check_decision_model(settings)
+    if decision_model is None:
+        return ChatModelInputCheck(chat_model)
+    return DecisionModelInputCheck(decision_model)
+
+
+def input_check_decision_model(settings: Settings) -> DecisionModel | None:
+    if settings.offline:
+        return None
+    try:
+        return get_decision_model(settings)
+    except DecisionConfigError as error:
+        logger.warning("The chat model sorts messages: %s", error)
+        return None
 
 
 @asynccontextmanager

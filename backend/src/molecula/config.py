@@ -41,11 +41,11 @@ class Settings(BaseSettings):
     source_check_reasoning_effort: Literal["default", "low", "medium", "high"] = "medium"
     # A decision model answers typed questions with probabilities over `/v1/systemone` (#102):
     # Jev on OpenRouter, or a model loaded in LM Studio when LOCAL_DECISION_BASE_URL is set.
-    decision_model: str | None = None
+    # Online, it sorts each message for the guard: as accurate as the chat model on the safety
+    # set and about five times faster (#226).
+    decision_model: str | None = "jev-1.13"
     local_decision_base_url: str | None = None
     decision_timeout_seconds: Annotated[float, Field(gt=0)] = 10.0
-    # Which model sorts each message before the agent sees it (#226).
-    input_check: Literal["chat", "decision"] = "chat"
     embedding_model: str = "local"
     # Multilingual and among the best CPU-sized models in docs/decisions/embeddings.md (#88).
     local_embedding_model: str = "BAAI/bge-m3"

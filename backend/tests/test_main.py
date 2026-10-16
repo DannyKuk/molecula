@@ -7,11 +7,11 @@ from fastapi.testclient import TestClient
 from langchain_core.embeddings import Embeddings, FakeEmbeddings
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage
+from pydantic import SecretStr
 
 from fake_llm import ScriptedChatModel, answer_message, tool_call_message
 from molecula import main
 from molecula.agent.agent import ChatAgent
-from molecula.agent.decisions import DecisionConfigError
 from molecula.agent.llm import LLMConfigError
 from molecula.config import Settings
 from molecula.guard.chat import GuardedChat
@@ -367,30 +367,30 @@ def test_chat_describes_the_stored_complex_offline(
     assert "disclaimer" not in events["sources"]
 
 
-def test_the_chat_model_sorts_messages_by_default(make_settings: Callable[..., Settings]) -> None:
-    input_check = main.open_input_check(make_settings(), ScriptedChatModel(script=[]))
+def test_offline_the_chat_model_sorts_messages(make_settings: Callable[..., Settings]) -> None:
+    settings = make_settings(offline=True, openrouter_api_key=SecretStr("sk-or-test"))
+
+    input_check = main.open_input_check(settings, ScriptedChatModel(script=[]))
 
     assert isinstance(input_check, ChatModelInputCheck)
 
 
-def test_input_check_decision_sorts_messages_with_the_decision_model(
-    make_settings: Callable[..., Settings],
-) -> None:
-    settings = make_settings(
-        input_check="decision",
-        decision_model="kev-0.8b",
-        local_decision_base_url="http://localhost:1234/v1",
-    )
+def test_online_jev_sorts_messages(make_settings: Callable[..., Settings]) -> None:
+    settings = make_settings(offline=False, openrouter_api_key=SecretStr("sk-or-test"))
 
+    decision_model = main.input_check_decision_model(settings)
     input_check = main.open_input_check(settings, ScriptedChatModel(script=[]))
 
     assert isinstance(input_check, DecisionModelInputCheck)
+    assert decision_model is not None
+    assert decision_model.model == "jev-1.13"
 
 
-def test_input_check_decision_without_a_decision_model_stops_the_start(
+def test_online_without_an_openrouter_key_the_chat_model_sorts_messages(
     make_settings: Callable[..., Settings],
 ) -> None:
-    settings = make_settings(input_check="decision", decision_model=None)
+    settings = make_settings(offline=False, openrouter_api_key=None)
 
-    with pytest.raises(DecisionConfigError, match="DECISION_MODEL is empty"):
-        main.open_input_check(settings, ScriptedChatModel(script=[]))
+    input_check = main.open_input_check(settings, ScriptedChatModel(script=[]))
+
+    assert isinstance(input_check, ChatModelInputCheck)
