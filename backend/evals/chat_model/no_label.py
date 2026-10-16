@@ -31,6 +31,7 @@ from evals.chat_model.citations import SQUARE, numbers, tool_descriptions, tool_
 from evals.safety.run import Answer, cache_path, post_chat
 from pydantic import BaseModel, ConfigDict, Field
 
+from molecula.agent.llm import chat_model_name
 from molecula.config import Settings, get_settings
 from molecula.main import app, lifespan
 
@@ -149,7 +150,7 @@ def main() -> int:
     parser.add_argument("--times", type=int, default=3, help="askings per question")
     args = parser.parse_args()
     settings = get_settings()
-    model_name = settings.local_llm_model or settings.llm_model or "unknown"
+    model_name = chat_model_name(settings)
     items = load_items()
     cache, runs = asyncio.run(ask_all(settings, model_name, items, args.times))
     verdicts = read_verdicts(VERDICTS / f"{cache.stem}.yaml")

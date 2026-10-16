@@ -28,7 +28,7 @@ from evals.retrieval.filters import first_hit_rank, gold_filter, labels_by_drug,
 from langchain_core.callbacks import get_usage_metadata_callback
 
 from molecula import prompts
-from molecula.agent.llm import get_chat_model
+from molecula.agent.llm import chat_model_name, get_chat_model
 from molecula.config import Settings, get_settings
 from molecula.rag.embeddings import embedding_model_id, get_embeddings
 from molecula.rag.filters import FilterExtractor
@@ -69,7 +69,7 @@ class Scored:
 
 def main() -> int:
     settings = get_settings()
-    model_name = settings.local_llm_model or settings.llm_model or "unknown"
+    model_name = chat_model_name(settings)
     conn = connect(settings.db_path)
     compounds = CompoundStore(conn)
     extractor = FilterExtractor(
