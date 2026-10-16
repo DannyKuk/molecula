@@ -32,7 +32,7 @@ Of the 28 single-drug answers in the set, 8 have an addition. After the check, 4
 
 ## The submit loop, built and dropped (#213)
 
-The first design let an answer reach the user only through a tool, `submit_answer`, which ran the check; the agent rewrote what it rejected, and after two rejections the user got only the claims that passed with "Part of this answer couldn't be verified against Molecula's sources." It was built (branch `feat/213-submit-answer`) and asked the 28 from-memory questions three times each with gpt-oss-20b, the check at medium effort. The 84 answers were judged by hand against the from-memory rules (`backend/evals/chat_model/from_memory_verdicts/openai_gpt-oss-20b-check-medium-bbfca19608c5.yaml`).
+The first design let an answer reach the user only through a tool, `submit_answer`, which ran the check; the agent rewrote what it rejected, and after two rejections the user got only the claims that passed with "Part of this answer couldn't be verified against Molecula's sources." It was built, on a branch since deleted, and asked the 28 from-memory questions three times each with gpt-oss-20b, the check at medium effort. The 84 answers were judged by hand against the from-memory rules (`backend/evals/chat_model/from_memory_verdicts/openai_gpt-oss-20b-check-medium-bbfca19608c5.yaml`).
 
 | Setup | Answers | From memory | Rewritten | Fell back | Lost the answer | Seconds p50 | p95 |
 |---|---|---|---|---|---|---|---|
