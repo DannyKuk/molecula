@@ -131,7 +131,9 @@ def check_member(member: tarfile.TarInfo) -> None:
     path = PurePosixPath(member.name)
     if not (member.isfile() or member.isdir()):
         raise FetchError(f"The archive holds {member.name}, which is not a file or folder.")
-    if path.is_absolute() or ".." in path.parts or path.parts[0] not in STORE_PARTS:
+    if not path.parts or path.is_absolute() or ".." in path.parts:
+        raise FetchError(f"The archive holds {member.name}, outside the store.")
+    if path.parts[0] not in STORE_PARTS:
         raise FetchError(f"The archive holds {member.name}, outside the store.")
 
 

@@ -308,11 +308,20 @@ def link_member(name: str, kind: bytes, target: str) -> tarfile.TarInfo:
         file_member("../evil.txt"),
         file_member("structures/../../evil.txt"),
         file_member("/evil.txt"),
+        file_member("."),
         file_member("models/evil.bin"),
         link_member("structures/link", tarfile.SYMTYPE, "../../evil.txt"),
         link_member("index/link", tarfile.LNKTYPE, "molecula.db"),
     ],
-    ids=["parent", "nested parent", "absolute", "outside the store", "symlink", "hard link"],
+    ids=[
+        "parent",
+        "nested parent",
+        "absolute",
+        "current folder",
+        "outside the store",
+        "symlink",
+        "hard link",
+    ],
 )
 def test_unsafe_archive_member_is_rejected(
     release: Release,
@@ -329,3 +338,4 @@ def test_unsafe_archive_member_is_rejected(
     assert leftovers(settings) == []
     assert not (tmp_path / "evil.txt").exists()
     assert not (settings.data_dir / "evil.txt").exists()
+    assert not (settings.models_dir / "evil.bin").exists()
