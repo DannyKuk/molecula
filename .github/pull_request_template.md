@@ -24,7 +24,7 @@ Closes #
 
 - [ ] Changes the database schema or ingest output (the data must be rebuilt; say how)
 - [ ] Calls an external API at runtime (must go through the rate limiter and respect `OFFLINE=1`)
-- [ ] Changes system prompts, guardrails or refusal rules (run the safety eval)
+- [ ] Changes system prompts, guardrails or refusal rules (run the quick safety eval; the full one for guard rules or fixed answers)
 - [ ] Changes retrieval: chunking, embeddings, hybrid weights or query translation (run the RAG eval)
 - [ ] Adds or changes a hero complex (therapeutic target checked, chain and contacts recorded)
 - [ ] Adds a dependency or changes a Dockerfile / `docker-compose.yaml`
