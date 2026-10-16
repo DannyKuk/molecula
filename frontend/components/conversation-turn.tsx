@@ -5,6 +5,7 @@ import { structuresOf } from "@/lib/tool-cards";
 
 import { AnswerMarkdown } from "./answer-markdown";
 import { AnswerSources } from "./answer-sources";
+import { CopyCheckReport } from "./copy-check-report";
 import { DidYouMeanButtons } from "./did-you-mean";
 import { ProgressSteps } from "./progress-steps";
 import { SourceCheckBadge } from "./source-check-badge";
@@ -46,7 +47,12 @@ export function ConversationTurn({ turn, onAsk, chatAnswering, onRetry }: Conver
           sourceCheck={turn.sourceCheck}
         />
       )}
-      {turn.answer && <SourceCheckBadge check={turn.sourceCheck} checking={checkingAnswer(turn)} />}
+      {turn.answer && (
+        <div className="flex flex-wrap items-center gap-2 empty:hidden">
+          <SourceCheckBadge check={turn.sourceCheck} checking={checkingAnswer(turn)} />
+          {turn.sourceCheck && <CopyCheckReport turn={turn} />}
+        </div>
+      )}
       {turn.sources && <AnswerSources answer={turn.answer} sources={turn.sources} />}
       {offers.length > 0 && (
         <DidYouMeanButtons offers={offers} onAsk={onAsk} disabled={chatAnswering} />
