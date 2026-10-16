@@ -108,7 +108,7 @@ def get_decision_model(
         raise DecisionConfigError(
             "DECISION_MODEL is empty. Set it to the decision model loaded in LM Studio "
             "(e.g. kev-0.8b) with LOCAL_DECISION_BASE_URL, or to a Jev id on OpenRouter "
-            "(e.g. typesafe/jev-1.14). See .env.example."
+            "(e.g. jev-1.13). See .env.example."
         )
     endpoint = _resolve_endpoint(settings, settings.decision_model)
     return DecisionModel(

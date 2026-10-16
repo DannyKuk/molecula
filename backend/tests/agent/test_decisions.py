@@ -80,7 +80,7 @@ def lm_studio_settings(**overrides: Any) -> Settings:
 
 def openrouter_settings(**overrides: Any) -> Settings:
     return settings(
-        openrouter_api_key=SecretStr("sk-or-test"), decision_model="typesafe/jev-1.14", **overrides
+        openrouter_api_key=SecretStr("sk-or-test"), decision_model="jev-1.13", **overrides
     )
 
 
@@ -154,8 +154,8 @@ def test_an_answer_of_another_type_cannot_be_read_as_this_one() -> None:
         response.noul("topic")
 
 
-def test_openrouter_gets_the_key_and_the_attribution_headers() -> None:
-    server = Server(body=fixture("lmstudio/answers.json"))
+def test_openrouter_gets_the_recorded_request_with_the_key_and_attribution() -> None:
+    server = Server(body=fixture("openrouter/answers.json"))
 
     decide(model(openrouter_settings(), server))
 
@@ -163,7 +163,19 @@ def test_openrouter_gets_the_key_and_the_attribution_headers() -> None:
     assert str(request.url) == "https://openrouter.ai/api/v1/systemone"
     assert request.headers["authorization"] == "Bearer sk-or-test"
     assert request.headers["x-openrouter-title"] == "Molecula"
-    assert server.sent["model"] == "typesafe/jev-1.14"
+    assert server.sent == fixture("request.json") | {"model": "jev-1.13"}
+
+
+def test_jev_answers_under_a_dated_model_id_with_openrouter_extras() -> None:
+    server = Server(body=fixture("openrouter/answers.json"))
+
+    response = decide(model(openrouter_settings(), server))
+
+    assert response.model == "typesafe/jev-1.13-20260917"
+    assert response.noul("personal").noul == pytest.approx(0.97)
+    assert response.choice("topic").probabilities["interaction"] == 1.0
+    assert response.score("urgency").probabilities == {"0": 0.73, "1": 0.27, "2": 0.0}
+    assert response.usage.output_tokens == 77
 
 
 def test_a_conversation_goes_as_its_own_messages() -> None:
@@ -269,7 +281,7 @@ def test_offline_keeps_lm_studio() -> None:
     ("overrides", "message"),
     [
         ({"local_decision_base_url": LM_STUDIO_URL}, "DECISION_MODEL is empty"),
-        ({"decision_model": "typesafe/jev-1.14"}, "No decision model server is configured"),
+        ({"decision_model": "jev-1.13"}, "No decision model server is configured"),
     ],
     ids=["no model", "no server"],
 )
