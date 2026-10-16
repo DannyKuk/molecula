@@ -2,6 +2,7 @@ import { vi } from "vitest";
 
 import type { Resolution, Suggestion } from "@/lib/api";
 import type { ChatMessage, Source } from "@/lib/chat";
+import { type ChatHistory, type Conversation, summaryOf } from "@/lib/chat-history";
 import type { Passage } from "@/lib/citations";
 
 /** The backend's answer for a name outside the supported drugs. */
@@ -164,3 +165,24 @@ export const IMATINIB_SOURCES_EVENT = chatFrame({
   sources: IMATINIB_SOURCES,
   unknown_refs: [],
 });
+
+/**
+ * A `ChatHistory` kept in memory, which copies what it stores as IndexedDB does. A test renders
+ * the chat again with the same one to reload the page. With `failing`, every call rejects, as in a
+ * browser that refuses storage.
+ */
+export function memoryHistory({ failing = false } = {}) {
+  const stored = new Map<string, Conversation>();
+  const answer = async <T>(result: () => T): Promise<T> => {
+    if (failing) throw new DOMException("The storage is blocked.", "SecurityError");
+    return structuredClone(result());
+  };
+  const history: ChatHistory = {
+    list: () => answer(() => [...stored.values()].map(summaryOf)),
+    get: (id) => answer(() => stored.get(id)),
+    put: (conversation) =>
+      answer(() => void stored.set(conversation.id, structuredClone(conversation))),
+    delete: (id) => answer(() => void stored.delete(id)),
+  };
+  return { history, stored };
+}
