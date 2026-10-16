@@ -1,0 +1,201 @@
+# openai/gpt-6-luna on OpenRouter, default effort, main's prompt and tools (#98). Judged against RULES
+# in no_label.py by two subagents; every flag and the questions gpt-oss-20b got wrong before
+# (zolpidem, bupropion, pseudoephedrine, valacyclovir, celecoxib, omeprazole, atorvastatin, spironolactone)
+# re-read with the full passages.
+
+- id: zolpidem-abuse-dependence#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Zolpidem 40 mg similar but not identical to diazepam 20 mg, 10 mg hard to tell from placebo, in
+    former drug abusers: all from [4]. "Molecula doesn't have a separate Valium label result" is
+    true, since search_labels returned Valium as not_supported, so it is not a denial.
+- id: bupropion-abuse-dependence#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Inhaling crushed tablets, with seizures and deaths reported after intranasal use, comes from
+    [8]. Loss of consciousness and abnormal heart rhythms come from the bupropion-alone overdose
+    list in [6] ("ECG changes such as conduction disturbances or arrhythmias"). Both facts are held,
+    but the answer cites [1] (seizure incidence/hypertension) for them, so the citations are wrong.
+- id: atorvastatin-common-side-effects#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    The five reactions at >=5% (nasopharyngitis, arthralgia, diarrhea, pain in extremity, UTI) are
+    quoted from [2]. Plain-language glosses ("joint pain", "pain in an arm or leg") explain the
+    terms.
+- id: ondansetron-adverse-reactions#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Headache is a common adverse reaction ([2]), and 24% vs 13% placebo with moderately emetogenic
+    (cyclophosphamide-based) chemotherapy is from Table 3 in [4]. "Rates varied by setting" is
+    backed by [1], [2] and [4].
+- id: omeprazole-clinical-studies#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    9/12 children aged 1-2 with at least 50% fewer vomiting/regurgitation episodes, and about 60%
+    (60% and 59%) success at 4 weeks in ages 2-16, are from [1]. 51/57 EE healed is from [1], and
+    "two uncontrolled studies" is from [2]. The point that uncontrolled studies can't isolate the
+    drug's effect follows directly.
+- id: risperidone-clinical-studies#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Two 8-week placebo-controlled trials in ages 5-16 for irritability with autistic disorder ([1],
+    [2]), plus a third 6-week trial in ages 5-17 ([2]). All held.
+- id: lisinopril-angioedema#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    The contraindication for a history of angioedema or hypersensitivity from previous ACE-inhibitor
+    treatment is from [2]. "Swelling beneath the skin" explains the term, and saying face/lip
+    swelling may fit is a direct conclusion.
+- id: acetazolamide-contraindications#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Fatal sulfonamide reactions and sensitization that may recur on readministration are from [2].
+    "I can't say it's safe" is a cautious conclusion, not a denial of data.
+- id: atorvastatin-starting-dose#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    10 or 20 mg once daily, and 40 mg for patients needing >45% LDL-C reduction, both quoted from
+    [1].
+- id: lamotrigine-dosing#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    500 mg/day in 2 divided doses as the monotherapy maintenance dose after conversion is from [1],
+    and dosing that depends on other medicines and age, with escalation not to be exceeded, is from
+    [4]. The label's conversion table says "16 years and older" and the answer says "adults"; adults
+    are inside that range, so the claim still holds.
+- id: omeprazole-indications#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Established for 1 month to <1 year only for EE due to acid-mediated GERD, and not established
+    under 1 month for any indication: both from [1] (also [4]).
+- id: ciprofloxacin-indications#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    The plague indication, including pneumonic and septicemic plague, based on animal efficacy
+    studies because human studies weren't feasible, is from [1].
+- id: acetaminophen-warfarin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    "Ask a doctor or pharmacist before use if you are taking ... warfarin" is from [1]/[2]. Saying
+    the label doesn't specify the nature of the interaction or other blood thinners is an accurate
+    statement of what the passages lack, not a denial.
+- id: clopidogrel-omeprazole#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Avoid concomitant use because omeprazole significantly reduces clopidogrel's antiplatelet
+    activity: from [1] (also [3]). The heartburn advice is generic.
+- id: pseudoephedrine-antidepressants#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Says not to use pseudoephedrine with prescription MAOIs (a class that includes certain drugs for
+    depression) or for 2 weeks after stopping one, and that the label names no specific
+    antidepressants; all from [1][2].
+- id: diclofenac-otc-consumer#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Says people under 18 should ask a doctor before using Voltaren Arthritis Pain gel and that
+    safety and effectiveness under 18 are not known; both from [6].
+- id: diclofenac-overdosage#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Lists sleepiness, nausea, vomiting, upper-abdominal pain, GI bleeding, and rarely high blood
+    pressure, acute kidney failure, slowed breathing and coma; all from the overdosage section [1]
+    (lethargy/drowsiness -> sleepiness, epigastric -> upper abdomen). [1] words them as NSAID-
+    overdose symptoms in the diclofenac label, so applying them to diclofenac is a direct
+    conclusion.
+- id: spironolactone-overdosage#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    Close: the listed symptoms and high potassium are in [1], but "In some cases, low sodium ... in
+    the blood may occur" lists hyponatremia as an overdose sign, while [1] says these "are unlikely
+    due to acute overdosage" and gives them only "rarely ... in patients with severe liver disease".
+    Read leniently it is a shortening; a pharmacist would see the attribution and population
+    changed, so flagged.
+- id: risperidone-patient-information#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Store at 15-25 °C (59-77 °F), do not freeze, protect from light, keep from children; all in [1]
+    and [3].
+- id: valacyclovir-patient-information#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    "VALTREX does not cure ... genital herpes", treats or controls outbreaks, and with safer sex
+    lowers the chance of spreading it; all from the patient information [3].
+- id: ibuprofen-mechanism#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Analgesic and antipyretic activity, mode of action not fully understood, "may be related to
+    prostaglandin synthetase inhibition"; from [1]. Calling prostaglandin synthetase "an enzyme"
+    explains the term.
+- id: oseltamivir-pharmacology#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Says the label gives no separate pregnancy dose (no returned passage gives one), that some
+    pregnancy studies "lacked information on dose" [1], and that the label adjusts dose for kidney
+    impairment [7][10]. All held; the answer-key passage was not returned, but nothing is added from
+    memory.
+- id: gabapentin-product#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    300, 450, 600, 750 and 900 mg tablets; exactly [3] (also [1][2]).
+- id: levothyroxine-product#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Clear, colorless to slightly yellow solution in 1 mL white non-transparent unit-dose ampules,
+    pouches of 5 and boxes of 30, strength identified by color; all from [1] ("opaque" and "single-
+    dose" restate it).
+- id: ondansetron-specific-populations#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    One large study found a small increase in oral clefts after first-trimester prescriptions (RR
+    1.24 in [1]), other findings inconsistent [1], and the studies' limitations preclude conclusions
+    [2]. Dropping that the increase was for oral, not IV, ondansetron is a shortening. The opening
+    overdose line is generic safety advice, not a drug fact.
+- id: morphine-specific-populations#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Close: lower-than-usual starting dose, slow titration and monitoring for respiratory depression,
+    sedation and hypotension are from [1]. "morphine's effects can be significantly altered in
+    people with cirrhosis" loosens [1]'s "pharmacokinetics ... significantly altered"; read strictly
+    that swaps kinetics for effects, but the altered effects follow directly from altered kinetics
+    and the advice that follows matches [1], so not flagged.
+- id: dextromethorphan-warnings#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Do not use with a prescription MAOI or for 2 weeks after stopping one; ask a doctor or
+    pharmacist if unsure; from [1] (also [2]).
+- id: celecoxib-warnings#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Upper-GI ulcers, gross bleeding or perforation in about 1% at 3-6 months and 2-4% at one year;
+    CLASS rates 0.78% at nine months and 2.19% with low-dose aspirin; symptomless events and the
+    risk factors; all from [6]. The 1% and 2-4% figures are NSAID-class rates in [6], and the answer
+    says "patients treated", not celecoxib-specific, so no misattribution.

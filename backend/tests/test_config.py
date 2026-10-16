@@ -104,7 +104,7 @@ def test_name_suggestion_cutoff_outside_0_to_1_is_rejected(
 def test_missing_env_file_uses_defaults(tmp_path: Path) -> None:
     settings = Settings(_env_file=tmp_path / "does-not-exist.env")
 
-    assert settings.llm_model is None
+    assert settings.llm_model == "openai/gpt-6-luna"
     assert settings.openfda_api_key is None
     assert settings.offline is False
     assert settings.build_dir == settings.data_dir / "build"
