@@ -19,8 +19,8 @@ from molecula.tools.base import build_tool, not_supported
 def get_complex_tool(compounds: CompoundService, complexes: ComplexService) -> StructuredTool:
     def get_complex(drug: str) -> DrugComplex | NoComplex | DrugNotSupported:
         """Look up the reviewed 3D structure of a supported drug bound to its target, the one
-        Molecula's 3D view shows: which protein holds the drug and which of its residues touch
-        it.
+        the chat shows the reader in Molecula's 3D view: which protein holds the drug and which
+        of its residues touch it.
 
         `drug` can be a generic name, a brand, a non-US or German name or a salt name; it is
         resolved to the stored drug first.
