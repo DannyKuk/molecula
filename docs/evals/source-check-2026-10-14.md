@@ -67,30 +67,38 @@ The run needs the from-memory and no-label caches in `data/build/eval/` and stop
 
 ## Changes since this baseline
 
-Amber = the claims the chat underlines (`unsupported`). A citation miss counts as caught by the baseline runs and as `held_elsewhere` from #220 on, so it has its own column.
+Amber = the claims the chat underlines (`unsupported`). A citation miss counts as caught by the baseline runs and as `held_elsewhere` from #220 on, so it has its own column. Every row is scored with the labels as they stand since #220 (see the hedge rule below): 47 additions, 15 of them cited, and 73 supported claims. The tables above use the labels of 2026-10-14.
 
 | Change | Additions amber | Citation misses amber | Supported amber | Non-claims amber | Seconds p50 |
 |---|---|---|---|---|---|
-| Baseline: revised prompt, no effort | 37–38/49 | 30–31/31 | 2/71 | 2–3/30 | 6.5–6.8 |
-| The same prompt at medium effort, as the chat runs it since #213 | 41/49 (84%) | 29/31 | 3/71 | 6/30 | 11.5 |
-| The check sees every returned result; a fact another result holds is `held_elsewhere` (#220) | 36/49 (73%), both runs | 9/31, both runs | 5/71, both runs | 1–4/30 | 7.6–7.8 |
+| Baseline: revised prompt, no effort | 37/47, both runs | 30–31/31 | 2–3/73 | 2–3/30 | 6.5–6.8 |
+| The same prompt at medium effort, as the chat runs it since #213 | 40/47 (85%) | 29/31 | 4/73 | 6/30 | 11.5 |
+| The check sees every returned result; a fact another result holds is `held_elsewhere` (#220) | 36/47 (77%), both runs | 9/31, both runs | 5/73, both runs | 1–4/30 | 7.6–7.8 |
+| Not adopted: a prompt rule that a dropped hedge or another name for the same thing counts as held | 34–36/47 | 5–7/31 | 3–5/73 | 1–3/30 | 7.9 |
 
 ### Judged against every returned result (#220)
 
-The check now gets every result the answer's tools returned, not only the cited ones, and has a third verdict: `held_elsewhere`, with the refs that hold the claim (`held_by`). The chat shows those refs as a chip instead of an underline. Medium effort, the same 181 claims, run twice; before is the medium run above (`…-medium-89949973d5c1`), scored with the new runner.
+The check now gets every result the answer's tools returned, not only the cited ones, and has a third verdict: `held_elsewhere`, with the refs that hold the claim (`held_by`). The chat shows those refs as a chip instead of an underline. Medium effort, the same 181 claims, run twice; before is the medium run above (`…-medium-89949973d5c1`), scored with the new runner and labels.
 
 | | Before | After, run 1 | After, run 2 |
 |---|---|---|---|
 | Amber marks | 79 | 51 | 54 |
 | Citation misses held elsewhere, naming a labelled ref | 0 of 31 | 18 | 20 |
-| Additions, cited, amber | 10/17 | 9/17 | 9/17 |
+| Additions, cited, amber | 9/15 | 9/15 | 9/15 |
 | Additions, uncited, amber | 31/32 | 27/32 | 27/32 |
-| Supported amber | 3/71 | 5/71 | 5/71 |
+| Supported amber | 4/73 | 5/73 | 5/73 |
 | Answers failing the check | 40/65 | 28/65 | 31/65 |
 | Seconds per check p50 / mean / max | 11.5 / 14.4 / 47.7 | 7.8 / 8.1 / 27.3 | 7.6 / 8.4 / 41.7 |
 | Output tokens per check, mean | 555 | 708 | 777 |
 
 - **A third fewer underlines, and most of the drop is the misses #220 was about.** 18 or 20 of the 31 citation misses now get a chip for a result the labels name, against 9 still underlined.
-- **It lets 5 more additions through.** Of the 32 uncited additions, 2 or 4 are now `held_elsewhere`, and in run 1 two more are `supported`; one cited addition fewer is caught. I read the 13 additions run 1 let through against their passages: 7 are clear misreadings the chat now shows as backed (bupropion overdoses "alone", omeprazole's age bands, spironolactone's "unlikely due to acute overdosage", atorvastatin's side-effect ranges given a chip, an atorvastatin answer in German, the dipyrone list, advice about other PPIs), 6 are close calls where the label is strict (cyclooxygenase where the label says prostaglandin synthetase, and similar). Below the proposed 80% bar (73%). The owner decided on 2026-10-15 that about 25 fewer wrong warnings are worth 5 more additions passing; a stronger checker is #215.
+- **It lets 4 more additions through, all uncited.** Of the 32 uncited additions, 2 or 4 are now `held_elsewhere`, and in run 1 two more are `supported`. I read the 11 additions run 1 let through against their full passages: 7 are clear misreadings the chat now shows as backed (bupropion overdoses "alone", omeprazole's age bands, spironolactone's "unlikely due to acute overdosage", atorvastatin's side-effect ranges given a chip, an atorvastatin answer in German, the dipyrone list, advice about other PPIs), 4 are close calls (celecoxib's ulcers as a serious event, "lower its effectiveness in preventing heart attacks", and similar). Below the proposed 80% bar (77%). The owner decided on 2026-10-15 that about 25 fewer wrong warnings are worth 4 more additions passing; a stronger checker is #215.
 - **No slower.** More passages go into the call and the model writes more tokens, yet the median is 4 s lower. The before run is from another day, so read this as "not slower", not as a gain.
-- **Supported claims underlined went from 3 to 5 of 71** (7%), within the proposed 10%. Two of the five are list items that state more than the one passage they cite.
+- **Supported claims underlined: 4 before, 5 after, of 73** (7%), within the proposed 10%. Two of the five are list items that state more than the one passage they cite.
+
+### Hedges count as held (#220, labels only)
+
+In the live chat the owner found "This inhibition also explains its antipyretic (fever-reducing) effect [1]" underlined, while passage 2 of the same answer says ibuprofen "possesses analgesic and antipyretic activities. Its mode of action… may be related to prostaglandin synthetase inhibition." The sentence before it, "Its main way of working is to inhibit… prostaglandin synthetase", made the same step from "may be related" to a plain statement and passed. The owner decided that a dropped hedge ("may", "probable", "may be related to") and another common name for the same thing count as held, and that numbers, rates, populations and which drug a fact is about stay strict.
+
+- **Labels:** two claims change from unsupported to supported, both ibuprofen mechanism sentences of the same kind ("This reduces the signals that cause pain and lowers the fever-raising effect of inflammation [1][2]", and cyclo-oxygenase for prostaglandin synthetase). The other 78 unsupported labels add a fact no passage has or misread a number or a population, and stay. The rule is in the dataset's header.
+- **The same rule in the checker's prompt was not adopted.** Two runs (`…-medium-499c108390c6.jsonl`, `….run2.jsonl`): amber marks 47 and 47 against 51 and 54, additions caught 36 and 34 of 47 against 36 and 36, and uncited additions given a chip 5 and 8 against 2 and 4: within the spread, apart from more chips on facts no source holds. On the owner's answer, checked five times with the same passages, the antipyretic sentence was underlined 5 of 5 times with the rule; at `SOURCE_CHECK_REASONING_EFFORT=high` 5 of 5, and the "main way of working" sentence 5 of 5 as well. gpt-oss-20b reads "explains" against "may be related to" literally whatever the prompt says, so the fix belongs to a stronger checker (#215).

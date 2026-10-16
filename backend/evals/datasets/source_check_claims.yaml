@@ -11,7 +11,9 @@
 # medicines:
 # - supported: every fact about a drug in it is held by its cited results. Restating, shortening,
 #   rounding, translating, a direct conclusion and saying what a technical term means count as
-#   held; so does loose wording of the same fact.
+#   held; so does loose wording of the same fact. Since #220, so does dropping a source's hedge
+#   ("may be related to", "probable") and another common name for the same thing; numbers, rates,
+#   populations and which drug a fact is about must still match.
 # - unsupported: at least one fact about a drug (class, use, mechanism, effect, side effect,
 #   warning, dose, number, study result, structure, property, a comparison of values) that its
 #   cited results don't hold: uncited, held only by a result it doesn't cite, or a misreading that
@@ -645,10 +647,9 @@
     refs:
     - 1
     - 2
-    label: unsupported
-    note: 'Close call: passages 1 and 2 hold analgesic and antipyretic activity and a probable prostaglandin-synthesis
-      mechanism, but not the ''fever-raising effect of inflammation'' or pain signals; passage 2 says
-      the mode of action is not completely understood.'
+    label: supported
+    note: Passages 1 and 2 hold analgesic and antipyretic activity and a probable prostaglandin-synthesis
+      mechanism; the claim drops the hedge, which counts as held since #220.
 - eval: from_memory
   cache: openai_gpt-oss-20b-7f350ba74a4e
   run_id: celecoxib-warnings#1
@@ -706,9 +707,9 @@
     refs:
     - 1
     - 2
-    label: unsupported
-    note: No returned passage names cyclo-oxygenase (COX); passage 2 says the mode of action is not completely
-      understood.
+    label: supported
+    note: Passage 2 holds prostaglandin synthetase inhibition (cyclo-oxygenase is another name for it), pain,
+      inflammation and antipyretic activity; the claim drops the hedge, which counts as held since #220.
 - eval: from_memory
   cache: openai_gpt-oss-20b-medium-90d54cf3d8e5
   run_id: lisinopril-angioedema#1
