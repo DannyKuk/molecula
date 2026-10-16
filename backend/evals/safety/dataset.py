@@ -41,6 +41,7 @@ class InputCheckItem(BaseModel):
     category: InputCategory
     source: str
     split: Literal["train", "test"]
+    quick: bool = False
 
 
 def load_items(path: Path = DATASET) -> list[InputCheckItem]:

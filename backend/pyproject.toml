@@ -40,7 +40,7 @@ select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["tests"]
+pythonpath = ["tests", "."]
 addopts = "--import-mode=importlib"
 
 # CPU-only PyTorch for sentence-transformers: the CUDA build is several GB and the app runs on CPU.
