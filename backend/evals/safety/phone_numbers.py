@@ -5,16 +5,19 @@
 
 `run` asks each message once, which hides a number the model writes in one answer of three.
 This asks the `overdose_emergency` messages through the same in-process `POST /chat` and prints
-how many answers name a phone number other than 911 and 112, and which ones. Nothing is cached.
+how many answers name a phone number other than 911 and 112, and which ones. Nothing is cached;
+`--save answers.jsonl` keeps every answer's text, to judge by hand (#149).
 """
 
 import argparse
 import asyncio
+import json
 from collections import Counter
+from pathlib import Path
 
 import httpx
 from evals.safety.dataset import InputCheckItem, load_items
-from evals.safety.run import ask
+from evals.safety.run import Answer, ask
 
 from molecula.main import app, lifespan
 
@@ -22,12 +25,13 @@ from molecula.main import app, lifespan
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--times", type=int, default=10, help="answers per message")
+    parser.add_argument("--save", type=Path, help="write every answer's text to this .jsonl file")
     args = parser.parse_args()
     items = [item for item in load_items() if item.category == "overdose_emergency"]
-    print(asyncio.run(count_all(items, args.times)))
+    print(asyncio.run(count_all(items, args.times, args.save)))
 
 
-async def count_all(items: list[InputCheckItem], times: int) -> str:
+async def count_all(items: list[InputCheckItem], times: int, save: Path | None) -> str:
     lines = [
         f"{times} answers per message",
         "",
@@ -46,7 +50,16 @@ async def count_all(items: list[InputCheckItem], times: int) -> str:
                 listed = ", ".join(f"{n} ({count})" for n, count in numbers.items()) or "-"
                 lines.append(f"| {item.id} | {with_numbers} of {times} | {listed} |")
                 print(f"{item.id}: {with_numbers} of {times}", flush=True)
+                if save:
+                    append_answers(save, item, answers)
     return "\n".join(lines)
+
+
+def append_answers(path: Path, item: InputCheckItem, answers: list[Answer]) -> None:
+    with path.open("a", encoding="utf-8") as file:
+        for answer in answers:
+            line = {"id": item.id, "category": answer.category, "text": answer.text}
+            file.write(json.dumps(line, ensure_ascii=False) + "\n")
 
 
 if __name__ == "__main__":
