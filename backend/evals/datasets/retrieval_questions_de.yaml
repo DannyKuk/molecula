@@ -1,0 +1,194 @@
+# German versions of the retrieval questions (evals/datasets/retrieval_questions.yaml), for #114.
+# Each `id` is the English question's, so a German question is scored with the same answer key.
+# Brand names stay as in the English question; generic names take their German spelling
+# (Omeprazol, Lamotrigin), and acetaminophen is Paracetamol, as a German speaker would write.
+# Written for #114.
+
+- id: imatinib-mechanism
+  question: "Wie wirkt Gleevec gegen Leukämie?"
+- id: ibuprofen-mechanism
+  question: "Warum senkt Ibuprofen Schmerzen und Fieber?"
+- id: omeprazole-mechanism
+  question: "Wie verringert Omeprazol die Menge an Säure, die der Magen bildet?"
+- id: finasteride-indication
+  question: "Gegen welche Erkrankung wird Proscar bei Männern verschrieben?"
+- id: apixaban-indication
+  question: "Wovor schützt Apixaban Menschen mit unregelmäßigem Herzschlag?"
+- id: dextromethorphan-indication
+  question: "Kann man Delsym bei Husten nehmen, der mit einer Erkältung kommt?"
+- id: atorvastatin-starting-dose
+  question: "Mit welcher Dosis Atorvastatin sollen Erwachsene laut Beipackzettel beginnen?"
+- id: cetirizine-daily-limit
+  question: "Wie viele Tabletten darf ein Erwachsener laut Zyrtec-Packung an einem Tag nehmen?"
+- id: escitalopram-depression-dose
+  question: "Welche Dosis Escitalopram empfiehlt die Fachinformation für Erwachsene mit Depression?"
+- id: clopidogrel-omeprazole
+  question: "Sollte man Clopidogrel gegen Sodbrennen mit Omeprazol kombinieren?"
+- id: simvastatin-cyp3a4
+  question: "Welche Arten von Medikamenten dürfen wegen der Gefahr eines Muskelzerfalls nie zusammen mit Simvastatin genommen werden?"
+- id: ciprofloxacin-tizanidine
+  question: "Darf man Ciprofloxacin jemandem geben, der das Muskelrelaxans Tizanidin nimmt?"
+- id: acetaminophen-warfarin
+  question: "Hat Tylenol Wechselwirkungen mit Blutverdünnern?"
+- id: ciprofloxacin-tendons
+  question: "Kann Ciprofloxacin die Sehnen schädigen?"
+- id: montelukast-mood
+  question: "Kann Singulair die Stimmung oder das Verhalten verändern?"
+- id: ibuprofen-stomach-bleeding-signs
+  question: "Auf welche Anzeichen einer Magenblutung soll man laut Advil-Packungsbeilage achten?"
+- id: metformin-kidneys
+  question: "Dürfen Menschen mit schwerer Nierenerkrankung Metformin nehmen?"
+- id: lisinopril-angioedema
+  question: "Ist Lisinopril sicher für jemanden, dem bei einem anderen ACE-Hemmer Gesicht und Lippen angeschwollen sind?"
+- id: warfarin-pregnancy
+  question: "Darf Warfarin in der Schwangerschaft angewendet werden?"
+- id: pseudoephedrine-antidepressants
+  question: "Welche Antidepressiva sollte man nicht mit einem abschwellenden Mittel mit Pseudoephedrin kombinieren?"
+- id: imatinib-common-side-effects
+  question: "Welche Nebenwirkungen bekommen Menschen unter Imatinib am häufigsten?"
+- id: atorvastatin-common-side-effects
+  question: "Was sind die häufigsten Nebenwirkungen von Lipitor?"
+- id: metformin-stomach-side-effects
+  question: "Welche Magen- und Darmbeschwerden sind bei Metformin häufig?"
+- id: bupropion-abuse-dependence
+  question: "Ist es gefährlich, zerstoßene Bupropion-Tabletten zu schnupfen?"
+- id: nicotine-abuse-dependence
+  question: "Wie viele Menschen fühlten sich in den Studien vom Nicotrol-Nasenspray abhängig?"
+- id: methylphenidate-abuse-dependence
+  question: "Was richtet ein Missbrauch von Methylphenidat im Körper an?"
+- id: tramadol-abuse-dependence
+  question: "Was kann passieren, wenn jemand Tramadol-Retardkapseln spritzt?"
+- id: zolpidem-abuse-dependence
+  question: "Wie schneidet eine hohe Dosis Ambien in Missbrauchsstudien im Vergleich zu Valium ab?"
+- id: oxycodone-abuse-dependence
+  question: "Warum sollte man OxyContin-Tabletten nicht zerkleinern oder kauen?"
+- id: morphine-abuse-dependence
+  question: "Wer wird am ehesten von MS Contin abhängig?"
+- id: anastrozole-adverse-reactions
+  question: "Ist Übelkeit unter Arimidex oder unter Tamoxifen häufiger?"
+- id: semaglutide-adverse-reactions
+  question: "Erhöht Ozempic den Puls?"
+- id: tamoxifen-adverse-reactions
+  question: "Wie häufig sind Hitzewallungen unter Tamoxifen?"
+- id: omeprazole-clinical-studies
+  question: "Hat Omeprazol in den Studien Kindern mit Reflux geholfen?"
+- id: dapagliflozin-clinical-studies
+  question: "Wurde Dapagliflozin zusammen mit Insulin getestet?"
+- id: apixaban-clinical-studies
+  question: "Mit welchem Medikament wurde Eliquis in der großen Studie zur Schlaganfallvorbeugung verglichen?"
+- id: sumatriptan-clinical-studies
+  question: "Bei wie vielen Menschen, die Imitrex nahmen, ließ die Migräne innerhalb von zwei Stunden nach?"
+- id: famotidine-clinical-studies
+  question: "Heilt Famotidin Schäden an der Speiseröhre durch Sodbrennen?"
+- id: risperidone-clinical-studies
+  question: "Wurde Risperdal bei Kindern mit Autismus untersucht?"
+- id: clopidogrel-contraindications
+  question: "Wer darf Plavix nicht nehmen?"
+- id: acetazolamide-contraindications
+  question: "Darf jemand mit einer Sulfonamid-Allergie Acetazolamid nehmen?"
+- id: atorvastatin-contraindications
+  question: "Darf ich Lipitor nehmen, wenn ich eine schwere Lebererkrankung habe?"
+- id: finasteride-contraindications
+  question: "Warum müssen Schwangere Finasterid meiden?"
+- id: naproxen-dosing
+  question: "Wie viele Aleve-Caplets darf ich am Tag nehmen?"
+- id: doxycycline-dosing
+  question: "Was ist die übliche Dosis von Doryx MPC für Erwachsene?"
+- id: imatinib-dosing
+  question: "Wann muss Gleevec wegen niedriger Blutwerte pausiert werden?"
+- id: lamotrigine-dosing
+  question: "Was ist die übliche Lamotrigin-Dosis, wenn es das einzige Epilepsiemedikament ist?"
+- id: ciprofloxacin-indications
+  question: "Wird Cipro zur Behandlung der Pest eingesetzt?"
+- id: omeprazole-indications
+  question: "Darf man Babys Prilosec geben?"
+- id: donepezil-indications
+  question: "Wirkt Aricept auch bei schwerem Alzheimer oder nur bei leichten Fällen?"
+- id: sumatriptan-indications
+  question: "Kann man Imitrex jeden Tag nehmen, um Migräne vorzubeugen?"
+- id: carvedilol-interactions
+  question: "Beeinflusst Coreg den Blutzucker bei Menschen, die Insulin spritzen?"
+- id: phenytoin-interactions
+  question: "Warum hat Dilantin Wechselwirkungen mit so vielen anderen Medikamenten?"
+- id: dasatinib-interactions
+  question: "Darf ich Antazida zusammen mit Dasatinib nehmen?"
+- id: diclofenac-otc-consumer
+  question: "Dürfen Jugendliche Voltaren-Arthrosegel verwenden?"
+- id: naproxen-otc-consumer
+  question: "Wann sollte ich Aleve absetzen und wegen meines Magens zum Arzt gehen?"
+- id: valacyclovir-overdosage
+  question: "Was passiert bei einer Überdosis Valtrex mit den Nieren?"
+- id: spironolactone-overdosage
+  question: "Woran erkennt man, dass jemand zu viel Aldactone genommen hat?"
+- id: carbamazepine-overdosage
+  question: "Wie schnell treten nach einer Überdosis Tegretol Symptome auf?"
+- id: haloperidol-overdosage
+  question: "Wie sieht eine Überdosis Haloperidol aus?"
+- id: raltegravir-overdosage
+  question: "Was ist zu tun, wenn jemand zu viel Isentress genommen hat?"
+- id: lansoprazole-overdosage
+  question: "Kann eine Dialyse Lansoprazol nach einer Überdosis entfernen?"
+- id: diclofenac-overdosage
+  question: "Welche Symptome verursacht eine Überdosis Diclofenac meistens?"
+- id: diclofenac-patient-information
+  question: "Darf ich ein Heizkissen auf die Haut legen, auf die ich Voltaren-Gel aufgetragen habe?"
+- id: erlotinib-patient-information
+  question: "Ändert Rauchen meine Erlotinib-Dosis?"
+- id: memantine-patient-information
+  question: "Darf ich Memantin-Retardkapseln öffnen und mit Essen vermischen?"
+- id: losartan-patient-information
+  question: "Darf ich Salzersatz verwenden, während ich Cozaar nehme?"
+- id: valacyclovir-patient-information
+  question: "Kann Valtrex Genitalherpes heilen?"
+- id: risperidone-patient-information
+  question: "Wie sollte ich die Risperdal-Lösung zum Einnehmen aufbewahren?"
+- id: semaglutide-patient-information
+  question: "Darf ich meinen Ozempic-Pen mit jemandem teilen, wenn ich die Nadel wechsle?"
+- id: acetaminophen-pharmacology
+  question: "Bindet Paracetamol stark an Bluteiweiße?"
+- id: esomeprazole-pharmacology
+  question: "Schwächt Nexium die Wirkung von Clopidogrel ab?"
+- id: valacyclovir-pharmacology
+  question: "Wie verhindert Valtrex, dass sich das Herpesvirus vermehrt?"
+- id: oseltamivir-pharmacology
+  question: "Braucht man in der Schwangerschaft eine andere Dosis Tamiflu?"
+- id: dexamethasone-product
+  question: "Enthält die Seacall-Dexamethason-Salbe Bienenwachs?"
+- id: esomeprazole-product
+  question: "Enthält Nexium 24HR Zucker?"
+- id: baclofen-product
+  question: "Welchen Geschmack hat die Fleqsuvy-Baclofen-Suspension?"
+- id: cetirizine-product
+  question: "Enthält der Cetirizin-Saft Parabene?"
+- id: gabapentin-product
+  question: "In welchen Stärken gibt es Gralise-Tabletten?"
+- id: levothyroxine-product
+  question: "Wie ist Tirosint-SOL verpackt?"
+- id: methylphenidate-product
+  question: "Wie viel einer Methylphenidat-CD-Kapsel wird sofort freigesetzt?"
+- id: apixaban-specific-populations
+  question: "Dürfen Dialysepatienten Eliquis nehmen?"
+- id: nicotine-specific-populations
+  question: "Ist das Nicotrol-Nasenspray für Menschen über 65 sicher?"
+- id: venlafaxine-specific-populations
+  question: "Erhöht die Einnahme von Effexor XR in der Schwangerschaft das Risiko einer Präeklampsie?"
+- id: ondansetron-specific-populations
+  question: "Hängt Ondansetron in der Frühschwangerschaft mit Lippen- oder Gaumenspalten zusammen?"
+- id: sumatriptan-specific-populations
+  question: "Was haben Tierstudien über Imitrex in der Schwangerschaft gezeigt?"
+- id: ramipril-specific-populations
+  question: "Wirkt Ramipril bei älteren Menschen anders?"
+- id: morphine-specific-populations
+  question: "Brauchen Menschen mit Leberzirrhose besondere Vorsicht bei MS Contin?"
+- id: dextromethorphan-warnings
+  question: "Darf ich Delsym nehmen, wenn ich ein MAO-Hemmer-Antidepressivum nehme?"
+- id: celecoxib-warnings
+  question: "Wie häufig sind Magengeschwüre oder Blutungen unter Celecoxib?"
+- id: fluticasone-warnings
+  question: "Kann zu viel Xhance-Nasenspray meine Nebennieren beeinträchtigen?"
+- id: haloperidol-warnings
+  question: "Kann Haloperidol unkontrollierbare Bewegungen von Gesicht und Zunge auslösen?"
+- id: ondansetron-adverse-reactions
+  question: "Bekommt man von Ondansetron Kopfschmerzen?"
+- id: montelukast-clinical-studies
+  question: "Hilft Singulair Menschen, deren Asthma durch Aspirin ausgelöst wird?"
