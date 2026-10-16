@@ -1,0 +1,8 @@
+{
+  "error": {
+    "message": "Invalid model identifier \"openai/gpt-oss-20b\". There are no downloaded decision models. Please download a model to get started.",
+    "type": "invalid_request_error",
+    "param": "model",
+    "code": "invalidModelIdentifier"
+  }
+}

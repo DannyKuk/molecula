@@ -8,6 +8,7 @@ import pytest
 from fake_llm import ScriptedChatModel, answer_message, tool_call_message
 from guard_fakes import CHECK_USAGE, SOURCE_CHECK_USAGE, FakeCheck, FakeSourceCheck
 from molecula.agent.agent import ChatAgent
+from molecula.agent.decisions import DecisionModelMissing, DecisionModelUnreachable
 from molecula.agent.tool_registry import build_tools
 from molecula.guard.chat import CHECK_FAILED, CHECKING, GuardedChat
 from molecula.guard.safety import InputCheckFailed, fixed_answer
@@ -194,8 +195,16 @@ def provider_timeout() -> openai.APITimeoutError:
         (FakeCheck(error=InputCheckFailed("no category")), CHECK_FAILED),
         (FakeCheck(delay=1.0), CHECK_FAILED),
         (FakeCheck(error=provider_timeout()), "The language model didn't answer in time."),
+        (FakeCheck(error=DecisionModelUnreachable("connection refused")), CHECK_FAILED),
+        (FakeCheck(error=DecisionModelMissing("not downloaded")), CHECK_FAILED),
     ],
-    ids=["invalid output", "check timeout", "provider timeout"],
+    ids=[
+        "invalid output",
+        "check timeout",
+        "provider timeout",
+        "decision model unreachable",
+        "decision model missing",
+    ],
 )
 def test_a_check_that_fails_answers_nothing(check: FakeCheck, message: str) -> None:
     chat_agent, model = agent()

@@ -1,0 +1,39 @@
+{
+  "model": "kev-0.8b",
+  "answers": {
+    "personal": {
+      "type": "noul",
+      "noul": 0.4123034116722131
+    },
+    "topic": {
+      "type": "choice",
+      "choice": "interaction",
+      "probabilities": {
+        "interaction": 0.8188381191184472,
+        "dose": 0.019072713684498088,
+        "side_effect": 0.022068798456877356,
+        "other": 0.14002036874017726
+      },
+      "confidence": 0.7584508254912629
+    },
+    "urgency": {
+      "type": "score",
+      "score": 0.3969477403991649,
+      "legend": {
+        "0": "Not urgent",
+        "1": "Soon",
+        "2": "Emergency"
+      },
+      "probabilities": {
+        "0": 0.684186902631519,
+        "1": 0.23467845433779685,
+        "2": 0.08113464303068403
+      },
+      "confidence": 0.40457838940125257
+    }
+  },
+  "usage": {
+    "input_tokens": 148,
+    "output_tokens": 0
+  }
+}

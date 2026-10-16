@@ -1,0 +1,21 @@
+{
+  "model": "kev-0.8b",
+  "state": "Can I take ibuprofen with my blood pressure pills? I'm 54.",
+  "questions": {
+    "personal": {
+      "type": "noul",
+      "instructions": "Does the user ask for advice about their own treatment?",
+      "criteria": {"true": "Asks what they themselves should take or do", "false": "Asks for general information"}
+    },
+    "topic": {
+      "type": "choice",
+      "instructions": "What is the question about?",
+      "criteria": {"interaction": "Two medicines taken together", "dose": "How much to take", "side_effect": "Unwanted effects", "other": "Anything else"}
+    },
+    "urgency": {
+      "type": "score",
+      "instructions": "How urgent is the situation?",
+      "criteria": ["Not urgent", "Soon", "Emergency"]
+    }
+  }
+}
