@@ -1,0 +1,67 @@
+# Questions with a drug name Molecula doesn't know (#181, #190). `typed` is the unknown name as
+# the question writes it, and `suggestions` the names `CompoundService.resolve` offers for it, as
+# `alias (name)`, checked on main 74aebb0. The answer should say the name wasn't found and offer
+# the suggestions as written, or ask which drug is meant when there are none, and never say a
+# suggested drug has no data or name a drug the tools didn't return. `turns` are the user's
+# messages in order; the last answer is scored.
+
+- id: compare-imatinib-novaminsuflon
+  turns: ["Can you compare imatinib to Novaminsuflon?"]
+  typed: Novaminsuflon
+  suggestions: ["Novaminsulfon (metamizole)"]
+  language: en
+  source: "#181, the reported question"
+- id: novaminsuflon-alone
+  turns: ["Novaminsuflon"]
+  typed: Novaminsuflon
+  suggestions: ["Novaminsulfon (metamizole)"]
+  language: en
+  source: "#190"
+- id: side-effects-tylenoll
+  turns: ["What are the side effects of Tylenoll?"]
+  typed: Tylenoll
+  suggestions: ["Tylenol (acetaminophen)"]
+  language: en
+  source: written for #190, a brand
+- id: mechanism-imatinb
+  turns: ["How does imatinb work?"]
+  typed: imatinb
+  suggestions: ["imatinib (imatinib)"]
+  language: en
+  source: written for #190, a generic
+- id: uses-ibuflan-de
+  turns: ["Wofür wird Ibuflan verwendet?"]
+  typed: Ibuflan
+  suggestions: ["Ibuflam (ibuprofen)"]
+  language: de
+  source: written for #190, a German brand
+- id: 3d-glevec
+  turns: ["Show me Glevec as a 3D model"]
+  typed: Glevec
+  suggestions: ["Gleevec (imatinib)", "Glivec (imatinib)"]
+  language: en
+  source: written for #190, two suggestions
+- id: about-parace
+  turns: ["Tell me about parace"]
+  typed: parace
+  suggestions: ["paracetamol (acetaminophen)"]
+  language: en
+  source: "#190, a short form"
+- id: about-marcumarr
+  turns: ["Tell me about Marcumarr"]
+  typed: Marcumarr
+  suggestions: []
+  language: en
+  source: written for #190, no suggestions (Marcumar, phenprocoumon, isn't stored)
+- id: uses-xyzzolan-de
+  turns: ["Wofür wird Xyzzolan verwendet?"]
+  typed: Xyzzolan
+  suggestions: []
+  language: de
+  source: written for #190, no suggestions, not a drug
+- id: uses-phenprocoumon
+  turns: ["What is phenprocoumon used for?"]
+  typed: phenprocoumon
+  suggestions: []
+  language: en
+  source: written for #190, a real drug spelled right that isn't stored

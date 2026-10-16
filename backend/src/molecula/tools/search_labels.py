@@ -44,9 +44,10 @@ def search_labels_tool(extractor: FilterExtractor, retriever: LabelRetriever) ->
         for it. An empty `passages` list means the
         labels don't answer the question: say so rather than answering from memory.
         `drugs_without_label` are supported drugs that have no US label. `unsupported` lists
-        named drugs that aren't in Molecula's data, with `suggestions`. Returns
-        `status: "not_supported"` when every drug named is outside Molecula's data: say so and
-        offer the suggestions, never pick one yourself.
+        named drugs Molecula doesn't know, with `suggestions`. Returns `status: "not_supported"`
+        when Molecula knows none of the names (they may be misspelt): say the names weren't found
+        and offer the suggestions by their `alias`, never pick one yourself. Pass drug names in
+        `question` and `drug` as the user wrote them, typos included.
         """
         label_filter = extractor.filter_for(question, drug=drug, section=section)
         retrieval = retriever.retrieve(question, label_filter)

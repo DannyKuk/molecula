@@ -14,7 +14,8 @@ def get_targets_tool(compounds: CompoundService, targets: TargetService) -> Stru
         action, as ChEMBL records them.
 
         `drug` can be a generic name, a brand, a non-US or German name or a salt name; it is
-        resolved to the stored drug first.
+        resolved to the stored drug first. Pass it as the user wrote it, typos included:
+        never correct a spelling yourself.
 
         Returns `status: "found"` with the drug's CID and generic `name`, and `targets`: for
         each target its name, type (single protein, complex, ...), organism, ChEMBL's
@@ -22,8 +23,9 @@ def get_targets_tool(compounds: CompoundService, targets: TargetService) -> Stru
         symbols, `source_url`, its ChEMBL page, and `ref`, the number to cite that target and
         its mechanism with in square brackets, like `[2]`. An empty `targets` list means
         ChEMBL records no mechanism for the drug; say that rather than guessing one. Returns
-        `status: "not_supported"` with `suggestions` when the drug isn't in Molecula's data:
-        say so and offer the suggestions, never pick one yourself.
+        `status: "not_supported"` with `suggestions` when Molecula doesn't know the name (it may
+        be misspelt): say the name wasn't found and offer the suggestions by their `alias`, never
+        pick one yourself.
         """
         resolution = compounds.resolve(drug)
         match = resolution.match

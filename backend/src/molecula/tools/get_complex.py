@@ -23,7 +23,8 @@ def get_complex_tool(compounds: CompoundService, complexes: ComplexService) -> S
         of its residues touch it.
 
         `drug` can be a generic name, a brand, a non-US or German name or a salt name; it is
-        resolved to the stored drug first.
+        resolved to the stored drug first. Pass it as the user wrote it, typos included:
+        never correct a spelling yourself.
 
         Returns `status: "found"` with the drug's CID and generic `name`; `pdb_id`, the Protein
         Data Bank entry; `target`, the target's gene symbol, sometimes with a short note
@@ -38,8 +39,8 @@ def get_complex_tool(compounds: CompoundService, complexes: ComplexService) -> S
         Describe only these contacts; don't add binding details from memory. Returns
         `status: "no_complex"` when Molecula has no reviewed structure of this drug bound to
         its target: the 3D view shows the molecule alone. Returns `status: "not_supported"`
-        with `suggestions` when the drug isn't in Molecula's data: say so and offer the
-        suggestions, never pick one yourself.
+        with `suggestions` when Molecula doesn't know the name (it may be misspelt): say the
+        name wasn't found and offer the suggestions by their `alias`, never pick one yourself.
         """
         resolution = compounds.resolve(drug)
         match = resolution.match
