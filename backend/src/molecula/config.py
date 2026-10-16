@@ -50,6 +50,11 @@ class Settings(BaseSettings):
     embedding_model: str = "local"
     # Multilingual and among the best CPU-sized models in docs/decisions/embeddings.md (#88).
     local_embedding_model: str = "BAAI/bge-m3"
+    # The Hugging Face commit of LOCAL_EMBEDDING_MODEL that the published index was built with;
+    # `ingest fetch` downloads it and checks its weights (#118).
+    local_embedding_model_revision: Annotated[str, Field(pattern=r"^[0-9a-f]{40}$")] = (
+        "5617a9f61b028005a4858fdac845db406aefb181"
+    )
     retrieval_top_k: Annotated[int, Field(ge=1, le=50)] = 5
     retrieval_min_score: Annotated[float, Field(ge=-1.0, le=1.0)] = 0.0
     # Added to the cosine similarity of a chunk in the extracted section groups. Chosen with
@@ -60,6 +65,8 @@ class Settings(BaseSettings):
     chat_timeout_seconds: Annotated[float, Field(gt=0)] = 180.0
     openfda_api_key: SecretStr | None = None
     offline: bool = False
+    # The GitHub release `ingest fetch` downloads the store from (#35); a new snapshot bumps it.
+    store_release: Annotated[str, Field(pattern=r"^store-\d{4}-\d{2}-\d{2}$")] = "store-2026-10-17"
     data_dir: Path = REPO_ROOT / "data"
     cors_origins: list[str] = ["http://localhost:3000"]
     name_suggestion_cutoff: Annotated[float, Field(ge=0.0, le=1.0)] = 0.8
@@ -97,6 +104,11 @@ class Settings(BaseSettings):
     def models_dir(self) -> Path:
         """Local model weights, saved when the index is built so the app runs with OFFLINE=1."""
         return self.build_dir / "models"
+
+    @property
+    def store_release_url(self) -> str:
+        """Where the assets of the pinned store release are downloaded from."""
+        return f"https://github.com/DannyKuk/molecula/releases/download/{self.store_release}"
 
     @property
     def export_dir(self) -> Path:
