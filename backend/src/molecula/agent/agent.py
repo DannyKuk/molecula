@@ -9,6 +9,7 @@ from langchain_core.messages import AIMessage, AnyMessage, BaseMessage, HumanMes
 from langchain_core.tools import BaseTool
 
 from molecula import prompts
+from molecula.agent.channel_markers import without_channel_markers
 from molecula.agent.events import AgentRun
 from molecula.agent.llm import ChatModelError, describe_provider_error
 from molecula.agent.references import NumberSources, References
@@ -124,7 +125,11 @@ def without_tool_calls(message: BaseMessage) -> BaseMessage:
 
 
 def to_langchain(conversation: Sequence[ChatMessage]) -> list[BaseMessage]:
+    """The conversation as LangChain messages. An earlier answer loses its channel markers, so
+    one sent before they were stripped doesn't teach the model to write them."""
     return [
-        HumanMessage(message.content) if message.role == "user" else AIMessage(message.content)
+        HumanMessage(message.content)
+        if message.role == "user"
+        else AIMessage(without_channel_markers(message.content))
         for message in conversation
     ]

@@ -5,6 +5,7 @@ from typing import Any
 from langchain_core.messages import AIMessage, AIMessageChunk, ToolCall, ToolMessage
 from langchain_core.tools import BaseTool
 
+from molecula.agent.channel_markers import ChannelMarkerFilter, without_channel_markers
 from molecula.agent.references import cited_refs
 from molecula.schemas.chat import (
     Candidate,
@@ -37,6 +38,7 @@ class AgentRun:
         self.calls: dict[str, ToolCall] = {}
         self.sources: dict[tuple[str, str | None, int | None], Source] = {}
         self.answer = ""
+        self.markers = ChannelMarkerFilter()
 
     def events(self, mode: str, data: Any) -> Iterator[ChatEvent]:
         if mode == "messages":
@@ -46,7 +48,7 @@ class AgentRun:
                 and isinstance(chunk, AIMessageChunk)
                 and chunk.text
             ):
-                yield TokenEvent(text=chunk.text)
+                yield from tokens(self.markers.feed(chunk.text))
             return
         for update in data.values():
             for message in (update or {}).get("messages", []):
@@ -56,13 +58,14 @@ class AgentRun:
                     yield from self.tool_reply(message)
 
     def model_reply(self, message: AIMessage) -> Iterator[ChatEvent]:
+        yield from tokens(self.markers.flush())
         self.model_calls += 1
         if message.usage_metadata:
             self.usage.input_tokens += message.usage_metadata["input_tokens"]
             self.usage.output_tokens += message.usage_metadata["output_tokens"]
             self.usage.total_tokens += message.usage_metadata["total_tokens"]
         if not message.tool_calls:
-            self.answer = message.text
+            self.answer = without_channel_markers(message.text)
         for call in message.tool_calls:
             call_id = call["id"] or ""
             self.calls[call_id] = call
@@ -99,6 +102,11 @@ class AgentRun:
         if progress is None:
             return f"Running {call['name']}"
         return progress(call["args"])
+
+
+def tokens(text: str) -> Iterator[TokenEvent]:
+    if text:
+        yield TokenEvent(text=text)
 
 
 def parse_result(content: str) -> Any:
