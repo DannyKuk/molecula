@@ -73,13 +73,14 @@ People type brands (Gleevec, Tylenol), non-US names (paracetamol, Ibuflam), the 
 - **Misspellings are not aliases.** "Trapentadol" from a hand-written list was read as tapentadol, not added (PR #32).
 - **Suggestions come from the 323 scope names and aliases only**, best first, at most three; where two drugs share a spelling, the scope name wins. They are matched on the name without salt words (PR #78).
 - **The cutoff is a setting**, `NAME_SUGGESTION_CUTOFF` (default 0.8); a value outside 0–1 stops the app at startup (PR #78).
+- **The chat answers an unknown name with "I couldn't find it" and offers the suggestions by the spelling they were found under**, with the drug's name in brackets ("Did you mean Novaminsulfon (metamizole)?"), or asks which drug is meant when there are none. It never says Molecula has no data on the drug, since a typo says nothing about it, and the agent passes names to the tools as the user typed them. A button under the answer sends the question again with the suggestion (#189). Measured on 30 answers: 4 → 24 pass ([not-found eval](../evals/not-found-2026-10-16.md), #190).
 - **No live PubChem lookup for unknown names.** Besides the reasons in [local store](local-store.md), every typo sent to PubChem would become a cached 404 (#30 comment).
 
 ## Limits
 
 - **No phonetic matching** (out of scope in #51).
 - **German spellings exist only for the drugs on the hand-written list** (PR #32); the rest of the scope has none yet.
-- **Nobody sees the suggestions yet.** The drugs page (#79) and the chat's "not supported" answer (#16) are still to show them.
+- **The agent can still correct a typo itself** before any lookup, and then the user sees no suggestion: 2 of 30 answers in the [not-found eval](../evals/not-found-2026-10-16.md) after #190, 10 of 30 before. Only the prompt stops it; no code checks that a tool got the name as the user typed it.
 - **A combination brand gets a bare "not supported"**, without saying that it is a combination Molecula doesn't cover (#30 comment).
 - **The cutoff was checked on one store and a short list of typos.** A new scope entry can bring a new look-alike pair; the look-alike tests in `tests/services/test_compounds.py` use the store's real names.
 

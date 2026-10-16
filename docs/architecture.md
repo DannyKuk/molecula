@@ -166,3 +166,4 @@ Each step is `cd backend && uv run python -m molecula.ingest <step>`, runs throu
 | [Decision model as the input check](evals/input-check-decision-2026-10-16.md) | Do Jev and Kev sort the guard's messages as well as gpt-oss-20b, and how fast? |
 | [Chat model](decisions/chat-model.md) | Which model answers locally and in the cloud, and how do gpt-6-luna and claude-haiku-5.5 compare with gpt-oss-20b? |
 | [Query translation](evals/query-translation-2026-10-16.md) | Does translating a German question or adding rewrites make the label search find the answer more often? Translation wins back 3 of 94 questions for ~4 s per search, rewrites lose 5; neither is built |
+| [Unknown drug names](evals/not-found-2026-10-16.md) | How does the chat answer a misspelled or unknown drug name? With "I couldn't find it, did you mean …?" in 24 of 30 answers after #190, against 4 of 30 on main, where it said there was no data or corrected the typo itself |
