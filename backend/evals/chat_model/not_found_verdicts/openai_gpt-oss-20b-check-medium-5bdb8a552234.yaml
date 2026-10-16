@@ -1,0 +1,181 @@
+- id: compare-imatinib-novaminsuflon#1
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''I couldn''t find a drug named Novaminsuflon … Did you mean Novaminsulfon (metamizole)?''; asks
+    before comparing'
+- id: compare-imatinib-novaminsuflon#2
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''Did you mean Novaminsulfon (also known as metamizole)?'''
+- id: compare-imatinib-novaminsuflon#3
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''Did you mean Novaminsulfon (metamizole)?'''
+- id: novaminsuflon-alone#1
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''Did you mean Novaminsulfon (metamizole)?'''
+- id: novaminsuflon-alone#2
+  denies_data: false
+  misses_suggestion: true
+  names_other_drug: false
+  answers_unasked: false
+  note: 'the guard sorted the bare name off_topic: fixed answer'
+- id: novaminsuflon-alone#3
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''Did you mean Novaminsulfon (metamizole)?'''
+- id: side-effects-tylenoll#1
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: true
+  note: the agent searched 'Tylenol' itself and answered about acetaminophen
+- id: side-effects-tylenoll#2
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''Did you mean Tylenol (acetaminophen)?'''
+- id: side-effects-tylenoll#3
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''Did you mean Tylenol (acetaminophen)?'''
+- id: mechanism-imatinb#1
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''Did you mean imatinib?'''
+- id: mechanism-imatinb#2
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: true
+  note: the agent searched 'imatinib' itself and answered
+- id: mechanism-imatinb#3
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''Did you mean imatinib?'''
+- id: uses-ibuflan-de#1
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''Ich konnte den Namen „Ibuflan“ nicht finden. … „Ibuflam“ (Ibuprofen)'''
+- id: uses-ibuflan-de#2
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: 'same as #1'
+- id: uses-ibuflan-de#3
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''Möglicherweise meinten Sie Ibuflam (Ibuprofen)'''
+- id: 3d-glevec#1
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''Did you mean Gleevec (imatinib) or Glivec?'''
+- id: 3d-glevec#2
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: offers Gleevec (imatinib); leaves out Glivec, the same drug
+- id: 3d-glevec#3
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: offers Gleevec (imatinib); leaves out Glivec, the same drug
+- id: about-parace#1
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''Did you mean paracetamol (acetaminophen)?'''
+- id: about-parace#2
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''Did you mean paracetamol (acetaminophen)?'''
+- id: about-parace#3
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''Did you mean paracetamol (acetaminophen)?'''
+- id: about-marcumarr#1
+  denies_data: false
+  misses_suggestion: true
+  names_other_drug: false
+  answers_unasked: false
+  note: 'the guard sorted it off_topic: fixed answer'
+- id: about-marcumarr#2
+  denies_data: false
+  misses_suggestion: true
+  names_other_drug: false
+  answers_unasked: false
+  note: 'the guard sorted it off_topic: fixed answer'
+- id: about-marcumarr#3
+  denies_data: false
+  misses_suggestion: true
+  names_other_drug: false
+  answers_unasked: false
+  note: 'the guard sorted it off_topic: fixed answer'
+- id: uses-xyzzolan-de#1
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: no information found; asks to check the name or give another
+- id: uses-xyzzolan-de#2
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: name not found; asks which name is meant
+- id: uses-xyzzolan-de#3
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: name not found; asks which drug is meant
+- id: uses-phenprocoumon#1
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''I couldn''t find a US drug label for phenprocoumon'''
+- id: uses-phenprocoumon#2
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: not found in the labels Molecula covers
+- id: uses-phenprocoumon#3
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: not found; asks to check the spelling or another name

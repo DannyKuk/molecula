@@ -13,14 +13,16 @@ def resolve_drug_tool(compounds: CompoundService) -> StructuredTool:
 
         `name` can be a generic name, a brand (Gleevec, Tylenol), a non-US or German name
         (paracetamol, Ibuflam) or a salt name from a prescription (imatinib mesylate). Case
-        doesn't matter.
+        doesn't matter. Pass the name as the user wrote it, typos included: never correct a
+        spelling yourself.
 
         Returns `status: "found"` with the drug's PubChem CID, its generic `name`, the stored
         name or alias the input matched (`matched_alias`, `match_kind`), its PubChem page as
         `source_url` and `ref`, the number to cite it with in square brackets, like `[2]`.
-        Returns `status: "not_supported"` when the drug isn't in Molecula's data: then say it
-        isn't supported. `suggestions` holds up to three supported names close to the input;
-        offer them to the user to pick, never answer as if one of them was meant.
+        Returns `status: "not_supported"` when Molecula doesn't know the name (it may be
+        misspelt): then say the name wasn't found. `suggestions` holds up to three supported
+        names close to the input; offer them by their `alias` for the user to pick, never answer
+        as if one of them was meant.
         """
         resolution = compounds.resolve(name)
         match = resolution.match

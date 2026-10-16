@@ -1,0 +1,182 @@
+- id: compare-imatinib-novaminsuflon#1
+  denies_data: true
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''does not have data on Novaminsuflon'', then offers Novaminsulfon (metamizole)'
+- id: compare-imatinib-novaminsuflon#2
+  denies_data: true
+  misses_suggestion: true
+  names_other_drug: false
+  answers_unasked: false
+  note: '''does not have data for Novaminsuflon''; offers ''metamizole (also known as Novaminsulfon)'',
+    generic first; cites imatinib''s [1] for it'
+- id: compare-imatinib-novaminsuflon#3
+  denies_data: true
+  misses_suggestion: true
+  names_other_drug: false
+  answers_unasked: false
+  note: '''does not have data for Novaminsuflon''; offers ''metamizole (Novaminsulfon)'', generic first;
+    drops imatinib'
+- id: novaminsuflon-alone#1
+  denies_data: true
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''does not have data for Novaminsuflon. A similar drug that is covered is Novaminsulfon (metamizole)'''
+- id: novaminsuflon-alone#2
+  denies_data: true
+  misses_suggestion: true
+  names_other_drug: false
+  answers_unasked: false
+  note: '''does not have data''; offers ''Metamizole (also known as Novaminsulfon)'' as a similar drug'
+- id: novaminsuflon-alone#3
+  denies_data: true
+  misses_suggestion: true
+  names_other_drug: false
+  answers_unasked: false
+  note: '''does not have data on Novaminsuflon''; offers ''metamizole (Novaminsulfon)'' as a similar drug'
+- id: side-effects-tylenoll#1
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: true
+  note: the agent searched 'Tylenol' itself and answered about acetaminophen; the user never saw a suggestion
+- id: side-effects-tylenoll#2
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: true
+  note: the agent searched 'Tylenol' itself and answered about acetaminophen; the user never saw a suggestion
+- id: side-effects-tylenoll#3
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: true
+  note: the agent searched 'Tylenol' itself and answered about acetaminophen; the user never saw a suggestion
+- id: mechanism-imatinb#1
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: true
+  note: the agent searched 'imatinib' itself and answered
+- id: mechanism-imatinb#2
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: true
+  note: the agent searched 'imatinib' itself and answered
+- id: mechanism-imatinb#3
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: true
+  note: the agent searched 'imatinib' itself and answered
+- id: uses-ibuflan-de#1
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''Ibuflan ist nicht in Molecula enthalten'', offers Ibuflam (Ibuprofen)'
+- id: uses-ibuflan-de#2
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: true
+  note: the agent searched 'ibuprofen' itself and answered 'Ibuflan (Ibuprofen) wird ... eingesetzt'
+- id: uses-ibuflan-de#3
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''Möglicherweise meinen Sie Ibuflam (Ibuprofen)'''
+- id: 3d-glevec#1
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: true
+  note: the agent called get_complex('Gleevec') itself and described imatinib's complex
+- id: 3d-glevec#2
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: true
+  note: the agent called get_complex('Gleevec') itself and described imatinib's complex
+- id: 3d-glevec#3
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: true
+  note: the agent called get_complex('Gleevec') itself and described imatinib's complex
+- id: about-parace#1
+  denies_data: true
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''does not have data on parace''; offers paracetamol (acetaminophen)'
+- id: about-parace#2
+  denies_data: true
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''does not have data on parace''; offers paracetamol (acetaminophen)'
+- id: about-parace#3
+  denies_data: true
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''does not have data on parace. A similar drug that is covered is paracetamol'''
+- id: about-marcumarr#1
+  denies_data: false
+  misses_suggestion: true
+  names_other_drug: false
+  answers_unasked: false
+  note: 'the guard sorted it off_topic: fixed answer, no ''not found'', no question which drug is meant'
+- id: about-marcumarr#2
+  denies_data: false
+  misses_suggestion: true
+  names_other_drug: false
+  answers_unasked: false
+  note: 'the guard sorted it off_topic: fixed answer, no ''not found'', no question which drug is meant'
+- id: about-marcumarr#3
+  denies_data: false
+  misses_suggestion: true
+  names_other_drug: false
+  answers_unasked: false
+  note: 'the guard sorted it off_topic: fixed answer, no ''not found'', no question which drug is meant'
+- id: uses-xyzzolan-de#1
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''nicht abgedeckt'', asks for another name from the supported list'
+- id: uses-xyzzolan-de#2
+  denies_data: false
+  misses_suggestion: true
+  names_other_drug: false
+  answers_unasked: false
+  note: '''wählen Sie einen der folgenden unterstützten Namen aus: …'' with no names'
+- id: uses-xyzzolan-de#3
+  denies_data: false
+  misses_suggestion: true
+  names_other_drug: false
+  answers_unasked: false
+  note: points at 'vorgeschlagenen Alternativen' that don't exist
+- id: uses-phenprocoumon#1
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: false
+  answers_unasked: false
+  note: '''does not have information on phenprocoumon'', nothing else'
+- id: uses-phenprocoumon#2
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: true
+  answers_unasked: false
+  note: suggests warfarin or acenocoumarol from memory
+- id: uses-phenprocoumon#3
+  denies_data: false
+  misses_suggestion: false
+  names_other_drug: true
+  answers_unasked: false
+  note: suggests warfarin or acenocoumarol from memory

@@ -13,15 +13,17 @@ def compare_drugs_tool(compounds: CompoundService) -> StructuredTool:
         """Put the chemical properties of 2 to 4 drugs side by side, as PubChem reports them.
 
         Each entry of `drugs` can be a generic name, a brand, a non-US or German name or a
-        salt name; each is resolved to the stored drug first.
+        salt name; each is resolved to the stored drug first. Pass each as the user wrote it,
+        typos included: never correct a spelling yourself.
 
         Returns `drugs` in the order asked. A supported drug has `status: "found"` and its
         `compound`: CID, generic name, molecular formula, molecular weight (g/mol), XLogP,
         topological polar surface area (Å²), hydrogen bond donors and acceptors, rotatable
         bonds, heavy atoms, and `source_url`, its PubChem page; and `ref`, the number to cite
-        that drug's properties with in square brackets, like `[2]`. A drug that isn't in
-        Molecula's data has `status: "not_supported"` with `suggestions`: say it isn't
-        supported, compare the others, and never substitute a suggestion yourself.
+        that drug's properties with in square brackets, like `[2]`. A name Molecula doesn't
+        know (it may be misspelt) has `status: "not_supported"` with `suggestions`: say the
+        name wasn't found, offer the suggestions by their `alias`, compare the others, and never
+        substitute a suggestion yourself.
         """
         return DrugComparison(drugs=[drug_properties(compounds, drug) for drug in drugs])
 
