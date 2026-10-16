@@ -73,4 +73,4 @@ docs/       data plan, architecture, decisions, eval results
 
 ## Data sources and licences
 
-openFDA drug labels (CC0) · RCSB PDB (free to use) · PubChem (mostly public domain) · ChEMBL (CC BY-SA 3.0)
+openFDA drug labels (CC0) · RCSB PDB (CC0) · PubChem (mostly public domain) · ChEMBL (CC BY-SA 3.0). The published store contains data derived from ChEMBL, so the [store release](https://github.com/DannyKuk/molecula/releases/tag/store-2026-10-16) as a whole is shared under CC BY-SA 3.0.
