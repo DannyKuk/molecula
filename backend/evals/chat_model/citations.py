@@ -34,6 +34,7 @@ from fastapi import FastAPI
 
 from molecula import prompts
 from molecula.agent.agent import ChatAgent
+from molecula.agent.llm import chat_model_name
 from molecula.agent.tool_registry import build_tools
 from molecula.config import Settings, get_settings
 from molecula.main import input_check_decision_model, lifespan
@@ -72,7 +73,7 @@ class Scored:
 
 def main() -> int:
     settings = get_settings()
-    model_name = settings.local_llm_model or settings.llm_model or "unknown"
+    model_name = chat_model_name(settings)
     questions = load_questions()
     answers = asyncio.run(ask_all(settings, model_name, questions))
     scored = [score(q, a) for q, a in zip(questions, answers, strict=True)]

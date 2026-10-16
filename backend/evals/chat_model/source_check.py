@@ -35,7 +35,7 @@ from evals.chat_model.no_label import read_verdicts
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from molecula import prompts
-from molecula.agent.llm import get_source_check_model
+from molecula.agent.llm import chat_model_name, get_source_check_model
 from molecula.config import Settings, get_settings
 from molecula.guard.claims import split_claims
 from molecula.guard.safety import fixed_answer
@@ -114,7 +114,7 @@ def main() -> int:
         print(report(args.cache.stem, labelled, list(read_cache(args.cache).values())))
         return 0
     settings = get_settings()
-    model_name = settings.local_llm_model or settings.llm_model or "unknown"
+    model_name = chat_model_name(settings)
     answers = read_answers(settings, labelled)
     mismatched = [answer.key for answer in labelled if not splits_as_labelled(answer, answers)]
     if mismatched:

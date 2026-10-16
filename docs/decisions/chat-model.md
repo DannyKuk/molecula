@@ -62,12 +62,12 @@ OpenRouter prices per million tokens on 2026-10-16, in / out: gpt-6-luna $0.10 /
 
 ## Reproduce
 
-The cloud runs need `LOCAL_LLM_BASE_URL` and `LOCAL_LLM_MODEL` empty in `.env` (an empty value in the shell doesn't override `.env`), and `OPENROUTER_API_KEY` set.
+The cloud runs need `OPENROUTER_API_KEY` and `OFFLINE=0`, which picks the cloud chat model even with the local settings in `.env` (#230).
 
 ```
 cd backend
-OFFLINE=1 LLM_MODEL=openai/gpt-6-luna uv run python -m evals.chat_model.from_memory --times 1
-OFFLINE=1 LLM_MODEL=anthropic/claude-haiku-5.5 uv run python -m evals.chat_model.from_memory --times 1
+OFFLINE=0 LLM_MODEL=openai/gpt-6-luna uv run python -m evals.chat_model.from_memory --times 1
+OFFLINE=0 LLM_MODEL=anthropic/claude-haiku-5.5 uv run python -m evals.chat_model.from_memory --times 1
 OFFLINE=0 LLM_MODEL=openai/gpt-6-luna uv run python -m evals.safety.run
 ```
 

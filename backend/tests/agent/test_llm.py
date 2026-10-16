@@ -6,7 +6,12 @@ import pytest
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
 
-from molecula.agent.llm import LLMConfigError, get_chat_model, get_source_check_model
+from molecula.agent.llm import (
+    LLMConfigError,
+    chat_model_name,
+    get_chat_model,
+    get_source_check_model,
+)
 from molecula.config import Settings
 
 LLM_FIELDS: dict[str, Any] = {
@@ -16,6 +21,7 @@ LLM_FIELDS: dict[str, Any] = {
     "local_llm_model": None,
     "llm_reasoning_effort": None,
     "source_check_reasoning_effort": "medium",
+    "offline": False,
 }
 
 
@@ -63,16 +69,37 @@ def test_openrouter_requests_carry_the_attribution_headers() -> None:
     assert str(model.root_client.base_url) == "https://openrouter.ai/api/v1/"
 
 
-def test_local_base_url_wins_over_openrouter() -> None:
-    model = chat_openai(
-        openrouter_settings(
-            local_llm_base_url="http://localhost:11434/v1", local_llm_model="qwen3:8b"
-        )
+def both_setups(**overrides: Any) -> Settings:
+    """An OpenRouter key and a local server, as a `.env` with both setups holds them."""
+    return openrouter_settings(
+        local_llm_base_url="http://localhost:11434/v1", local_llm_model="qwen3:8b", **overrides
     )
+
+
+def test_offline_the_local_server_answers() -> None:
+    model = chat_openai(both_setups(offline=True))
 
     assert model.openai_api_base == "http://localhost:11434/v1"
     assert model.model_name == "qwen3:8b"
     assert not model.default_headers
+
+
+def test_online_with_a_key_openrouter_answers_although_a_local_server_is_set() -> None:
+    model = chat_openai(both_setups(offline=False))
+
+    assert model.openai_api_base == "https://openrouter.ai/api/v1"
+    assert model.model_name == "openai/gpt-4o-mini"
+
+
+def test_offline_without_a_local_server_never_falls_back_to_openrouter() -> None:
+    with pytest.raises(LLMConfigError, match="OFFLINE=1 needs a local chat model"):
+        get_chat_model(openrouter_settings(offline=True))
+
+
+def test_the_chat_model_name_follows_the_same_rule() -> None:
+    assert chat_model_name(both_setups(offline=True)) == "qwen3:8b"
+    assert chat_model_name(both_setups(offline=False)) == "openai/gpt-4o-mini"
+    assert chat_model_name(settings()) == "unknown"
 
 
 def test_local_server_needs_no_api_key() -> None:

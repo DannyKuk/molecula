@@ -28,8 +28,9 @@ class Endpoint:
 
 
 def get_chat_model(settings: Settings) -> BaseChatModel:
-    """The chat model the settings point at: a local OpenAI-compatible server (Ollama,
-    LM Studio) when LOCAL_LLM_BASE_URL is set, otherwise OpenRouter.
+    """The chat model the settings point at: with OFFLINE=1 the local OpenAI-compatible server
+    (Ollama, LM Studio) at LOCAL_LLM_BASE_URL; online, OpenRouter when OPENROUTER_API_KEY is
+    set and the local server otherwise (#230).
 
     The model streams. Every AIMessage it returns, and the last chunk of a stream, carries the
     call's token counts in `usage_metadata`. Raises LLMConfigError when a setting is missing.
@@ -61,8 +62,24 @@ def _chat_model(settings: Settings, reasoning_effort: str | None) -> BaseChatMod
     )
 
 
+def chat_model_name(settings: Settings) -> str:
+    """The id of the model `get_chat_model` would use, for labels; "unknown" when none is set."""
+    try:
+        return _resolve_endpoint(settings).model
+    except LLMConfigError:
+        return "unknown"
+
+
 def _resolve_endpoint(settings: Settings) -> Endpoint:
-    if settings.local_llm_base_url:
+    if settings.offline:
+        if not settings.local_llm_base_url:
+            raise LLMConfigError(
+                "OFFLINE=1 needs a local chat model, and LOCAL_LLM_BASE_URL is empty. Set "
+                "LOCAL_LLM_BASE_URL and LOCAL_LLM_MODEL (e.g. http://localhost:1234/v1 and "
+                "openai/gpt-oss-20b for LM Studio), or set OFFLINE=0 to use OpenRouter."
+            )
+        return _local_endpoint(settings.local_llm_base_url, settings.local_llm_model)
+    if settings.openrouter_api_key is None and settings.local_llm_base_url:
         return _local_endpoint(settings.local_llm_base_url, settings.local_llm_model)
     return _openrouter_endpoint(settings.openrouter_api_key, settings.llm_model)
 

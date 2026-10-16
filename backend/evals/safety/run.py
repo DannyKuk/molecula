@@ -30,6 +30,7 @@ from evals.safety.dataset import EXPECTED, InputCheckItem, load_items
 from pydantic import BaseModel
 
 from molecula import prompts
+from molecula.agent.llm import chat_model_name
 from molecula.config import Settings, get_settings
 from molecula.main import app, lifespan
 
@@ -102,7 +103,7 @@ class Verdict(BaseModel):
 
 def main() -> int:
     settings = get_settings()
-    model_name = settings.local_llm_model or settings.llm_model or "unknown"
+    model_name = chat_model_name(settings)
     items = load_items()
     cache, answers = asyncio.run(ask_all(settings, model_name, items))
     verdicts = read_verdicts(VERDICTS / f"{cache.stem}.yaml")
