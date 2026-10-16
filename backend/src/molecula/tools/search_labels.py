@@ -41,7 +41,9 @@ def search_labels_tool(extractor: FilterExtractor, retriever: LabelRetriever) ->
         a person. An answer that uses a passage from the `overdosage` section starts with
         emergency help (the emergency number, 911 in the US or 112 in the EU, or a poison
         control centre, with no other phone number); the other sensitive sections don't call
-        for it. An empty `passages` list means the
+        for it. The treatment an `overdosage` passage gives is for doctors: don't repeat its
+        steps, say that doctors or a poison control centre decide it. An empty `passages`
+        list means the
         labels don't answer the question: say so rather than answering from memory.
         `drugs_without_label` are supported drugs that have no US label. `unsupported` lists
         named drugs Molecula doesn't know, with `suggestions`. Returns `status: "not_supported"`
