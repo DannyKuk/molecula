@@ -9,11 +9,13 @@ from those evals' caches in `data/build/eval/`, so the run needs the owner's bui
 run stops when an answer no longer splits into its labelled claims: relabel after changing the
 splitter.
 
-`ChatModelSourceCheck` with the configured chat model checks each answer once. The report gives
-the unsupported claims it catches (additions with and without a citation, and citation misses),
-the supported claims and non-claims it wrongly rejects, who decided each rejection, and the
-seconds per answer. Checks are cached per model, the check's reasoning effort
-(`SOURCE_CHECK_REASONING_EFFORT`, medium unless set) and prompt.
+`ChatModelSourceCheck` with the configured chat model checks each answer once. The report gives,
+for each kind of labelled claim (additions with and without a citation, citation misses,
+supported claims, non-claims), how the check judged it: rejected as unsupported (the amber mark in
+the chat), held by another returned result (#220) and whether it named a ref the labels name, or
+supported. It also gives who decided each rejection and the seconds per answer. Checks are cached
+per model, the check's reasoning effort (`SOURCE_CHECK_REASONING_EFFORT`, medium unless set) and
+prompt. `--cache` reports a cache file as it is, without a model, to compare with an earlier run.
 """
 
 import argparse
@@ -44,7 +46,8 @@ from molecula.schemas.source_check import CheckedAnswer, SourceCheckFailed
 
 DATASET = Path(__file__).resolve().parents[1] / "datasets" / "source_check_claims.yaml"
 VERDICTS = Path(__file__).resolve().parent
-# The proposed go/no-go bar (#212); the owner sets the final one.
+# The proposed go/no-go bar (#212): additions caught and supported claims wrongly rejected. A
+# citation miss is meant to come out held elsewhere since #220, so it no longer counts as caught.
 MIN_CAUGHT = 0.80
 MAX_WRONGLY_REJECTED = 0.10
 
@@ -103,10 +106,15 @@ class Check:
 
 
 def main() -> int:
-    argparse.ArgumentParser(description=__doc__.splitlines()[0]).parse_args()
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--cache", type=Path, help="report this cache file without a model")
+    args = parser.parse_args()
+    labelled = load_dataset()
+    if args.cache:
+        print(report(args.cache.stem, labelled, list(read_cache(args.cache).values())))
+        return 0
     settings = get_settings()
     model_name = settings.local_llm_model or settings.llm_model or "unknown"
-    labelled = load_dataset()
     answers = read_answers(settings, labelled)
     mismatched = [answer.key for answer in labelled if not splits_as_labelled(answer, answers)]
     if mismatched:
@@ -222,35 +230,41 @@ def to_json(check: Check) -> dict[str, object]:
 
 def report(name: str, labelled: list[LabelledAnswer], checks: list[Check]) -> str:
     by_key = {check.key: check.checked for check in checks}
-    done = [(answer, checked) for answer in labelled if (checked := by_key[answer.key])]
+    done = [(answer, checked) for answer in labelled if (checked := by_key.get(answer.key))]
     pairs = [
         pair for answer, checked in done for pair in zip(answer.claims, checked.claims, strict=True)
     ]
-    unsupported = [(c, v) for c, v in pairs if c.label == "unsupported"]
-    additions = [(c, v) for c, v in unsupported if c.addition]
-    misses = [(c, v) for c, v in unsupported if not c.addition]
+    additions = [(c, v) for c, v in pairs if c.addition]
+    misses = [(c, v) for c, v in pairs if c.label == "unsupported" and not c.addition]
     supported = [(c, v) for c, v in pairs if c.label == "supported"]
     non_claims = [(c, v) for c, v in pairs if c.label == "not_a_claim"]
-    caught = rate(unsupported)
+    marked = [(c, v) for c, v in pairs if v.label == "unsupported"]
+    caught = rate(additions)
     wrongly = rate(supported)
     seconds = [check.seconds for check in checks if check.checked is not None]
     clean = [
         checked for answer, checked in done if all(c.label != "unsupported" for c in answer.claims)
     ]
     with_addition = [checked for answer, checked in done if any(c.addition for c in answer.claims)]
-    deciders = Counter(v.decided_by for _, v in pairs if v.label == "unsupported")
+    deciders = Counter(v.decided_by for _, v in marked)
     go = caught >= MIN_CAUGHT and wrongly <= MAX_WRONGLY_REJECTED
     lines = [
         f"{name}: {len(done)} of {len(labelled)} answers checked, {len(pairs)} claims",
         "",
-        "| Claims | Labelled | Rejected | Rate |",
-        "|---|---|---|---|",
-        row("Unsupported", unsupported),
-        row("- additions, cited", [p for p in additions if p[0].refs]),
-        row("- additions, uncited", [p for p in additions if not p[0].refs]),
-        row("- citation misses (a returned result holds them)", misses),
+        "| Claims | Labelled | Unsupported | Held elsewhere | …naming a labelled ref "
+        "| Supported | Not a claim |",
+        "|---|---|---|---|---|---|---|",
+        row("Additions, cited", [p for p in additions if p[0].refs]),
+        row("Additions, uncited", [p for p in additions if not p[0].refs]),
+        row("Citation misses (a returned result holds them)", misses),
         row("Supported", supported),
         row("Not a claim", non_claims),
+        "",
+        f"Marked unsupported (amber in the chat): {len(marked)}: "
+        f"{sum(c.addition for c, _ in marked)} additions, "
+        f"{sum(c.label == 'unsupported' and not c.addition for c, _ in marked)} citation misses, "
+        f"{judged_as(marked, 'supported')} supported, "
+        f"{judged_as(marked, 'not_a_claim')} non-claims.",
         "",
         "| Answers | Count | Failed the check |",
         "|---|---|---|",
@@ -269,12 +283,15 @@ def report(name: str, labelled: list[LabelledAnswer], checks: list[Check]) -> st
         )
     lines += [
         "",
-        f"Bar (proposed): catch at least {MIN_CAUGHT:.0%} of the unsupported claims and wrongly "
-        f"reject at most {MAX_WRONGLY_REJECTED:.0%} of the supported ones: "
+        f"Bar (proposed): catch at least {MIN_CAUGHT:.0%} of the additions and wrongly reject at "
+        f"most {MAX_WRONGLY_REJECTED:.0%} of the supported claims: "
         f"{'go' if go else 'no-go'} ({caught:.0%} caught, {wrongly:.0%} wrongly rejected).",
         "",
-        "Unsupported claims let through:",
-        *listed((c, v) for c, v in unsupported if v.label != "unsupported"),
+        "Additions let through:",
+        *listed((c, v) for c, v in additions if v.label != "unsupported"),
+        "",
+        "Citation misses not held elsewhere with a labelled ref:",
+        *listed((c, v) for c, v in misses if not held_with_labelled_ref(c, v)),
         "",
         "Supported claims and non-claims rejected:",
         *listed((c, v) for c, v in supported + non_claims if v.label == "unsupported"),
@@ -285,25 +302,45 @@ def report(name: str, labelled: list[LabelledAnswer], checks: list[Check]) -> st
 type Pair = tuple[LabelledClaim, CheckedClaim]
 
 
-def rejected(pairs: list[Pair]) -> int:
-    return sum(verdict.label == "unsupported" for _, verdict in pairs)
+def held_with_labelled_ref(claim: LabelledClaim, verdict: CheckedClaim) -> bool:
+    return verdict.label == "held_elsewhere" and bool(set(verdict.held_by) & set(claim.held_by))
+
+
+def checked_as(pairs: list[Pair], label: str) -> int:
+    """How many of the claims the check gave this label."""
+    return sum(verdict.label == label for _, verdict in pairs)
+
+
+def judged_as(pairs: list[Pair], label: str) -> int:
+    """How many of the claims were labelled so by hand."""
+    return sum(claim.label == label for claim, _ in pairs)
 
 
 def rate(pairs: list[Pair]) -> float:
     """The share of the claims the check rejected."""
-    return rejected(pairs) / len(pairs) if pairs else 0.0
+    return checked_as(pairs, "unsupported") / len(pairs) if pairs else 0.0
 
 
 def row(name: str, pairs: list[Pair]) -> str:
-    return f"| {name} | {len(pairs)} | {rejected(pairs)} | {rate(pairs):.0%} |"
+    counts = [
+        checked_as(pairs, "unsupported"),
+        checked_as(pairs, "held_elsewhere"),
+        sum(held_with_labelled_ref(c, v) for c, v in pairs),
+        checked_as(pairs, "supported"),
+        checked_as(pairs, "not_a_claim"),
+    ]
+    return f"| {name} | {len(pairs)} | " + " | ".join(str(n) for n in counts) + " |"
 
 
 def listed(pairs: Iterable[Pair]) -> list[str]:
-    lines = [
-        f"- {claim.text[:90]!r} (labelled {claim.label}, checked {verdict.label} by "
-        f"{verdict.decided_by}): {verdict.reason or '-'}"
-        for claim, verdict in pairs
-    ]
+    lines = []
+    for claim, verdict in pairs:
+        labelled_as = claim.label + (f", held by {list(claim.held_by)}" if claim.held_by else "")
+        checked = verdict.label + (f" {list(verdict.held_by)}" if verdict.held_by else "")
+        lines.append(
+            f"- {claim.text[:90]!r} (labelled {labelled_as}, checked {checked} by "
+            f"{verdict.decided_by}): {verdict.reason or '-'}"
+        )
     return lines or ["- none"]
 
 

@@ -19,13 +19,15 @@ export type Source = {
 };
 
 /** One claim of the answer and the source check's verdict on it (`CheckedClaim` in
- * `backend/src/molecula/schemas/claims.py`). `reason` is empty unless the model decided. */
+ * `backend/src/molecula/schemas/claims.py`). `reason` is empty unless the model decided;
+ * `held_by` names the results that hold a `held_elsewhere` claim it doesn't cite. */
 export type CheckedClaim = {
   text: string;
   refs: number[];
-  label: "supported" | "unsupported" | "not_a_claim";
+  label: "supported" | "held_elsewhere" | "unsupported" | "not_a_claim";
   decided_by: "model" | "unknown_refs" | "no_verdict";
   reason: string;
+  held_by: number[];
 };
 
 /** The source check's verdict on the whole answer; `checked` is false when the check failed. */

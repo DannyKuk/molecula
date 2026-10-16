@@ -1,32 +1,49 @@
 import type { CheckedClaim, SourceCheck } from "./chat";
 import type { Turn } from "./chat-turn";
 
-/** Where an unbacked claim stands in the answer's Markdown; `claim` is its index in the check. */
+/** Where a claim the sources don't back stands in the answer's Markdown; `claim` is its index
+ * in the check. */
 export type UnbackedRange = { start: number; end: number; claim: number };
+
+/** A chip to add at offset `at` of the answer, for results the claim before it doesn't cite but
+ * that hold it. */
+export type FoundCitation = { at: number; refs: number[] };
+
+/** What the source check adds to the answer's text. */
+export type SourceCheckMarks = { unbacked: UnbackedRange[]; found: FoundCitation[] };
 
 /** A list item or table row, as `ITEM` and `ROW` in `backend/src/molecula/guard/claims.py`. */
 const ITEM = /^\s*(?:[-*+•]|\d+[.)])\s+/;
 const ROW = /^\s*\|/;
+/** The punctuation that ends a claim, so a found chip goes before it like a written one. */
+const CLOSING = /[.!?;:]+["”’)]*\s*$/;
 
 /**
- * Where the claims the sources don't back stand in the answer, in order. The splitter joins a
- * claim's lines with single spaces and puts a list's heading in front of each of its items, so
- * each line is looked for on its own with any whitespace, the heading left out. Claims are
- * found in the answer's order, so a sentence written twice is found where it was checked; a
- * claim that can't be found is left unmarked.
+ * Where the claims the sources don't back stand in the answer, and where a chip goes for each
+ * claim another returned result holds (#220). The splitter joins a claim's lines with single
+ * spaces and puts a list's heading in front of each of its items, so each line is looked for on
+ * its own with any whitespace, the heading left out. Claims are found in the answer's order, so
+ * a sentence written twice is found where it was checked; a claim that can't be found is left
+ * unmarked.
  */
-export function unbackedRanges(answer: string, claims: CheckedClaim[]): UnbackedRange[] {
-  const ranges: UnbackedRange[] = [];
+export function sourceCheckMarks(answer: string, claims: CheckedClaim[]): SourceCheckMarks {
+  const marks: SourceCheckMarks = { unbacked: [], found: [] };
   let from = 0;
   claims.forEach((claim, index) => {
+    let last: { start: number; end: number } | null = null;
     for (const line of claimLines(claim.text)) {
       const found = find(answer, line, from);
       if (!found) continue;
       from = found.end;
-      if (claim.label === "unsupported") ranges.push({ ...found, claim: index });
+      last = found;
+      if (claim.label === "unsupported") marks.unbacked.push({ ...found, claim: index });
+    }
+    if (last && claim.label === "held_elsewhere" && claim.held_by.length > 0) {
+      const closing = answer.slice(last.start, last.end).match(CLOSING)?.[0].length ?? 0;
+      marks.found.push({ at: last.end - closing, refs: claim.held_by });
     }
   });
-  return ranges;
+  return marks;
 }
 
 function claimLines(text: string): string[] {
@@ -74,16 +91,20 @@ export function checkSummary(check: SourceCheck): CheckSummary | null {
   if (!check.checked) return { kind: "unchecked", title: "Not checked against the sources" };
   const facts = check.claims.filter((claim) => claim.label !== "not_a_claim");
   const unbacked = facts.filter((claim) => claim.label === "unsupported").length;
+  const elsewhere = facts.filter((claim) => claim.label === "held_elsewhere").length;
   if (facts.length === 0) return null;
   const title = "Checked against the sources";
-  if (unbacked === 0) {
+  if (unbacked === 0 && elsewhere === 0) {
     return { kind: "backed", title, detail: "Every fact is backed by the source it cites." };
+  }
+  if (unbacked === 0) {
+    return { kind: "backed", title, detail: "Every fact is in Molecula's sources." };
   }
   const sentences = unbacked === 1 ? "1 sentence isn't" : `${unbacked} sentences aren't`;
   return {
     kind: "unbacked",
     title,
-    detail: `${facts.length - unbacked} of ${facts.length} facts backed · ${sentences} backed by the sources (underlined).`,
+    detail: `${facts.length - unbacked} of ${facts.length} facts backed · ${sentences} in Molecula's sources (underlined).`,
   };
 }
 

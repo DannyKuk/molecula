@@ -7,8 +7,13 @@ import { IMATINIB_PASSAGES, IMATINIB_SOURCES } from "@/lib/test-fixtures";
 import { AnswerMarkdown } from "./answer-markdown";
 import { SourceCheckBadge } from "./source-check-badge";
 
-function claim(text: string, label: CheckedClaim["label"], reason = ""): CheckedClaim {
-  return { text, refs: [], label, decided_by: "model", reason };
+function claim(
+  text: string,
+  label: CheckedClaim["label"],
+  reason = "",
+  held_by: number[] = [],
+): CheckedClaim {
+  return { text, refs: [], label, decided_by: "model", reason, held_by };
 }
 
 function renderChecked(text: string, check: SourceCheck) {
@@ -57,13 +62,33 @@ describe("source check in the answer", () => {
 
     expect(marks(container)).toEqual([UNBACKED]);
     expect(screen.getByRole("status").textContent).toBe(
-      "Checked against the sources· 1 of 2 facts backed · 1 sentence isn't backed by the sources (underlined).",
+      "Checked against the sources· 1 of 2 facts backed · 1 sentence isn't in Molecula's sources (underlined).",
     );
 
     fireEvent.click(screen.getByRole("button", { name: UNBACKED }));
     const popover = within(await screen.findByRole("dialog"));
-    expect(popover.getByText("Not backed by the sources")).toBeDefined();
+    expect(popover.getByText("Not in Molecula's sources")).toBeDefined();
     expect(popover.getByText("No source cited for the approval year.")).toBeDefined();
+  });
+
+  it("adds a chip for the result that holds a sentence the answer cited elsewhere", async () => {
+    const sentence = "Imatinib is cleared mostly in the feces [1].";
+    const { container } = renderChecked(sentence, {
+      checked: true,
+      claims: [claim(sentence, "held_elsewhere", "Passage 2 holds it.", [2])],
+    });
+
+    expect(marks(container)).toEqual([]);
+    expect(container.textContent).toBe(
+      "Imatinib is cleared mostly in the feces Gleevec · Mechanism of action Gleevec · Pharmacokinetics." +
+        "Checked against the sources· Every fact is in Molecula's sources.",
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Found by the source check: Gleevec · Pharmacokinetics" }),
+    );
+    const popover = within(await screen.findByRole("dialog"));
+    expect(popover.getByText(/the source check found the sentence here/)).toBeDefined();
+    expect(popover.getByText(/25% of the dose/)).toBeDefined();
   });
 
   it("keeps the source chip of an unbacked sentence outside the underline", () => {

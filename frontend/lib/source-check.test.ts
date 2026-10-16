@@ -6,19 +6,36 @@ import {
   CHECKING_ANSWER,
   checkingAnswer,
   checkSummary,
-  unbackedRanges,
+  sourceCheckMarks,
   unbackedReason,
 } from "./source-check";
 
-function claim(text: string, label: CheckedClaim["label"], reason = ""): CheckedClaim {
-  return { text, refs: [], label, decided_by: "model", reason };
+function claim(
+  text: string,
+  label: CheckedClaim["label"],
+  reason = "",
+  held_by: number[] = [],
+): CheckedClaim {
+  return { text, refs: [], label, decided_by: "model", reason, held_by };
 }
 
 function marked(answer: string, claims: CheckedClaim[]): string[] {
-  return unbackedRanges(answer, claims).map(({ start, end }) => answer.slice(start, end));
+  return sourceCheckMarks(answer, claims).unbacked.map(({ start, end }) =>
+    answer.slice(start, end),
+  );
 }
 
-describe("unbackedRanges", () => {
+/** The answer with each found chip written in as `{refs}`. */
+function withFound(answer: string, claims: CheckedClaim[]): string {
+  return sourceCheckMarks(answer, claims)
+    .found.toReversed()
+    .reduce(
+      (text, { at, refs }) => `${text.slice(0, at)}{${refs.join(",")}}${text.slice(at)}`,
+      answer,
+    );
+}
+
+describe("sourceCheckMarks", () => {
   it("finds the sentence the sources don't back and nothing else", () => {
     const answer =
       "A 40 mg dose was like diazepam 20 mg [2]. The 40 mg dose is above the usual maximum. " +
@@ -57,13 +74,37 @@ describe("unbackedRanges", () => {
       claim("It is an NSAID.", "unsupported"),
     ];
 
-    expect(unbackedRanges(answer, claims)).toEqual([{ start: 20, end: 35, claim: 1 }]);
+    expect(sourceCheckMarks(answer, claims).unbacked).toEqual([{ start: 20, end: 35, claim: 1 }]);
   });
 
   it("skips a claim it can't find instead of marking the wrong text", () => {
-    expect(unbackedRanges("Something else entirely.", [claim("Not here.", "unsupported")])).toEqual(
-      [],
+    expect(
+      sourceCheckMarks("Something else entirely.", [claim("Not here.", "unsupported")]),
+    ).toEqual({ unbacked: [], found: [] });
+  });
+});
+
+describe("found citations", () => {
+  it("go before the closing punctuation of a claim another result holds", () => {
+    const answer = "It is an NSAID [1]. It reduces fever. Ask a doctor.";
+    const claims = [
+      claim("It is an NSAID [1].", "held_elsewhere", "", [2]),
+      claim("It reduces fever.", "held_elsewhere", "", [2, 3]),
+      claim("Ask a doctor.", "not_a_claim"),
+    ];
+
+    expect(withFound(answer, claims)).toBe(
+      "It is an NSAID [1]{2}. It reduces fever{2,3}. Ask a doctor.",
     );
+    expect(marked(answer, claims)).toEqual([]);
+  });
+
+  it("go after the last item of a list claim", () => {
+    const answer = "**Uses**\n- pain [1]\n- fever";
+
+    expect(
+      withFound(answer, [claim("**Uses**\n- pain [1]\n- fever", "held_elsewhere", "", [4])]),
+    ).toBe("**Uses**\n- pain [1]\n- fever{4}");
   });
 });
 
@@ -90,14 +131,23 @@ describe("checkSummary", () => {
     ).toEqual({
       kind: "unbacked",
       title: "Checked against the sources",
-      detail: "1 of 2 facts backed · 1 sentence isn't backed by the sources (underlined).",
+      detail: "1 of 2 facts backed · 1 sentence isn't in Molecula's sources (underlined).",
     });
     expect(
       checkSummary({
         checked: true,
         claims: [claim("a", "unsupported"), claim("b", "unsupported")],
       })?.detail,
-    ).toBe("0 of 2 facts backed · 2 sentences aren't backed by the sources (underlined).");
+    ).toBe("0 of 2 facts backed · 2 sentences aren't in Molecula's sources (underlined).");
+  });
+
+  it("says every fact is in Molecula's sources when some were found in an uncited result", () => {
+    expect(
+      checkSummary({
+        checked: true,
+        claims: [claim("a", "supported"), claim("b", "held_elsewhere", "", [2])],
+      })?.detail,
+    ).toBe("Every fact is in Molecula's sources.");
   });
 
   it("says the answer wasn't checked when the check failed", () => {

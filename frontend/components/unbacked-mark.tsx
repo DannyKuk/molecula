@@ -25,7 +25,9 @@ export function UnbackedMark({ claim, children }: { claim: number; children: Rea
         {children}
       </PopoverTrigger>
       <PopoverContent align="start" className="gap-1">
-        <p className="font-medium text-amber-700 dark:text-amber-400">Not backed by the sources</p>
+        <p className="font-medium text-amber-700 dark:text-amber-400">
+          Not in Molecula&apos;s sources
+        </p>
         <p className="text-zinc-700 dark:text-zinc-300">{unbackedReason(checked)}</p>
       </PopoverContent>
     </Popover>

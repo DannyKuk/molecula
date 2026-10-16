@@ -16,6 +16,7 @@ describe("applyEvent", () => {
         label: "supported" as const,
         decided_by: "model" as const,
         reason: "Passage 1 says so.",
+        held_by: [],
       },
     ];
 

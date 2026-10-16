@@ -3,85 +3,11 @@ import remarkGfm from "remark-gfm";
 
 import type { SourceCheck } from "@/lib/chat";
 import { CITATION_RUN, runRefs, type Citations } from "@/lib/citations";
-import { unbackedRanges, type UnbackedRange } from "@/lib/source-check";
+import { remarkSourceCheck, type MarkdownNode } from "@/lib/remark-source-check";
+import { sourceCheckMarks } from "@/lib/source-check";
 
 import { CitationChip, CitationsContext } from "./citation-chip";
 import { CheckedClaimsContext, UnbackedMark } from "./unbacked-mark";
-
-type MarkdownNode = {
-  type: string;
-  value?: string;
-  children?: MarkdownNode[];
-  data?: { hName: string; hProperties: Record<string, string> };
-  position?: { start: { offset?: number }; end: { offset?: number } };
-};
-
-/** Marks the text of each claim the sources don't back as a `mark` element. It runs before
- * `remarkCitations`, while text nodes still know where they stand in the answer. */
-function remarkUnbacked(ranges: UnbackedRange[]) {
-  return (tree: MarkdownNode) => {
-    if (ranges.length > 0) markUnbacked(tree, ranges);
-  };
-}
-
-function markUnbacked(node: MarkdownNode, ranges: UnbackedRange[]) {
-  if (!node.children) return;
-  node.children = node.children.flatMap((child) => {
-    if (child.type === "text" && child.value) return splitUnbacked(child, ranges);
-    markUnbacked(child, ranges);
-    return [child];
-  });
-}
-
-function splitUnbacked(node: MarkdownNode, ranges: UnbackedRange[]): MarkdownNode[] {
-  const start = node.position?.start.offset;
-  const end = node.position?.end.offset;
-  const value = node.value!;
-  if (start === undefined || end === undefined) return [node];
-  const inside = ranges.filter((range) => range.start < end && range.end > start);
-  if (inside.length === 0) return [node];
-  // An escape or an entity makes the text shorter than its source, so offsets don't line up.
-  if (end - start !== value.length) return markedText(value, inside[0].claim);
-  const nodes: MarkdownNode[] = [];
-  let at = 0;
-  for (const range of inside) {
-    const from = Math.max(range.start - start, at);
-    const to = Math.min(range.end - start, value.length);
-    if (from > at) nodes.push({ type: "text", value: value.slice(at, from) });
-    nodes.push(...markedText(value.slice(from, to), range.claim));
-    at = to;
-  }
-  if (at < value.length) nodes.push({ type: "text", value: value.slice(at) });
-  return nodes;
-}
-
-/** The text marked, except its citations and anything without a word, so a chip never sits
- * inside the underline. */
-function markedText(text: string, claim: number): MarkdownNode[] {
-  const nodes: MarkdownNode[] = [];
-  let end = 0;
-  const mark = (part: string) => {
-    if (!part) return;
-    nodes.push(
-      /\w/.test(part)
-        ? {
-            type: "unbacked",
-            data: { hName: "mark", hProperties: { dataClaim: String(claim) } },
-            children: [{ type: "text", value: part }],
-          }
-        : { type: "text", value: part },
-    );
-  };
-  for (const run of text.matchAll(CITATION_RUN)) {
-    let start = run.index;
-    while (start > end && text[start - 1] === " ") start--;
-    mark(text.slice(end, start));
-    end = run.index + run[0].length;
-    nodes.push({ type: "text", value: text.slice(start, end) });
-  }
-  mark(text.slice(end));
-  return nodes;
-}
 
 /** Marks each run of citations in the text as a `cite` element, so it renders as a chip.
  * Code is left alone: its text isn't a `text` node. */
@@ -132,6 +58,7 @@ const components: Components = {
       <CitationChip
         refs={String(data["data-refs"]).split(",").map(Number)}
         spaced={data["data-spaced"] === "true"}
+        found={data["data-found"] === "true"}
       >
         {children}
       </CitationChip>
@@ -185,7 +112,8 @@ const components: Components = {
 /** The answer as Markdown, GitHub style (tables, strikethrough). Raw HTML shows as text, never
  * rendered, because the answer is model output quoting untrusted label text. Citations such as
  * `[1]` and `【1】` stay as written until `citations` arrive, then become source chips. Once the
- * source check's verdict arrives, the text of each claim the sources don't back is underlined. */
+ * source check's verdict arrives, the text of each claim Molecula's sources don't hold is
+ * underlined, and a claim that another returned result holds gets a chip for it. */
 export function AnswerMarkdown({
   text,
   citations = null,
@@ -196,13 +124,13 @@ export function AnswerMarkdown({
   sourceCheck?: SourceCheck | null;
 }) {
   const claims = sourceCheck?.checked ? sourceCheck.claims : [];
-  const ranges = unbackedRanges(text, claims);
+  const marks = sourceCheckMarks(text, claims);
   return (
     <CitationsContext value={citations}>
       <CheckedClaimsContext value={claims}>
         <div className="leading-relaxed break-words">
           <Markdown
-            remarkPlugins={[remarkGfm, [remarkUnbacked, ranges], remarkCitations]}
+            remarkPlugins={[remarkGfm, [remarkSourceCheck, marks], remarkCitations]}
             components={components}
           >
             {text}

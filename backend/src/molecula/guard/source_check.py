@@ -62,23 +62,14 @@ class ChatModelSourceCheck:
             elif number not in judgements:
                 checked.append(_unsupported(claim, "no_verdict"))
             else:
-                judgement = judgements[number]
-                checked.append(
-                    CheckedClaim(
-                        **claim.model_dump(),
-                        label=judgement.verdict,
-                        decided_by="model",
-                        reason=judgement.reason,
-                    )
-                )
+                checked.append(_judged(claim, judgements[number], sources))
         return CheckedAnswer(claims=checked, usage=usage)
 
     async def _judge(
         self, claims: dict[int, Claim], sources: dict[int, dict[str, Any]]
     ) -> tuple[dict[int, ClaimJudgement], Usage]:
-        cited = sorted({ref for claim in claims.values() for ref in claim.refs if ref in sources})
         data = {
-            "sources": [{"ref": ref, **sources[ref]} for ref in cited],
+            "sources": [{"ref": ref, **source} for ref, source in sorted(sources.items())],
             "claims": [
                 {"id": number, "text": claim.text, "refs": list(claim.refs)}
                 for number, claim in claims.items()
@@ -105,6 +96,25 @@ class ChatModelSourceCheck:
             if judgement.id in claims:
                 judgements.setdefault(judgement.id, judgement)
         return judgements, usage
+
+
+def _judged(claim: Claim, judgement: ClaimJudgement, sources: dict[int, Any]) -> CheckedClaim:
+    """The model's verdict, with `held_by` cut to returned results the claim doesn't cite. A
+    fact held only by the claim's own refs is supported; one held by no returned ref is not."""
+    label = judgement.verdict
+    held_by: tuple[int, ...] = ()
+    if label == "held_elsewhere":
+        named = [ref for ref in dict.fromkeys(judgement.held_by) if ref in sources]
+        held_by = tuple(ref for ref in named if ref not in claim.refs)
+        if not held_by:
+            label = "supported" if named else "unsupported"
+    return CheckedClaim(
+        **claim.model_dump(),
+        label=label,
+        decided_by="model",
+        reason=judgement.reason,
+        held_by=held_by,
+    )
 
 
 def cited_sources(results: Sequence[Any]) -> dict[int, dict[str, Any]]:
