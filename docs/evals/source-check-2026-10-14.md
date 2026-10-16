@@ -63,8 +63,34 @@ The runs above set `LLM_REASONING_EFFORT`; since #213 the check has its own sett
 
 The run needs the from-memory and no-label caches in `data/build/eval/` and stops if an answer no longer splits into its labelled claims. Checks are cached in `data/build/eval/source_check/`, keyed by the model, the effort and the checker's prompt: `openai_gpt-oss-20b-e1d7c7553d62.jsonl` (first prompt), `…-25a5986caf0f.jsonl` (revised prompt) and `…-medium-89949973d5c1.jsonl`. For the repeat, the first revised-prompt cache was moved aside; the second run is `…-25a5986caf0f.run2.jsonl`. The table splits cited from uncited additions, and the answer counts come from those caches.
 
+#220's runs are `…-medium-b8c92b98980d.jsonl` and `….run2.jsonl`. `--cache <file>` reports a cache as it is, without a model, so the medium run of 2026-10-14 can be scored the same way: `uv run python -m evals.chat_model.source_check --cache ../data/build/eval/source_check/openai_gpt-oss-20b-medium-89949973d5c1.jsonl`.
+
 ## Changes since this baseline
 
-| Change | Unsupported caught | Additions, cited | Supported rejected | Non-claims rejected | Seconds p50 |
+Amber = the claims the chat underlines (`unsupported`). A citation miss counts as caught by the baseline runs and as `held_elsewhere` from #220 on, so it has its own column.
+
+| Change | Additions amber | Citation misses amber | Supported amber | Non-claims amber | Seconds p50 |
 |---|---|---|---|---|---|
-| Baseline: revised prompt, no effort | 68/80 | 6–7/17 | 2/71 | 2–3/30 | 6.5–6.8 |
+| Baseline: revised prompt, no effort | 37–38/49 | 30–31/31 | 2/71 | 2–3/30 | 6.5–6.8 |
+| The same prompt at medium effort, as the chat runs it since #213 | 41/49 (84%) | 29/31 | 3/71 | 6/30 | 11.5 |
+| The check sees every returned result; a fact another result holds is `held_elsewhere` (#220) | 36/49 (73%), both runs | 9/31, both runs | 5/71, both runs | 1–4/30 | 7.6–7.8 |
+
+### Judged against every returned result (#220)
+
+The check now gets every result the answer's tools returned, not only the cited ones, and has a third verdict: `held_elsewhere`, with the refs that hold the claim (`held_by`). The chat shows those refs as a chip instead of an underline. Medium effort, the same 181 claims, run twice; before is the medium run above (`…-medium-89949973d5c1`), scored with the new runner.
+
+| | Before | After, run 1 | After, run 2 |
+|---|---|---|---|
+| Amber marks | 79 | 51 | 54 |
+| Citation misses held elsewhere, naming a labelled ref | 0 of 31 | 18 | 20 |
+| Additions, cited, amber | 10/17 | 9/17 | 9/17 |
+| Additions, uncited, amber | 31/32 | 27/32 | 27/32 |
+| Supported amber | 3/71 | 5/71 | 5/71 |
+| Answers failing the check | 40/65 | 28/65 | 31/65 |
+| Seconds per check p50 / mean / max | 11.5 / 14.4 / 47.7 | 7.8 / 8.1 / 27.3 | 7.6 / 8.4 / 41.7 |
+| Output tokens per check, mean | 555 | 708 | 777 |
+
+- **A third fewer underlines, and most of the drop is the misses #220 was about.** 18 or 20 of the 31 citation misses now get a chip for a result the labels name, against 9 still underlined.
+- **It lets 5 more additions through.** Of the 32 uncited additions, 2 or 4 are now `held_elsewhere`, and in run 1 two more are `supported`; one cited addition fewer is caught. I read the 13 additions run 1 let through against their passages: 7 are clear misreadings the chat now shows as backed (bupropion overdoses "alone", omeprazole's age bands, spironolactone's "unlikely due to acute overdosage", atorvastatin's side-effect ranges given a chip, an atorvastatin answer in German, the dipyrone list, advice about other PPIs), 6 are close calls where the label is strict (cyclooxygenase where the label says prostaglandin synthetase, and similar). Below the proposed 80% bar (73%). The owner decided on 2026-10-15 that about 25 fewer wrong warnings are worth 5 more additions passing; a stronger checker is #215.
+- **No slower.** More passages go into the call and the model writes more tokens, yet the median is 4 s lower. The before run is from another day, so read this as "not slower", not as a gain.
+- **Supported claims underlined went from 3 to 5 of 71** (7%), within the proposed 10%. Two of the five are list items that state more than the one passage they cite.
