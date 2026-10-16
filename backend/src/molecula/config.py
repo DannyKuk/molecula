@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     # The source check's own effort, so the writer keeps its fast default (#206, #213).
     # "default" leaves the model's own default, as an empty LLM_REASONING_EFFORT does.
     source_check_reasoning_effort: Literal["default", "low", "medium", "high"] = "medium"
+    # A decision model answers typed questions with probabilities over `/v1/systemone` (#102):
+    # Jev on OpenRouter, or a model loaded in LM Studio when LOCAL_DECISION_BASE_URL is set.
+    decision_model: str | None = None
+    local_decision_base_url: str | None = None
+    decision_timeout_seconds: Annotated[float, Field(gt=0)] = 10.0
     embedding_model: str = "local"
     # Multilingual and among the best CPU-sized models in docs/decisions/embeddings.md (#88).
     local_embedding_model: str = "BAAI/bge-m3"

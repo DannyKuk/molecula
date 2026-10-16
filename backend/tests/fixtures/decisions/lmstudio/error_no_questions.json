@@ -1,0 +1,8 @@
+{
+  "error": {
+    "message": "- request.questions: At least one question is required.",
+    "type": "invalid_request_error",
+    "param": "questions",
+    "code": "invalid_value"
+  }
+}

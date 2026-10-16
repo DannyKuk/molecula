@@ -3,6 +3,7 @@ import logging
 from collections.abc import AsyncIterator, Sequence
 
 from molecula.agent.agent import ChatAgent
+from molecula.agent.decisions import DecisionModelError
 from molecula.agent.llm import ChatModelError, describe_provider_error
 from molecula.guard.safety import REFUSED, InputCheck, InputCheckFailed, Verdict, fixed_answer
 from molecula.schemas.chat import (
@@ -61,6 +62,10 @@ class GuardedChat:
             return
         except InputCheckFailed as error:
             logger.warning("Input check gave no category: %s", error)
+            yield ErrorEvent(message=CHECK_FAILED)
+            return
+        except DecisionModelError as error:
+            logger.warning("Input check's decision model failed: %r", error)
             yield ErrorEvent(message=CHECK_FAILED)
             return
         if verdict.category in REFUSED:
