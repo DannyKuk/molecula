@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { Ellipsis, Pencil, Trash2 } from "lucide-react";
+import { Bookmark, BookmarkX, Ellipsis, Pencil, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -17,15 +17,31 @@ import type { ConversationSummary } from "@/lib/chat-history";
 type HistoryRowProps = {
   conversation: ConversationSummary;
   active: boolean;
+  bookmarked: boolean;
   onOpen: (id: string) => void;
   onRename: (id: string, title: string) => void;
   onDelete: (id: string) => void;
+  onBookmark: (id: string) => void;
+  onUnbookmark: (id: string) => void;
 };
 
-/** One saved conversation in the list: it opens on click, and its ⋯ menu renames or deletes it. */
-export function HistoryRow({ conversation, active, onOpen, onRename, onDelete }: HistoryRowProps) {
+/**
+ * One saved conversation in the list: it opens on click, the bookmark button beside it bookmarks
+ * it, and its ⋯ menu renames, bookmarks or deletes it.
+ */
+export function HistoryRow({
+  conversation,
+  active,
+  bookmarked,
+  onOpen,
+  onRename,
+  onDelete,
+  onBookmark,
+  onUnbookmark,
+}: HistoryRowProps) {
   const [mode, setMode] = useState<"idle" | "renaming" | "deleting">("idle");
   const { id, title } = conversation;
+  const toggleBookmark = () => (bookmarked ? onUnbookmark(id) : onBookmark(id));
 
   if (mode === "renaming") {
     const finish = (newTitle: string | null) => {
@@ -65,25 +81,62 @@ export function HistoryRow({ conversation, active, onOpen, onRename, onDelete }:
       >
         {title}
       </button>
+      <BookmarkButton title={title} bookmarked={bookmarked} onToggle={toggleBookmark} />
       <RowMenu
         title={title}
         alwaysShown={active}
+        bookmarked={bookmarked}
         onRename={() => setMode("renaming")}
+        onToggleBookmark={toggleBookmark}
         onDelete={() => setMode("deleting")}
       />
     </li>
   );
 }
 
+const SHOWN_ON_HOVER =
+  "pointer-fine:opacity-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100";
+
+type BookmarkButtonProps = { title: string; bookmarked: boolean; onToggle: () => void };
+
+/** With a mouse it shows on hover and focus; on touch it is left out and the ⋯ menu bookmarks. */
+function BookmarkButton({ title, bookmarked, onToggle }: BookmarkButtonProps) {
+  const label = bookmarked ? `Remove bookmark: ${title}` : `Bookmark: ${title}`;
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      aria-label={label}
+      title={label}
+      onClick={onToggle}
+      className={cn(
+        "hidden text-zinc-600 pointer-fine:inline-flex dark:text-zinc-400",
+        SHOWN_ON_HOVER,
+      )}
+    >
+      <Bookmark className={cn(bookmarked && "fill-current")} />
+    </Button>
+  );
+}
+
 type RowMenuProps = {
   title: string;
   alwaysShown: boolean;
+  bookmarked: boolean;
   onRename: () => void;
+  onToggleBookmark: () => void;
   onDelete: () => void;
 };
 
 /** With a mouse the ⋯ button shows on hover and focus; on touch it always shows. */
-function RowMenu({ title, alwaysShown, onRename, onDelete }: RowMenuProps) {
+function RowMenu({
+  title,
+  alwaysShown,
+  bookmarked,
+  onRename,
+  onToggleBookmark,
+  onDelete,
+}: RowMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -94,8 +147,7 @@ function RowMenu({ title, alwaysShown, onRename, onDelete }: RowMenuProps) {
             aria-label={`Options: ${title}`}
             className={cn(
               "mr-1 text-zinc-600 dark:text-zinc-400",
-              !alwaysShown &&
-                "pointer-fine:opacity-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100 pointer-fine:aria-expanded:opacity-100",
+              !alwaysShown && [SHOWN_ON_HOVER, "pointer-fine:aria-expanded:opacity-100"],
             )}
           />
         }
@@ -106,6 +158,10 @@ function RowMenu({ title, alwaysShown, onRename, onDelete }: RowMenuProps) {
         <DropdownMenuItem onClick={onRename}>
           <Pencil />
           Rename
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onToggleBookmark}>
+          {bookmarked ? <BookmarkX /> : <Bookmark />}
+          {bookmarked ? "Remove bookmark" : "Bookmark"}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onClick={onDelete}>

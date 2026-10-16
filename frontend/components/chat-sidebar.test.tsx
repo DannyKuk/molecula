@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ChatHistory } from "@/lib/chat-history";
+import { startTurn } from "@/lib/chat-turn";
 import { chatFrame, DONE, memoryHistory, stubChatStream, stubPage } from "@/lib/test-fixtures";
 import { SIDEBAR_KEY } from "@/lib/use-sidebar-expanded";
 
@@ -16,6 +17,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -63,7 +65,53 @@ function listedTitles(): string[] {
     .map((row) => row.textContent ?? "");
 }
 
-async function chooseFromMenu(title: string, item: "Rename" | "Delete") {
+/** The titles in one group of the expanded list, top to bottom. */
+function titlesUnder(group: string): string[] {
+  const section = sidebar().queryByRole("region", { name: group });
+  return section
+    ? within(section)
+        .getAllByRole("listitem")
+        .map((row) => row.textContent ?? "")
+    : [];
+}
+
+/** The rail's bookmark buttons as "number title", top to bottom. */
+function railBookmarks(): string[] {
+  const group = rail().queryByRole("group", { name: "Bookmarks" });
+  if (!group) return [];
+  return within(group)
+    .getAllByRole("button")
+    .map((button) => `${button.textContent} ${button.getAttribute("aria-label")}`);
+}
+
+function collapseSidebar() {
+  fireEvent.click(sidebar().getByRole("button", { name: "Hide chats" }));
+}
+
+/** A history that already holds a finished chat for each title, the first one newest. */
+function historyWith(titles: string[]) {
+  const memory = memoryHistory();
+  titles.forEach((title, index) => {
+    const updatedAt = Date.now() - index * 1000;
+    memory.stored.set(`c${index}`, {
+      id: `c${index}`,
+      title,
+      turns: [{ ...startTurn(title), answer: `About ${title}.`, state: "done" }],
+      createdAt: updatedAt,
+      updatedAt,
+    });
+  });
+  return memory;
+}
+
+function bookmarkFromRow(title: string) {
+  fireEvent.click(sidebar().getByRole("button", { name: `Bookmark: ${title}` }));
+}
+
+async function chooseFromMenu(
+  title: string,
+  item: "Rename" | "Delete" | "Bookmark" | "Remove bookmark",
+) {
   fireEvent.click(sidebar().getByRole("button", { name: `Options: ${title}` }));
   fireEvent.click(await screen.findByRole("menuitem", { name: item }));
 }
@@ -304,5 +352,150 @@ describe("Chat sidebar", () => {
 
     expect(await screen.findByText("Imatinib blocks BCR-ABL.")).toBeDefined();
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+});
+
+describe("Chat bookmarks", () => {
+  const CHATS = [
+    "Imatinib",
+    "Sildenafil",
+    "Warfarin",
+    "Metformin",
+    "Aspirin",
+    "Ibuprofen",
+    "Digoxin",
+  ];
+
+  it("moves a bookmarked chat into the Bookmarked group and the rail, and opens it from there", async () => {
+    await openPage(historyWith(["Imatinib", "Sildenafil"]).history);
+    expandSidebar();
+
+    bookmarkFromRow("Sildenafil");
+
+    expect(titlesUnder("Bookmarked")).toEqual(["Sildenafil"]);
+    expect(titlesUnder("Today")).toEqual(["Imatinib"]);
+    collapseSidebar();
+    expect(railBookmarks()).toEqual(["1 Sildenafil"]);
+    fireEvent.click(rail().getByRole("button", { name: "Sildenafil" }));
+    expect(await screen.findByText("About Sildenafil.")).toBeDefined();
+    expect(rail().getByRole("button", { name: "Sildenafil" }).getAttribute("aria-current")).toBe(
+      "page",
+    );
+  });
+
+  it("shows only the rail's icons without bookmarks", async () => {
+    await openPage(historyWith(["Imatinib"]).history);
+
+    expect(railBookmarks()).toEqual([]);
+  });
+
+  it("shows the Bookmarked group on top in the phone drawer", async () => {
+    await openPage(historyWith(["Imatinib", "Sildenafil"]).history);
+    expandSidebar();
+    bookmarkFromRow("Sildenafil");
+
+    fireEvent.click(screen.getByRole("button", { name: "Open chats" }));
+    const drawer = within(await screen.findByRole("dialog", { name: "Chats" }));
+
+    expect(drawer.getAllByRole("region").map((group) => group.getAttribute("aria-label"))).toEqual([
+      "Bookmarked",
+      "Today",
+    ]);
+  });
+
+  it("removes a bookmark from the ⋯ menu, and Undo puts it back in its place", async () => {
+    const { history, bookmarks } = historyWith(["Imatinib", "Sildenafil", "Warfarin"]);
+    await openPage(history);
+    expandSidebar();
+    for (const title of ["Warfarin", "Imatinib", "Sildenafil"]) {
+      await chooseFromMenu(title, "Bookmark");
+    }
+
+    await chooseFromMenu("Imatinib", "Remove bookmark");
+
+    expect(titlesUnder("Bookmarked")).toEqual(["Warfarin", "Sildenafil"]);
+    expect(titlesUnder("Today")).toEqual(["Imatinib"]);
+    const undoBar = sidebar().getByRole("status");
+    expect(undoBar.textContent).toContain("Removed 'Imatinib' from bookmarks");
+    fireEvent.click(within(undoBar).getByRole("button", { name: "Undo" }));
+
+    expect(titlesUnder("Bookmarked")).toEqual(["Warfarin", "Imatinib", "Sildenafil"]);
+    expect(sidebar().queryByRole("status")).toBeNull();
+    await waitFor(() => expect(bookmarks.ids).toEqual(["c2", "c0", "c1"]));
+  });
+
+  it("hides the Undo after about six seconds", async () => {
+    vi.useFakeTimers();
+    await openPage(historyWith(["Imatinib"]).history);
+    expandSidebar();
+    bookmarkFromRow("Imatinib");
+
+    fireEvent.click(sidebar().getByRole("button", { name: "Remove bookmark: Imatinib" }));
+    expect(sidebar().getByRole("status")).toBeDefined();
+    act(() => vi.advanceTimersByTime(6000));
+
+    expect(sidebar().queryByRole("status")).toBeNull();
+    expect(titlesUnder("Bookmarked")).toEqual([]);
+  });
+
+  it("numbers the first five bookmarks in the rail and puts the rest behind +N", async () => {
+    await openPage(historyWith(CHATS).history);
+    expandSidebar();
+    CHATS.forEach(bookmarkFromRow);
+    collapseSidebar();
+
+    expect(railBookmarks()).toEqual([
+      "1 Imatinib",
+      "2 Sildenafil",
+      "3 Warfarin",
+      "4 Metformin",
+      "5 Aspirin",
+      "+2 All 7 bookmarks",
+    ]);
+  });
+
+  it("lists every bookmark in the +N flyout and opens one from it", async () => {
+    await openPage(historyWith(CHATS).history);
+    expandSidebar();
+    CHATS.forEach(bookmarkFromRow);
+    collapseSidebar();
+
+    fireEvent.click(rail().getByRole("button", { name: "All 7 bookmarks" }));
+    const items = await screen.findAllByRole("menuitem");
+    expect(items.map((item) => item.textContent)).toEqual(
+      CHATS.map((title, index) => `${index + 1}${title}`),
+    );
+    fireEvent.click(screen.getByRole("menuitem", { name: "Digoxin" }));
+
+    expect(await screen.findByText("About Digoxin.")).toBeDefined();
+  });
+
+  it("drops the bookmark of a deleted chat", async () => {
+    const { history, bookmarks } = historyWith(["Imatinib", "Sildenafil"]);
+    await openPage(history);
+    expandSidebar();
+    bookmarkFromRow("Imatinib");
+
+    await chooseFromMenu("Imatinib", "Delete");
+    const confirm = within(sidebar().getByRole("group", { name: "Delete chat" }));
+    fireEvent.click(confirm.getByRole("button", { name: "Delete" }));
+
+    expect(sidebar().queryByRole("region", { name: "Bookmarked" })).toBeNull();
+    await waitFor(() => expect(bookmarks.ids).toEqual([]));
+    collapseSidebar();
+    expect(railBookmarks()).toEqual([]);
+  });
+
+  it("keeps the bookmarks and their order across a reload", async () => {
+    const { history } = historyWith(["Imatinib", "Sildenafil", "Warfarin"]);
+    const page = await openPage(history);
+    expandSidebar();
+    bookmarkFromRow("Warfarin");
+    bookmarkFromRow("Imatinib");
+    collapseSidebar();
+
+    await reload(page, history);
+
+    expect(railBookmarks()).toEqual(["1 Warfarin", "2 Imatinib"]);
   });
 });

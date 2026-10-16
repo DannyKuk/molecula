@@ -46,10 +46,14 @@ export function Chat({ initialQuestion, history = browserHistory }: ChatProps) {
   const showsStructure = structuresOf(turns.at(-1)?.steps ?? []).length > 0;
   useFollowAnswer(conversationRef, sent, answering, showsStructure);
 
+  const { removedBookmark, unbookmark } = useBookmarkUndo(saved);
+
   const chatList: ChatListProps = {
     available: saved.available,
     conversations: saved.conversations,
+    bookmarks: saved.bookmarks,
     activeId: id,
+    removedBookmark,
     onOpen: async (openedId) => {
       if (openedId === id) return;
       const conversation = await saved.load(openedId);
@@ -61,6 +65,8 @@ export function Chat({ initialQuestion, history = browserHistory }: ChatProps) {
       if (deletedId === id) startNew();
       saved.remove(deletedId);
     },
+    onBookmark: saved.bookmark,
+    onUnbookmark: unbookmark,
   };
 
   return (
@@ -125,6 +131,40 @@ function EmptyState({ onAsk }: { onAsk: (question: string) => void }) {
       <HelpGuide onAsk={onAsk} />
     </section>
   );
+}
+
+const UNDO_SHOWN_MS = 6000;
+
+/**
+ * Removes bookmarks and keeps the last one removed for a few seconds, so Undo can put it back in
+ * its place. It lives here rather than in the list because the sidebar and the drawer share it.
+ */
+function useBookmarkUndo(saved: ReturnType<typeof useChatHistory>) {
+  const [removed, setRemoved] = useState<{ id: string; at: number } | null>(null);
+
+  useEffect(() => {
+    if (!removed) return;
+    const timer = setTimeout(() => setRemoved(null), UNDO_SHOWN_MS);
+    return () => clearTimeout(timer);
+  }, [removed]);
+
+  const unbookmark = (id: string) => {
+    setRemoved({ id, at: saved.bookmarks.indexOf(id) });
+    saved.unbookmark(id);
+  };
+  const title = saved.conversations.find((c) => c.id === removed?.id)?.title;
+  const removedBookmark =
+    removed && title !== undefined
+      ? {
+          title,
+          onUndo: () => {
+            setRemoved(null);
+            saved.bookmark(removed.id, removed.at);
+          },
+        }
+      : null;
+
+  return { removedBookmark, unbookmark };
 }
 
 /**

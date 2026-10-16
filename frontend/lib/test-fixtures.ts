@@ -173,6 +173,7 @@ export const IMATINIB_SOURCES_EVENT = chatFrame({
  */
 export function memoryHistory({ failing = false } = {}) {
   const stored = new Map<string, Conversation>();
+  const bookmarks = { ids: [] as string[] };
   const answer = async <T>(result: () => T): Promise<T> => {
     if (failing) throw new DOMException("The storage is blocked.", "SecurityError");
     return structuredClone(result());
@@ -183,6 +184,8 @@ export function memoryHistory({ failing = false } = {}) {
     put: (conversation) =>
       answer(() => void stored.set(conversation.id, structuredClone(conversation))),
     delete: (id) => answer(() => void stored.delete(id)),
+    bookmarks: () => answer(() => bookmarks.ids),
+    putBookmarks: (ids) => answer(() => void (bookmarks.ids = [...ids])),
   };
-  return { history, stored };
+  return { history, stored, bookmarks };
 }
