@@ -53,7 +53,7 @@ Each change to the agent's prompt or tools that should keep answers to what the 
 | Change | Where | Pass | From memory | Denies data | Right passage returned | From memory with it | Seconds p50 |
 |---|---|---|---|---|---|---|---|
 | Baseline: main's prompt | main 5c8027f | 23 | 4 | 1 | 26 | 3 | 9.3 |
-| The owner's citation-first prompt: a sentence about a drug needs a `ref` or is deleted, partial answers, term explanations without drug facts, a check of every sentence before sending; only label passages numbered | `fix/205-test-prompt` 7d0f010 | 26 | 2 | 0 | 25 | 2 | 7.0 |
+| The owner's citation-first prompt: a sentence about a drug needs a `ref` or is deleted, partial answers, term explanations without drug facts, a check of every sentence before sending; only label passages numbered | a branch since deleted | 26 | 2 | 0 | 25 | 2 | 7.0 |
 | The same prompt with the citation rule naming every tool's `ref` (passages, PubChem properties, ChEMBL targets, the 3D structure), and tool docstrings that say each result carries one | #208 | 24 | 4 | 0 | 22 | 3 | 7.2 |
 
 - **The citation-first prompt doesn't measurably cut memory on these questions.** 4, 2 and 4 of 28 are within the spread of two or three answers between identical runs (see Limits), and the 95% intervals overlap almost entirely. Three of the four additions in #208's run are the same ones the baseline made: the MAOI list for pseudoephedrine, the celecoxib ulcer rate read from a list of rarer events, and (like the medium run) "the virus remains in the body" for valacyclovir. The fourth is new: zolpidem 40 mg "higher than the usual maximum" and "used only in research".
