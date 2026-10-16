@@ -1,6 +1,10 @@
+import hashlib
+import logging
 import os
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import httpx
 from langchain_core.embeddings import Embeddings
 from langchain_openai import OpenAIEmbeddings
 
@@ -10,14 +14,41 @@ if TYPE_CHECKING:
     from sentence_transformers import SentenceTransformer
     from transformers import PreTrainedTokenizerBase
 
+logger = logging.getLogger(__name__)
+
 LOCAL = "local"
 # Every model gets the same chunks, so a comparison of models compares only the models.
 CHUNK_TOKENIZER = "BAAI/bge-small-en-v1.5"
 BATCH_SIZE = 32
 
+# The pinned model `ingest fetch` downloads; LOCAL_EMBEDDING_MODEL_REVISION's default in config.py
+# is its commit. Exact names, because a pattern like *.json would also match onnx/tokenizer.json.
+# README.md too, so an online start doesn't fetch it.
+PINNED_MODEL = "BAAI/bge-m3"
+PINNED_REVISION = "5617a9f61b028005a4858fdac845db406aefb181"
+MODEL_FILES = (
+    "config.json",
+    "config_sentence_transformers.json",
+    "modules.json",
+    "sentence_bert_config.json",
+    "1_Pooling/config.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "special_tokens_map.json",
+    "pytorch_model.bin",
+    "README.md",
+)
+WEIGHTS_FILE = "pytorch_model.bin"
+# Hugging Face checks only the size of a download, so the weights are checked here.
+WEIGHTS_SHA256 = "b5e0ce3470abf5ef3831aa1bd5553b486803e83251590ab7ff35a117cf6aad38"
+
 
 class EmbeddingConfigError(Exception):
     """The settings don't say which embedding model to use, or it can't be reached."""
+
+
+class ModelDownloadError(Exception):
+    """The pinned local model can't be downloaded, or its weights aren't the pinned ones."""
 
 
 class LocalEmbeddings(Embeddings):
@@ -96,13 +127,70 @@ def load_local_model(settings: Settings) -> SentenceTransformer:
             settings.local_embedding_model,
             device="cuda" if on_gpu else "cpu",
             cache_folder=str(settings.models_dir),
+            revision=settings.local_embedding_model_revision,
             local_files_only=settings.offline,
             model_kwargs=model_kwargs,
         )
     except OSError as error:
         raise EmbeddingConfigError(
-            missing_model(settings, settings.local_embedding_model)
+            missing_model(settings, settings.local_embedding_model, "fetch")
         ) from error
+
+
+def snapshot_dir(settings: Settings) -> Path:
+    """Where Hugging Face's cache keeps the files of the configured model and revision."""
+    repo_folder = "models--" + settings.local_embedding_model.replace("/", "--")
+    return settings.models_dir / repo_folder / "snapshots" / settings.local_embedding_model_revision
+
+
+def has_local_model(settings: Settings) -> bool:
+    """Whether every file the app reads of the pinned revision is in `models_dir`."""
+    snapshot = snapshot_dir(settings)
+    return all((snapshot / name).is_file() for name in MODEL_FILES)
+
+
+def download_local_model(settings: Settings) -> None:
+    """Download the pinned model's files into `models_dir` and check the weights' SHA-256.
+
+    Raises ModelDownloadError for another model or revision than the pinned one, a failed
+    download, or weights with another hash; bad weights are deleted, so the next run downloads
+    them again.
+    """
+    from huggingface_hub import snapshot_download
+
+    pinned = (settings.local_embedding_model, settings.local_embedding_model_revision)
+    if pinned != (PINNED_MODEL, PINNED_REVISION):
+        raise ModelDownloadError(
+            f"fetch downloads only {PINNED_MODEL} at revision {PINNED_REVISION}, not "
+            f"{pinned[0]} at {pinned[1]}. Build the index with that model instead: "
+            "`python -m molecula.ingest index` downloads it."
+        )
+    try:
+        snapshot = snapshot_download(
+            PINNED_MODEL,
+            revision=PINNED_REVISION,
+            cache_dir=settings.models_dir,
+            allow_patterns=list(MODEL_FILES),
+        )
+    # huggingface_hub raises its HTTP errors as OSError and connection errors as httpx's.
+    except (OSError, httpx.HTTPError) as error:
+        raise ModelDownloadError(
+            f"{PINNED_MODEL} could not be downloaded from Hugging Face: {error}"
+        ) from error
+    check_weights(Path(snapshot) / WEIGHTS_FILE)
+
+
+def check_weights(weights: Path) -> None:
+    with weights.open("rb") as file:
+        sha256 = hashlib.file_digest(file, "sha256").hexdigest()
+    if sha256 != WEIGHTS_SHA256:
+        # The snapshot entry may be a link into the cache's blobs; both go.
+        blob = weights.resolve()
+        weights.unlink()
+        blob.unlink(missing_ok=True)
+        raise ModelDownloadError(
+            f"{weights} has SHA-256 {sha256}, not the pinned {WEIGHTS_SHA256}; it was deleted."
+        )
 
 
 def load_chunk_tokenizer(settings: Settings) -> PreTrainedTokenizerBase:
@@ -115,13 +203,14 @@ def load_chunk_tokenizer(settings: Settings) -> PreTrainedTokenizerBase:
             local_files_only=settings.offline,
         )
     except OSError as error:
-        raise EmbeddingConfigError(missing_model(settings, CHUNK_TOKENIZER)) from error
+        raise EmbeddingConfigError(missing_model(settings, CHUNK_TOKENIZER, "index")) from error
 
 
-def missing_model(settings: Settings, name: str) -> str:
+def missing_model(settings: Settings, name: str, step: str) -> str:
+    """Why the model didn't load, and the ingest step that downloads it."""
     if settings.offline:
         return (
-            f"{name} isn't in {settings.models_dir} and OFFLINE=1 forbids the download. "
-            "Run `python -m molecula.ingest index` once without OFFLINE=1."
+            f"{name} isn't in {settings.models_dir} and OFFLINE=1 loads only local files. "
+            f"Run `python -m molecula.ingest {step}` once; it downloads the model."
         )
     return f"{name} could not be loaded from Hugging Face into {settings.models_dir}."

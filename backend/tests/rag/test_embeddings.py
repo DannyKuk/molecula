@@ -2,17 +2,26 @@ import os
 from collections.abc import Callable
 from typing import Any
 
+import httpx
 import numpy as np
 import pytest
 from langchain_openai import OpenAIEmbeddings
 from pydantic import SecretStr
 
+from fake_hub import install_fake_hub
 from molecula.config import OPENROUTER_BASE_URL, Settings
 from molecula.rag.embeddings import (
+    MODEL_FILES,
+    PINNED_MODEL,
+    PINNED_REVISION,
     EmbeddingConfigError,
     LocalEmbeddings,
+    ModelDownloadError,
+    download_local_model,
     embedding_model_id,
     get_embeddings,
+    has_local_model,
+    snapshot_dir,
 )
 
 
@@ -40,6 +49,7 @@ def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "OPENROUTER_API_KEY",
         "EMBEDDING_MODEL",
         "LOCAL_EMBEDDING_MODEL",
+        "LOCAL_EMBEDDING_MODEL_REVISION",
         "DISABLE_SAFETENSORS_CONVERSION",
     ]:
         # Set first, so monkeypatch restores the variable after a test where the loader sets it.
@@ -72,6 +82,15 @@ def test_local_model_is_the_default_and_loads_from_the_models_dir(
     assert loaded.name == "BAAI/bge-m3"
     assert loaded.options["cache_folder"] == str(current.models_dir)
     assert (loaded.options["device"], loaded.options["local_files_only"]) == ("cpu", False)
+
+
+def test_local_model_loads_the_pinned_revision(
+    make_settings: Callable[..., Settings], fake_model: list[FakeSentenceTransformer]
+) -> None:
+    # snapshot_download writes no refs/main, so a fetched model loads only by its revision.
+    get_embeddings(make_settings(offline=True))
+
+    assert fake_model[0].options["revision"] == PINNED_REVISION
 
 
 def test_loading_never_fetches_a_second_converted_copy_of_the_weights(
@@ -113,8 +132,90 @@ def test_missing_model_offline_says_how_to_get_it(
 
     monkeypatch.setattr("sentence_transformers.SentenceTransformer", missing)
 
-    with pytest.raises(EmbeddingConfigError, match="once without OFFLINE=1"):
+    with pytest.raises(EmbeddingConfigError, match="ingest fetch` once"):
         get_embeddings(make_settings(offline=True))
+
+
+def test_default_settings_name_the_pinned_model(make_settings: Callable[..., Settings]) -> None:
+    current = make_settings()
+
+    assert (current.local_embedding_model, current.local_embedding_model_revision) == (
+        PINNED_MODEL,
+        PINNED_REVISION,
+    )
+
+
+def test_model_download_is_pinned_to_the_revision_and_the_files_the_app_reads(
+    make_settings: Callable[..., Settings], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    hub = install_fake_hub(monkeypatch)
+    current = make_settings()
+    assert not has_local_model(current)
+
+    download_local_model(current)
+
+    (call,) = hub.calls
+    assert call["repo_id"] == "BAAI/bge-m3"
+    assert call["revision"] == "5617a9f61b028005a4858fdac845db406aefb181"
+    assert call["cache_dir"] == current.models_dir
+    assert call["allow_patterns"] == list(MODEL_FILES)
+    assert "pytorch_model.bin" in call["allow_patterns"]
+    assert not any("*" in pattern for pattern in call["allow_patterns"])
+    assert has_local_model(current)
+
+
+def test_weights_with_another_hash_are_rejected_and_deleted(
+    make_settings: Callable[..., Settings], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    install_fake_hub(monkeypatch, weights=b"tampered weights")
+    current = make_settings()
+
+    with pytest.raises(ModelDownloadError, match="SHA-256"):
+        download_local_model(current)
+
+    assert not (snapshot_dir(current) / "pytorch_model.bin").exists()
+    assert not has_local_model(current)
+
+
+def test_partly_downloaded_model_is_not_there(
+    make_settings: Callable[..., Settings], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    install_fake_hub(monkeypatch)
+    current = make_settings()
+    download_local_model(current)
+
+    (snapshot_dir(current) / "tokenizer.json").unlink()
+
+    assert not has_local_model(current)
+
+
+def test_another_model_is_not_downloaded(
+    make_settings: Callable[..., Settings], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    hub = install_fake_hub(monkeypatch)
+
+    with pytest.raises(ModelDownloadError, match="downloads only BAAI/bge-m3"):
+        download_local_model(make_settings(local_embedding_model="BAAI/bge-small-en-v1.5"))
+
+    assert hub.calls == []
+
+
+@pytest.mark.parametrize(
+    "error",
+    [httpx.ConnectError("connection refused"), OSError("401 Client Error")],
+)
+def test_failed_model_download_is_a_download_error(
+    make_settings: Callable[..., Settings],
+    monkeypatch: pytest.MonkeyPatch,
+    error: Exception,
+) -> None:
+    def fail(repo_id: str, **options: Any) -> str:
+        raise error
+
+    monkeypatch.setattr("huggingface_hub.snapshot_download", fail)
+
+    with pytest.raises(ModelDownloadError, match="could not be downloaded"):
+        download_local_model(make_settings())
 
 
 def test_local_embeddings_use_the_model_prompts_and_unit_vectors() -> None:
