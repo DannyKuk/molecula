@@ -7,7 +7,7 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, Tool
 
 from fake_llm import ScriptedChatModel, answer_message, tool_call_message
 from molecula import prompts
-from molecula.agent.agent import ChatAgent
+from molecula.agent.agent import NO_ANSWER, ChatAgent
 from molecula.agent.tool_registry import build_tools
 from molecula.schemas.chat import (
     ChatEvent,
@@ -259,6 +259,34 @@ def test_at_the_step_limit_the_model_answers_without_further_tool_calls() -> Non
     assert last_system.text == prompts.load(
         "agent/step_limit", system_prompt=prompts.load("agent/system")
     )
+
+
+def test_a_last_step_that_only_calls_a_tool_ends_with_an_error_not_an_empty_answer() -> None:
+    model = ScriptedChatModel(
+        script=[
+            tool_call_message("get_targets", {"drug": "imatinib"}, call_id="call_1"),
+            tool_call_message("get_properties", {"drug": "imatinib"}, call_id="call_2"),
+        ]
+    )
+
+    events = run(agent(model, max_steps=2))
+
+    assert kinds(events) == ["status", "tool_call", "tool_result", "error"]
+    error = events[-1]
+    assert isinstance(error, ErrorEvent)
+    assert error.message == NO_ANSWER
+    assert model.received[1][0].text == prompts.load(
+        "agent/step_limit", system_prompt=prompts.load("agent/system")
+    )
+
+
+def test_an_empty_answer_before_the_step_limit_ends_with_an_error_too() -> None:
+    model = ScriptedChatModel(script=[answer_message("  \n")])
+
+    events = run(agent(model))
+
+    assert events[-1] == ErrorEvent(message=NO_ANSWER)
+    assert not any(isinstance(event, DoneEvent | SourcesEvent) for event in events)
 
 
 def test_earlier_turns_dont_count_towards_the_step_limit() -> None:
