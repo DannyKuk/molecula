@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 
 import type { Source } from "@/lib/chat";
-import { citedRefs, isLabel, sourceLabel } from "@/lib/citations";
+import { citedRefs, isLabel, sourceLabel, sourceLines } from "@/lib/citations";
+
 const OPENFDA_URL = "https://open.fda.gov";
 
 /**
@@ -61,13 +62,30 @@ function OpenFdaCredit() {
   );
 }
 
+/** Every source of the answer with its link, on paper only, where the chips' popovers don't open. */
+export function PrintedSources({ sources }: { sources: Source[] }) {
+  if (sources.length === 0) return null;
+  return (
+    <section aria-label="Sources" className="hidden text-xs print:block">
+      <p className="font-medium">Sources</p>
+      <ul>
+        {sourceLines(sources).map((line) => (
+          <li key={line} className="break-words">
+            {line}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function uniqueByUrl(sources: Source[]): Source[] {
   return [...new Map(sources.map((source) => [source.url, source])).values()];
 }
 
 function SourceLinks({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 print:hidden">
       <span className="text-muted-foreground">{title}</span>
       {children}
     </div>

@@ -15,7 +15,7 @@ import {
 } from "./chat-turn";
 
 /** A question and the chat it was asked in, with the turns before it. */
-type Asked = { id: string; question: string; earlier: Turn[] };
+type Asked = { id: string; question: string; earlier: Turn[]; askedAt: number };
 
 /**
  * The chats this page has answered, the one on screen and the answers coming in. One answer
@@ -62,8 +62,8 @@ export function useConversations(
 
   /** Streams the answer into its chat until the stream ends or `controller` aborts it. */
   const streamAnswer = useCallback(
-    async ({ id, question, earlier }: Asked, controller: AbortController) => {
-      let latest = startTurn(question);
+    async ({ id, question, earlier, askedAt }: Asked, controller: AbortController) => {
+      let latest: Turn = { ...startTurn(question), askedAt };
       const updateLatest = (change: (turn: Turn) => Turn) => {
         latest = change(latest);
         if (running.current?.controller === controller) setTurnsOf(id, [...earlier, latest]);
@@ -83,6 +83,7 @@ export function useConversations(
         if (controller.signal.aborted) updateLatest(stopTurn);
         else updateLatest((turn) => failTurn(turn, failureText(error)));
       }
+      updateLatest((turn) => ({ ...turn, answeredAt: Date.now() }));
       saveRef.current(id, [...earlier, latest]);
     },
     [setTurnsOf],
@@ -117,14 +118,19 @@ export function useConversations(
 
   const askIn = useCallback(
     (question: string, earlier: Turn[]) => {
-      const asked = { id: (shownIdRef.current ??= newConversationId()), question, earlier };
+      const asked = {
+        id: (shownIdRef.current ??= newConversationId()),
+        question,
+        earlier,
+        askedAt: Date.now(),
+      };
       setSent((count) => count + 1);
       if (!running.current) {
         answerInLine(asked);
         return;
       }
       line.current.push(asked);
-      const turns = [...earlier, queueTurn(question)];
+      const turns = [...earlier, { ...queueTurn(question), askedAt: asked.askedAt }];
       setTurnsOf(asked.id, turns);
       saveRef.current(asked.id, turns);
       showBusy();

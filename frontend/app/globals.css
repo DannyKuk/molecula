@@ -30,6 +30,9 @@
   --radius-2xl: calc(var(--radius) * 1.8);
 }
 
+/* Dark mode is for the screen only, so a page printed from a dark browser comes out dark on white. */
+@custom-variant dark (@media screen and (prefers-color-scheme: dark));
+
 /* The tokens follow the Tailwind zinc scale the hand-written components use, and dark mode follows
    the system setting as before, not shadcn's `.dark` class. */
 :root {
@@ -54,7 +57,7 @@
   --radius: 0.625rem;
 }
 
-@media (prefers-color-scheme: dark) {
+@media screen and (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
