@@ -49,7 +49,7 @@ export function withTurns(
 
 /** The turns of a saved conversation as the chat reopens them: no answer streams across a reload. */
 export function reopenedTurns(turns: Turn[]): Turn[] {
-  return turns.map((turn) => (turn.state === "answering" ? stopTurn(turn) : turn));
+  return turns.map(stopTurn);
 }
 
 export type DayGroup = {

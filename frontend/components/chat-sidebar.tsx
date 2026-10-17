@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { History, Menu, PanelLeft, Plus, SquarePen, X } from "lucide-react";
+import { History, LoaderCircle, Menu, PanelLeft, Plus, SquarePen, X } from "lucide-react";
 import { type ComponentProps, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,9 @@ export type ChatListProps = {
   /** The bookmarked conversations' ids, in the order they were bookmarked. */
   bookmarks: string[];
   activeId: string | null;
+  /** The chat whose answer is coming in, and the chats whose questions wait for it, in order. */
+  answeringId: string | null;
+  queuedIds: string[];
   /** The bookmark removed last, which Undo puts back, for a few seconds after its removal. */
   removedBookmark: { title: string; onUndo: () => void } | null;
   onOpen: (id: string) => void;
@@ -46,6 +49,10 @@ export function ChatSidebar(props: ChatListProps) {
   const [expanded, setExpanded] = useSidebarExpanded();
 
   if (!expanded) {
+    // The rail marks the answering chat's number, or Chat history when that chat has none.
+    const numbered = bookmarkedOf(props.conversations, props.bookmarks).slice(0, RAIL_BOOKMARKS);
+    const answeringElsewhere =
+      props.answeringId !== null && !numbered.some(({ id }) => id === props.answeringId);
     return (
       <nav aria-label="Chats" className={`${SIDEBAR_CLASSES} w-14 items-center gap-1 py-3`}>
         <IconButton label="Show chats" onClick={() => setExpanded(true)}>
@@ -54,8 +61,13 @@ export function ChatSidebar(props: ChatListProps) {
         <IconButton label="New chat" onClick={props.onNew}>
           <SquarePen />
         </IconButton>
-        <IconButton label="Chat history" onClick={() => setExpanded(true)}>
+        <IconButton
+          label={answeringElsewhere ? "Chat history, an answer is coming in" : "Chat history"}
+          onClick={() => setExpanded(true)}
+          className="relative"
+        >
           <History />
+          {answeringElsewhere && <AnsweringBadge />}
         </IconButton>
         <RailBookmarks {...props} />
       </nav>
@@ -78,7 +90,7 @@ export function ChatSidebar(props: ChatListProps) {
  * The first bookmarks as numbered buttons, and the rest behind "+N", which lists them all. The open
  * chat's number is outlined, or "+N" when the open chat is past the numbers.
  */
-function RailBookmarks({ conversations, bookmarks, activeId, onOpen }: ChatListProps) {
+function RailBookmarks({ conversations, bookmarks, activeId, answeringId, onOpen }: ChatListProps) {
   const bookmarked = bookmarkedOf(conversations, bookmarks);
   if (bookmarked.length === 0) return null;
   const numbered = bookmarked.slice(0, RAIL_BOOKMARKS);
@@ -94,12 +106,13 @@ function RailBookmarks({ conversations, bookmarks, activeId, onOpen }: ChatListP
       {numbered.map(({ id, title }, index) => (
         <IconButton
           key={id}
-          label={title}
+          label={id === answeringId ? `${title}, answering` : title}
           aria-current={id === activeId ? "page" : undefined}
           onClick={() => onOpen(id)}
-          className={cn("text-[13px] tabular-nums", id === activeId && OUTLINED)}
+          className={cn("relative text-[13px] tabular-nums", id === activeId && OUTLINED)}
         >
           {index + 1}
+          {id === answeringId && <AnsweringBadge />}
         </IconButton>
       ))}
       {more > 0 && (
@@ -193,6 +206,8 @@ function ChatGroups({
   conversations,
   bookmarks,
   activeId,
+  answeringId,
+  queuedIds,
   ...actions
 }: Omit<ChatListProps, "onNew" | "removedBookmark">) {
   if (available === false) return <HistoryOff />;
@@ -216,12 +231,27 @@ function ChatGroups({
             conversation={conversation}
             active={conversation.id === activeId}
             bookmarked={group.label === "Bookmarked"}
+            progress={progressOf(conversation.id, answeringId, queuedIds)}
             {...actions}
           />
         ))}
       </ul>
     </section>
   ));
+}
+
+function progressOf(id: string, answeringId: string | null, queuedIds: string[]) {
+  if (id === answeringId) return "answering";
+  return queuedIds.includes(id) ? "queued" : null;
+}
+
+function AnsweringBadge() {
+  return (
+    <LoaderCircle
+      aria-hidden
+      className="absolute top-0.5 right-0.5 size-3 animate-spin text-zinc-500 motion-reduce:animate-none"
+    />
+  );
 }
 
 function UndoBar({ title, onUndo }: { title: string; onUndo: () => void }) {

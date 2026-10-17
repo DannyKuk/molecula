@@ -40,6 +40,11 @@ export function ConversationTurn({ turn, onAsk, chatAnswering, onRetry }: Conver
           Thinking…
         </p>
       )}
+      {turn.state === "queued" && (
+        <p role="status" className="text-sm text-zinc-600 dark:text-zinc-400">
+          Waiting for the answer in another chat to finish…
+        </p>
+      )}
       {turn.answer && (
         <AnswerMarkdown
           text={turn.answer}
