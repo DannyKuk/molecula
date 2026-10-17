@@ -106,9 +106,10 @@ export function StructureViewer({
       cancelled = true;
       visibility.disconnect();
       resizes.disconnect();
-      const camera = scene.current?.camera();
+      if (!scene.current) return;
+      const camera = scene.current.camera();
       savedCamera.current = camera ? { data, camera } : null;
-      scene.current?.dispose();
+      scene.current.dispose();
       scene.current = null;
     };
   }, [data, dark, reduceMotion, near]);

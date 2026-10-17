@@ -201,6 +201,20 @@ describe("StructureViewer", () => {
     expect(vi.mocked(createScene).mock.calls[1][3].camera).toEqual(camera);
   });
 
+  it("keeps the camera when a view goes away again before it was built", async () => {
+    renderViewer(molecule, "molecule");
+    await waitFor(() => expect(createScene).toHaveBeenCalledOnce());
+    const camera: Camera = { view: [1, 2, 3, 40, 0, 0, 0, 1], grabbed: false };
+    scenes[0].camera.mockReturnValue(camera);
+    moveFarAway();
+
+    act(() => reportNearby({ isIntersecting: true }));
+    moveFarAway();
+    await comeBack();
+
+    expect(vi.mocked(createScene).mock.calls[1][3].camera).toEqual(camera);
+  });
+
   it("builds a view again in its default framing when it was given back mid-binding", async () => {
     renderViewer(complex, "site");
     await waitFor(() => expect(createScene).toHaveBeenCalledOnce());
