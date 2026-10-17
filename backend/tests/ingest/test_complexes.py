@@ -199,6 +199,16 @@ def azithromycin() -> Complex:
     return build_hero("8E42", "I/3002")
 
 
+def kept_names(complex_: Complex) -> set[str]:
+    """Every residue, metal ion and cofactor name the complex keeps anywhere."""
+    return (
+        {residue.name for residue in complex_.pocket + complex_.trace}
+        | {contact.residue.name for contact in complex_.contacts}
+        | {metal.name for metal in complex_.metals}
+        | {cofactor.code for cofactor in complex_.cofactors}
+    )
+
+
 def pocket_names(complex_: Complex) -> list[str]:
     return [f"{residue.chain}/{residue.name}{residue.number}" for residue in complex_.pocket]
 
@@ -241,10 +251,8 @@ def test_trace_leaves_out_chains_outside_the_pocket(azithromycin) -> None:
 
 def test_only_the_hero_ligand_is_kept_when_the_entry_holds_another_drug(azithromycin) -> None:
     # Tiamulin (MUL) is bound next to azithromycin in 8E42.
-    names = {residue.name for residue in azithromycin.pocket + azithromycin.trace}
-
     assert azithromycin.ligand.code == "ZIT"
-    assert "MUL" not in names
+    assert "MUL" not in kept_names(azithromycin)
 
 
 def test_aspirin_keeps_the_acetylated_ser530_and_drops_diclofenac() -> None:
@@ -252,7 +260,7 @@ def test_aspirin_keeps_the_acetylated_ser530_and_drops_diclofenac() -> None:
 
     assert "B/OAS530" in pocket_names(aspirin)
     assert ("OAS", 530, "OAC", "O1'", 2.89) in hbonds(aspirin)
-    assert "DIF" not in {residue.name for residue in aspirin.pocket + aspirin.trace}
+    assert "DIF" not in kept_names(aspirin)
 
 
 def test_dolutegravir_pocket_spans_the_integrase_and_the_viral_dna() -> None:
@@ -313,12 +321,9 @@ def test_acetazolamide_keeps_the_zinc_its_sulfonamide_binds(acetazolamide) -> No
 def test_waters_and_the_glycerol_next_to_acetazolamide_are_dropped(acetazolamide) -> None:
     cif = pdbx.CIFFile.read(io.StringIO(recorded_structure("3HS4")))
     recorded = set(pdbx.get_structure(cif, model=1, use_author_fields=True).res_name)
-    kept = {residue.name for residue in acetazolamide.pocket + acetazolamide.trace} | {
-        contact.residue.name for contact in acetazolamide.contacts
-    }
 
     assert {"HOH", "GOL"} <= recorded
-    assert not kept & {"HOH", "GOL"}
+    assert not kept_names(acetazolamide) & {"HOH", "GOL"}
     assert acetazolamide.cofactors == []
 
 
@@ -362,7 +367,7 @@ def test_the_sodium_of_escitaloprams_transporter_site_is_too_far_to_keep() -> No
     escitalopram = build_hero("5I71", "A/701")
 
     assert escitalopram.metals == []
-    assert "NA" not in {contact.residue.name for contact in escitalopram.contacts}
+    assert not kept_names(escitalopram) & {"NA", "D12", "HOH"}
 
 
 def test_dolutegravir_keeps_both_magnesium_ions_it_grips() -> None:
