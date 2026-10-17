@@ -136,6 +136,74 @@ export function easeInOut(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
 }
 
+type BondedAtom = { elem?: string; bonds?: number[] };
+
+/**
+ * The order the drug's atoms appear in: the heavy atoms bond by bond from the first one, so the drug
+ * grows as one piece, then each hydrogen in the order of the atom it sits on.
+ */
+export function assemblyOrder(atoms: BondedAtom[]): number[] {
+  const heavy = (i: number) => atoms[i].elem !== "H";
+  const order: number[] = [];
+  const seen = new Set<number>();
+  for (let first = 0; first < atoms.length; first++) {
+    if (seen.has(first) || !heavy(first)) continue;
+    const queue = [first];
+    seen.add(first);
+    while (queue.length > 0) {
+      const atom = queue.shift()!;
+      order.push(atom);
+      for (const next of atoms[atom].bonds ?? []) {
+        if (!seen.has(next) && heavy(next)) {
+          seen.add(next);
+          queue.push(next);
+        }
+      }
+    }
+  }
+  const place = new Map(order.map((atom, i) => [atom, i]));
+  const hydrogens = atoms.flatMap((_, i) => (heavy(i) ? [] : [i]));
+  const carrier = (i: number) => place.get(atoms[i].bonds?.[0] ?? -1) ?? order.length;
+  return [...order, ...hydrogens.sort((a, b) => carrier(a) - carrier(b))];
+}
+
+const ASSEMBLY_MS = 2000;
+const ATOM_STEP_MS = 90;
+const POP_MS = 300;
+
+/** How long the drug takes to build itself up. */
+export function assemblyDuration(atomCount: number): number {
+  return atomCount === 0 ? 0 : (atomCount - 1) * atomStep(atomCount) + POP_MS;
+}
+
+function atomStep(atomCount: number): number {
+  return Math.min(ATOM_STEP_MS, ASSEMBLY_MS / atomCount);
+}
+
+/**
+ * The drug `elapsed` ms into building itself up: the atoms that are full size and drawn with their
+ * bonds, and the ones still growing, with their size from 0 to 1. 3Dmol draws a bond only when both
+ * atoms have sticks, so a bond appears once its later atom is full size.
+ */
+export function assemblyFrame(
+  order: number[],
+  elapsed: number,
+): { bonded: number[]; growing: { atom: number; scale: number }[] } {
+  const step = atomStep(order.length);
+  const bonded: number[] = [];
+  const growing: { atom: number; scale: number }[] = [];
+  order.forEach((atom, i) => {
+    const since = elapsed - i * step;
+    if (since >= POP_MS) bonded.push(atom);
+    else if (since > 0) growing.push({ atom, scale: easeOut(since / POP_MS) });
+  });
+  return { bonded, growing };
+}
+
+function easeOut(t: number): number {
+  return 1 - (1 - t) ** 3;
+}
+
 const DOCK_DISTANCE = 18;
 const DOCK_TURN = 2.2;
 const DOCK_AXIS = unit({ x: 0.3, y: 1, z: 0.2 });

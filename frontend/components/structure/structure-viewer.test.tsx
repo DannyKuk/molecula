@@ -105,15 +105,18 @@ describe("StructureViewer", () => {
     expect(scenes[0].replay).toHaveBeenCalledOnce();
   });
 
-  it("shows a molecule at once and stops it turning while it is off screen", async () => {
+  it("builds a molecule up the first time half of it is on screen, and stops it turning off screen", async () => {
     const { element } = renderViewer(molecule, "molecule");
     await waitFor(() => expect(createScene).toHaveBeenCalled());
+    expect(element.style.visibility).toBe("hidden");
+
+    act(() => reportVisibility({ isIntersecting: true, intersectionRatio: 0.5 }));
+    expect(scenes[0].replay).toHaveBeenCalledOnce();
     expect(element.style.visibility).toBe("");
 
     act(() => reportVisibility({ isIntersecting: false, intersectionRatio: 0 }));
-
-    expect(scenes[0].setOnScreen).toHaveBeenCalledWith(false);
-    expect(scenes[0].replay).not.toHaveBeenCalled();
+    expect(scenes[0].setOnScreen).toHaveBeenLastCalledWith(false);
+    expect(scenes[0].replay).toHaveBeenCalledOnce();
   });
 
   it("plays the binding when the view leaves Molecule, and shows it at once", async () => {

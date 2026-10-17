@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   approachDirection,
+  assemblyDuration,
+  assemblyFrame,
+  assemblyOrder,
   centroid,
   dockingPose,
   hydrogenBonds,
@@ -106,3 +109,56 @@ describe("dockingPose", () => {
 function distance(a: { x: number; y: number; z: number }, b: { x: number; y: number; z: number }) {
   return Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 }
+
+describe("assemblyOrder", () => {
+  it("grows the heavy atoms bond by bond from the first, then adds each hydrogen after its atom", () => {
+    // C0 - C3 - O1, with H2 on O1 and H4 on C0.
+    const atoms = [
+      { elem: "C", bonds: [3, 4] },
+      { elem: "O", bonds: [3, 2] },
+      { elem: "H", bonds: [1] },
+      { elem: "C", bonds: [0, 1] },
+      { elem: "H", bonds: [0] },
+    ];
+
+    expect(assemblyOrder(atoms)).toEqual([0, 3, 1, 4, 2]);
+  });
+
+  it("builds a salt's separate parts one after the other", () => {
+    const atoms = [
+      { elem: "Na", bonds: [] },
+      { elem: "C", bonds: [2] },
+      { elem: "O", bonds: [1] },
+    ];
+
+    expect(assemblyOrder(atoms)).toEqual([0, 1, 2]);
+  });
+});
+
+describe("assemblyFrame", () => {
+  const order = [0, 3, 1];
+
+  it("shows nothing before the first atom starts growing", () => {
+    expect(assemblyFrame(order, -1)).toEqual({ bonded: [], growing: [] });
+  });
+
+  it("grows atoms one after another and gives an atom its bonds once it is full size", () => {
+    const { bonded, growing } = assemblyFrame(order, 350);
+
+    expect(bonded).toEqual([0]);
+    expect(growing.map(({ atom }) => atom)).toEqual([3, 1]);
+    expect(growing[0].scale).toBeGreaterThan(growing[1].scale);
+  });
+
+  it("has every atom bonded at the end", () => {
+    expect(assemblyFrame(order, assemblyDuration(order.length))).toEqual({
+      bonded: [0, 3, 1],
+      growing: [],
+    });
+  });
+
+  it("builds a large drug in about two seconds", () => {
+    expect(assemblyDuration(52)).toBeLessThanOrEqual(2300);
+    expect(assemblyDuration(0)).toBe(0);
+  });
+});

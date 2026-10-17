@@ -15,8 +15,8 @@ const NEARBY = "200% 0px";
 
 /**
  * The 3D canvas. 3Dmol is bundled with the app, not fetched from a CDN, so the view works offline;
- * it is loaded only when a view first comes near the screen. A complex plays its binding the first
- * time half of the view is on screen, and a view off screen stops turning. Far off screen the view
+ * it is loaded only when a view first comes near the screen. The drug builds itself up, and in a
+ * complex binds, the first time half of the view is on screen, and a view off screen stops turning. Far off screen the view
  * is closed, and it is built again with the same mode and camera when it comes back.
  */
 export function StructureViewer({
@@ -66,12 +66,8 @@ export function StructureViewer({
   useEffect(() => {
     if (!near) return;
     const element = container.current!;
-    const awaitsBinding = () =>
-      data.kind === "complex" &&
-      shownMode.current !== "molecule" &&
-      !reduceMotion &&
-      !bindingPlayed.current;
-    // Hidden until the binding starts, so the drug doesn't show in its pocket and then jump out.
+    const awaitsBinding = () => !reduceMotion && !bindingPlayed.current;
+    // Hidden until the sequence starts, so the finished drug doesn't show and then fall apart.
     element.style.visibility = awaitsBinding() ? "hidden" : "";
     let cancelled = false;
     const visibility = new IntersectionObserver(

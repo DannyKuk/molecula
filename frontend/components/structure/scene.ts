@@ -1,8 +1,11 @@
-import type { GLViewer } from "3dmol";
+import type { GLModel, GLViewer } from "3dmol";
 
 import type { Complex } from "@/lib/api";
 import {
   approachDirection,
+  assemblyDuration,
+  assemblyFrame,
+  assemblyOrder,
   centroid,
   dockingPose,
   easeInOut,
@@ -10,6 +13,7 @@ import {
   ligandAtoms,
   pocketSelection,
   proteinAtoms,
+  type HydrogenBondLine,
   type Point,
 } from "@/lib/complex-scene";
 
@@ -33,12 +37,12 @@ export type SceneOptions = {
 export type Scene = {
   /** Switches the view; `animate` plays the binding when the pocket comes into view. */
   setMode(mode: ViewMode, animate: boolean): void;
-  /** Plays the binding again, or for a molecule just recenters it. */
+  /** Plays the sequence again: the drug builds itself up and, in a complex, binds. */
   replay(): void;
   reset(): void;
   /** A view scrolled off screen stops turning, so the views further up the chat cost nothing. */
   setOnScreen(onScreen: boolean): void;
-  /** The camera to build the view again with, or null while the binding plays. */
+  /** The camera to build the view again with, or null while the sequence plays. */
   camera(): Camera | null;
   resize(): void;
   dispose(): void;
@@ -50,17 +54,37 @@ const COLORS = {
 };
 
 const ZOOM: Record<ViewMode, number> = { molecule: 0.9, site: 0.75, protein: 0.5 };
+// Far enough out while the backbone grows to see the protein around the pocket.
+const REVEAL_ZOOM = 0.3;
 
+const HOLD_MS = 300;
+const REVEAL_MS = 2800;
 const DOCK_MS = 2600;
-// The camera holds the Molecule zoom while the drug travels and only pulls back once it is close.
-const ZOOM_OUT_FROM = 0.55;
+const CONTACT_MS = 350;
+// The backbone grows and fades in steps: each one restyles the whole protein, which for the largest
+// complexes (thousands of residues) is too slow to do on every frame.
+const TRACE_STEPS = 20;
+const FADE_STEPS = 5;
+const FADE_FROM = 0.6;
+const TRACE_OPACITY = 0.35;
 const SPIN_SPEED = 0.25;
 // Wider than any stored complex: `zoomTo` on the drug would otherwise clip the protein around it.
 const SLAB = 500;
 
 /** The slow turn: on once the view is settled, held while it is off screen, and stopped for good
  * when the user grabs the view, until Reset or the binding plays again. */
-type Turning = { start(): void; stop(): void; release(): void; grabbed(): boolean };
+type Turning = { start(): void; stop(): void; release(): void };
+
+/** The sequence playing, if any: `stop` halts it where it is, `skip` jumps to its end, which is what
+ * a click or drag in the view does. */
+type Playing = { current: { stop(): void; skip(): void } | null };
+
+type DrugStyle = {
+  stick: { radius: number; colorscheme?: string };
+  sphere: { scale: number; colorscheme?: string };
+};
+
+const MOLECULE_STYLE: DrugStyle = { stick: { radius: 0.15 }, sphere: { scale: 0.25 } };
 
 /** Builds the 3D view in `element`, which must already have its size. */
 export function createScene(
@@ -78,6 +102,7 @@ export function createScene(
   let wanted = false;
   let onScreen = true;
   let grabbed = false;
+  const playing: Playing = { current: null };
   const apply = () => {
     if (wanted && onScreen && !grabbed && !options.reduceMotion) viewer.spin("y", SPIN_SPEED);
     else viewer.spin(false);
@@ -94,10 +119,10 @@ export function createScene(
     release: () => {
       grabbed = false;
     },
-    grabbed: () => grabbed,
   };
   const grab = () => {
     grabbed = true;
+    playing.current?.skip();
     apply();
   };
   box.addEventListener("pointerdown", grab);
@@ -112,12 +137,13 @@ export function createScene(
       onScreen = visible;
       apply();
     },
-    camera: () => ({ view: viewer.getView(), grabbed }),
+    camera: () => (playing.current ? null : { view: viewer.getView(), grabbed }),
     resize: () => {
       viewer.resize();
       viewer.render();
     },
     dispose: () => {
+      playing.current?.stop();
       box.removeEventListener("pointerdown", grab);
       viewer.spin(false);
       viewer.clear();
@@ -126,24 +152,63 @@ export function createScene(
     },
   };
 
-  if (data.kind === "molecule") {
-    viewer.addModel(data.sdf, "sdf");
-    viewer.setStyle({}, { stick: { radius: 0.15 }, sphere: { scale: 0.25 } });
-    const reset = () => {
-      turning.release();
-      viewer.zoomTo();
-      viewer.setSlab(-SLAB, SLAB);
-      viewer.render();
-      turning.start();
-    };
-    reset();
-    if (options.camera) restore(options.camera);
-    return { ...common, setMode: () => {}, replay: reset, reset };
-  }
-
-  const scene = complexScene(viewer, data.complex, options, turning, common);
+  const scene =
+    data.kind === "molecule"
+      ? moleculeScene(viewer, data.sdf, options, turning, playing, common)
+      : complexScene(viewer, data.complex, options, turning, playing, common);
   if (options.camera) restore(options.camera);
   return scene;
+}
+
+type Common = Pick<Scene, "setOnScreen" | "camera" | "resize" | "dispose">;
+
+function moleculeScene(
+  viewer: GLViewer,
+  sdf: string,
+  options: SceneOptions,
+  turning: Turning,
+  playing: Playing,
+  common: Common,
+): Scene {
+  const model = viewer.addModel(sdf, "sdf");
+  const drug = assembly(model, MOLECULE_STYLE);
+  const settle = () => {
+    playing.current = null;
+    model.setStyle({}, MOLECULE_STYLE);
+    viewer.render();
+    turning.start();
+  };
+  const reset = () => {
+    playing.current?.stop();
+    turning.release();
+    viewer.zoomTo();
+    viewer.setSlab(-SLAB, SLAB);
+    settle();
+  };
+  reset();
+  return {
+    ...common,
+    setMode: () => {},
+    replay: () => {
+      reset();
+      if (options.reduceMotion) return;
+      turning.stop();
+      const show = (elapsed: number) => {
+        drug.show(elapsed);
+        viewer.render();
+      };
+      show(0);
+      const stop = play(drug.duration, show, settle);
+      playing.current = {
+        stop,
+        skip: () => {
+          stop();
+          settle();
+        },
+      };
+    },
+    reset,
+  };
 }
 
 function complexScene(
@@ -151,24 +216,25 @@ function complexScene(
   complex: Complex,
   options: SceneOptions,
   turning: Turning,
-  common: Pick<Scene, "setOnScreen" | "camera" | "resize" | "dispose">,
+  playing: Playing,
+  common: Common,
 ): Scene {
   const colors = options.dark ? COLORS.dark : COLORS.light;
   const protein = viewer.addModel();
   protein.addAtoms(proteinAtoms(complex));
   protein.assignBonds();
+  const proteinSize = protein.selectedAtoms({}).length;
   const ligand = viewer.addModel();
   ligand.addAtoms(ligandAtoms(complex.ligand));
   const atoms = ligand.selectedAtoms({});
   const bound = atoms.map(({ x, y, z }) => ({ x: x!, y: y!, z: z! }));
   const center = centroid(bound);
   const approach = approachDirection(complex);
+  const outside = dockingPose(bound, approach, 0);
   const pocket = pocketSelection(complex);
   const bonds = hydrogenBonds(complex);
   let mode = options.mode;
-  let frame = 0;
-  let docking = false;
-  let ligandStyle = {};
+  let ligandStyle: DrugStyle = MOLECULE_STYLE;
 
   const placeLigand = (positions: Point[]) => {
     atoms.forEach((atom, i) => Object.assign(atom, positions[i]));
@@ -176,30 +242,39 @@ function complexScene(
     ligand.setStyle({}, ligandStyle);
   };
 
-  const showContacts = () => {
-    for (const bond of bonds) {
-      viewer.addCylinder({
-        start: bond.residue,
-        end: bond.ligand,
-        radius: 0.09,
-        dashed: true,
-        dashLength: 0.25,
-        gapLength: 0.15,
-        color: colors.hbond,
-        fromCap: 1,
-        toCap: 1,
-      });
-      viewer.addLabel(bond.label, {
-        position: bond.residue,
-        fontSize: 12,
-        fontColor: colors.label,
-        backgroundColor: colors.labelBackground,
-        backgroundOpacity: 0.85,
-        borderColor: colors.hbond,
-        borderThickness: 1,
-        inFront: true,
-      });
-    }
+  const showTrace = (upTo: number, opacity: number) => {
+    protein.setStyle({}, {});
+    if (upTo === 0 || opacity === 0) return;
+    protein.setStyle(
+      { predicate: (atom) => atom.index! < upTo },
+      { cartoon: { style: "trace", color: colors.trace, thickness: 0.3, opacity } },
+    );
+  };
+
+  const showPocket = () => protein.setStyle(pocket, { stick: { radius: 0.12 } }, true);
+
+  const showContact = (bond: HydrogenBondLine) => {
+    viewer.addCylinder({
+      start: bond.residue,
+      end: bond.ligand,
+      radius: 0.09,
+      dashed: true,
+      dashLength: 0.25,
+      gapLength: 0.15,
+      color: colors.hbond,
+      fromCap: 1,
+      toCap: 1,
+    });
+    viewer.addLabel(bond.label, {
+      position: bond.residue,
+      fontSize: 12,
+      fontColor: colors.label,
+      backgroundColor: colors.labelBackground,
+      backgroundOpacity: 0.85,
+      borderColor: colors.hbond,
+      borderThickness: 1,
+      inFront: true,
+    });
   };
 
   // 3Dmol's view is [-center x, -center y, -center z, camera distance, rotation quaternion x y z w];
@@ -209,76 +284,131 @@ function complexScene(
     return [-target.x, -target.y, -target.z, distance, ...rotation];
   };
 
-  const distanceFor = (target: ViewMode) => {
+  const distanceAt = (zoom: number) => {
     const current = viewer.getView();
     viewer.zoomTo({ model: ligand });
-    viewer.zoom(ZOOM[target]);
+    viewer.zoom(zoom);
     const distance = viewer.getView()[3];
     viewer.setView(current);
     viewer.setSlab(-SLAB, SLAB);
     return distance;
   };
 
-  const dock = (from: number, to: number) => {
-    docking = true;
-    const start = performance.now();
-    const tick = (now: number) => {
-      const progress = Math.min(1, (now - start) / DOCK_MS);
-      const positions = dockingPose(bound, approach, progress);
-      placeLigand(positions);
-      // Once the user grabs the view during this binding, the camera is theirs.
-      if (!turning.grabbed()) {
-        const pullBack = easeInOut(Math.max(0, (progress - ZOOM_OUT_FROM) / (1 - ZOOM_OUT_FROM)));
-        viewer.setView(viewAt(centroid(positions), from + (to - from) * pullBack));
-      }
-      viewer.render();
-      if (progress < 1) {
-        frame = requestAnimationFrame(tick);
-      } else {
-        docking = false;
-        showContacts();
-        viewer.render();
-        turning.start();
-      }
-    };
-    frame = requestAnimationFrame(tick);
-  };
-
-  let framed = false;
   const setMode = (next: ViewMode, animate: boolean) => {
     mode = next;
-    cancelAnimationFrame(frame);
-    docking = false;
-    turning.stop();
-    viewer.removeAllShapes();
-    viewer.removeAllLabels();
     const carbons = next === "molecule" ? "default" : "greenCarbon";
     ligandStyle = {
       stick: { radius: 0.2, colorscheme: carbons },
       sphere: { scale: 0.25, colorscheme: carbons },
     };
-    protein.setStyle(
-      {},
-      next === "protein"
-        ? { cartoon: { style: "trace", color: colors.trace, thickness: 0.3, opacity: 0.35 } }
-        : {},
-    );
-    if (next !== "molecule") protein.setStyle(pocket, { stick: { radius: 0.12 } }, true);
+    if (animate && next !== "molecule" && !options.reduceMotion) playSequence(false);
+    else settle();
+  };
+
+  let framed = false;
+  const settle = () => {
+    playing.current?.stop();
+    playing.current = null;
+    turning.stop();
+    viewer.removeAllShapes();
+    viewer.removeAllLabels();
+    showTrace(mode === "protein" ? proteinSize : 0, TRACE_OPACITY);
+    if (mode !== "molecule") showPocket();
     placeLigand(bound);
     if (!framed) {
       viewer.zoomTo({ model: ligand });
       framed = true;
     }
-    const to = distanceFor(next);
-    if (next === "molecule" || !animate || options.reduceMotion) {
-      viewer.setView(viewAt(center, to));
-      if (next !== "molecule") showContacts();
+    viewer.setView(viewAt(center, distanceAt(ZOOM[mode])));
+    if (mode !== "molecule") bonds.forEach(showContact);
+    viewer.render();
+    turning.start();
+  };
+
+  /**
+   * The drug builds itself up (`assemble`); outside Molecule mode it does so outside the pocket,
+   * then the camera pulls back while the backbone grows, the drug docks with the camera on it, and
+   * the hydrogen bonds appear one by one. The path in is an illustration; only the end pose is from
+   * the structure.
+   */
+  const playSequence = (assemble: boolean) => {
+    playing.current?.stop();
+    turning.stop();
+    turning.release();
+    viewer.removeAllShapes();
+    viewer.removeAllLabels();
+    const docks = mode !== "molecule";
+    const drug = assembly(ligand, ligandStyle);
+    const near = distanceAt(ZOOM.molecule);
+    const far = distanceAt(REVEAL_ZOOM);
+    const end = distanceAt(ZOOM[mode]);
+    const reveal = assemble ? drug.duration + HOLD_MS : 0;
+    const docking = reveal + REVEAL_MS;
+    const contacts = docking + DOCK_MS;
+    const duration = docks ? contacts + bonds.length * CONTACT_MS : drug.duration;
+    const fades = mode === "site";
+    let traceStep = -1;
+    let fadeStep = -1;
+    let shownContacts = 0;
+    let assembled = !assemble;
+
+    if (docks) showTrace(0, 0);
+    placeLigand(docks ? outside : bound);
+    if (assemble) drug.show(0);
+    viewer.setView(viewAt(docks ? centroid(outside) : center, near));
+    viewer.render();
+
+    const step = (elapsed: number) => {
+      if (!assembled) {
+        assembled = elapsed >= drug.duration;
+        if (assembled) placeLigand(docks ? outside : bound);
+        else drug.show(elapsed);
+      }
+      if (docks && elapsed >= reveal && elapsed < docking) {
+        const progress = easeInOut((elapsed - reveal) / REVEAL_MS);
+        const nextStep = Math.ceil(progress * TRACE_STEPS);
+        if (nextStep !== traceStep) {
+          traceStep = nextStep;
+          showTrace(Math.round((proteinSize * traceStep) / TRACE_STEPS), TRACE_OPACITY);
+        }
+        viewer.setView(viewAt(centroid(outside), near + (far - near) * progress));
+      }
+      if (docks && elapsed >= docking && elapsed < contacts) {
+        const progress = (elapsed - docking) / DOCK_MS;
+        const positions = dockingPose(bound, approach, progress);
+        placeLigand(positions);
+        viewer.setView(viewAt(centroid(positions), far + (end - far) * easeInOut(progress)));
+        const nextFade = fades
+          ? Math.ceil((Math.max(0, progress - FADE_FROM) / (1 - FADE_FROM)) * FADE_STEPS)
+          : 0;
+        if (nextFade !== fadeStep) {
+          fadeStep = nextFade;
+          showTrace(proteinSize, TRACE_OPACITY * (1 - fadeStep / FADE_STEPS));
+        }
+      }
+      if (docks && elapsed >= contacts) {
+        if (shownContacts === 0) {
+          placeLigand(bound);
+          showTrace(fades ? 0 : proteinSize, TRACE_OPACITY);
+          showPocket();
+          viewer.setView(viewAt(center, end));
+        }
+        const due = Math.min(bonds.length, Math.floor((elapsed - contacts) / CONTACT_MS) + 1);
+        bonds.slice(shownContacts, due).forEach(showContact);
+        shownContacts = Math.max(due, 1);
+      }
+      viewer.render();
+    };
+
+    const finish = () => {
+      playing.current = null;
+      step(duration);
+      if (docks) bonds.slice(shownContacts).forEach(showContact);
       viewer.render();
       turning.start();
-    } else {
-      turning.release();
-      dock(distanceFor("molecule"), to);
-    }
+    };
+    const stop = play(duration, step, finish);
+    playing.current = { stop, skip: settle };
   };
 
   setMode(mode, false);
@@ -286,21 +416,51 @@ function complexScene(
     ...common,
     setMode,
     replay: () => {
-      turning.release();
-      setMode(mode, true);
+      if (options.reduceMotion) settle();
+      else playSequence(true);
     },
     reset: () => {
       turning.release();
-      setMode(mode, false);
-    },
-    // Mid-binding the camera follows the drug on its way in, which a rebuilt view in the bound pose
-    // would point past.
-    camera: () => (docking ? null : common.camera()),
-    dispose: () => {
-      cancelAnimationFrame(frame);
-      common.dispose();
+      settle();
     },
   };
+}
+
+/** The drug building itself up in `model`, atom by atom, in `style` once it is complete. */
+function assembly(model: GLModel, style: DrugStyle) {
+  const order = assemblyOrder(model.selectedAtoms({}));
+  return {
+    duration: assemblyDuration(order.length),
+    show: (elapsed: number) => {
+      const { bonded, growing } = assemblyFrame(order, elapsed);
+      const done = new Set(bonded);
+      model.setStyle({}, {});
+      model.setStyle({ predicate: (atom) => done.has(atom.index!) }, style);
+      for (const { atom, scale } of growing) {
+        model.setStyle(
+          { predicate: (other) => other.index === atom },
+          { sphere: { ...style.sphere, scale: style.sphere.scale * scale } },
+        );
+      }
+    },
+  };
+}
+
+/** Calls `step` on every frame with the time since the start, then `end` after `duration` ms.
+ * Returns a function that stops it. */
+function play(duration: number, step: (elapsed: number) => void, end: () => void): () => void {
+  const start = performance.now();
+  let frame = 0;
+  const tick = (now: number) => {
+    if (now - start >= duration) {
+      end();
+      return;
+    }
+    step(now - start);
+    frame = requestAnimationFrame(tick);
+  };
+  frame = requestAnimationFrame(tick);
+  return () => cancelAnimationFrame(frame);
 }
 
 /** Browsers allow only a few live WebGL contexts per page, so a closed view gives its back. */
