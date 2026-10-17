@@ -1,0 +1,30 @@
+# Two-turn conversations for the follow-up 3D eval (#173): a first question, then a request to see
+# a drug in 3D. `drug` is the stored generic name the follow-up's `get_complex` call should resolve
+# to; `expected` is the status it returns: `found` for a reviewed complex in data/hero_set.yaml,
+# `no_complex` when the 3D view shows the molecule alone.
+
+- id: imatinib-then-acetaminophen
+  first: Show me how imatinib binds its target in 3D
+  followup: Show me acetaminophen in 3D
+  drug: acetaminophen
+  expected: no_complex
+- id: imatinib-then-ibuprofen
+  first: Show me how imatinib binds its target in 3D
+  followup: Show me ibuprofen in 3D
+  drug: ibuprofen
+  expected: found
+- id: acetaminophen-then-imatinib
+  first: Show me acetaminophen in 3D
+  followup: Show me imatinib in 3D
+  drug: imatinib
+  expected: found
+- id: de-imatinib-then-paracetamol
+  first: Zeig mir in 3D, wie Imatinib an sein Ziel bindet
+  followup: Zeig mir Paracetamol in 3D
+  drug: acetaminophen
+  expected: no_complex
+- id: label-then-same-drug-3d
+  first: What is ibuprofen used for?
+  followup: Show me ibuprofen in 3D
+  drug: ibuprofen
+  expected: found
