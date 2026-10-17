@@ -14,6 +14,7 @@ import { ChatComposer } from "./chat-composer";
 import { ChatDrawer, type ChatListProps, ChatSidebar } from "./chat-sidebar";
 import { ConversationTurn } from "./conversation-turn";
 import { Disclaimer } from "./disclaimer";
+import { ExportMenu } from "./export-menu";
 import { HelpDialog, HelpGuide } from "./help-guide";
 
 const browserHistory = indexedDbHistory();
@@ -49,6 +50,10 @@ export function Chat({ initialQuestion, history = browserHistory }: ChatProps) {
   useFollowAnswer(conversationRef, sent, answering, showsStructure);
 
   const { removedBookmark, unbookmark } = useBookmarkUndo(saved);
+  const title =
+    saved.conversations.find((conversation) => conversation.id === id)?.title ??
+    turns[0]?.question ??
+    "";
 
   const chatList: ChatListProps = {
     available: saved.available,
@@ -82,10 +87,13 @@ export function Chat({ initialQuestion, history = browserHistory }: ChatProps) {
             <ChatDrawer {...chatList} />
             <h1 className="text-xl font-semibold tracking-tight">Molecula</h1>
           </div>
-          <nav className="flex items-center gap-3 text-sm">
+          <nav className="flex items-center gap-3 text-sm print:hidden">
             <Link href="/drugs" className="font-medium underline-offset-4 hover:underline">
               Supported drugs
             </Link>
+            {turns.length > 0 && (
+              <ExportMenu title={title} turns={turns} disabled={pendingAnswer} />
+            )}
             <HelpDialog onAsk={ask} />
           </nav>
         </header>
@@ -112,10 +120,12 @@ export function Chat({ initialQuestion, history = browserHistory }: ChatProps) {
             </ol>
           )}
         </div>
-        <div className="sticky bottom-0 flex flex-col gap-2 border-t border-zinc-200 bg-background py-3 dark:border-zinc-800">
-          <ChatComposer answering={pendingAnswer} onSend={ask} onStop={stop} />
+        <div className="sticky bottom-0 flex flex-col gap-2 border-t border-zinc-200 bg-background py-3 dark:border-zinc-800 print:static print:border-0">
+          <div className="contents print:hidden">
+            <ChatComposer answering={pendingAnswer} onSend={ask} onStop={stop} />
+          </div>
           {saved.available === false && (
-            <p className="text-sm text-sky-800 dark:text-sky-300">
+            <p className="text-sm text-sky-800 dark:text-sky-300 print:hidden">
               History is off in this browser, so this chat isn&apos;t saved.
             </p>
           )}

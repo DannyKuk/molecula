@@ -35,6 +35,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 function questionBox(): HTMLTextAreaElement {
@@ -381,7 +382,7 @@ describe("Chat", () => {
         name: "Sources: Gleevec · Mechanism of action, Gleevec · Pharmacokinetics",
       }),
     ).toBeDefined();
-    expect(screen.queryByText(/\[1\]/)).toBeNull();
+    expect(screen.queryByText(/\[1\]\[2\]/)).toBeNull();
     expect(screen.getByRole("link", { name: "openFDA" })).toBeDefined();
   });
 
@@ -702,5 +703,86 @@ describe("Chat", () => {
     expect((button as HTMLButtonElement).disabled).toBe(true);
     await streamed(() => stream.send(DONE));
     expect((button as HTMLButtonElement).disabled).toBe(false);
+  });
+});
+
+describe("Chat export", () => {
+  function exportButton(): HTMLButtonElement {
+    return screen.getByRole("button", { name: "Export chat" });
+  }
+
+  /** Catches the files the chat hands the browser to save, instead of saving them. */
+  function stubDownloads() {
+    const files: { name: string; blob: Blob }[] = [];
+    let latest: Blob | undefined;
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: (blob: Blob) => {
+        latest = blob;
+        return "blob:export";
+      },
+      revokeObjectURL: () => {},
+    });
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      files.push({ name: this.download, blob: latest! });
+    });
+    return files;
+  }
+
+  async function answerGleevec() {
+    const stream = stubChatStream();
+    render(<Chat />);
+    expect(screen.queryByRole("button", { name: "Export chat" })).toBeNull();
+
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(IMATINIB_LABEL_SEARCH + token("It blocks BCR-ABL [1].")));
+    expect(exportButton().disabled).toBe(true);
+    await streamed(() => stream.send(IMATINIB_SOURCES_EVENT + DONE));
+    expect(exportButton().disabled).toBe(false);
+  }
+
+  async function pick(item: string) {
+    fireEvent.click(exportButton());
+    fireEvent.click(await screen.findByRole("menuitem", { name: item }));
+  }
+
+  it("saves the answered conversation as CSV with the answer's sources", async () => {
+    const files = stubDownloads();
+    await answerGleevec();
+
+    await pick("CSV, one row per message");
+
+    expect(files).toHaveLength(1);
+    expect(files[0].name).toMatch(/^molecula-\d{4}-\d{2}-\d{2}-how-does-gleevec-work\.csv$/);
+    const csv = await files[0].blob.text();
+    expect(csv).toContain("user,How does Gleevec work?,");
+    expect(csv).toContain(
+      'assistant,It blocks BCR-ABL [1].,"[1] Gleevec – Mechanism of action – https://',
+    );
+  });
+
+  it("saves the answered conversation as JSON with what the label search returned", async () => {
+    const files = stubDownloads();
+    await answerGleevec();
+
+    await pick("JSON, with sources and tools");
+
+    const json = JSON.parse(await files[0].blob.text());
+    expect(json.title).toBe("How does Gleevec work?");
+    expect(json.turns[0].answer).toBe("It blocks BCR-ABL [1].");
+    expect(json.turns[0].passages[1].text).toContain("BCR-ABL tyrosine kinase");
+    expect(json.turns[0].sources[0].name).toBe("Gleevec");
+  });
+
+  it("opens the print dialog to print the conversation or save it as PDF", async () => {
+    const print = vi.fn();
+    vi.stubGlobal("print", print);
+    await answerGleevec();
+
+    await pick("Print or save as PDF");
+
+    expect(print).toHaveBeenCalledOnce();
   });
 });

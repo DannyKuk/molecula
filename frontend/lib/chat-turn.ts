@@ -14,7 +14,8 @@ import type { Step } from "./tool-cards";
  * token; `passages` are the label passages the label search returned, by the number the answer
  * cites them with. `sourceCheck` is the source check's verdict, which arrives after `sources`; a
  * fixed answer and a stopped one have none. A question asked while another chat's answer comes in
- * is `queued` until that answer ends.
+ * is `queued` until that answer ends. `askedAt` and `answeredAt` are epoch milliseconds; turns
+ * saved before they existed have neither.
  */
 export type Turn = {
   question: string;
@@ -25,6 +26,8 @@ export type Turn = {
   sources: Source[] | null;
   passages: Record<number, Passage>;
   sourceCheck: SourceCheck | null;
+  askedAt?: number;
+  answeredAt?: number;
 };
 
 export function startTurn(question: string): Turn {

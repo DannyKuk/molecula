@@ -7,6 +7,7 @@ import {
   runRefs,
   sectionName,
   sourceLabel,
+  sourceLines,
 } from "./citations";
 import { IMATINIB_SOURCES } from "./test-fixtures";
 
@@ -53,5 +54,21 @@ describe("citations", () => {
   it("names label sections as words", () => {
     expect(sectionName("ask_doctor_or_pharmacist")).toBe("Ask doctor or pharmacist");
     expect(sectionName(null)).toBe("Label");
+  });
+});
+
+describe("sourceLines", () => {
+  it("names a label passage by drug and section and a page by its site, after its numbers", () => {
+    expect(sourceLines(IMATINIB_SOURCES)).toEqual([
+      `[1] Gleevec – Mechanism of action – ${IMATINIB_SOURCES[0].url}`,
+      `[2, 3] Gleevec – Pharmacokinetics – ${IMATINIB_SOURCES[1].url}`,
+      "[4] PubChem – imatinib – https://pubchem.ncbi.nlm.nih.gov/compound/5291",
+    ]);
+  });
+
+  it("leaves out the number of a source the answer can't cite", () => {
+    expect(sourceLines([{ ...IMATINIB_SOURCES[3], ref: null }])).toEqual([
+      "PubChem – imatinib – https://pubchem.ncbi.nlm.nih.gov/compound/5291",
+    ]);
   });
 });

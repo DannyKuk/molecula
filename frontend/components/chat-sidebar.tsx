@@ -42,7 +42,7 @@ const RAIL_BOOKMARKS = 5;
 const OUTLINED = "border-zinc-500 text-foreground dark:border-zinc-400";
 
 const SIDEBAR_CLASSES =
-  "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-zinc-200 bg-zinc-50 md:flex dark:border-zinc-800 dark:bg-[oklch(0.17_0.004_286)]";
+  "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-zinc-200 bg-zinc-50 md:flex dark:border-zinc-800 dark:bg-[oklch(0.17_0.004_286)] print:hidden";
 
 /** The chats on a wide screen: a rail of icons, or once expanded, the whole list. */
 export function ChatSidebar(props: ChatListProps) {
@@ -159,7 +159,9 @@ export function ChatDrawer(props: ChatListProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<IconButton label="Open chats" className="-ml-2 md:hidden" />}>
+      <DialogTrigger
+        render={<IconButton label="Open chats" className="-ml-2 md:hidden print:hidden" />}
+      >
         <Menu />
       </DialogTrigger>
       <SheetContent className="bg-zinc-50 dark:bg-[oklch(0.17_0.004_286)]">
