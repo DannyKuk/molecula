@@ -5,13 +5,14 @@ from pydantic import BaseModel, ConfigDict, computed_field
 type Coordinates = tuple[float, float, float]
 type SecondaryStructure = Literal["helix", "sheet", "coil"]
 type BondOrder = Literal["single", "double", "triple", "aromatic"]
-type ContactKind = Literal["hbond", "contact"]
+type ContactKind = Literal["hbond", "coordination", "contact"]
 
 RCSB_ENTRY_URL = "https://www.rcsb.org/structure/{pdb_id}"
 
 
 class Residue(BaseModel):
-    """A polymer residue, named as the depositor numbered it (author chain and residue number)."""
+    """A polymer residue, metal ion or cofactor, named as the depositor numbered it (author chain
+    and residue number)."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -44,8 +45,16 @@ class PocketResidue(Residue):
     atoms: list[Atom]
 
 
+class MetalIon(Residue):
+    """A metal ion within coordination distance of the ligand, such as the zinc a sulfonamide
+    binds in carbonic anhydrase."""
+
+    element: str
+    xyz: Coordinates
+
+
 class Bond(BaseModel):
-    """A ligand bond between two indices into the ligand's atoms."""
+    """A bond between two indices into the atoms of the ligand or cofactor it belongs to."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -54,7 +63,8 @@ class Bond(BaseModel):
 
 
 class Ligand(BaseModel):
-    """The ligand copy shown, as its chem-comp code and author chain and residue number."""
+    """The ligand copy shown, or a cofactor copy, as its chem-comp code and author chain and
+    residue number."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -66,10 +76,11 @@ class Ligand(BaseModel):
 
 
 class Contact(BaseModel):
-    """An atom pair between a pocket residue and the ligand.
+    """An atom pair between a pocket residue, metal ion or cofactor and the ligand.
 
-    `hbond`: a nitrogen or oxygen pair close enough for a hydrogen bond. `contact`: the closest
-    heavy-atom pair of a pocket residue, one per residue.
+    `hbond`: a nitrogen or oxygen pair close enough for a hydrogen bond. `coordination`: a metal
+    atom close enough to bind a ligand atom. `contact`: the closest heavy-atom pair, one per
+    residue, metal ion and cofactor.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -88,7 +99,9 @@ class Complex(BaseModel):
     `target` (the gene symbol, with a note where one is needed, such as "ABL1 (BCR-ABL)") and
     `organism` say what the drug is bound to, from the reviewed entry in `data/hero_set.yaml`.
     `caption` is shown with the structure when it isn't simply the drug in its main target;
-    `showcase` marks the cleanest complexes, for the landing page and demos.
+    `showcase` marks the cleanest complexes, for the landing page and demos. `metals` and
+    `cofactors` are what the ligand binds through besides the polymer; their contacts are in
+    `contacts` with the pocket's.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -97,6 +110,8 @@ class Complex(BaseModel):
     ligand: Ligand
     trace: list[TraceResidue]
     pocket: list[PocketResidue]
+    metals: list[MetalIon] = []
+    cofactors: list[Ligand] = []
     contacts: list[Contact]
     target: str | None = None
     organism: str | None = None

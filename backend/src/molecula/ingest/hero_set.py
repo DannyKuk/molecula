@@ -5,6 +5,8 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 type ChainId = Annotated[str, Field(pattern=r"^[A-Za-z0-9]+$")]
+# A chem-comp code and its copy as author chain and residue number: "HEM A/601".
+type CofactorCopy = Annotated[str, Field(pattern=r"^[A-Z0-9]{1,5} [A-Za-z0-9]+/-?[0-9]+$")]
 
 
 class HeroComplex(BaseModel):
@@ -22,6 +24,7 @@ class HeroComplex(BaseModel):
     showcase: bool = False
     caption: str | None = None
     exclude_chains: tuple[ChainId, ...] = ()
+    cofactors: tuple[CofactorCopy, ...] = ()
     note: str = Field(min_length=1)
 
     @property

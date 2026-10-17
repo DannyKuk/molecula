@@ -46,6 +46,8 @@ export const SMALL_COMPLEX: Complex = {
       atoms: [{ name: "OG1", element: "O", xyz: [12, 3, 0] }],
     },
   ],
+  metals: [],
+  cofactors: [],
   contacts: [
     {
       kind: "hbond",

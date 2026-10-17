@@ -38,3 +38,12 @@ def test_a_file_stored_without_the_rcsb_link_gets_it(files: ComplexFiles) -> Non
     assert "source_url" not in stored
     assert found is not None
     assert found.model_dump()["source_url"] == "https://www.rcsb.org/structure/2HYY"
+
+
+def test_a_file_stored_before_metals_and_cofactors_were_kept_has_none(files: ComplexFiles) -> None:
+    files.write(5291, IMATINIB_COMPLEX.model_dump_json(exclude={"metals", "cofactors"}))
+
+    found = ComplexService(files).get_complex(5291)
+
+    assert found is not None
+    assert (found.metals, found.cofactors) == ([], [])

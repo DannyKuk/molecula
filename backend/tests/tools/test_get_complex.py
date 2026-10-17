@@ -5,6 +5,7 @@ import pytest
 from langchain_core.tools import StructuredTool
 
 from molecula.schemas.chat import Source
+from molecula.schemas.complexes import Contact, MetalIon, Residue
 from molecula.schemas.tools import (
     DrugComplex,
     DrugNotSupported,
@@ -127,3 +128,32 @@ def test_a_stand_in_structure_brings_its_caption(
 
     assert isinstance(message.artifact, DrugComplex)
     assert message.artifact.caption == "The mouse ABL1 kinase domain."
+
+
+def test_a_metal_ion_the_drug_binds_is_listed_with_the_contacts(
+    tool: StructuredTool, complexes: FakeComplexService
+) -> None:
+    zinc = Residue(chain="A", number=301, name="ZN")
+    complexes.complexes[5291] = complexes.complexes[5291].model_copy(
+        update={
+            "metals": [MetalIon(**zinc.model_dump(), element="Zn", xyz=(0.0, 0.0, 1.9))],
+            "contacts": [
+                Contact(
+                    kind="coordination",
+                    residue=zinc,
+                    residue_atom="ZN",
+                    ligand_atom=0,
+                    distance=1.9,
+                ),
+                Contact(
+                    kind="contact", residue=zinc, residue_atom="ZN", ligand_atom=0, distance=1.9
+                ),
+            ],
+        }
+    )
+
+    message = call_tool(tool, {"drug": "imatinib"})
+
+    assert isinstance(message.artifact, DrugComplex)
+    assert message.artifact.contacts == [ResidueContact(residue="ZN301", chain="A", distance=1.9)]
+    assert message.artifact.hydrogen_bonds == []

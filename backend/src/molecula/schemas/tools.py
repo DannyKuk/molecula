@@ -157,7 +157,7 @@ class DrugComparison(ToolResult):
 
 
 class HydrogenBond(BaseModel):
-    """A hydrogen bond between a pocket residue's atom and a ligand atom, in Å."""
+    """A hydrogen bond between a pocket residue's or cofactor's atom and a ligand atom, in Å."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -169,7 +169,8 @@ class HydrogenBond(BaseModel):
 
 
 class ResidueContact(BaseModel):
-    """A pocket residue and its closest heavy-atom distance to the ligand, in Å."""
+    """A pocket residue, metal ion or cofactor and its closest heavy-atom distance to the ligand,
+    in Å."""
 
     model_config = ConfigDict(frozen=True)
 
