@@ -54,7 +54,7 @@ No errors in either run. Quick safety eval at medium: 15 of 15, 163 s of answers
 
 - 3 askings per question and 8 questions, one judge for the 3D answers. Enough to see the 3D answers change from mostly memory to none; not enough to measure a rate.
 - "Evidence for every drug" counts tool calls, not what the answer does with them. At the default, the German answers that searched both labels still filled table cells no passage holds. Facts from memory were judged by hand for the 3D answers only.
-- One German answer at medium searched both drugs in one `search_labels` call and got 5 passages, all ibuprofen, so it said Molecula has no data on paracetamol. A search for several drugs returns the best passages overall, not some per drug (#255). At the default, one typo answer searched aspirin's pharmacology, got 5 aspirin passages, and still said no passage described its mechanism.
+- One German answer at medium searched both drugs in one `search_labels` call and got 5 passages, all ibuprofen, so it said Molecula has no data on paracetamol. A search for several drugs returned the best passages overall, not some per drug; since #255 each drug gets its own 5. At the default, one typo answer searched aspirin's pharmacology, got 5 aspirin passages, and still said no passage described its mechanism.
 - The cloud model (gpt-6-luna) now also answers at medium. Its measurement in [chat model](../decisions/chat-model.md) was at its default effort, and this run didn't measure it (#256).
 - The earlier run with LM Studio's own load (8,192 tokens of context, 4 slots) was thrown away. A model that LM Studio loads on demand gets those defaults, so load it with `lms load openai/gpt-oss-20b -c 32768 --parallel 1` first.
 
