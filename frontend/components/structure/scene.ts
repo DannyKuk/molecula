@@ -411,7 +411,7 @@ function complexScene(
     playing.current = { stop, skip: settle };
   };
 
-  settle();
+  setMode(mode, false);
   return {
     ...common,
     setMode,

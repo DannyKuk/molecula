@@ -109,6 +109,16 @@ describe("createScene", () => {
     expect(viewer.spin).toHaveBeenLastCalledWith("y", expect.any(Number));
   });
 
+  it("colours the drug's carbons green next to the protein, and by element on its own", () => {
+    const { scene, drug } = complexScene();
+    const carbons = () => (drug[0].style as { stick: { colorscheme?: string } }).stick.colorscheme;
+
+    expect(carbons()).toBe("greenCarbon");
+
+    scene.setMode("molecule", false);
+    expect(carbons()).toBe("default");
+  });
+
   it("shows the drug alone in Molecule mode", () => {
     const { scene, viewer } = complexScene();
     viewer.addCylinder.mockClear();
@@ -189,7 +199,7 @@ describe("createScene", () => {
   });
 
   it("jumps to the end when the user grabs the view while the sequence plays", () => {
-    const { scene, viewer, protein, drug, grab } = complexScene();
+    const { scene, viewer, drug, grab } = complexScene();
     viewer.addCylinder.mockClear();
     scene.replay();
     runFrames(100, 2000);
