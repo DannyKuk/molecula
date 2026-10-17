@@ -16,6 +16,9 @@ class LabelRetriever:
     wrong group the chat model picks still leaves the drug's other sections in reach. The
     `top_k` best chunks are candidates; those whose own score is below `min_score` are dropped
     but still returned, so the retrieval trace can show them.
+
+    A filter with several drugs searches each drug on its own and keeps its `top_k` best
+    chunks, so a drug whose label matches the question better can't crowd out the others (#255).
     """
 
     def __init__(
@@ -45,8 +48,7 @@ class LabelRetriever:
         if label_filter is not None and label_filter.names_drugs and not label_filter.set_ids:
             return Retrieval(question=question, filter=label_filter, chunks=[], dropped=[])
         vector = self._embeddings.embed_query(question)
-        found, widened = self._search_widening(vector, label_filter)
-        candidates = self._ranked(found, label_filter)
+        candidates, widened = self._candidates(vector, label_filter)
         return Retrieval(
             question=question,
             filter=label_filter,
@@ -54,6 +56,24 @@ class LabelRetriever:
             dropped=[c for c in candidates if c.score < self._min_score],
             widened=widened,
         )
+
+    def _candidates(
+        self, vector: list[float], label_filter: LabelFilter | None
+    ) -> tuple[list[RetrievedChunk], list[Widening]]:
+        """The best chunks under the filter, or the best chunks of each drug it names."""
+        searched = [drug for drug in label_filter.drugs if drug.set_ids] if label_filter else []
+        if label_filter is None or len(searched) < 2:
+            found, widened = self._search_widening(vector, label_filter)
+            return self._ranked(found, label_filter, self._top_k), widened
+        candidates: list[RetrievedChunk] = []
+        widenings: set[Widening] = set()
+        for drug in searched:
+            one_drug = label_filter.model_copy(update={"drugs": [drug]})
+            found, widened = self._search_widening(vector, one_drug)
+            candidates += self._ranked(found, one_drug, self._top_k)
+            widenings.update(widened)
+        candidates.sort(key=self._ranking_score, reverse=True)
+        return candidates, sorted(widenings)
 
     def _search_widening(
         self, vector: list[float], label_filter: LabelFilter | None
@@ -84,15 +104,15 @@ class LabelRetriever:
         return list({chunk.id: (chunk, score) for chunk, score in [*grouped, *found]}.values())
 
     def _ranked(
-        self, found: list[tuple[Chunk, float]], label_filter: LabelFilter | None
+        self, found: list[tuple[Chunk, float]], label_filter: LabelFilter | None, limit: int
     ) -> list[RetrievedChunk]:
         groups = label_filter.section_groups if label_filter else []
         chunks = [retrieved(chunk, score, chunk.section_group in groups) for chunk, score in found]
-        chunks.sort(
-            key=lambda c: c.score + (self._section_group_boost if c.in_section_groups else 0.0),
-            reverse=True,
-        )
-        return chunks[: self._top_k]
+        chunks.sort(key=self._ranking_score, reverse=True)
+        return chunks[:limit]
+
+    def _ranking_score(self, chunk: RetrievedChunk) -> float:
+        return chunk.score + (self._section_group_boost if chunk.in_section_groups else 0.0)
 
 
 def in_groups(found: list[tuple[Chunk, float]], label_filter: LabelFilter) -> bool:

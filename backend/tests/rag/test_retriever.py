@@ -1,3 +1,4 @@
+from collections import Counter
 from dataclasses import replace
 from datetime import date
 from pathlib import Path
@@ -156,6 +157,46 @@ def test_two_drugs_search_the_labels_of_both(index: LabelIndex) -> None:
         IBUPROFEN_SIDE_EFFECTS.id,
         IMATINIB_SIDE_EFFECTS.id,
     ]
+
+
+def test_a_drug_whose_label_matches_better_doesnt_crowd_out_the_other(
+    index: LabelIndex,
+) -> None:
+    retrieval = retriever(index, top_k=1).retrieve(
+        "bleeding pain fever", label_filter([IMATINIB, IBUPROFEN])
+    )
+
+    assert sorted(chunk.cid for chunk in retrieval.chunks) == [IBUPROFEN.cid, IMATINIB.cid]
+
+
+def test_each_drug_gets_top_k_chunks_of_its_own(index: LabelIndex) -> None:
+    retrieval = retriever(index, top_k=2).retrieve(
+        "bleeding pain fever", label_filter([IMATINIB, IBUPROFEN])
+    )
+
+    assert Counter(chunk.cid for chunk in retrieval.chunks) == {IMATINIB.cid: 2, IBUPROFEN.cid: 2}
+
+
+def test_a_drug_without_labels_leaves_top_k_to_the_drug_with_labels(index: LabelIndex) -> None:
+    metamizole = DrugFilter(name="metamizole", cid=3111, generic="metamizole", set_ids=[])
+
+    retrieval = retriever(index, top_k=2).retrieve("nausea", label_filter([metamizole, IMATINIB]))
+
+    assert [chunk.cid for chunk in retrieval.chunks] == [IMATINIB.cid, IMATINIB.cid]
+
+
+def test_each_drug_of_several_widens_on_its_own(index: LabelIndex) -> None:
+    advil = DrugFilter(
+        name="Advil", cid=3672, generic="ibuprofen", set_ids=["advil"], narrowed=True
+    )
+
+    retrieval = retriever(index).retrieve(
+        "nausea", label_filter([advil, IMATINIB], section_groups=["adverse_reactions"])
+    )
+
+    assert IBUPROFEN_SIDE_EFFECTS.id in [chunk.id for chunk in retrieval.chunks]
+    assert IMATINIB_SIDE_EFFECTS.id in [chunk.id for chunk in retrieval.chunks]
+    assert retrieval.widened == ["labels"]
 
 
 def test_without_section_groups_every_part_of_the_drugs_label_is_searched(
