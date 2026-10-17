@@ -11,7 +11,12 @@ from langchain_core.language_models import BaseChatModel
 
 from molecula.agent.agent import ChatAgent
 from molecula.agent.decisions import DecisionConfigError, DecisionModel, get_decision_model
-from molecula.agent.llm import LLMConfigError, get_chat_model, get_source_check_model
+from molecula.agent.llm import (
+    LLMConfigError,
+    get_answer_model,
+    get_chat_model,
+    get_source_check_model,
+)
 from molecula.agent.tool_registry import build_tools
 from molecula.api import chat, drugs, health
 from molecula.config import Settings, get_settings
@@ -132,7 +137,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             app.state.label_retriever,
         )
         app.state.chat_agent = ChatAgent(
-            chat_model,
+            get_answer_model(settings),
             tools,
             max_steps=settings.chat_max_steps,
             timeout_seconds=settings.chat_timeout_seconds,

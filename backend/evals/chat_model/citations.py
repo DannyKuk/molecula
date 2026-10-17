@@ -124,7 +124,7 @@ def tool_descriptions(app: FastAPI) -> str:
 
 
 def cache_path(settings: Settings, model_name: str, descriptions: str) -> Path:
-    name = model_label(settings, model_name)
+    name = answer_label(settings, model_name)
     setup = f"{name}\n{prompts.load('agent/system')}\n{descriptions}"
     key = hashlib.sha256(setup.encode()).hexdigest()[:12]
     slug = name.replace("/", "_")
@@ -137,11 +137,20 @@ def model_label(settings: Settings, model_name: str) -> str:
     return f"{model_name}-{effort}" if effort else model_name
 
 
+def answer_label(settings: Settings, model_name: str) -> str:
+    """The model label and the answering agent's effort, unless it is the model's default:
+    `openai/gpt-oss-20b-answer-medium` (#254)."""
+    label = model_label(settings, model_name)
+    effort = settings.answer_reasoning_effort
+    return label if effort == "default" else f"{label}-answer-{effort}"
+
+
 def chat_label(settings: Settings, model_name: str) -> str:
-    """The model label and the source check's effort, for evals that ask `POST /chat`, where
-    the check runs after each answer: `openai/gpt-oss-20b-check-medium`. When a decision model
-    sorts the messages (online, #226) it is named too: `…-check-medium-input-jev-1.13`."""
-    label = f"{model_label(settings, model_name)}-check-{settings.source_check_reasoning_effort}"
+    """The answer label and the source check's effort, for evals that ask `POST /chat`, where
+    the check runs after each answer: `openai/gpt-oss-20b-answer-medium-check-medium`. When a
+    decision model sorts the messages (online, #226) it is named too:
+    `…-check-medium-input-jev-1.13`."""
+    label = f"{answer_label(settings, model_name)}-check-{settings.source_check_reasoning_effort}"
     decision_model = input_check_decision_model(settings)
     return label if decision_model is None else f"{label}-input-{decision_model.model}"
 

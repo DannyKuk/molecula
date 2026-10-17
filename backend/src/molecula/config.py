@@ -34,9 +34,14 @@ class Settings(BaseSettings):
     llm_temperature: float = 0.2
     llm_timeout_seconds: float = 60.0
     llm_max_retries: int = 2
-    # Empty leaves the model's own default: gpt-oss-20b in LM Studio then reasons about as
-    # briefly as on "low", gpt-5-mini on OpenRouter longer than on "medium" (#193, #198).
+    # The effort of the guard's sorting and the label-filter extraction. Empty leaves the model's
+    # own default: gpt-oss-20b in LM Studio then reasons about as briefly as on "low", gpt-5-mini
+    # on OpenRouter longer than on "medium" (#193, #198).
     llm_reasoning_effort: Literal["low", "medium", "high"] | None = None
+    # The answering agent's own effort: at gpt-oss-20b's default it stopped after the 3D view or
+    # the properties and wrote the rest of a comparison from memory (#254). "default" leaves the
+    # model's own default.
+    answer_reasoning_effort: Literal["default", "low", "medium", "high"] = "medium"
     # The source check's own effort, so the writer keeps its fast default (#206, #213).
     # "default" leaves the model's own default, as an empty LLM_REASONING_EFFORT does.
     source_check_reasoning_effort: Literal["default", "low", "medium", "high"] = "medium"
