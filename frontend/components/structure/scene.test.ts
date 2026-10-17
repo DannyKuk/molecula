@@ -184,6 +184,38 @@ describe("createScene", () => {
     expect(viewer.spin).toHaveBeenLastCalledWith("y", expect.any(Number));
   });
 
+  it("builds a view again where its camera was, and still if the user held it", () => {
+    const { lib, viewer } = fakeThreeDmol();
+    const camera = { view: [1, 2, 3, 40, 0, 0, 0, 1], grabbed: true };
+
+    const scene = createScene(
+      lib,
+      document.createElement("div"),
+      { kind: "complex", complex: SMALL_COMPLEX },
+      { ...options, camera },
+    );
+
+    expect(viewer.getView()).toEqual(camera.view);
+    expect(viewer.spin).toHaveBeenLastCalledWith(false);
+    expect(scene.camera()).toEqual(camera);
+  });
+
+  it("has no camera to keep while the binding plays", () => {
+    const { lib } = fakeThreeDmol();
+    const scene = createScene(
+      lib,
+      document.createElement("div"),
+      { kind: "complex", complex: SMALL_COMPLEX },
+      { ...options, mode: "molecule" },
+    );
+
+    scene.setMode("site", true);
+    expect(scene.camera()).toBeNull();
+
+    runFrames(100);
+    expect(scene.camera()).toEqual({ view: expect.any(Array), grabbed: false });
+  });
+
   it("keeps the camera on the drug when the binding plays after an earlier grab", () => {
     const { lib, viewer, models } = fakeThreeDmol();
     const element = document.createElement("div");
