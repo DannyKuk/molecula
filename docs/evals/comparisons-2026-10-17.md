@@ -32,7 +32,7 @@ The 3D answers by hand:
 | | default | medium |
 |---|---|---|
 | States a drug fact no tool returned | **4 of 6** | **0 of 6** |
-| Borderline | 1 ("binds reversibly") | 1 ("ibuprofen targets COX-2", read off the one structure) |
+| Borderline | 1 ("binds reversibly") | 1 to 2 ("ibuprofen targets COX-2" and "non-covalent inhibitor of COX-2", read off the one structure) |
 | Other | 1 gives aspirin 0 H-bond donors and 0 rotatable bonds, against PubChem's 1 and 3 | - |
 
 No errors in either run. Quick safety eval at medium: 15 of 15, 163 s of answers.
@@ -41,7 +41,7 @@ No errors in either run. Quick safety eval at medium: 15 of 15, 163 s of answers
 
 - **At the default effort the 3D view is where the model stops.** It shows the structure, sometimes adds the properties, and writes how the drugs work from memory: aspirin acetylating "a serine residue in PTGS2" (the stored structure is COX-1), ibuprofen "competing with arachidonic acid", and for the typo a made-up dialogue between the two drugs. None of that is in a tool result.
 - **At medium the 3D answers stay with the tool data.** They fetch both structures (or one structure and a label search) and compare what those hold: the target, the species, the contacts, and aspirin's covalent Ser530 from the structure's caption. They still don't search the labels for how each drug works, so the table counts 0 there; the answers just don't claim more than the structures say.
-- **The plain comparisons searched both labels more often**, 12 of 12 against 10 of 12. The two misses at the default stopped at `compare_drugs`; one then added "faster onset but shorter half-life" from memory.
+- **The plain comparisons searched both labels more often**, 12 of 12 against 10 of 12. The two misses at the default stopped at `compare_drugs` and gave the properties and little else. A third default answer looked up both drugs' targets, so the script counts it, and still added "faster onset but shorter half-life" from memory.
 - **Medium costs time:** about 5 s more for a simple question (4.2 → 9.5 s) and 7 to 13 s more for a comparison. The setting covers only the answers, so the guard and the filter extraction keep their speed.
 - **This doesn't contradict #197.** There, medium made no difference on single-drug label questions, where the label search is the obvious first step. It pays off when the question has several parts.
 
@@ -53,8 +53,9 @@ No errors in either run. Quick safety eval at medium: 15 of 15, 163 s of answers
 ## Limits
 
 - 3 askings per question and 8 questions, one judge for the 3D answers. Enough to see the 3D answers change from mostly memory to none; not enough to measure a rate.
-- Medium still has flaws the script can't count: one German answer searched only ibuprofen and said Molecula has no data on paracetamol, which it has.
-- The cloud model (gpt-6-luna) now also answers at medium. Its measurement in [chat model](../decisions/chat-model.md) was at its default effort, and this run didn't measure it.
+- "Evidence for every drug" counts tool calls, not what the answer does with them. At the default, the German answers that searched both labels still filled table cells no passage holds. Facts from memory were judged by hand for the 3D answers only.
+- One German answer at medium searched both drugs in one `search_labels` call and got 5 passages, all ibuprofen, so it said Molecula has no data on paracetamol. A search for several drugs returns the best passages overall, not some per drug (#255). At the default, one typo answer searched aspirin's pharmacology, got 5 aspirin passages, and still said no passage described its mechanism.
+- The cloud model (gpt-6-luna) now also answers at medium. Its measurement in [chat model](../decisions/chat-model.md) was at its default effort, and this run didn't measure it (#256).
 - The earlier run with LM Studio's own load (8,192 tokens of context, 4 slots) was thrown away. A model that LM Studio loads on demand gets those defaults, so load it with `lms load openai/gpt-oss-20b -c 32768 --parallel 1` first.
 
 ## Reproduce
