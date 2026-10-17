@@ -52,7 +52,7 @@ export function CitationChip({
           openOnHover
           delay={150}
           aria-label={`${found ? "Found by the source check" : "Sources"}: ${labels.join(", ")}`}
-          className="mx-0.5 inline-flex max-w-full items-center rounded-full border border-zinc-300 bg-zinc-100 px-2 py-0.5 align-middle text-xs font-medium hover:bg-zinc-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          className="mx-0.5 inline-flex max-w-full items-center rounded-full border border-zinc-300 bg-zinc-100 px-2 py-0.5 align-middle text-xs font-medium hover:bg-zinc-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800 print:hidden"
         >
           <span className="truncate">{labels[0]}</span>
           {others}
@@ -76,6 +76,7 @@ export function CitationChip({
           </ol>
         </PopoverContent>
       </Popover>
+      <span className="hidden print:inline">[{printedRefs(sources)}]</span>
     </>
   );
 }
@@ -118,6 +119,11 @@ function CitedPage({ source }: { source: Source }) {
       </a>
     </>
   );
+}
+
+/** "2, 3": the numbers the printed source list gives these sources. */
+function printedRefs(sources: Source[]): string {
+  return [...new Set(sources.map((source) => source.ref))].join(", ");
 }
 
 function excerpt(text: string): string {

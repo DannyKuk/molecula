@@ -26,7 +26,16 @@ describe("CitationChip", () => {
     const { container } = renderAnswer("Imatinib blocks BCR-ABL [1].");
 
     expect(chips()).toEqual(["Gleevec · Mechanism of action"]);
-    expect(container.textContent).toBe("Imatinib blocks BCR-ABL Gleevec · Mechanism of action.");
+    expect(container.textContent).toBe("Imatinib blocks BCR-ABL Gleevec · Mechanism of action[1].");
+  });
+
+  it("prints a run of citations as the numbers of the printed source list", () => {
+    renderAnswer("It is cleared by the liver [2][3].");
+
+    const printed = screen.getByText("[2, 3]");
+    expect(printed.className).toContain("hidden");
+    expect(printed.className).toContain("print:inline");
+    expect(screen.getByRole("button").className).toContain("print:hidden");
   });
 
   it("opens the passage, the label date and the DailyMed link from the chip", async () => {
@@ -90,7 +99,7 @@ describe("CitationChip", () => {
 
     expect(chips()).toEqual(["Gleevec · Mechanism of action"]);
     expect(container.textContent).toBe(
-      "Sildenafil binds PDE5A. Imatinib blocks BCR-ABL Gleevec · Mechanism of action.",
+      "Sildenafil binds PDE5A. Imatinib blocks BCR-ABL Gleevec · Mechanism of action[1].",
     );
   });
 
