@@ -14,7 +14,9 @@ The hero entries with a special case (`CROPPED`) were recorded on 2026-10-13 too
 ligands' chem-comps. Whole they are up to 13 MB, so each `{pdb}_cropped.cif` keeps only `_entry`
 and the `atom_site` rows of model 1 of every residue with an atom within 10 Å of the hero ligand
 copy, written with biotite's `CIFFile`. On each one `build_complex` gives the same pocket, contacts
-and ligand as on the whole entry.
+and ligand as on the whole entry. The entries with a metal ion or cofactor at the ligand (3HS4 zinc,
+4WMZ heme, 1U72 NADPH, 5I71 sodium) were cropped the same way on 2026-10-18 from the store's HTTP
+cache, which holds them as fetched on 2026-10-13, with their ligands' chem-comps (#144).
 
 Search and GraphQL requests are POSTs to one URL, so they are told apart by their JSON body:
 `describe` turns a request into a short readable key. The ibuprofen InChIKey search answered
@@ -47,6 +49,10 @@ CROPPED = {
     "3B7E": "ZMR",
     "9C9M": "DLU",
     "1HWK": "117",
+    "3HS4": "AZM",
+    "4WMZ": "TPF",
+    "1U72": "MTX",
+    "5I71": "68P",
 }
 
 

@@ -16,12 +16,13 @@ from typing import Any
 
 import biotite.structure.io.pdbx as pdbx
 import httpx2
+import numpy as np
 import pytest
 from rdkit import Chem
 
 from molecula.ingest.complexes import ComplexError, ComplexesReport, build_complex, ingest_complexes
 from molecula.ingest.hero_set import HeroComplex
-from molecula.schemas.complexes import Complex, Ligand
+from molecula.schemas.complexes import Complex, ContactKind, Ligand
 from molecula.sources.http import SourceClient
 from molecula.sources.rcsb import RcsbClient
 from molecula.store.compounds import CompoundStore
@@ -279,6 +280,153 @@ def test_excluded_chain_leaves_losartans_pocket_and_trace() -> None:
     assert losartan.pocket == [r for r in with_nanobody.pocket if r.chain == "A"]
 
 
+def bound_contacts(complex_: Complex, *kinds: ContactKind) -> list[tuple[str, str, str, float]]:
+    """The contacts of the metal ions and cofactors, as residue, its atom, ligand atom, distance."""
+    bound = {(metal.chain, metal.number) for metal in complex_.metals} | {
+        (cofactor.chain, cofactor.number) for cofactor in complex_.cofactors
+    }
+    return [
+        (
+            f"{contact.residue.name}{contact.residue.number}",
+            contact.residue_atom,
+            complex_.ligand.atoms[contact.ligand_atom].name,
+            contact.distance,
+        )
+        for contact in complex_.contacts
+        if (contact.residue.chain, contact.residue.number) in bound and contact.kind in kinds
+    ]
+
+
+@pytest.fixture(scope="module")
+def acetazolamide() -> Complex:
+    return build_hero("3HS4", "A/701")
+
+
+def test_acetazolamide_keeps_the_zinc_its_sulfonamide_binds(acetazolamide) -> None:
+    [zinc] = acetazolamide.metals
+
+    assert (zinc.chain, zinc.number, zinc.name, zinc.element) == ("A", 301, "ZN", "Zn")
+    assert bound_contacts(acetazolamide, "coordination") == [("ZN301", "ZN", "N1", 1.94)]
+    assert bound_contacts(acetazolamide, "contact") == [("ZN301", "ZN", "N1", 1.94)]
+
+
+def test_waters_and_the_glycerol_next_to_acetazolamide_are_dropped(acetazolamide) -> None:
+    cif = pdbx.CIFFile.read(io.StringIO(recorded_structure("3HS4")))
+    recorded = set(pdbx.get_structure(cif, model=1, use_author_fields=True).res_name)
+    kept = {residue.name for residue in acetazolamide.pocket + acetazolamide.trace} | {
+        contact.residue.name for contact in acetazolamide.contacts
+    }
+
+    assert {"HOH", "GOL"} <= recorded
+    assert not kept & {"HOH", "GOL"}
+    assert acetazolamide.cofactors == []
+
+
+def test_histidines_that_bind_the_zinc_are_no_hydrogen_bonds(acetazolamide) -> None:
+    # His94 and His96 NE2 sit 3.3 Å from acetazolamide's N1 across the zinc they bind.
+    pairs = {(name, number, atom) for name, number, atom, *_ in hbonds(acetazolamide)}
+
+    assert ("THR", 199, "OG1") in pairs
+    assert not {("HIS", 94, "NE2"), ("HIS", 96, "NE2")} & pairs
+
+
+def zinc_moved_to(distance: float) -> str:
+    """The 3HS4 crop with its zinc moved along the N1-Zn line to `distance` Å from N1."""
+    cif = pdbx.CIFFile.read(io.StringIO(recorded_structure("3HS4")))
+    atom_site = cif.block["atom_site"]
+    names = atom_site["label_atom_id"].as_array()
+    comps = atom_site["label_comp_id"].as_array()
+    columns = ["Cartn_x", "Cartn_y", "Cartn_z"]
+    coords = np.stack([atom_site[column].as_array(float) for column in columns], axis=-1)
+    [zinc] = np.flatnonzero(comps == "ZN")
+    [n1] = np.flatnonzero((comps == "AZM") & (names == "N1"))
+    direction = (coords[zinc] - coords[n1]) / np.linalg.norm(coords[zinc] - coords[n1])
+    coords[zinc] = coords[n1] + direction * distance
+    for axis, column in enumerate(columns):
+        atom_site[column] = np.char.mod("%.3f", coords[:, axis])
+    text = io.StringIO()
+    cif.write(text)
+    return text.getvalue()
+
+
+@pytest.mark.parametrize(("distance", "kept"), [(2.79, True), (2.81, False)])
+def test_a_metal_is_kept_only_within_coordination_distance(distance: float, kept: bool) -> None:
+    complex_ = build_complex(zinc_moved_to(distance), "AZM", "A/701", recorded_smiles("AZM"))
+
+    assert [metal.name for metal in complex_.metals] == (["ZN"] if kept else [])
+    assert any(contact.residue.name == "ZN" for contact in complex_.contacts) is kept
+
+
+def test_the_sodium_of_escitaloprams_transporter_site_is_too_far_to_keep() -> None:
+    # The nearest sodium is 3.45 Å from escitalopram, an ion in the site, not bound to the drug.
+    escitalopram = build_hero("5I71", "A/701")
+
+    assert escitalopram.metals == []
+    assert "NA" not in {contact.residue.name for contact in escitalopram.contacts}
+
+
+def test_dolutegravir_keeps_both_magnesium_ions_it_grips() -> None:
+    dolutegravir = build_hero("9C9M", "O/101")
+
+    assert [(metal.chain, metal.number, metal.element) for metal in dolutegravir.metals] == [
+        ("I", 301, "Mg"),
+        ("I", 302, "Mg"),
+    ]
+    assert bound_contacts(dolutegravir, "coordination") == [
+        ("MG302", "MG", "OAE", 2.03),
+        ("MG301", "MG", "OAC", 2.09),
+        ("MG301", "MG", "OAE", 2.13),
+        ("MG302", "MG", "OAD", 2.21),
+    ]
+
+
+@pytest.fixture(scope="module")
+def fluconazole() -> Complex:
+    return build_hero("4WMZ", "A/602", cofactors=["HEM A/601"])
+
+
+def test_fluconazole_keeps_the_heme_whose_iron_its_triazole_binds(fluconazole) -> None:
+    [heme] = fluconazole.cofactors
+
+    assert (heme.code, heme.chain, heme.number, len(heme.atoms)) == ("HEM", "A", 601, 43)
+    assert bound_contacts(fluconazole, "coordination") == [("HEM601", "FE", "N5", 2.13)]
+    assert fluconazole.metals == []
+
+
+def test_hemes_nitrogens_that_bind_its_iron_are_no_hydrogen_bonds(fluconazole) -> None:
+    assert bound_contacts(fluconazole, "hbond") == []
+
+
+def test_cofactor_bonds_come_from_the_chem_comp_dictionary(fluconazole) -> None:
+    [heme] = fluconazole.cofactors
+    names = [atom.name for atom in heme.atoms]
+    bonded = {frozenset(names[i] for i in bond.atoms) for bond in heme.bonds}
+
+    assert len(heme.bonds) == 50
+    assert {frozenset({"FE", nitrogen}) for nitrogen in ("NA", "NB", "NC", "ND")} <= bonded
+    assert {bond.order for bond in heme.bonds} == {"single", "double", "aromatic"}
+
+
+def test_a_cofactor_not_listed_is_dropped() -> None:
+    fluconazole = build_hero("4WMZ", "A/602")
+
+    assert fluconazole.cofactors == []
+    assert "HEM" not in {contact.residue.name for contact in fluconazole.contacts}
+
+
+def test_methotrexate_keeps_the_nadph_next_to_it() -> None:
+    methotrexate = build_hero("1U72", "A/188", cofactors=["NDP A/187"])
+
+    [nadph] = methotrexate.cofactors
+    assert (nadph.code, len(nadph.atoms)) == ("NDP", 48)
+    assert bound_contacts(methotrexate, "contact") == [("NDP187", "O7N", "C4", 3.27)]
+
+
+def test_a_listed_cofactor_missing_from_the_entry_is_an_error() -> None:
+    with pytest.raises(ComplexError, match="no cofactor HEM at B/601"):
+        build_hero("4WMZ", "A/602", cofactors=["HEM B/601"])
+
+
 def test_smiles_with_explicit_hydrogens_still_gives_the_bond_orders() -> None:
     # The chem-comp spells out a hydrogen on zanamivir's guanidine to fix the C=N geometry.
     assert recorded_smiles("ZMR").startswith("[H]/N=C")
@@ -290,6 +438,7 @@ def test_smiles_with_explicit_hydrogens_still_gives_the_bond_orders() -> None:
 
 
 ZANAMIVIR = compound_record(60855, "zanamivir")
+FLUCONAZOLE = compound_record(3365, "fluconazole")
 IMATINIB_HERO = HeroComplex(
     drug="imatinib",
     pdb="1IEP",
@@ -312,6 +461,17 @@ ZANAMIVIR_HERO = HeroComplex(
     caption="Neuraminidase of a 1918 strain.",
     note="explicit hydrogen in the SMILES",
 )
+FLUCONAZOLE_HERO = HeroComplex(
+    drug="fluconazole",
+    pdb="4WMZ",
+    ligand_code="TPF",
+    ligand_copy="A/602",
+    chain="A",
+    target="ERG11 (CYP51)",
+    organism="Saccharomyces cerevisiae",
+    cofactors=("HEM A/601",),
+    note="the triazole binds the heme iron",
+)
 
 
 @pytest.fixture
@@ -324,7 +484,7 @@ def ingest(
     conn: sqlite3.Connection, replaying_client: Callable[..., SourceClient], files: ComplexFiles
 ) -> Callable[..., ComplexesReport]:
     compounds = CompoundStore(conn)
-    for record in (IMATINIB, ZANAMIVIR):
+    for record in (IMATINIB, ZANAMIVIR, FLUCONAZOLE):
         compounds.save(record, [], datetime(2026, 10, 13, tzinfo=UTC))
 
     def run(heroes: list[HeroComplex], handler: Replay | None = None) -> ComplexesReport:
@@ -415,3 +575,20 @@ def test_chem_comp_without_a_smiles_is_reported(ingest, files: ComplexFiles) -> 
 
     assert report.failures == {"Zanamivir": "the chem-comp record of ZMR has no SMILES"}
     assert files.read(60855) is None
+
+
+def test_a_heroes_cofactors_are_stored_with_its_complex(ingest, files: ComplexFiles) -> None:
+    report = ingest([FLUCONAZOLE_HERO])
+
+    assert report.complete
+    fluconazole = Complex.model_validate_json(files.read(3365) or "")
+    assert [cofactor.code for cofactor in fluconazole.cofactors] == ["HEM"]
+
+
+def test_a_listed_cofactor_missing_from_the_entry_is_reported(ingest, files) -> None:
+    wrong_copy = FLUCONAZOLE_HERO.model_copy(update={"cofactors": ("HEM B/601",)})
+
+    report = ingest([wrong_copy])
+
+    assert report.failures == {"fluconazole": "no cofactor HEM at B/601"}
+    assert files.read(3365) is None

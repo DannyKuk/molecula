@@ -52,22 +52,29 @@ export type Residue = { chain: string; number: number; ins_code: string; name: s
 
 export type Atom = { name: string; element: string; xyz: Xyz };
 
+/** A ligand or cofactor copy with its heavy atoms and bonds. */
+export type Molecule = {
+  code: string;
+  chain: string;
+  number: number;
+  atoms: Atom[];
+  bonds: { atoms: [number, number]; order: "single" | "double" | "triple" | "aromatic" }[];
+};
+
 /** A drug-target complex for the 3D view (`Complex` in `backend/src/molecula/schemas/complexes.py`):
  * heavy atoms only, coordinates in Å. */
 export type Complex = {
   pdb_id: string;
-  ligand: {
-    code: string;
-    chain: string;
-    number: number;
-    atoms: Atom[];
-    bonds: { atoms: [number, number]; order: "single" | "double" | "triple" | "aromatic" }[];
-  };
+  ligand: Molecule;
   /** One point per residue: the CA atom of an amino acid, the P atom of a nucleotide (`sse` null). */
   trace: (Residue & { sse: "helix" | "sheet" | "coil" | null; xyz: Xyz })[];
   pocket: (Residue & { atoms: Atom[] })[];
+  /** The metal ions within coordination distance of the drug, and the cofactors it binds through;
+   * their contacts are in `contacts`. */
+  metals: (Residue & { element: string; xyz: Xyz })[];
+  cofactors: Molecule[];
   contacts: {
-    kind: "hbond" | "contact";
+    kind: "hbond" | "coordination" | "contact";
     residue: Residue;
     residue_atom: string;
     ligand_atom: number;

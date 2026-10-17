@@ -12,6 +12,8 @@
 # showcase:    the cleanest entries, for the landing page and demos
 # caption:     shown with the structure when it isn't simply the drug in its main target
 # exclude_chains: polymer chains left out of the view, such as an engineered binder at the pocket
+# cofactors:   cofactors the drug binds through, as code and author chain/residue number; metal ions
+#              within 2.8 Å of the drug are kept without being listed
 # note:        why this entry
 
 complexes:
@@ -290,6 +292,7 @@ complexes:
     chain: A
     target: "ERG11 (CYP51)"
     organism: Saccharomyces cerevisiae
+    cofactors: ["HEM A/601"]
     note: "S. cerevisiae CYP51 wild type, 2.05 Å, standing in for Candida; rank 1 (5ESM) is a T322I mutant."
   - drug: gabapentin
     pdb: 8FD7
@@ -440,6 +443,7 @@ complexes:
     target: "DHFR"
     organism: Homo sapiens
     showcase: true
+    cofactors: ["NDP A/187"]
     note: "Wild-type human DHFR, 1.9 Å; rank-1 3EIG is the F31R/Q35E resistant mutant."
   - drug: methylphenidate
     pdb: 8Y2G
