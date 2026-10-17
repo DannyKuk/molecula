@@ -13,13 +13,14 @@ import type { Step } from "./tool-cards";
  * tools returned. `sources` is null until the answer's `sources` event arrives, after its last
  * token; `passages` are the label passages the label search returned, by the number the answer
  * cites them with. `sourceCheck` is the source check's verdict, which arrives after `sources`; a
- * fixed answer and a stopped one have none.
+ * fixed answer and a stopped one have none. A question asked while another chat's answer comes in
+ * is `queued` until that answer ends.
  */
 export type Turn = {
   question: string;
   answer: string;
   steps: Step[];
-  state: "answering" | "done" | "stopped" | "failed";
+  state: "queued" | "answering" | "done" | "stopped" | "failed";
   error?: string;
   sources: Source[] | null;
   passages: Record<number, Passage>;
@@ -36,6 +37,10 @@ export function startTurn(question: string): Turn {
     passages: {},
     sourceCheck: null,
   };
+}
+
+export function queueTurn(question: string): Turn {
+  return { ...startTurn(question), state: "queued" };
 }
 
 export function applyEvent(turn: Turn, event: ChatEvent): Turn {
@@ -106,9 +111,16 @@ export function failTurn(turn: Turn, error: string): Turn {
   return { ...turn, state: "failed", error };
 }
 
-/** The turn once its stream was aborted; an answer that had already finished stays as it is. */
+/** The turn once its stream was aborted or its question left the line; a finished one stays. */
 export function stopTurn(turn: Turn): Turn {
-  return turn.state === "answering" ? { ...turn, state: "stopped" } : turn;
+  return turn.state === "answering" || turn.state === "queued"
+    ? { ...turn, state: "stopped" }
+    : turn;
+}
+
+/** Whether the turn's answer is still to come, so its chat takes no other question yet. */
+export function pending(turn: Turn | undefined): boolean {
+  return turn?.state === "answering" || turn?.state === "queued";
 }
 
 /** The earlier turns and a new question as the messages of a chat request. */

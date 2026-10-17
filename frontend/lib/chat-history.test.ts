@@ -7,7 +7,7 @@ import {
   reopenedTurns,
   withTurns,
 } from "./chat-history";
-import { startTurn, type Turn } from "./chat-turn";
+import { queueTurn, startTurn, type Turn } from "./chat-turn";
 
 function doneTurn(question: string, answer: string): Turn {
   return { ...startTurn(question), answer, state: "done" };
@@ -50,6 +50,15 @@ describe("reopenedTurns", () => {
     const done = doneTurn("How does imatinib work?", "It blocks BCR-ABL.");
 
     expect(reopenedTurns([done, streaming])).toEqual([done, { ...streaming, state: "stopped" }]);
+  });
+
+  it("reopens a question that waited for another chat's answer as stopped", () => {
+    const done = doneTurn("How does imatinib work?", "It blocks BCR-ABL.");
+
+    expect(reopenedTurns([done, queueTurn("And its side effects?")])).toEqual([
+      done,
+      { ...startTurn("And its side effects?"), state: "stopped" },
+    ]);
   });
 });
 

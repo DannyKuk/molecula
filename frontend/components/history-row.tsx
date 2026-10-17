@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { Bookmark, BookmarkX, Ellipsis, Pencil, Trash2 } from "lucide-react";
+import { Bookmark, BookmarkX, Clock, Ellipsis, LoaderCircle, Pencil, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,8 @@ type HistoryRowProps = {
   conversation: ConversationSummary;
   active: boolean;
   bookmarked: boolean;
+  /** Whether the chat's answer is coming in, or its question waits for another chat's answer. */
+  progress: "answering" | "queued" | null;
   onOpen: (id: string) => void;
   onRename: (id: string, title: string) => void;
   onDelete: (id: string) => void;
@@ -33,6 +35,7 @@ export function HistoryRow({
   conversation,
   active,
   bookmarked,
+  progress,
   onOpen,
   onRename,
   onDelete,
@@ -81,6 +84,7 @@ export function HistoryRow({
       >
         {title}
       </button>
+      {progress && <ProgressMark progress={progress} />}
       <BookmarkButton title={title} bookmarked={bookmarked} onToggle={toggleBookmark} />
       <RowMenu
         title={title}
@@ -91,6 +95,20 @@ export function HistoryRow({
         onDelete={() => setMode("deleting")}
       />
     </li>
+  );
+}
+
+/** A spinner while the chat's answer comes in, a clock while its question waits in line. */
+function ProgressMark({ progress }: { progress: "answering" | "queued" }) {
+  const label = progress === "answering" ? "Answering" : "Waiting for another answer";
+  return (
+    <span role="img" aria-label={label} title={label} className="px-1 text-zinc-500">
+      {progress === "answering" ? (
+        <LoaderCircle aria-hidden className="size-3.5 animate-spin motion-reduce:animate-none" />
+      ) : (
+        <Clock aria-hidden className="size-3.5" />
+      )}
+    </span>
   );
 }
 

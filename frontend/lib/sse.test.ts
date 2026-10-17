@@ -59,4 +59,23 @@ describe("readServerSentEvents", () => {
   it("names a frame without an event line 'message'", async () => {
     expect(await readAll(["data: hello\n\n"])).toEqual([{ event: "message", data: "hello" }]);
   });
+
+  it("cancels the body when the reader stops after an event", async () => {
+    let cancelled = false;
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('event: done\ndata: {"type":"done"}\n\n'));
+      },
+      cancel() {
+        cancelled = true;
+      },
+    });
+
+    for await (const event of readServerSentEvents(body)) {
+      expect(event.event).toBe("done");
+      break;
+    }
+
+    expect(cancelled).toBe(true);
+  });
 });
