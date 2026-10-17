@@ -48,7 +48,7 @@ FIRST_ANSWER_TRIES = 3
 SENTENCE = re.compile(r"[^.!?\n]+")
 VIEW = re.compile(
     r"\b(below|beneath|under (this|the) answer|view(er)?|shown|displayed|you can see|visible"
-    r"|unten|darunter|ansicht|angezeigt|zu sehen|dargestellt|sichtbar)\b",
+    r"|unten|darunter|ansicht|angezeigt|zu sehen|dargestellt|darstellung|sichtbar)\b",
     re.IGNORECASE,
 )
 NO_3D = re.compile(
