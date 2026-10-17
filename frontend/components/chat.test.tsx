@@ -9,6 +9,7 @@ import {
   DONE,
   IMATINIB_LABEL_SEARCH,
   IMATINIB_SOURCES_EVENT,
+  IN_CONVERSATION,
   stubChatStream,
   stubPage,
 } from "@/lib/test-fixtures";
@@ -36,6 +37,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 function questionBox(): HTMLTextAreaElement {
@@ -108,7 +110,7 @@ describe("Chat", () => {
     await streamed(() => stream.send(DONE));
 
     expect(await screen.findByText("Imatinib blocks BCR-ABL [1].")).toBeDefined();
-    expect(screen.getByText("How does Gleevec work?")).toBeDefined();
+    expect(screen.getByText("How does Gleevec work?", IN_CONVERSATION)).toBeDefined();
     expect(stream.sentMessages()).toEqual([{ role: "user", content: "How does Gleevec work?" }]);
   });
 
@@ -219,7 +221,7 @@ describe("Chat", () => {
 
     expect(await screen.findByText("Imatinib blocks BCR-ABL.")).toBeDefined();
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(screen.getAllByText("How does Gleevec work?")).toHaveLength(1);
+    expect(screen.getAllByText("How does Gleevec work?", IN_CONVERSATION)).toHaveLength(1);
     expect(stream.sentMessages()).toEqual([{ role: "user", content: "How does Gleevec work?" }]);
   });
 
@@ -326,7 +328,7 @@ describe("Chat", () => {
     const stream = stubChatStream();
     render(<Chat initialQuestion="How does imatinib work?" />);
 
-    expect(await screen.findByText("How does imatinib work?")).toBeDefined();
+    expect(await screen.findByText("How does imatinib work?", IN_CONVERSATION)).toBeDefined();
     expect(stream.fetchMock).toHaveBeenCalledTimes(1);
     expect(stream.sentMessages()).toEqual([{ role: "user", content: "How does imatinib work?" }]);
   });
@@ -345,7 +347,7 @@ describe("Chat", () => {
     await streamed(() => stream.send(token("Imatinib blocks BCR-ABL.") + DONE));
 
     expect(await screen.findByText("Imatinib blocks BCR-ABL.")).toBeDefined();
-    expect(screen.getAllByText("How does imatinib work?")).toHaveLength(1);
+    expect(screen.getAllByText("How does imatinib work?", IN_CONVERSATION)).toHaveLength(1);
     expect(screen.queryByText("Stopped.")).toBeNull();
   });
 
@@ -494,7 +496,7 @@ describe("Chat", () => {
     stubChatStream();
     render(<Chat initialQuestion="How does imatinib work?" />);
 
-    await screen.findByText("How does imatinib work?");
+    await screen.findByText("How does imatinib work?", IN_CONVERSATION);
     expect(page.scrollTo).toHaveBeenCalledTimes(1);
   });
 
@@ -784,5 +786,41 @@ describe("Chat export", () => {
     await pick("Print or save as PDF");
 
     expect(print).toHaveBeenCalledOnce();
+  });
+
+  it("prints the chat's title and the day above the conversation, on paper only", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 9, 17, 12));
+    await answerGleevec();
+
+    const printed = screen.getByRole("region", { name: "Printed conversation" });
+    expect(printed.className).toContain("hidden");
+    expect(printed.className).toContain("print:block");
+    expect(within(printed).getByRole("heading", { name: "How does Gleevec work?" })).toBeDefined();
+    expect(within(printed).getByText("Printed on October 17, 2026")).toBeDefined();
+  });
+
+  it("marks each printed message as the user's or Molecula's, on paper only", async () => {
+    await answerGleevec();
+
+    const conversation = within(screen.getByRole("list", { name: "Conversation" }));
+    for (const speaker of ["You", "Molecula"]) {
+      const label = conversation.getByText(speaker);
+      expect(label.className).toContain("hidden");
+      expect(label.className).toContain("print:block");
+    }
+  });
+
+  it("names Molecula on paper only once an answer has started", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+    const conversation = within(screen.getByRole("list", { name: "Conversation" }));
+    expect(conversation.getByText("You")).toBeDefined();
+    expect(conversation.queryByText("Molecula")).toBeNull();
+
+    await streamed(() => stream.send(token("It blocks BCR-ABL.")));
+    expect(conversation.getByText("Molecula")).toBeDefined();
   });
 });

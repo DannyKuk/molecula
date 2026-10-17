@@ -101,23 +101,26 @@ export function Chat({ initialQuestion, history = browserHistory }: ChatProps) {
           {turns.length === 0 ? (
             <EmptyState onAsk={ask} />
           ) : (
-            <ol
-              // Keyed by conversation, so an opened chat doesn't keep the last one's open steps.
-              key={id}
-              ref={conversationRef}
-              aria-label="Conversation"
-              className="flex flex-col gap-8"
-            >
-              {turns.map((turn, index) => (
-                <ConversationTurn
-                  key={index}
-                  turn={turn}
-                  onAsk={ask}
-                  chatAnswering={pendingAnswer}
-                  onRetry={index === turns.length - 1 ? retry : undefined}
-                />
-              ))}
-            </ol>
+            <>
+              <PrintedTitle title={title} />
+              <ol
+                // Keyed by conversation, so an opened chat doesn't keep the last one's open steps.
+                key={id}
+                ref={conversationRef}
+                aria-label="Conversation"
+                className="flex flex-col gap-8"
+              >
+                {turns.map((turn, index) => (
+                  <ConversationTurn
+                    key={index}
+                    turn={turn}
+                    onAsk={ask}
+                    chatAnswering={pendingAnswer}
+                    onRetry={index === turns.length - 1 ? retry : undefined}
+                  />
+                ))}
+              </ol>
+            </>
           )}
         </div>
         <div className="sticky bottom-0 flex flex-col gap-2 border-t border-zinc-200 bg-background py-3 dark:border-zinc-800 print:static print:border-0">
@@ -133,6 +136,21 @@ export function Chat({ initialQuestion, history = browserHistory }: ChatProps) {
         </div>
       </main>
     </div>
+  );
+}
+
+/** The conversation's title and the day it was printed, at the top of the first page. */
+function PrintedTitle({ title }: { title: string }) {
+  const printedOn = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  return (
+    <section aria-label="Printed conversation" className="hidden print:block">
+      <h2 className="text-lg font-semibold">{title}</h2>
+      <p className="text-sm text-zinc-600">Printed on {printedOn}</p>
+    </section>
   );
 }
 

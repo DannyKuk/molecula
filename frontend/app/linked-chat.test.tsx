@@ -6,7 +6,7 @@ import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Chat } from "@/components/chat";
-import { chatFrame, stubChatStream, stubPage } from "@/lib/test-fixtures";
+import { chatFrame, IN_CONVERSATION, stubChatStream, stubPage } from "@/lib/test-fixtures";
 
 import { LinkedChat } from "./linked-chat";
 
@@ -86,7 +86,7 @@ describe("LinkedChat", () => {
     expect(await screen.findByText("Spironolactone is a diuretic.")).toBeDefined();
     await waitFor(() => expect(window.location.search).toBe(""));
     expect(screen.getByText("Looking up Aldactone")).toBeDefined();
-    expect(screen.getAllByText("What is Aldactone used for?")).toHaveLength(1);
+    expect(screen.getAllByText("What is Aldactone used for?", IN_CONVERSATION)).toHaveLength(1);
     expect(stream.fetchMock).toHaveBeenCalledOnce();
     expect(page.errors).toEqual([]);
     page.unmount();

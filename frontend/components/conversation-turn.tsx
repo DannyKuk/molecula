@@ -1,3 +1,5 @@
+import { cn } from "cn";
+
 import type { Turn } from "@/lib/chat-turn";
 import { didYouMeanOf } from "@/lib/did-you-mean";
 import { checkingAnswer } from "@/lib/source-check";
@@ -26,8 +28,12 @@ export function ConversationTurn({ turn, onAsk, chatAnswering, onRetry }: Conver
   const answering = turn.state === "answering";
   const offers = answering ? [] : didYouMeanOf(turn.question, turn.steps);
   return (
-    <li data-turn className="flex flex-col gap-3 print:break-inside-avoid">
-      <p className="max-w-[85%] self-end rounded-2xl bg-zinc-100 px-4 py-2 break-words whitespace-pre-wrap dark:bg-zinc-900">
+    <li
+      data-turn
+      className="flex flex-col gap-3 print:break-inside-avoid print:border-t print:pt-6"
+    >
+      <PrintedSpeaker className="self-end">You</PrintedSpeaker>
+      <p className="max-w-[85%] self-end rounded-2xl bg-zinc-100 px-4 py-2 break-words whitespace-pre-wrap dark:bg-zinc-900 print:border print:border-zinc-300">
         {turn.question}
       </p>
       <div className="contents print:hidden">
@@ -37,6 +43,7 @@ export function ConversationTurn({ turn, onAsk, chatAnswering, onRetry }: Conver
           <StructurePanel key={target.cid} target={target} />
         ))}
       </div>
+      {(turn.answer || !answering) && <PrintedSpeaker>Molecula</PrintedSpeaker>}
       {answering && turn.steps.length === 0 && !turn.answer && (
         <p role="status" className="text-sm text-zinc-600 dark:text-zinc-400">
           Thinking…
@@ -92,5 +99,22 @@ export function ConversationTurn({ turn, onAsk, chatAnswering, onRetry }: Conver
         </div>
       )}
     </li>
+  );
+}
+
+/**
+ * Who wrote the message below it, on paper only: browsers leave out backgrounds when printing, so
+ * the question's grey bubble no longer sets it apart from the answer.
+ */
+function PrintedSpeaker({ className, children }: { className?: string; children: string }) {
+  return (
+    <p
+      className={cn(
+        "hidden text-xs font-semibold text-zinc-600 print:-mb-2 print:block",
+        className,
+      )}
+    >
+      {children}
+    </p>
   );
 }
