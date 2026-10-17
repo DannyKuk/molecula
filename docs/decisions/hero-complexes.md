@@ -60,7 +60,7 @@ The top-ranked candidate was often not the right one:
 
 - The papers were not read. Pocket residues were compared with residues known from the literature; numbering offsets (mouse COX-2, erlotinib's mature numbering, the VKOR-GFP fusion) were inferred from residue patterns.
 - Contacts come from the deposited model, not the biological assembly.
-- Cofactors are kept only where `cofactors` lists them, the heme of 4WMZ and the NADPH of 1U72. The ubiquinone 2.73 Å from metformin in 8ZSQ (U10 S7/201) and the lipids and detergents next to other drugs are dropped. Metal ions are kept by distance (≤ 2.8 Å), so a metal that reaches the drug only through a water would be dropped. Waters are dropped, also the ones that bridge ciprofloxacin's magnesium to gyrase Ser90 and Asp94 (#144).
+- Cofactors are kept only where `cofactors` lists them, the heme of 4WMZ and the NADPH of 1U72. The ubiquinone 2.73 Å from metformin in 8ZSQ (U10 S7/201) and the lipids and detergents next to other drugs are dropped: heme is what fluconazole binds, and DHFR holds methotrexate together with NADPH, while metformin's site in complex I is only proposed and monoolein (6WV3) is the lipid the crystal was grown in. Metal ions are kept by distance (≤ 2.8 Å), so a metal that reaches the drug only through a water would be dropped. Waters are dropped, also the ones that bridge ciprofloxacin's magnesium to gyrase Ser90 and Asp94 (#144).
 - Spironolactone's S810L is the mutation that makes spironolactone an agonist (from the literature, not measured here).
 
 ## Reproduce
