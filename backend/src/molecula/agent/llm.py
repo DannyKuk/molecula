@@ -38,11 +38,19 @@ def get_chat_model(settings: Settings) -> BaseChatModel:
     return _chat_model(settings, settings.llm_reasoning_effort)
 
 
+def get_answer_model(settings: Settings) -> BaseChatModel:
+    """The same model at the answering agent's own reasoning effort, ANSWER_REASONING_EFFORT."""
+    return _chat_model(settings, _own_effort(settings.answer_reasoning_effort))
+
+
 def get_source_check_model(settings: Settings) -> BaseChatModel:
     """The same model at the source check's own reasoning effort,
     SOURCE_CHECK_REASONING_EFFORT."""
-    effort = settings.source_check_reasoning_effort
-    return _chat_model(settings, None if effort == "default" else effort)
+    return _chat_model(settings, _own_effort(settings.source_check_reasoning_effort))
+
+
+def _own_effort(effort: str) -> str | None:
+    return None if effort == "default" else effort
 
 
 def _chat_model(settings: Settings, reasoning_effort: str | None) -> BaseChatModel:

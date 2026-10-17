@@ -9,6 +9,7 @@ from pydantic import SecretStr
 from molecula.agent.llm import (
     LLMConfigError,
     chat_model_name,
+    get_answer_model,
     get_chat_model,
     get_source_check_model,
 )
@@ -20,6 +21,7 @@ LLM_FIELDS: dict[str, Any] = {
     "local_llm_base_url": None,
     "local_llm_model": None,
     "llm_reasoning_effort": None,
+    "answer_reasoning_effort": "medium",
     "source_check_reasoning_effort": "medium",
     "offline": False,
 }
@@ -139,6 +141,44 @@ def test_reasoning_effort_reaches_the_request() -> None:
 def test_without_a_reasoning_effort_the_request_leaves_it_to_the_model() -> None:
     model = chat_openai(local_settings())
 
+    assert "reasoning_effort" not in model._default_params
+
+
+def test_the_answering_agent_reasons_at_its_own_effort() -> None:
+    model = get_answer_model(local_settings(answer_reasoning_effort="high"))
+
+    assert isinstance(model, ChatOpenAI)
+    assert model._default_params["reasoning_effort"] == "high"
+    assert model.model_name == "qwen3:8b"
+
+
+def test_the_answers_reason_at_medium_while_the_other_calls_keep_the_models_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in ("LLM_REASONING_EFFORT", "ANSWER_REASONING_EFFORT"):
+        monkeypatch.delenv(name, raising=False)
+    defaults = {
+        name: value
+        for name, value in LLM_FIELDS.items()
+        if name not in ("llm_reasoning_effort", "answer_reasoning_effort")
+    }
+    plain = Settings(
+        _env_file=None,
+        **(defaults | {"local_llm_base_url": "http://localhost:1234/v1", "local_llm_model": "m"}),
+    )
+    answer_model = get_answer_model(plain)
+    chat_model = get_chat_model(plain)
+
+    assert isinstance(answer_model, ChatOpenAI)
+    assert isinstance(chat_model, ChatOpenAI)
+    assert answer_model._default_params["reasoning_effort"] == "medium"
+    assert "reasoning_effort" not in chat_model._default_params
+
+
+def test_an_answer_effort_of_default_leaves_it_to_the_model() -> None:
+    model = get_answer_model(local_settings(answer_reasoning_effort="default"))
+
+    assert isinstance(model, ChatOpenAI)
     assert "reasoning_effort" not in model._default_params
 
 

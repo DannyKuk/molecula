@@ -163,6 +163,7 @@ def use_models(monkeypatch: pytest.MonkeyPatch, model: ScriptedChatModel) -> Non
     """The scripted model sorts the message, answers it and checks the answer."""
     monkeypatch.setattr(main, "get_embeddings", lambda settings: UnitEmbeddings())
     monkeypatch.setattr(main, "get_chat_model", lambda settings: model)
+    monkeypatch.setattr(main, "get_answer_model", lambda settings: model)
     monkeypatch.setattr(main, "get_source_check_model", lambda settings: model)
 
 
@@ -179,12 +180,17 @@ def loaded_models(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         loaded.append("chat")
         return ScriptedChatModel(script=[])
 
+    def answer_model(settings: Settings) -> BaseChatModel:
+        loaded.append("answer")
+        return ScriptedChatModel(script=[])
+
     def source_check_model(settings: Settings) -> BaseChatModel:
         loaded.append("source check")
         return ScriptedChatModel(script=[])
 
     monkeypatch.setattr(main, "get_embeddings", embeddings)
     monkeypatch.setattr(main, "get_chat_model", chat_model)
+    monkeypatch.setattr(main, "get_answer_model", answer_model)
     monkeypatch.setattr(main, "get_source_check_model", source_check_model)
     return loaded
 
@@ -211,7 +217,7 @@ def test_startup_builds_the_label_search_over_a_matching_index(
         assert isinstance(app.state.chat_agent, ChatAgent)
         assert isinstance(app.state.chat, GuardedChat)
 
-    assert loaded_models == ["chat", "embeddings", "source check"]
+    assert loaded_models == ["chat", "embeddings", "answer", "source check"]
 
 
 def test_without_a_chat_model_the_label_search_is_off_and_the_routes_still_work(

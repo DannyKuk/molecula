@@ -50,7 +50,7 @@ OpenRouter prices per million tokens on 2026-10-16, in / out: gpt-6-luna $0.10 /
 ## Decided along the way
 
 - **No filter-extraction or tool-calling set of its own.** #98 planned both for every candidate. The from-memory and safety evals run the whole agent, tools included, and gpt-6-luna called a tool and cited it in every answer of the safety eval that reached the agent; the owner decided the screen was enough (2026-10-16).
-- **The default reasoning effort.** Both cloud models ran with `LLM_REASONING_EFFORT` empty, as the app ships.
+- **The default reasoning effort.** Both cloud models ran with `LLM_REASONING_EFFORT` empty, as the app shipped then. Since #254 the answers reason at medium (`ANSWER_REASONING_EFFORT`) because that stopped gpt-oss-20b from answering comparisons from memory ([comparisons](../evals/comparisons-2026-10-17.md)); gpt-6-luna wasn't measured at medium (#256).
 - **The source check runs on the same model.** In the cloud setup gpt-6-luna also checks the answers; that was not measured on the 181 labelled claims ([source check eval](../evals/source-check-2026-10-14.md)).
 
 ## Limits

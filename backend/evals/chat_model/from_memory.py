@@ -1,7 +1,7 @@
 """Ask about drugs that have a label and see whether the answers add facts from memory (#197).
 
     OFFLINE=1 LOCAL_LLM_BASE_URL=http://localhost:1234/v1 LOCAL_LLM_MODEL=openai/gpt-oss-20b \
-        LLM_REASONING_EFFORT=medium uv run python -m evals.chat_model.from_memory --times 1
+        ANSWER_REASONING_EFFORT=medium uv run python -m evals.chat_model.from_memory --times 1
 
 Asks each question of `datasets/from_memory_sample.yaml`, a fixed sample of the retrieval
 questions, `--times` times through `ChatAgent.stream`, as the citations eval does. The guard is

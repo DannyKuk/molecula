@@ -54,8 +54,10 @@ cd backend
 OFFLINE=1 LOCAL_LLM_BASE_URL=http://localhost:1234/v1 LOCAL_LLM_MODEL=openai/gpt-oss-20b \
     uv run python -m evals.chat_model.from_memory
 OFFLINE=1 LOCAL_LLM_BASE_URL=http://localhost:1234/v1 LOCAL_LLM_MODEL=openai/gpt-oss-20b \
-    LLM_REASONING_EFFORT=medium uv run python -m evals.chat_model.from_memory
+    LLM_REASONING_EFFORT=medium ANSWER_REASONING_EFFORT=medium uv run python -m evals.chat_model.from_memory
 ```
+
+Since #254 the answers have their own effort, `ANSWER_REASONING_EFFORT`, medium unless set: the first run above needs `ANSWER_REASONING_EFFORT=default` to repeat the "none" row, and the second sets both, as `LLM_REASONING_EFFORT` alone did then. The cache names now carry `-answer-medium`, so a re-run asks again.
 
 Answers are cached in `data/build/eval/from_memory/`, keyed by the model, the effort, every prompt file and the tool descriptions. A re-run with the same setup asks nothing and prints the table from the verdicts. A new setup writes a review sheet next to the cache that shows each answer under its tool results. `--times 2` asks each question a second time and keeps the first answers.
 

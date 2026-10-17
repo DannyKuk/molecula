@@ -1,0 +1,36 @@
+# Questions about two drugs, or a 3D view plus a comparison, for the comparisons eval (#254), and
+# two single-drug controls. `drugs` are the names as written, which the label or target lookups
+# should name.
+
+- id: typo-3d-ibuprofen-aspirin
+  question: Show me a 3d model of ibuprofen and complain it to aspirin
+  drugs: [ibuprofen, aspirin]
+  kind: 3d_comparison
+- id: 3d-ibuprofen-aspirin
+  question: Show me a 3d model of ibuprofen and compare it to aspirin
+  drugs: [ibuprofen, aspirin]
+  kind: 3d_comparison
+- id: compare-ibuprofen-naproxen
+  question: Compare ibuprofen and naproxen
+  drugs: [ibuprofen, naproxen]
+  kind: comparison
+- id: diff-metformin-glimepiride
+  question: How is metformin different from glimepiride?
+  drugs: [metformin, glimepiride]
+  kind: comparison
+- id: de-ibuprofen-paracetamol
+  question: Vergleiche Ibuprofen mit Paracetamol
+  drugs: [ibuprofen, paracetamol]
+  kind: comparison
+- id: diff-omeprazole-famotidine
+  question: What's the difference between omeprazole and famotidine?
+  drugs: [omeprazole, famotidine]
+  kind: comparison
+- id: control-use-ibuprofen
+  question: What is ibuprofen used for?
+  drugs: [ibuprofen]
+  kind: control
+- id: control-3d-aspirin
+  question: Show me aspirin in 3D
+  drugs: [aspirin]
+  kind: control
