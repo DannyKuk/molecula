@@ -20,7 +20,15 @@ export type ViewMode = "molecule" | "site" | "protein";
 
 export type SceneData = { kind: "complex"; complex: Complex } | { kind: "molecule"; sdf: string };
 
-export type SceneOptions = { mode: ViewMode; dark: boolean; reduceMotion: boolean };
+/** The camera and whether the user held the view, kept to build a released view again. */
+export type Camera = { view: number[]; grabbed: boolean };
+
+export type SceneOptions = {
+  mode: ViewMode;
+  dark: boolean;
+  reduceMotion: boolean;
+  camera?: Camera;
+};
 
 export type Scene = {
   /** Switches the view; `animate` plays the binding when the pocket comes into view. */
@@ -30,6 +38,8 @@ export type Scene = {
   reset(): void;
   /** A view scrolled off screen stops turning, so the views further up the chat cost nothing. */
   setOnScreen(onScreen: boolean): void;
+  /** The camera to build the view again with, or null while the binding plays. */
+  camera(): Camera | null;
   resize(): void;
   dispose(): void;
 };
@@ -91,11 +101,18 @@ export function createScene(
     apply();
   };
   box.addEventListener("pointerdown", grab);
+  const restore = (camera: Camera) => {
+    grabbed = camera.grabbed;
+    viewer.setView(camera.view);
+    viewer.render();
+    apply();
+  };
   const common = {
     setOnScreen: (visible: boolean) => {
       onScreen = visible;
       apply();
     },
+    camera: () => ({ view: viewer.getView(), grabbed }),
     resize: () => {
       viewer.resize();
       viewer.render();
@@ -120,10 +137,13 @@ export function createScene(
       turning.start();
     };
     reset();
+    if (options.camera) restore(options.camera);
     return { ...common, setMode: () => {}, replay: reset, reset };
   }
 
-  return complexScene(viewer, data.complex, options, turning, common);
+  const scene = complexScene(viewer, data.complex, options, turning, common);
+  if (options.camera) restore(options.camera);
+  return scene;
 }
 
 function complexScene(
@@ -131,7 +151,7 @@ function complexScene(
   complex: Complex,
   options: SceneOptions,
   turning: Turning,
-  common: Pick<Scene, "setOnScreen" | "resize" | "dispose">,
+  common: Pick<Scene, "setOnScreen" | "camera" | "resize" | "dispose">,
 ): Scene {
   const colors = options.dark ? COLORS.dark : COLORS.light;
   const protein = viewer.addModel();
@@ -147,6 +167,7 @@ function complexScene(
   const bonds = hydrogenBonds(complex);
   let mode = options.mode;
   let frame = 0;
+  let docking = false;
   let ligandStyle = {};
 
   const placeLigand = (positions: Point[]) => {
@@ -199,6 +220,7 @@ function complexScene(
   };
 
   const dock = (from: number, to: number) => {
+    docking = true;
     const start = performance.now();
     const tick = (now: number) => {
       const progress = Math.min(1, (now - start) / DOCK_MS);
@@ -213,6 +235,7 @@ function complexScene(
       if (progress < 1) {
         frame = requestAnimationFrame(tick);
       } else {
+        docking = false;
         showContacts();
         viewer.render();
         turning.start();
@@ -225,6 +248,7 @@ function complexScene(
   const setMode = (next: ViewMode, animate: boolean) => {
     mode = next;
     cancelAnimationFrame(frame);
+    docking = false;
     turning.stop();
     viewer.removeAllShapes();
     viewer.removeAllLabels();
@@ -269,6 +293,9 @@ function complexScene(
       turning.release();
       setMode(mode, false);
     },
+    // Mid-binding the camera follows the drug on its way in, which a rebuilt view in the bound pose
+    // would point past.
+    camera: () => (docking ? null : common.camera()),
     dispose: () => {
       cancelAnimationFrame(frame);
       common.dispose();

@@ -3,30 +3,48 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi, type Mock }
 
 import { SMALL_COMPLEX } from "@/lib/test-complexes";
 
-import { createScene, type Scene, type SceneData } from "./scene";
+import { createScene, type Camera, type Scene, type SceneData } from "./scene";
 import { StructureViewer } from "./structure-viewer";
 
 vi.mock("3dmol", () => ({}));
 vi.mock("./scene", () => ({ createScene: vi.fn() }));
 
-let scene: { [K in keyof Scene]: Mock<() => void> };
-let reportVisibility: (entry: Partial<IntersectionObserverEntry>) => void;
+type FakeScene = { [K in keyof Scene]: Mock<Scene[K]> };
+type Report = (entry: Partial<IntersectionObserverEntry>) => void;
+
+let scenes: FakeScene[];
+let reportVisibility: Report;
+let reportNearby: Report;
+
+function fakeScene(): FakeScene {
+  return {
+    setMode: vi.fn<Scene["setMode"]>(),
+    replay: vi.fn<Scene["replay"]>(),
+    reset: vi.fn<Scene["reset"]>(),
+    setOnScreen: vi.fn<Scene["setOnScreen"]>(),
+    camera: vi.fn<Scene["camera"]>(() => null),
+    resize: vi.fn<Scene["resize"]>(),
+    dispose: vi.fn<Scene["dispose"]>(),
+  };
+}
 
 beforeEach(() => {
-  scene = {
-    setMode: vi.fn<() => void>(),
-    replay: vi.fn<() => void>(),
-    reset: vi.fn<() => void>(),
-    setOnScreen: vi.fn<() => void>(),
-    resize: vi.fn<() => void>(),
-    dispose: vi.fn<() => void>(),
-  };
-  vi.mocked(createScene).mockReturnValue(scene);
+  scenes = [];
+  vi.mocked(createScene).mockImplementation(() => {
+    const scene = fakeScene();
+    scenes.push(scene);
+    return scene;
+  });
   vi.stubGlobal(
     "IntersectionObserver",
     class {
-      constructor(callback: (entries: Partial<IntersectionObserverEntry>[]) => void) {
-        reportVisibility = (entry) => callback([entry]);
+      constructor(
+        callback: (entries: Partial<IntersectionObserverEntry>[]) => void,
+        options?: IntersectionObserverInit,
+      ) {
+        const report: Report = (entry) => callback([entry]);
+        if (options?.rootMargin) reportNearby = report;
+        else reportVisibility = report;
       }
       observe() {}
       disconnect() {}
@@ -56,9 +74,21 @@ afterEach(() => {
 const complex: SceneData = { kind: "complex", complex: SMALL_COMPLEX };
 const molecule: SceneData = { kind: "molecule", sdf: "1983\n$$$$\n" };
 
+/** Renders the viewer near the screen, where it builds its scene. */
 function renderViewer(data: SceneData, mode: "molecule" | "site" | "protein", onError = vi.fn()) {
   const view = render(<StructureViewer data={data} mode={mode} label="View" onError={onError} />);
+  act(() => reportNearby({ isIntersecting: true }));
   return { ...view, element: view.container.firstChild as HTMLElement };
+}
+
+function moveFarAway() {
+  act(() => reportNearby({ isIntersecting: false }));
+}
+
+async function comeBack() {
+  const built = scenes.length;
+  act(() => reportNearby({ isIntersecting: true }));
+  await waitFor(() => expect(scenes).toHaveLength(built + 1));
 }
 
 describe("StructureViewer", () => {
@@ -68,11 +98,11 @@ describe("StructureViewer", () => {
     expect(element.style.visibility).toBe("hidden");
 
     act(() => reportVisibility({ isIntersecting: true, intersectionRatio: 0.2 }));
-    expect(scene.replay).not.toHaveBeenCalled();
+    expect(scenes[0].replay).not.toHaveBeenCalled();
 
     act(() => reportVisibility({ isIntersecting: true, intersectionRatio: 0.6 }));
     expect(element.style.visibility).toBe("");
-    expect(scene.replay).toHaveBeenCalledOnce();
+    expect(scenes[0].replay).toHaveBeenCalledOnce();
   });
 
   it("shows a molecule at once and stops it turning while it is off screen", async () => {
@@ -82,8 +112,8 @@ describe("StructureViewer", () => {
 
     act(() => reportVisibility({ isIntersecting: false, intersectionRatio: 0 }));
 
-    expect(scene.setOnScreen).toHaveBeenCalledWith(false);
-    expect(scene.replay).not.toHaveBeenCalled();
+    expect(scenes[0].setOnScreen).toHaveBeenCalledWith(false);
+    expect(scenes[0].replay).not.toHaveBeenCalled();
   });
 
   it("plays the binding when the view leaves Molecule, and shows it at once", async () => {
@@ -91,10 +121,10 @@ describe("StructureViewer", () => {
     await waitFor(() => expect(createScene).toHaveBeenCalled());
 
     rerender(<StructureViewer data={complex} mode="site" label="View" onError={vi.fn()} />);
-    expect(scene.setMode).toHaveBeenLastCalledWith("site", true);
+    expect(scenes[0].setMode).toHaveBeenLastCalledWith("site", true);
 
     rerender(<StructureViewer data={complex} mode="protein" label="View" onError={vi.fn()} />);
-    expect(scene.setMode).toHaveBeenLastCalledWith("protein", false);
+    expect(scenes[0].setMode).toHaveBeenLastCalledWith("protein", false);
     expect(element.style.visibility).toBe("");
   });
 
@@ -104,7 +134,7 @@ describe("StructureViewer", () => {
 
     unmount();
 
-    expect(scene.dispose).toHaveBeenCalledOnce();
+    expect(scenes[0].dispose).toHaveBeenCalledOnce();
   });
 
   it("reports a view that can't be drawn", async () => {
@@ -114,6 +144,108 @@ describe("StructureViewer", () => {
     const onError = vi.fn();
 
     renderViewer(molecule, "molecule", onError);
+
+    await waitFor(() => expect(onError).toHaveBeenCalledOnce());
+  });
+
+  it("builds nothing for a view that never comes near the screen", async () => {
+    render(<StructureViewer data={molecule} mode="molecule" label="View" onError={vi.fn()} />);
+
+    await act(async () => {});
+
+    expect(createScene).not.toHaveBeenCalled();
+  });
+
+  it("gives back a view far off screen and builds it again in its mode, without replaying", async () => {
+    const { element, rerender } = renderViewer(complex, "site");
+    await waitFor(() => expect(createScene).toHaveBeenCalledOnce());
+    act(() => reportVisibility({ isIntersecting: true, intersectionRatio: 0.6 }));
+    rerender(<StructureViewer data={complex} mode="protein" label="View" onError={vi.fn()} />);
+
+    moveFarAway();
+
+    expect(scenes[0].dispose).toHaveBeenCalledOnce();
+    expect(createScene).toHaveBeenCalledOnce();
+
+    await comeBack();
+
+    expect(vi.mocked(createScene).mock.calls[1][3]).toMatchObject({ mode: "protein" });
+    expect(element.style.visibility).toBe("");
+    act(() => reportVisibility({ isIntersecting: true, intersectionRatio: 0.6 }));
+    expect(scenes[1].replay).not.toHaveBeenCalled();
+  });
+
+  it("plays the binding once when a view given back before it played comes back", async () => {
+    const { element } = renderViewer(complex, "site");
+    await waitFor(() => expect(createScene).toHaveBeenCalledOnce());
+
+    moveFarAway();
+    await comeBack();
+
+    expect(element.style.visibility).toBe("hidden");
+    act(() => reportVisibility({ isIntersecting: true, intersectionRatio: 0.6 }));
+    expect(element.style.visibility).toBe("");
+    expect(scenes[0].replay).not.toHaveBeenCalled();
+    expect(scenes[1].replay).toHaveBeenCalledOnce();
+  });
+
+  it("builds a view again where its camera was", async () => {
+    renderViewer(molecule, "molecule");
+    await waitFor(() => expect(createScene).toHaveBeenCalledOnce());
+    const camera: Camera = { view: [1, 2, 3, 40, 0, 0, 0, 1], grabbed: true };
+    scenes[0].camera.mockReturnValue(camera);
+
+    moveFarAway();
+    await comeBack();
+
+    expect(vi.mocked(createScene).mock.calls[1][3].camera).toEqual(camera);
+  });
+
+  it("keeps the camera when a view goes away again before it was built", async () => {
+    renderViewer(molecule, "molecule");
+    await waitFor(() => expect(createScene).toHaveBeenCalledOnce());
+    const camera: Camera = { view: [1, 2, 3, 40, 0, 0, 0, 1], grabbed: false };
+    scenes[0].camera.mockReturnValue(camera);
+    moveFarAway();
+
+    act(() => reportNearby({ isIntersecting: true }));
+    moveFarAway();
+    await comeBack();
+
+    expect(vi.mocked(createScene).mock.calls[1][3].camera).toEqual(camera);
+  });
+
+  it("builds a view again in its default framing when it was given back mid-binding", async () => {
+    renderViewer(complex, "site");
+    await waitFor(() => expect(createScene).toHaveBeenCalledOnce());
+    scenes[0].camera.mockReturnValue(null);
+
+    moveFarAway();
+    await comeBack();
+
+    expect(vi.mocked(createScene).mock.calls[1][3].camera).toBeUndefined();
+  });
+
+  it("gives the view back only once when it goes away while far off screen", async () => {
+    const { unmount } = renderViewer(molecule, "molecule");
+    await waitFor(() => expect(createScene).toHaveBeenCalledOnce());
+
+    moveFarAway();
+    unmount();
+
+    expect(scenes[0].dispose).toHaveBeenCalledOnce();
+  });
+
+  it("reports a view that can't be drawn again when it comes back", async () => {
+    const onError = vi.fn();
+    renderViewer(molecule, "molecule", onError);
+    await waitFor(() => expect(createScene).toHaveBeenCalledOnce());
+    vi.mocked(createScene).mockImplementation(() => {
+      throw new Error("WebGL is not available");
+    });
+
+    moveFarAway();
+    act(() => reportNearby({ isIntersecting: true }));
 
     await waitFor(() => expect(onError).toHaveBeenCalledOnce());
   });
