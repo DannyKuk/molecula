@@ -172,6 +172,15 @@ def chat_model_name(settings: Settings) -> str:
         return "unknown"
 
 
+def chat_model_is_local(settings: Settings) -> bool:
+    """Whether `get_chat_model` would use a local server, which costs nothing; False when no
+    chat model is set."""
+    try:
+        return _resolve_endpoint(settings).local
+    except LLMConfigError:
+        return False
+
+
 def _resolve_endpoint(settings: Settings) -> Endpoint:
     if settings.offline:
         if not settings.local_llm_base_url:

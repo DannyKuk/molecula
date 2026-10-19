@@ -66,6 +66,20 @@ describe("streamChat", () => {
     expect(await failureOf(response)).toBe(CHAT_UNAVAILABLE);
   });
 
+  it("says when to try again when a limit turns the question away", async () => {
+    const tooMany =
+      "You've asked 10 questions in the last minute, the most Molecula takes. " +
+      "Try again in 42 seconds.";
+    const budget =
+      "Molecula has used up today's budget for the language model. Try again after " +
+      "midnight UTC, in 5 hours.";
+    const limited = (detail: string, status: number) =>
+      Response.json({ detail, retry_after: 42 }, { status, headers: { "Retry-After": "42" } });
+
+    expect(await failureOf(limited(tooMany, 429))).toBe(tooMany);
+    expect(await failureOf(limited(budget, 503))).toBe(budget);
+  });
+
   it("shows the backend's reason when a 422 gives one", async () => {
     const detail = "Molecula can't answer questions about doses for you.";
 

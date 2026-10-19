@@ -1,11 +1,12 @@
 import logging
 from collections.abc import AsyncIterator
 
-from fastapi import APIRouter
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse, StreamingResponse
 
-from molecula.api.dependencies import ChatDep
-from molecula.schemas.chat import ChatEvent, ChatRequest, ErrorEvent
+from molecula.api.dependencies import ChatDep, ChatLimitsDep
+from molecula.guard.limits import ChatLimited, ChatLimits
+from molecula.schemas.chat import ChatEvent, ChatRequest, DoneEvent, ErrorEvent
 
 logger = logging.getLogger(__name__)
 
@@ -17,17 +18,41 @@ router = APIRouter()
     response_class=StreamingResponse,
     responses={
         200: {"content": {"text/event-stream": {}}, "description": "The answer, as it happens"},
-        503: {"description": "Chat is off: no chat model or no label index"},
+        429: {"description": "The client asked too many questions; see Retry-After"},
+        503: {
+            "description": "Chat is off (no chat model or no label index), or the day's cost "
+            "limit is reached (with Retry-After)"
+        },
     },
 )
-async def chat(request: ChatRequest, guarded: ChatDep) -> StreamingResponse:
+async def chat(request: ChatRequest, limits: ChatLimitsDep, guarded: ChatDep) -> StreamingResponse:
     """Answers the conversation's last message as server-sent events: each event's name is its
     `type` and its data the event as JSON (`schemas/chat.py`). The stream ends with `done` or
-    `error`; `done` says how the guard sorted the question."""
+    `error`; `done` says how the guard sorted the question and what it cost."""
     return StreamingResponse(
-        server_sent(guarded.stream(request.messages)),
+        server_sent(counted(guarded.stream(request.messages), limits)),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache"},
+    )
+
+
+async def counted(events: AsyncIterator[ChatEvent], limits: ChatLimits) -> AsyncIterator[ChatEvent]:
+    """The events, with the answer's cost added to the day's when `done` passes. An answer
+    that fails or is stopped sends no `done`, so what its calls cost isn't added."""
+    async for event in events:
+        if isinstance(event, DoneEvent):
+            limits.record(event.usage)
+        yield event
+
+
+async def turned_away(request: Request, error: Exception) -> JSONResponse:
+    """A chat request a limit turned away: `detail` says when to try again, for the user, and
+    `retry_after` and the Retry-After header give the seconds."""
+    assert isinstance(error, ChatLimited)
+    return JSONResponse(
+        status_code=error.status,
+        content={"detail": error.message, "retry_after": error.retry_after},
+        headers={"Retry-After": str(error.retry_after)},
     )
 
 

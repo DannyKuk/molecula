@@ -13,6 +13,7 @@ from molecula.agent.agent import ChatAgent
 from molecula.agent.decisions import DecisionConfigError, DecisionModel, get_decision_model
 from molecula.agent.llm import (
     LLMConfigError,
+    chat_model_is_local,
     get_answer_model,
     get_chat_model,
     get_source_check_model,
@@ -21,6 +22,7 @@ from molecula.agent.tool_registry import build_tools
 from molecula.api import chat, drugs, health
 from molecula.config import Settings, get_settings
 from molecula.guard.chat import GuardedChat
+from molecula.guard.limits import ChatLimited, ChatLimits, DailyCostCap, RequestLimiter
 from molecula.guard.safety import ChatModelInputCheck, DecisionModelInputCheck, InputCheck
 from molecula.guard.source_check import ChatModelSourceCheck
 from molecula.guard.validation import readable_validation_error
@@ -39,6 +41,17 @@ from molecula.store.structures import ComplexFiles, ConformerFiles
 from molecula.store.targets import TargetStore
 
 logger = logging.getLogger(__name__)
+
+
+def log_to_console() -> None:
+    """Shows the app's INFO lines: uvicorn sets up only its own loggers, and Python prints
+    nothing below WARNING without a handler."""
+    app_logger = logging.getLogger("molecula")
+    if not app_logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(levelname)s:     %(name)s: %(message)s"))
+        app_logger.addHandler(handler)
+        app_logger.setLevel(logging.INFO)
 
 
 def open_store(settings: Settings) -> sqlite3.Connection:
@@ -99,9 +112,35 @@ def input_check_decision_model(settings: Settings) -> DecisionModel | None:
         return None
 
 
+def open_chat_limits(settings: Settings) -> ChatLimits:
+    """The request limit per client, and the daily cost limit unless the chat model is local,
+    which costs nothing."""
+    cost_cap = (
+        None if chat_model_is_local(settings) else DailyCostCap(settings.daily_cost_limit_usd)
+    )
+    return ChatLimits(
+        RequestLimiter(settings.chat_requests_per_minute, settings.chat_requests_per_day),
+        cost_cap,
+        trust_proxy=settings.trust_proxy,
+    )
+
+
+def log_api_keys(settings: Settings) -> None:
+    """Which API keys the backend has, by name: a key's value never leaves its environment."""
+    keys = {
+        "OPENROUTER_API_KEY": settings.openrouter_api_key,
+        "OPENFDA_API_KEY": settings.openfda_api_key,
+    }
+    for name, key in keys.items():
+        logger.info("%s is %s", name, "set" if key is not None else "not set")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
+    log_to_console()
+    log_api_keys(settings)
+    app.state.chat_limits = open_chat_limits(settings)
     conn = open_store(settings)
     compounds = CompoundStore(conn)
     app.state.compound_service = CompoundService(
@@ -154,11 +193,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(title="Molecula", lifespan=lifespan)
 app.add_exception_handler(RequestValidationError, readable_validation_error)
+app.add_exception_handler(ChatLimited, chat.turned_away)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_settings().cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
+    # A browser hides every other response header from the page across origins.
+    expose_headers=["Retry-After"],
 )
 app.include_router(health.router)
 app.include_router(drugs.router)
