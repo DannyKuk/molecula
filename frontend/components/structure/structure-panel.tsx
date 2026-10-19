@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObjec
 
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ApiError, getComplex, getStructure } from "@/lib/api";
+import { coordinationBonds } from "@/lib/complex-scene";
 import type { StructureTarget } from "@/lib/tool-cards";
 import { useMediaQuery } from "@/lib/use-media-query";
 
@@ -65,7 +66,8 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
     ? `${name} in ${target.complex.target ?? `PDB ${target.complex.pdb_id}`}`
     : name;
   const ready = loaded.status === "ready" ? loaded.data : null;
-  const switchable = ready?.kind === "complex";
+  const complex = ready?.kind === "complex" ? ready.complex : null;
+  const switchable = complex !== null;
 
   const modeSwitch = switchable && (
     <div
@@ -114,6 +116,18 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
           <LegendItem swatch={<span className="w-4 border-t-2 border-dashed border-amber-500" />}>
             hydrogen bond
           </LegendItem>
+          {coordinationBonds(complex).length > 0 && (
+            <LegendItem
+              swatch={<span className="w-4 border-t-2 border-dashed border-purple-500" />}
+            >
+              metal bond
+            </LegendItem>
+          )}
+          {complex.cofactors.length > 0 && (
+            <LegendItem swatch={<span className="w-4 border-t-2 border-slate-400" />}>
+              cofactor
+            </LegendItem>
+          )}
           <LegendItem swatch={<span className="w-4 border-t-2 border-zinc-400" />}>
             residues within 4 Å
           </LegendItem>

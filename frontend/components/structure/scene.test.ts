@@ -392,6 +392,15 @@ describe("createScene with metals and cofactors", () => {
     expect(lineColors(viewer)).toEqual([metalBond, metalBond, hydrogenBond, hydrogenBond]);
   });
 
+  it("adds nothing for a complex without metals or cofactors", () => {
+    const { viewer, metals, cofactors } = complexScene();
+
+    expect(metals).toEqual([]);
+    expect(cofactors).toEqual([]);
+    expect(labels(viewer)).toEqual(["Glu2", "Thr7A"]);
+    expect(lineColors(viewer)).toEqual([hydrogenBond, hydrogenBond]);
+  });
+
   it("hides them in Molecule mode", () => {
     const { scene, viewer, metals, cofactors } = metalScene();
     viewer.addCylinder.mockClear();

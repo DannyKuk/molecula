@@ -3,7 +3,7 @@ import { useImperativeHandle } from "react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { API_URL } from "@/lib/api";
-import { SMALL_COMPLEX } from "@/lib/test-complexes";
+import { METAL_COMPLEX, SMALL_COMPLEX } from "@/lib/test-complexes";
 import { IMATINIB_COMPLEX, METFORMIN_COMPLEX } from "@/lib/test-tool-results";
 import type { DrugComplex } from "@/lib/tool-cards";
 
@@ -84,6 +84,8 @@ describe("StructurePanel", () => {
     expect(view.dataset).toMatchObject({ kind: "complex", mode: "site" });
     expect(pressed()).toBe("Binding site");
     expect(screen.getByText("hydrogen bond")).toBeDefined();
+    expect(screen.queryByText("metal bond")).toBeNull();
+    expect(screen.queryByText("cofactor")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Whole protein" }));
     expect(view.dataset.mode).toBe("protein");
@@ -93,6 +95,18 @@ describe("StructurePanel", () => {
     expect(view.dataset.mode).toBe("molecule");
     expect(screen.queryByText("hydrogen bond")).toBeNull();
     expect(screen.queryByRole("button", { name: "Replay binding" })).toBeNull();
+  });
+
+  it("explains the metal bonds and cofactors of a complex that has them", async () => {
+    stubFetch(Response.json(METAL_COMPLEX));
+    render(<StructurePanel target={imatinib} />);
+
+    expect(await screen.findByText("metal bond")).toBeDefined();
+    expect(screen.getByText("cofactor")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Molecule" }));
+    expect(screen.queryByText("metal bond")).toBeNull();
+    expect(screen.queryByText("cofactor")).toBeNull();
   });
 
   it("replays the binding", async () => {
