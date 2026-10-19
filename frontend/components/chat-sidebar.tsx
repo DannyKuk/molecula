@@ -74,14 +74,6 @@ export function ChatSidebar(props: ChatListProps) {
         <IconButton label="New chat" onClick={props.onNew}>
           <SquarePen />
         </IconButton>
-        <IconButton
-          label={answeringElsewhere ? "Chat history, an answer is coming in" : "Chat history"}
-          onClick={() => setExpanded(true)}
-          className="relative"
-        >
-          <History />
-          {answeringElsewhere && <AnsweringBadge />}
-        </IconButton>
         <Link
           href="/benchmarks"
           aria-label="Benchmarks"
@@ -90,6 +82,14 @@ export function ChatSidebar(props: ChatListProps) {
         >
           <ChartColumn />
         </Link>
+        <IconButton
+          label={answeringElsewhere ? "Chat history, an answer is coming in" : "Chat history"}
+          onClick={() => setExpanded(true)}
+          className="relative"
+        >
+          <History />
+          {answeringElsewhere && <AnsweringBadge />}
+        </IconButton>
         <RailBookmarks {...props} />
       </nav>
     );
