@@ -562,6 +562,25 @@ describe("Chat sidebar", () => {
     expect(await screen.findByText("Imatinib blocks BCR-ABL.")).toBeDefined();
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
+
+  it("opens the saved chat a link from another page names", async () => {
+    render(<Chat history={historyWith(["Imatinib", "Sildenafil"]).history} initialChatId="c1" />);
+
+    expect(await screen.findByText("About Sildenafil.")).toBeDefined();
+  });
+
+  it("links to the benchmarks from the rail, the list and the phone drawer", async () => {
+    await openPage(memoryHistory().history);
+    const benchmarks = { name: "Benchmarks" };
+    expect(rail().getByRole("link", benchmarks).getAttribute("href")).toBe("/benchmarks");
+
+    fireEvent.click(screen.getByRole("button", { name: "Open chats" }));
+    const drawer = within(await screen.findByRole("dialog", { name: "Chats" }));
+    expect(drawer.getByRole("link", benchmarks).getAttribute("href")).toBe("/benchmarks");
+    fireEvent.click(drawer.getByRole("button", { name: "Close chats" }));
+
+    expect(expandSidebar().getByRole("link", benchmarks).getAttribute("href")).toBe("/benchmarks");
+  });
 });
 
 describe("Chat bookmarks", () => {

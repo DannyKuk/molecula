@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 import { type ChatHistory, reopenedTurns } from "@/lib/chat-history";
-import { indexedDbHistory } from "@/lib/chat-history-indexeddb";
+import { browserHistory } from "@/lib/chat-history-indexeddb";
 import { structuresOf } from "@/lib/tool-cards";
 import { useChatHistory } from "@/lib/use-chat-history";
 import { useConversations } from "@/lib/use-conversations";
@@ -16,17 +16,18 @@ import { ConversationTurn } from "./conversation-turn";
 import { Disclaimer } from "./disclaimer";
 import { ExportMenu } from "./export-menu";
 import { HelpDialog, HelpGuide } from "./help-guide";
-
-const browserHistory = indexedDbHistory();
+import { useBookmarkUndo } from "./saved-chats";
 
 type ChatProps = {
   initialQuestion?: string;
+  /** A saved chat to open, from a link on another page (`savedChatLink`). */
+  initialChatId?: string;
   /** Where the conversations are kept; the browser's IndexedDB unless a test passes its own. */
   history?: ChatHistory;
 };
 
 /** The chat: the saved chats, the conversation so far, the question box and the help guide. */
-export function Chat({ initialQuestion, history = browserHistory }: ChatProps) {
+export function Chat({ initialQuestion, initialChatId, history = browserHistory }: ChatProps) {
   const saved = useChatHistory(history);
   const {
     id,
@@ -55,6 +56,20 @@ export function Chat({ initialQuestion, history = browserHistory }: ChatProps) {
     turns[0]?.question ??
     "";
 
+  const openSaved = async (openedId: string) => {
+    const conversation = await saved.load(openedId);
+    if (conversation) open(conversation.id, reopenedTurns(conversation.turns));
+  };
+
+  const openedLinkedChat = useRef(false);
+  useEffect(() => {
+    if (!initialChatId || openedLinkedChat.current) return;
+    openedLinkedChat.current = true;
+    void saved.load(initialChatId).then((conversation) => {
+      if (conversation) open(conversation.id, reopenedTurns(conversation.turns));
+    });
+  }, [initialChatId, saved, open]);
+
   const chatList: ChatListProps = {
     available: saved.available,
     conversations: saved.conversations,
@@ -63,10 +78,8 @@ export function Chat({ initialQuestion, history = browserHistory }: ChatProps) {
     answeringId,
     queuedIds,
     removedBookmark,
-    onOpen: async (openedId) => {
-      if (openedId === id) return;
-      const conversation = await saved.load(openedId);
-      if (conversation) open(conversation.id, reopenedTurns(conversation.turns));
+    onOpen: (openedId) => {
+      if (openedId !== id) void openSaved(openedId);
     },
     onNew: startNew,
     onRename: saved.rename,
@@ -169,38 +182,4 @@ function EmptyState({ onAsk }: { onAsk: (question: string) => void }) {
       <HelpGuide onAsk={onAsk} />
     </section>
   );
-}
-
-const UNDO_SHOWN_MS = 6000;
-
-/**
- * Removes bookmarks and keeps the last one removed for a few seconds, so Undo can put it back in
- * its place. It lives here rather than in the list because the sidebar and the drawer share it.
- */
-function useBookmarkUndo(saved: ReturnType<typeof useChatHistory>) {
-  const [removed, setRemoved] = useState<{ id: string; at: number } | null>(null);
-
-  useEffect(() => {
-    if (!removed) return;
-    const timer = setTimeout(() => setRemoved(null), UNDO_SHOWN_MS);
-    return () => clearTimeout(timer);
-  }, [removed]);
-
-  const unbookmark = (id: string) => {
-    setRemoved({ id, at: saved.bookmarks.indexOf(id) });
-    saved.unbookmark(id);
-  };
-  const title = saved.conversations.find((c) => c.id === removed?.id)?.title;
-  const removedBookmark =
-    removed && title !== undefined
-      ? {
-          title,
-          onUndo: () => {
-            setRemoved(null);
-            saved.bookmark(removed.id, removed.at);
-          },
-        }
-      : null;
-
-  return { removedBookmark, unbookmark };
 }
