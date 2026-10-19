@@ -37,7 +37,7 @@ async def sort_all(
 ) -> dict[str, Counter[str]]:
     results = {}
     for number, item in enumerate(items, start=1):
-        conversation = [ChatMessage(role="user", content=item.text)]
+        conversation = item.messages()
         sorts = [await sort_once(input_check, conversation) for _ in range(times)]
         results[item.id] = Counter(sorts)
         print(f"{number}/{len(items)} {item.id}: {results[item.id][item.category]}/{times}")

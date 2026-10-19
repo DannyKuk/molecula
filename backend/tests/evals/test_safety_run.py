@@ -14,8 +14,9 @@ def item(category: InputCategory, item_id: str = "message") -> InputCheckItem:
         text="A message",
         language="en",
         category=category,
-        source="test",
+        source="written for #147",
         split="test",
+        judged=True,
         quick=True,
     )
 

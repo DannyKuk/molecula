@@ -65,7 +65,7 @@ async def sort_all(settings: Settings, items: list[InputCheckItem]) -> dict[str,
             continue
         start = time.perf_counter()
         try:
-            sorted_message = await input_check.sort([ChatMessage(role="user", content=item.text)])
+            sorted_message = await input_check.sort(item.messages())
         except DecisionModelError as error:
             print(f"{item.id}: {error!r}", flush=True)
             cached[item.id] = Sorted(item.id, None, time.perf_counter() - start, error=repr(error))

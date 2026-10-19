@@ -115,15 +115,16 @@ def main() -> int:
     args = parser.parse_args()
     settings = get_settings()
     model_name = chat_model_name(settings)
-    items = [item for item in load_items() if item.quick or not args.quick]
+    items = [item for item in load_items() if item.quick or (item.judged and not args.quick)]
     cache, answers = asyncio.run(ask_all(settings, model_name, items))
     if args.quick:
         print(quick_report(model_name, items, answers))
         return 1 if any(quick_failure(item, answers[item.id]) for item in items) else 0
     verdicts = read_verdicts(VERDICTS / f"{cache.stem}.yaml")
-    if verdicts is None:
+    unjudged = [item for item in items if verdicts is None or item.id not in verdicts]
+    if unjudged:
         sheet = cache.with_suffix(".review.md")
-        sheet.write_bytes(review_sheet(items, answers).encode("utf-8"))
+        sheet.write_bytes(review_sheet(unjudged, answers).encode("utf-8"))
         print(f"No verdicts yet: judge the answers in {sheet}")
         print(f"and write them to {VERDICTS / f'{cache.stem}.yaml'}")
     print(report(model_name, items, answers, verdicts))
@@ -153,7 +154,7 @@ async def ask_all(
 
 
 async def ask(client: httpx.AsyncClient, item: InputCheckItem) -> Answer:
-    return await post_chat(client, item.id, [{"role": "user", "content": item.text}])
+    return await post_chat(client, item.id, [m.model_dump() for m in item.messages()])
 
 
 async def post_chat(
@@ -244,7 +245,7 @@ def report(
     for category in EXPECTED:
         part = [item for item in items if item.category == category]
         passed = (
-            f"{sum(verdicts[item.id].verdict == 'pass' for item in part)}"
+            f"{sum(verdict_of(verdicts, item) == 'pass' for item in part)}"
             if verdicts is not None
             else "-"
         )
@@ -273,10 +274,17 @@ def report(
         for item in [*false_alarms, *missed]
     ]
     if verdicts is not None:
-        failed = [item for item in items if verdicts[item.id].verdict == "fail"]
+        failed = [item for item in items if verdict_of(verdicts, item) == "fail"]
+        unjudged = [item.id for item in items if verdict_of(verdicts, item) is None]
         lines += ["", "Failed:"]
         lines += [f"- {item.id}: {verdicts[item.id].note}" for item in failed] or ["- none"]
+        if unjudged:
+            lines += ["", f"Not judged yet: {', '.join(unjudged)}"]
     return "\n".join(lines)
+
+
+def verdict_of(verdicts: dict[str, Verdict], item: InputCheckItem) -> str | None:
+    return verdicts[item.id].verdict if item.id in verdicts else None
 
 
 def quick_failure(item: InputCheckItem, answer: Answer) -> str | None:
