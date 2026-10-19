@@ -1,18 +1,30 @@
-from collections.abc import Callable, Iterable
-from typing import get_args
+from collections.abc import Callable, Iterable, Mapping
+from typing import Protocol, get_args
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from molecula import prompts
 from molecula.schemas.compounds import Compound, Resolution
+from molecula.schemas.decisions import (
+    ChoiceQuestion,
+    DecisionResponse,
+    NoulQuestion,
+    Question,
+    StateMessage,
+)
 from molecula.schemas.labels import Label, ProductType, SectionGroup
 from molecula.schemas.retrieval import DrugFilter, LabelFilter, LabelQuery
 from molecula.schemas.usage import usage_of
 from molecula.services.compounds import CompoundService
 from molecula.services.labels import LabelService
 
-SECTION_GROUPS: frozenset[str] = frozenset(get_args(SectionGroup.__value__))
+SECTION_GROUP_ORDER: tuple[str, ...] = get_args(SectionGroup.__value__)
+SECTION_GROUPS: frozenset[str] = frozenset(SECTION_GROUP_ORDER)
+MAX_SECTION_GROUPS = 3
+SECTION_THRESHOLD = 0.5
+PRODUCT_TYPE = "product_type"
+PRODUCT_TYPE_OPTIONS = ("rx", "otc", "either")
 
 
 class FilterExtractor:
@@ -23,8 +35,7 @@ class FilterExtractor:
         self, model: BaseChatModel, compounds: CompoundService, labels: LabelService
     ) -> None:
         self._model = model
-        self._compounds = compounds
-        self._labels = labels
+        self._check = FilterCheck(compounds, labels)
 
     def extract(self, question: str) -> LabelFilter:
         """The checked filter for `question`. When the model gives no usable query, the filter
@@ -58,6 +69,93 @@ class FilterExtractor:
         return label_filter.model_copy(
             update={"section_groups": [*label_filter.section_groups, section]}
         )
+
+    def check(self, query: LabelQuery) -> LabelFilter:
+        return self._check.check(query)
+
+
+class Decider(Protocol):
+    async def decide(
+        self, state: str | list[StateMessage], questions: Mapping[str, Question]
+    ) -> DecisionResponse: ...
+
+
+class DecisionFilterExtractor:
+    """Fills the filter with a decision model in one call: a yes/no question per section group
+    and a choice for the product type. A decision model answers only what it is asked, so the
+    drug names are found in the question by `CompoundService.find_names`."""
+
+    def __init__(
+        self,
+        model: Decider,
+        compounds: CompoundService,
+        labels: LabelService,
+        *,
+        threshold: float = SECTION_THRESHOLD,
+    ) -> None:
+        self._model = model
+        self._compounds = compounds
+        self._check = FilterCheck(compounds, labels)
+        self._threshold = threshold
+        self.questions = filter_questions()
+
+    async def extract(self, question: str) -> LabelFilter:
+        """The checked filter for `question`. Raises the model's errors as they come."""
+        # The question goes as its own message, never into the questions: it is untrusted text.
+        state = [StateMessage(role="user", content=question)]
+        return self.filter_from(question, await self._model.decide(state, self.questions))
+
+    def filter_from(self, question: str, response: DecisionResponse) -> LabelFilter:
+        """The checked filter for `question` from the model's answers to `questions`."""
+        probabilities = {group: response.noul(group).noul for group in SECTION_GROUP_ORDER}
+        query = LabelQuery(
+            substances=self._compounds.find_names(question),
+            section_groups=picked_groups(probabilities, self._threshold),
+            product_type=product_type(response.choice(PRODUCT_TYPE).choice),
+        )
+        return self._check.check(query).model_copy(
+            update={"extraction_usage": response.usage.as_usage()}
+        )
+
+
+def filter_questions() -> dict[str, Question]:
+    """A yes/no question per section group, keyed by the group, and the product type choice."""
+    questions: dict[str, Question] = {
+        group: NoulQuestion(instructions=section_question(group)) for group in SECTION_GROUP_ORDER
+    }
+    questions[PRODUCT_TYPE] = ChoiceQuestion(
+        instructions=prompts.load("rag/label_filter/product_type/question").strip(),
+        criteria={
+            option: prompts.load(f"rag/label_filter/product_type/{option}").strip()
+            for option in PRODUCT_TYPE_OPTIONS
+        },
+    )
+    return questions
+
+
+def section_question(group: str) -> str:
+    part = prompts.load(f"rag/label_filter/sections/{group}").strip()
+    return prompts.load("rag/label_filter/section", part=part).strip()
+
+
+def picked_groups(probabilities: Mapping[str, float], threshold: float) -> list[str]:
+    """The groups whose probability reaches `threshold`, likeliest first, at most three, as many
+    as the chat model may pick."""
+    likeliest = sorted(probabilities, key=lambda group: probabilities[group], reverse=True)
+    return [group for group in likeliest if probabilities[group] >= threshold][:MAX_SECTION_GROUPS]
+
+
+def product_type(option: str) -> ProductType | None:
+    product_types: dict[str, ProductType] = {"rx": "rx", "otc": "otc"}
+    return product_types.get(option)
+
+
+class FilterCheck:
+    """Checks a `LabelQuery` against the store, whichever model filled it."""
+
+    def __init__(self, compounds: CompoundService, labels: LabelService) -> None:
+        self._compounds = compounds
+        self._labels = labels
 
     def check(self, query: LabelQuery) -> LabelFilter:
         """`query` checked against the store: drug names resolved to supported drugs and their

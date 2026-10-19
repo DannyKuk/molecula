@@ -114,6 +114,17 @@ class CompoundStore:
             aliases.setdefault(cid, []).append(alias)
         return aliases
 
+    def label_brands(self) -> dict[int, list[str]]:
+        """The brands of every compound's stored labels, as openFDA writes them."""
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT DISTINCT cid, brand FROM label WHERE brand IS NOT NULL ORDER BY cid, brand"
+            ).fetchall()
+        brands: dict[int, list[str]] = {}
+        for cid, brand in rows:
+            brands.setdefault(cid, []).append(brand)
+        return brands
+
     def synonyms(self, cid: int) -> list[Synonym]:
         with self._lock:
             rows = self._conn.execute(

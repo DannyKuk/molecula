@@ -214,3 +214,16 @@ def test_prune_keeping_every_compound_changes_nothing(
 
     assert store.prune({2519, 99}) == []
     assert conn.total_changes == changes
+
+
+def test_label_brands_lists_each_brand_of_a_compound_once(
+    conn: sqlite3.Connection, store: CompoundStore
+) -> None:
+    store.save(CAFFEINE, [Synonym("caffeine", "name")], FIRST_FETCH)
+    save_label(conn, CAFFEINE.cid, "Stay Awake")
+
+    assert store.label_brands() == {CAFFEINE.cid: ["Stay Awake"]}
+
+
+def test_label_brands_without_labels_is_empty(store: CompoundStore) -> None:
+    assert store.label_brands() == {}

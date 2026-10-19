@@ -16,6 +16,12 @@ from molecula.store.structures import ConformerFiles
 PUBCHEM_COMPOUND_URL = "https://pubchem.ncbi.nlm.nih.gov/compound/{cid}"
 MAX_SUGGESTIONS = 3
 MIN_PREFIX_LENGTH = 4
+# How close a word must be to a drug spelling to be taken as a possible drug name. Over the 94
+# retrieval questions and 280 input-check messages, 0.8 also took English words ("raise" for
+# Gralise, "score" for Coreg); 0.85 took only drug names, misspelled or in German (#287).
+NEAR_CUTOFF = 0.85
+# Shorter words are left out: abbreviations like "ASS" count only in capitals.
+MIN_NEAR_NAME_LENGTH = 5
 
 # Prescriptions and openFDA name the salt or hydrate ("imatinib mesylate"), the store holds the
 # parent compound. Ester words like "acetate" are left out: medroxyprogesterone acetate is a
@@ -137,17 +143,34 @@ class CompoundService:
                 )
         return spellings
 
+    def _brand_spellings(self) -> dict[str, Suggestion]:
+        """The label brands that aren't also a scope name or alias, by `spelling_key`."""
+        scope = {spelling_key(spelling) for spelling in self._scope_spellings()}
+        names = {record.cid: record.name for record in self._store.all()}
+        spellings: dict[str, Suggestion] = {}
+        for cid, brands in self._store.label_brands().items():
+            for brand in brands:
+                key = spelling_key(brand)
+                if key not in scope and cid in names:
+                    spellings.setdefault(key, Suggestion(alias=brand, cid=cid, name=names[cid]))
+        return spellings
+
+    def _mention_spellings(self) -> dict[str, Suggestion]:
+        scope = {spelling_key(s.alias): s for s in self._scope_spellings().values()}
+        return scope | self._brand_spellings()
+
     def find_mentions(self, text: str) -> list[DrugMention]:
-        """The supported drugs a text names by scope name or alias, in the order they appear.
+        """The supported drugs a text names by scope name, alias or label brand, in the order
+        they appear.
 
         Only whole words count, and a longer name wins over a name inside it ("acetylsalicylic
         acid"). PubChem synonyms are left out: they include codes and fragments that would match
         ordinary words.
         """
-        spellings = self._scope_spellings()
+        spellings = self._mention_spellings()
         mentions = []
         for match in self._mention_pattern.finditer(text):
-            drug = spellings[match.group().casefold()]
+            drug = spellings[spelling_key(match.group())]
             mentions.append(
                 DrugMention(
                     text=match.group(),
@@ -159,19 +182,33 @@ class CompoundService:
             )
         return mentions
 
+    def find_names(self, text: str) -> list[str]:
+        """The words of a text that may name a drug, as written: each mention of a supported
+        drug, then each other word close to one of their spellings ("Gleevc", "Cetirizin").
+        Resolving them is left to `resolve`, which suggests a drug for a misspelling rather than
+        taking it for that drug."""
+        mentions = self.find_mentions(text)
+        spellings = list(self._mention_spellings())
+        near = [
+            word.group()
+            for word in re.finditer(rf"\w{{{MIN_NEAR_NAME_LENGTH},}}", text)
+            if not any(mention.start <= word.start() < mention.end for mention in mentions)
+            and get_close_matches(spelling_key(word.group()), spellings, n=1, cutoff=NEAR_CUTOFF)
+        ]
+        return list(dict.fromkeys([*(mention.text for mention in mentions), *near]))
+
     @cached_property
     def _mention_pattern(self) -> re.Pattern[str]:
         # Abbreviations match only in capitals: "ASS" is aspirin in German, "ass" an English word.
-        spellings = sorted(
-            (suggestion.alias for suggestion in self._scope_spellings().values()),
-            key=len,
-            reverse=True,
-        )
-        alternatives = [
-            re.escape(spelling) if spelling.isupper() else f"(?i:{re.escape(spelling)})"
-            for spelling in spellings
+        # A label brand matches only with a capital first letter, because some brands are
+        # ordinary words ("Stay Awake", "anti-diarrheal").
+        scope = [
+            (spelling, re.escape(spelling) if spelling.isupper() else f"(?i:{re.escape(spelling)})")
+            for spelling in (suggestion.alias for suggestion in self._scope_spellings().values())
         ]
-        return re.compile(rf"(?<!\w)(?:{'|'.join(alternatives)})(?!\w)")
+        brands = [(s.alias, brand_pattern(s.alias)) for s in self._brand_spellings().values()]
+        alternatives = sorted([*scope, *brands], key=lambda pair: len(pair[0]), reverse=True)
+        return re.compile(rf"(?<!\w)(?:{'|'.join(pattern for _, pattern in alternatives)})(?!\w)")
 
     def get_compound(self, cid: int) -> Compound | None:
         record = self._store.get(cid)
@@ -210,6 +247,19 @@ def name_candidates(query: str) -> list[str]:
     if parent and len(parent) < len(words):
         return [query, " ".join(parent)]
     return [query]
+
+
+def spelling_key(spelling: str) -> str:
+    """A spelling compared ignoring case, with hyphens as spaces: "Tirosint-SOL" is the label's
+    "Tirosint SOL"."""
+    return spelling.casefold().replace("-", " ")
+
+
+def brand_pattern(brand: str) -> str:
+    """A label brand with a capital first letter, the rest in any case and its words joined by a
+    space or a hyphen."""
+    words = re.split(r"[\s-]+", brand[1:])
+    return f"{re.escape(brand[0].upper())}(?i:{'[ -]'.join(re.escape(word) for word in words)})"
 
 
 def to_compound(record: CompoundRecord) -> Compound:

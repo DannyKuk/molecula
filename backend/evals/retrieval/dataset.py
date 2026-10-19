@@ -8,6 +8,7 @@ from molecula.store.index import Chunk
 from molecula.store.labels import SectionGroup
 
 DATASET = Path(__file__).resolve().parents[1] / "datasets" / "retrieval_questions.yaml"
+TYPOS = DATASET.parent / "retrieval_questions_typos.yaml"
 
 
 class Question(BaseModel):
@@ -53,6 +54,18 @@ def load_questions(path: Path = DATASET) -> list[Question]:
     if duplicates:
         raise ValueError(f"Duplicate question ids in {path}: {sorted(duplicates)}")
     return questions
+
+
+def load_typos(questions: list[Question], path: Path = TYPOS) -> list[Question]:
+    """The questions of `path`, with a misspelled drug name, each scored with the answer key of
+    the question with its id."""
+    by_id = {question.id: question for question in questions}
+    typos = []
+    for entry in yaml.safe_load(path.read_text(encoding="utf-8")):
+        if entry["id"] not in by_id or entry["typo"] not in entry["question"]:
+            raise ValueError(f"{path}: {entry['id']} needs a known id and its typo in the question")
+        typos.append(by_id[entry["id"]].model_copy(update={"question": entry["question"]}))
+    return typos
 
 
 def is_hit(question: Question, chunk: Chunk) -> bool:
