@@ -4,7 +4,7 @@ Do Jev and gpt-oss-20b still sort the guard's messages correctly when the set is
 
 ## Setup
 
-- **Messages:** the 280 of `backend/evals/datasets/input_check.yaml` since #103. The set has at least 33 per language in `ok`, `overdose_emergency`, `personal_medical_advice` and `off_topic`. It includes 32 follow-ups, sent with their earlier messages, and 32 `ok` twins (`ok-pair-*`). `lethal_dose` and `synthesis_or_misuse` still have 7 each (5 English, 2 German) until #284.
+- **Messages:** the 280 of `backend/evals/datasets/input_check.yaml` since #103. The set has at least 33 per language in `ok`, `overdose_emergency`, `personal_medical_advice` and `off_topic`. It includes 32 follow-ups, sent with their earlier messages, and 24 `ok` twins (`ok-pair-*`) next to overdose, personal advice and off-topic. `lethal_dose` and `synthesis_or_misuse` still have 7 each (5 English, 2 German) until #284.
 - **Jev 1.13** on OpenRouter, through `DecisionModelInputCheck` (`guard/safety.py`), the check the chat uses online. One `choice` question over the six categories (`prompts/guard/input_check/`). Each message is sorted once, because a decision model gives the same answer to the same input. Runner: `evals.decisions.input_check`.
 - **gpt-oss-20b** in LM Studio (32,768 context, one slot, RX 7900 XTX), through `ChatModelInputCheck` with `prompts/guard/classify.md`, the check the chat uses offline. Each message is sorted 3 times, because it answers at temperature 0.2. Runner: `evals.safety.repeat --times 3`, which now reports per category and language and seconds per sort (#286).
 - Prompts as on main `0b648f3`. Times are warm.
@@ -24,10 +24,10 @@ Do Jev and gpt-oss-20b still sort the guard's messages correctly when the set is
 |---|---|---|
 | Sorted into its category | **278 of 280** | 829 of 840 sorts; 272 messages right in all 3, 278 by majority |
 | Unsafe sorted `ok` | **0** | 1 of 438 sorts (a German personal-advice question) |
-| `off_topic` sorted `ok` | 0 | 3 of 99 sorts (one message, every time) |
+| `off_topic` sorted `ok` | 0 | 3 of 198 sorts (one message, every time) |
 | `ok` sorted as something else | 2 of 68 (1 refused) | 5 of 204 sorts (3 refused) |
 | Follow-ups sorted right | 32 of 32 | 96 of 96 sorts |
-| `ok` twins sorted right | 30 of 32 | 92 of 96 sorts |
+| `ok` twins sorted right | 22 of 24 | 68 of 72 sorts |
 | Confident errors (p ≥ 0.9) | 0 | - |
 | Seconds per message | **p50 0.28**, max 0.56 | p50 0.94, max 3.38 |
 
@@ -67,4 +67,4 @@ OFFLINE=1 LOCAL_LLM_BASE_URL=http://localhost:1234/v1 LOCAL_LLM_MODEL=openai/gpt
     uv run python -m evals.safety.repeat --times 3
 ```
 
-Jev's answers are cached with their probabilities in `data/build/eval/decisions/input_check/jev-1.13-3f1dd8a07f92.jsonl`, keyed by the model and the prompts, so a re-run asks nothing. `repeat` caches nothing; its 840 sorts take about 15 minutes.
+Jev's answers are cached with their probabilities in `data/build/eval/decisions/input_check/jev-1.13-3f1dd8a07f92.jsonl`, keyed by the model and the prompts, so a re-run asks nothing. `repeat` caches nothing; its 840 sorts at a median 0.94 s come to about 13 minutes.
