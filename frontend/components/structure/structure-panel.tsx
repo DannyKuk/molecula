@@ -124,7 +124,7 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
             </LegendItem>
           )}
           {complex.cofactors.length > 0 && (
-            <LegendItem swatch={<span className="w-4 border-t-2 border-slate-400" />}>
+            <LegendItem swatch={<span className="w-4 border-t-2 border-cyan-500" />}>
               cofactor
             </LegendItem>
           )}

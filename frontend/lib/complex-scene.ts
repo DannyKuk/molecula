@@ -21,6 +21,10 @@ const BOND_ORDER = { single: 1, double: 2, triple: 3, aromatic: 1.5 } as const;
 // The elements the ingest counts as metals (`METALS` in `backend/src/molecula/ingest/complexes.py`).
 const METALS = new Set("Li Na K Mg Ca Mn Fe Co Ni Cu Zn Cd Hg Pt".split(" "));
 
+// How far a metal's label sits from the metal, in Å: just past its ball, leaving its 2 Å bond to the
+// drug in view.
+const METAL_LABEL_OFFSET = 1.2;
+
 const point = ([x, y, z]: Xyz): Point => ({ x, y, z });
 
 const residueKey = (residue: Residue) => `${residue.chain}:${residue.number}:${residue.ins_code}`;
@@ -117,15 +121,28 @@ export function isMetal(element: string | undefined): boolean {
   return element !== undefined && METALS.has(element);
 }
 
-/** The metal ions and the metals inside the cofactors, such as heme's iron, labelled once each. */
+/** The metal ions and the metals inside the cofactors, such as heme's iron, labelled once each,
+ * each label on the far side of its metal from the drug, so it doesn't cover the bond between them. */
 export function metalLabels(complex: Complex): MetalLabel[] {
+  const drug = centroid(complex.ligand.atoms.map((atom) => point(atom.xyz)));
   const ions = complex.metals.map((metal) => ({ label: metal.element, xyz: metal.xyz }));
   const bound = complex.cofactors.flatMap((cofactor) =>
     cofactor.atoms
       .filter((atom) => isMetal(atom.element))
       .map((atom) => ({ label: atom.element, xyz: atom.xyz })),
   );
-  return [...ions, ...bound].map(({ label, xyz }) => ({ label, position: point(xyz) }));
+  return [...ions, ...bound].map(({ label, xyz }) => ({
+    label,
+    position: awayFrom(drug, point(xyz), METAL_LABEL_OFFSET),
+  }));
+}
+
+function awayFrom(origin: Point, from: Point, distance: number): Point {
+  const d = { x: from.x - origin.x, y: from.y - origin.y, z: from.z - origin.z };
+  const length = Math.hypot(d.x, d.y, d.z);
+  if (length === 0) return from;
+  const scale = distance / length;
+  return { x: from.x + d.x * scale, y: from.y + d.y * scale, z: from.z + d.z * scale };
 }
 
 /** The pocket residues, as a 3Dmol selection. */

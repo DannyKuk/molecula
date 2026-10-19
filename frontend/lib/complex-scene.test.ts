@@ -15,6 +15,7 @@ import {
   metalLabels,
   pocketSelection,
   proteinAtoms,
+  type Point,
 } from "./complex-scene";
 import { METAL_COMPLEX, SMALL_COMPLEX } from "./test-complexes";
 
@@ -82,10 +83,21 @@ describe("metalAtoms", () => {
 
 describe("metalLabels", () => {
   it("labels each metal ion and each metal inside a cofactor by its element", () => {
-    expect(metalLabels(METAL_COMPLEX)).toEqual([
-      { label: "Zn", position: { x: 10, y: -2, z: 0 } },
-      { label: "Fe", position: { x: 12, y: -2, z: 0 } },
-    ]);
+    expect(metalLabels(METAL_COMPLEX).map((metal) => metal.label)).toEqual(["Zn", "Fe"]);
+  });
+
+  it("puts each label 1.2 Å from its metal, on the far side from the drug", () => {
+    const drug = { x: 11, y: 0, z: 0 };
+    const metals = [
+      { x: 10, y: -2, z: 0 },
+      { x: 12, y: -2, z: 0 },
+    ];
+    const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+
+    metalLabels(METAL_COMPLEX).forEach(({ position }, i) => {
+      expect(distance(position, metals[i])).toBeCloseTo(1.2);
+      expect(distance(position, drug)).toBeCloseTo(distance(metals[i], drug) + 1.2);
+    });
   });
 
   it("has none for a complex without metals", () => {
