@@ -11,7 +11,7 @@ ragas 0.4.3 imports `chat_models.vertexai`, which 0.4.2 dropped.
 
 Faithfulness splits the answer into statements and asks the judge which of them the contexts
 support (two calls); answer relevancy asks it for `STRICTNESS` questions the answer would fit and
-compares them with the asked one by embedding (three calls and one embedding request). The judge
+compares them with the asked one by embedding (three calls and two embedding requests). The judge
 and the embedding model are called through OpenRouter with OPENROUTER_API_KEY. Scores are saved
 per sample next to the samples, keyed by their content, the judge model and the RAGAs version, so
 an interrupted run goes on where it stopped, with each statement's verdict and the judge's reason;
