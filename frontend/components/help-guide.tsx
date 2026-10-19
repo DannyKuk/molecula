@@ -83,7 +83,11 @@ export function HelpGuide({ onAsk }: { onAsk: (question: string) => void }) {
           <Link href="/drugs" className="font-medium underline underline-offset-4">
             supported drugs
           </Link>
-          .
+          . How the label search was chosen is on the{" "}
+          <Link href="/benchmarks" className="font-medium underline underline-offset-4">
+            benchmarks
+          </Link>{" "}
+          page.
         </p>
         <p>
           A small tag after a fact, like &ldquo;Gleevec · Warnings and cautions&rdquo;, names the

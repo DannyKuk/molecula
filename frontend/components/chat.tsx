@@ -91,6 +91,12 @@ export function Chat({ initialQuestion, history = browserHistory }: ChatProps) {
             <Link href="/drugs" className="font-medium underline-offset-4 hover:underline">
               Supported drugs
             </Link>
+            <Link
+              href="/benchmarks"
+              className="hidden font-medium underline-offset-4 hover:underline sm:inline"
+            >
+              Benchmarks
+            </Link>
             {turns.length > 0 && (
               <ExportMenu title={title} turns={turns} disabled={pendingAnswer} />
             )}

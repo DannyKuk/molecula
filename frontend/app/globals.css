@@ -28,6 +28,15 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
+  --color-series-drug: var(--series-drug);
+  --color-series-index: var(--series-index);
+  --color-rank-first: var(--rank-first);
+  --color-rank-top5: var(--rank-top5);
+  --color-rank-top10: var(--rank-top10);
+  --color-app-model: var(--app-model);
+  --color-app-model-foreground: var(--app-model-foreground);
+  --color-evidence: var(--evidence);
+  --color-evidence-foreground: var(--evidence-foreground);
 }
 
 /* Dark mode is for the screen only, so a page printed from a dark browser comes out dark on white. */
@@ -55,6 +64,17 @@
   --input: oklch(0.871 0.006 286.286);
   --ring: oklch(0.552 0.016 285.938);
   --radius: 0.625rem;
+  /* Benchmark charts: two series checked for colour blindness, light and dark (#274), a blue
+     ramp for the rank of the answer, and the mark for the app's own model. */
+  --series-drug: #2a78d6;
+  --series-index: #eb6834;
+  --rank-first: #184f95;
+  --rank-top5: #3987e5;
+  --rank-top10: #86b6ef;
+  --app-model: #e0f2fe;
+  --app-model-foreground: #075985;
+  --evidence: #dbeafe;
+  --evidence-foreground: #0c2d5a;
 }
 
 @media screen and (prefers-color-scheme: dark) {
@@ -77,6 +97,15 @@
     --border: oklch(0.274 0.006 286.033);
     --input: oklch(0.37 0.013 285.805);
     --ring: oklch(0.552 0.016 285.938);
+    --series-drug: #3987e5;
+    --series-index: #d95926;
+    --rank-first: #9ec5f4;
+    --rank-top5: #3987e5;
+    --rank-top10: #1c5cab;
+    --app-model: #082f49;
+    --app-model-foreground: #7dd3fc;
+    --evidence: #1e3a6b;
+    --evidence-foreground: #eaf2ff;
   }
 }
 
