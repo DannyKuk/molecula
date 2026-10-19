@@ -21,6 +21,8 @@ from molecula.agent.llm import (
 from molecula.config import Settings
 from molecula.schemas.usage import usage_of
 
+FIXTURES = Path(__file__).parents[1] / "fixtures" / "openrouter"
+
 LLM_FIELDS: dict[str, Any] = {
     "openrouter_api_key": None,
     "llm_model": None,
@@ -414,3 +416,24 @@ def test_a_local_server_costs_nothing() -> None:
 
     assert usage_of(answer).cost_usd == 0.0
     assert usage_of(verdict["raw"]).cost_usd == 0.0
+
+
+def test_structured_output_from_openrouter_keeps_its_tokens_and_cost() -> None:
+    """OpenRouter repeats `"role": "assistant"` in every chunk, recorded 2026-10-19."""
+    recorded = (FIXTURES / "structured_stream.sse").read_text(encoding="utf-8")
+    # The server adds its own end of stream.
+    server = LocalServer([recorded.removesuffix("data: [DONE]\n\n")])
+    structured = server.model(PricedChatOpenAI).with_structured_output(
+        RecordedVerdict, include_raw=True
+    )
+
+    result = structured.invoke("Is aspirin an NSAID?")
+
+    assert result["parsed"] == RecordedVerdict(yes=True)
+    usage = usage_of(result["raw"])
+    assert (usage.input_tokens, usage.output_tokens, usage.total_tokens) == (38, 39, 77)
+    assert usage.cost_usd == 2.33e-05
+
+
+class RecordedVerdict(BaseModel):
+    yes: bool

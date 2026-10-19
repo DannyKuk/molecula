@@ -33,15 +33,29 @@ def _sum[N: (int, float)](left: N | None, right: N | None) -> N | None:
 
 
 def usage_of(message: BaseMessage) -> Usage:
-    """The usage of the model call that wrote `message`. The cost is the `cost` the chat model
-    keeps in `response_metadata["token_usage"]` (`agent/llm.py`)."""
-    usage = message.usage_metadata if isinstance(message, AIMessage) else None
-    if usage is None:
+    """The usage of the model call that wrote `message`, from its `usage_metadata` or else the
+    provider's own usage in `response_metadata["token_usage"]`, where the chat model also keeps
+    the `cost` (`agent/llm.py`)."""
+    if not isinstance(message, AIMessage):
         return Usage.unreported()
     token_usage: dict[str, Any] = message.response_metadata.get("token_usage") or {}
-    return Usage(
-        input_tokens=usage["input_tokens"],
-        output_tokens=usage["output_tokens"],
-        total_tokens=usage["total_tokens"],
-        cost_usd=token_usage.get("cost"),
-    )
+    cost = token_usage.get("cost")
+    if message.usage_metadata is not None:
+        usage = message.usage_metadata
+        return Usage(
+            input_tokens=usage["input_tokens"],
+            output_tokens=usage["output_tokens"],
+            total_tokens=usage["total_tokens"],
+            cost_usd=cost,
+        )
+    # OpenRouter repeats the role in every chunk of a stream, so the OpenAI client's
+    # structured-output stream ends with the role "assistantassistant…", and LangChain leaves
+    # `usage_metadata` empty for a message that isn't the assistant's.
+    if "prompt_tokens" in token_usage:
+        return Usage(
+            input_tokens=token_usage["prompt_tokens"],
+            output_tokens=token_usage["completion_tokens"],
+            total_tokens=token_usage["total_tokens"],
+            cost_usd=cost,
+        )
+    return Usage.unreported()
