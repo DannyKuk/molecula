@@ -5,15 +5,26 @@ import { cn } from "cn";
 
 import { DialogOverlay, DialogPortal } from "@/components/ui/dialog";
 
-/** A dialog that slides in from the left edge, as a drawer on a phone. */
-function SheetContent({ className, ...props }: DialogPrimitive.Popup.Props) {
+const SIDES = {
+  left: "inset-y-0 left-0 w-75 max-w-[85%] data-open:slide-in-from-left data-closed:slide-out-to-left",
+  bottom: "inset-0 data-open:slide-in-from-bottom data-closed:slide-out-to-bottom",
+};
+
+/** A dialog that slides in from an edge: from the left as a drawer, from the bottom as a
+ * full-screen sheet on a phone. */
+function SheetContent({
+  className,
+  side = "left",
+  ...props
+}: DialogPrimitive.Popup.Props & { side?: keyof typeof SIDES }) {
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Popup
         data-slot="sheet-content"
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-75 max-w-[85%] flex-col bg-popover text-sm text-popover-foreground shadow-lg ring-1 ring-foreground/10 outline-none duration-200 data-open:animate-in data-open:slide-in-from-left data-closed:animate-out data-closed:slide-out-to-left",
+          "fixed z-50 flex flex-col bg-popover text-sm text-popover-foreground shadow-lg ring-1 ring-foreground/10 outline-none duration-200 data-open:animate-in data-closed:animate-out",
+          SIDES[side],
           className,
         )}
         {...props}

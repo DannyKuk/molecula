@@ -66,7 +66,7 @@ npm run format:check && npm run lint && npm test && npm run build
 
 ```
 backend/    FastAPI app, LangChain agent, data services, MCP server, tests, evals
-frontend/   Next.js chat UI and 3D viewer
+frontend/   Next.js chat UI, 3D viewer and benchmark page
 data/       curated inputs (drug scope, hero complexes) and the built store
 docs/       data plan, architecture, decisions, eval results
 ```

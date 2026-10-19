@@ -148,6 +148,7 @@ uv run python -m evals.retrieval.compare_embeddings --only bge-m3          # one
 uv run python -m evals.retrieval.compare_embeddings                        # all, vectors from the cache
 uv run python -m evals.retrieval.compare_embeddings --device cpu --only bge-small bge-m3 bge-large qwen3-0.6b
 uv run python -m evals.retrieval.rescore ../data/build/eval/embeddings-<stamp>.json
+uv run python -m evals.retrieval.benchmark_export                         # the benchmark page's JSON
 uv run python -m molecula.ingest index                                     # the app's index
 ```
 

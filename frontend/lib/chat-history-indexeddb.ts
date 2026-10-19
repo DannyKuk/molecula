@@ -76,3 +76,6 @@ function openDatabase(): Promise<IDBDatabase> {
     opening.onerror = () => reject(opening.error);
   });
 }
+
+/** The browser's history, one for every page that lists or opens the saved chats. */
+export const browserHistory = indexedDbHistory();

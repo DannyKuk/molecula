@@ -36,10 +36,25 @@ def main() -> int:
     run = json.loads(args.run.read_text(encoding="utf-8"))
     chunks = {chunk.id: chunk for chunk in label_chunks(get_settings())}
     questions = load_questions()
+    try:
+        results = rescored_run(run, questions, chunks)
+    except ValueError as error:
+        print(error, file=sys.stderr)
+        return 1
+    print(report(results, questions))
+    return 0
+
+
+def rescored_run(
+    run: dict[str, Any], questions: list[Question], chunks: dict[str, Chunk]
+) -> list[Result]:
+    """Every model of a saved run scored against the current answer key.
+
+    Raises ValueError when the run was made with other questions or holds chunks the store
+    no longer has."""
     saved_ids = [question["id"] for question in run["questions"]]
     if saved_ids != [question.id for question in questions]:
-        print("The run was made with other questions; scoring needs the same set.", file=sys.stderr)
-        return 1
+        raise ValueError("The run was made with other questions; scoring needs the same set.")
     missing = {
         retrieved["chunk"]
         for row in run["results"]
@@ -48,12 +63,8 @@ def main() -> int:
         if retrieved["chunk"] not in chunks
     }
     if missing:
-        print(f"{len(missing)} chunks of the run are not in the store.", file=sys.stderr)
-        return 1
-
-    results = [rescored(row, questions, chunks) for row in run["results"]]
-    print(report(results, questions))
-    return 0
+        raise ValueError(f"{len(missing)} chunks of the run are not in the store.")
+    return [rescored(row, questions, chunks) for row in run["results"]]
 
 
 def rescored(row: dict[str, Any], questions: list[Question], chunks: dict[str, Chunk]) -> Result:
