@@ -1,10 +1,12 @@
 from dataclasses import dataclass, field
+from typing import Any
 
 import openai
-from langchain_core.language_models import BaseChatModel
+from langchain_core.language_models import BaseChatModel, LanguageModelInput
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
 
+from molecula import prompts
 from molecula.config import OPENROUTER_ATTRIBUTION_HEADERS, OPENROUTER_BASE_URL, Settings
 
 # The OpenAI client won't start without a key; Ollama and LM Studio ignore it.
@@ -19,12 +21,35 @@ class LLMConfigError(Exception):
     """The settings don't say which chat model to use, or how to reach it."""
 
 
+class LocalChatOpenAI(ChatOpenAI):
+    """ChatOpenAI for a local server, where gpt-oss loses the reasoning of its earlier tool calls.
+
+    gpt-oss writes its reasoning before each tool call and expects to see it before the earlier
+    calls of the same answer. LM Studio drops it from what it sends back, so after two calls
+    with nothing before them the model skips reasoning and writes a garbled third call (#277).
+    LM Studio shows the text of an assistant message that calls tools as its reasoning, so a
+    tool call without text goes back with a short fixed line. The model's own reasoning does as
+    well against the garbling, and both make answers with several tool calls cite the wrong
+    passage more often (#277).
+    """
+
+    def _get_request_payload(
+        self, input_: LanguageModelInput, *, stop: list[str] | None = None, **kwargs: Any
+    ) -> dict[str, Any]:
+        payload = super()._get_request_payload(input_, stop=stop, **kwargs)
+        for sent in payload["messages"]:
+            if sent["role"] == "assistant" and sent.get("tool_calls") and not sent["content"]:
+                sent["content"] = prompts.load("agent/tool_call_reasoning").strip()
+        return payload
+
+
 @dataclass(frozen=True)
 class Endpoint:
     base_url: str
     api_key: SecretStr
     model: str
     headers: dict[str, str] = field(default_factory=dict)
+    model_class: type[ChatOpenAI] = ChatOpenAI
 
 
 def get_chat_model(settings: Settings) -> BaseChatModel:
@@ -55,7 +80,7 @@ def _own_effort(effort: str) -> str | None:
 
 def _chat_model(settings: Settings, reasoning_effort: str | None) -> BaseChatModel:
     endpoint = _resolve_endpoint(settings)
-    return ChatOpenAI(
+    return endpoint.model_class(
         base_url=endpoint.base_url,
         api_key=endpoint.api_key,
         model=endpoint.model,
@@ -98,7 +123,9 @@ def _local_endpoint(base_url: str, model: str | None) -> Endpoint:
             "LOCAL_LLM_BASE_URL is set but LOCAL_LLM_MODEL is empty. "
             "Set LOCAL_LLM_MODEL to a model the local server has (e.g. one from `ollama list`)."
         )
-    return Endpoint(base_url=base_url, api_key=LOCAL_SERVER_API_KEY, model=model)
+    return Endpoint(
+        base_url=base_url, api_key=LOCAL_SERVER_API_KEY, model=model, model_class=LocalChatOpenAI
+    )
 
 
 def _openrouter_endpoint(api_key: SecretStr | None, model: str | None) -> Endpoint:
