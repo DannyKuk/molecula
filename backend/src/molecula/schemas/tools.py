@@ -1,7 +1,14 @@
 from collections.abc import Callable
-from typing import Annotated, Literal, Self
+from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializerFunctionWrapHandler,
+    StringConstraints,
+    model_serializer,
+)
 
 from molecula.schemas.chat import Source
 from molecula.schemas.compounds import Compound, DrugName, MatchKind, Suggestion
@@ -56,6 +63,16 @@ class ToolResult(BaseModel):
         return []
 
 
+class RefFirst(BaseModel):
+    """Puts `ref` first in the JSON the model reads, next to what it numbers. Last, it sat after
+    a passage's metadata and right before the next passage's text (#166)."""
+
+    @model_serializer(mode="wrap")
+    def _ref_first(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        data = handler(self)
+        return {"ref": data.pop("ref"), **data} if "ref" in data else data
+
+
 class DrugNotSupported(ToolResult):
     """A name that isn't a supported drug, with the closest supported names, best first.
 
@@ -76,7 +93,7 @@ class InvalidArguments(BaseModel):
     errors: list[str]
 
 
-class ResolvedDrug(ToolResult):
+class ResolvedDrug(RefFirst, ToolResult):
     """The supported drug a name refers to, the stored name or alias it matched, and its
     PubChem page."""
 
@@ -97,7 +114,7 @@ class ResolvedDrug(ToolResult):
         return [Source(kind=self.source, name=self.name, url=self.source_url, ref=self.ref)]
 
 
-class DrugProperties(ToolResult):
+class DrugProperties(RefFirst, ToolResult):
     """A supported drug's PubChem properties; the compound carries the source."""
 
     status: Literal["found"] = "found"
@@ -115,7 +132,7 @@ class DrugProperties(ToolResult):
         ]
 
 
-class CitedTarget(Target):
+class CitedTarget(RefFirst, Target):
     """A target with `ref`, the number an answer cites its ChEMBL mechanism with as `[ref]`."""
 
     ref: int | None = None
@@ -179,7 +196,7 @@ class ResidueContact(BaseModel):
     distance: float
 
 
-class DrugComplex(ToolResult):
+class DrugComplex(RefFirst, ToolResult):
     """A summary of a supported drug's reviewed complex: what it is bound to and how, without
     the coordinates the 3D view draws."""
 
@@ -213,7 +230,7 @@ class NoComplex(ToolResult):
     name: str
 
 
-class CitedPassage(RetrievedChunk):
+class CitedPassage(RefFirst, RetrievedChunk):
     """A label passage and `ref`, the number an answer cites it with as `[ref]`."""
 
     ref: int

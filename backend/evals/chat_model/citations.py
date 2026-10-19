@@ -13,10 +13,12 @@ gpt-oss's own citation style; it is counted apart, as "square" (`[n]` and links 
 "any", to show what accepting it adds. An answer cites
 the evidence when a passage it cites holds the question's evidence; a link only names a label,
 so for links that is checked per label, not per passage.
-Each answer is cached in data/build/eval/citations/, keyed by model, system prompt and tool
-descriptions, so an interrupted run goes on where it stopped.
+Each answer is cached in data/build/eval/citations/, keyed by model, system prompt, tool
+descriptions and `--variant` (name a code change the key can't see), so an interrupted run goes
+on where it stopped.
 """
 
+import argparse
 import asyncio
 import hashlib
 import json
@@ -72,23 +74,28 @@ class Scored:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--variant", default="", help="names a change the cache key can't see")
+    args = parser.parse_args()
     settings = get_settings()
     model_name = chat_model_name(settings)
     questions = load_questions()
-    answers = asyncio.run(ask_all(settings, model_name, questions))
+    answers = asyncio.run(ask_all(settings, model_name, questions, args.variant))
     scored = [score(q, a) for q, a in zip(questions, answers, strict=True)]
     print(report(model_name, scored))
     save(settings, model_name, questions, answers, scored)
     return 0
 
 
-async def ask_all(settings: Settings, model_name: str, questions: list[Question]) -> list[Answer]:
+async def ask_all(
+    settings: Settings, model_name: str, questions: list[Question], variant: str = ""
+) -> list[Answer]:
     app = FastAPI()
     async with lifespan(app):
         agent: ChatAgent | None = app.state.chat_agent
         if agent is None:
             raise SystemExit("The chat is off: build the index and set a chat model.")
-        cache = cache_path(settings, model_name, tool_descriptions(app))
+        cache = cache_path(settings, model_name, tool_descriptions(app), variant)
         cached = read_cache(cache)
         cache.parent.mkdir(parents=True, exist_ok=True)
         for number, question in enumerate(questions, start=1):
@@ -123,11 +130,13 @@ def tool_descriptions(app: FastAPI) -> str:
     return "\n".join(f"{tool.name}: {tool.description}" for tool in tools)
 
 
-def cache_path(settings: Settings, model_name: str, descriptions: str) -> Path:
+def cache_path(settings: Settings, model_name: str, descriptions: str, variant: str = "") -> Path:
     name = answer_label(settings, model_name)
     setup = f"{name}\n{prompts.load('agent/system')}\n{descriptions}"
+    if variant:
+        setup += f"\n{variant}"
     key = hashlib.sha256(setup.encode()).hexdigest()[:12]
-    slug = name.replace("/", "_")
+    slug = name.replace("/", "_") + (f"-{variant}" if variant else "")
     return settings.build_dir / "eval" / "citations" / f"{slug}-{key}.jsonl"
 
 
