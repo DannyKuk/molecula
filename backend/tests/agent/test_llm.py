@@ -9,7 +9,6 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMe
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
 
-from molecula import prompts
 from molecula.agent.llm import (
     LLMConfigError,
     LocalChatOpenAI,
@@ -301,30 +300,35 @@ def lookup(call_id: str, content: str = "") -> list[BaseMessage]:
     return [tool_call(call_id, content), ToolMessage("aspirin: NSAID", tool_call_id=call_id)]
 
 
-def test_a_tool_call_goes_back_with_a_line_of_reasoning_before_it() -> None:
-    server = LocalServer([chunk({"role": "assistant", "content": "Aspirin is an NSAID."})])
-
-    server.model().invoke([HumanMessage("What is aspirin?"), *lookup("call_1")])
-
-    [sent] = server.sent_assistant_messages()
-    assert sent["content"] == prompts.load("agent/tool_call_reasoning").strip()
-    assert sent["tool_calls"][0]["function"]["name"] == "lookup"
+def sent_messages(server: LocalServer) -> list[tuple[str, str | None]]:
+    return [(sent["role"], sent.get("content")) for sent in server.requests[-1]["messages"]]
 
 
-def test_an_earlier_answer_and_a_tool_call_with_text_go_back_unchanged() -> None:
-    server = LocalServer([chunk({"role": "assistant", "content": "It is an NSAID."})])
+def test_earlier_tool_calls_go_back_as_one_message_of_results_after_the_question() -> None:
+    server = LocalServer([chunk({"role": "assistant", "content": "Both are NSAIDs."})])
 
     server.model().invoke(
         [
             HumanMessage("What is aspirin?"),
             AIMessage("Aspirin relieves pain."),
-            HumanMessage("And what class is it?"),
-            *lookup("call_1", "Looking it up."),
+            HumanMessage("What are aspirin and ibuprofen?"),
+            *lookup("call_1"),
             *lookup("call_2"),
         ]
     )
 
-    answer, with_text, without_text = server.sent_assistant_messages()
-    assert answer["content"] == "Aspirin relieves pain."
-    assert with_text["content"] == "Looking it up."
-    assert without_text["content"] == prompts.load("agent/tool_call_reasoning").strip()
+    sent = sent_messages(server)
+    assert [role for role, _ in sent] == ["user", "assistant", "user", "user"]
+    assert sent[1] == ("assistant", "Aspirin relieves pain.")
+    results = sent[3][1] or ""
+    assert results.count('<result call="lookup({"drug": "aspirin"})">') == 2
+    assert results.count("aspirin: NSAID") == 2
+    assert all("tool_calls" not in m for m in server.requests[-1]["messages"])
+
+
+def test_a_request_without_tool_calls_goes_unchanged() -> None:
+    server = LocalServer([chunk({"role": "assistant", "content": "Aspirin is an NSAID."})])
+
+    server.model().invoke([HumanMessage("What is aspirin?")])
+
+    assert sent_messages(server) == [("user", "What is aspirin?")]

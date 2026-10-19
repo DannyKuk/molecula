@@ -27,20 +27,43 @@ class LocalChatOpenAI(ChatOpenAI):
     gpt-oss writes its reasoning before each tool call and expects to see it before the earlier
     calls of the same answer. LM Studio drops it from what it sends back, so after two calls
     with nothing before them the model skips reasoning and writes a garbled third call (#277).
-    LM Studio shows the text of an assistant message that calls tools as its reasoning, so a
-    tool call without text goes back with a short fixed line. The model's own reasoning does as
-    well against the garbling, and both make answers with several tool calls cite the wrong
-    passage more often (#277).
+    So the model never sees its earlier calls of an answer as calls: they and their results go
+    back as one message after the question, listing each call with what it returned.
     """
 
     def _get_request_payload(
         self, input_: LanguageModelInput, *, stop: list[str] | None = None, **kwargs: Any
     ) -> dict[str, Any]:
         payload = super()._get_request_payload(input_, stop=stop, **kwargs)
-        for sent in payload["messages"]:
-            if sent["role"] == "assistant" and sent.get("tool_calls") and not sent["content"]:
-                sent["content"] = prompts.load("agent/tool_call_reasoning").strip()
+        payload["messages"] = with_tool_calls_as_results(payload["messages"])
         return payload
+
+
+def with_tool_calls_as_results(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The messages with the tool calls and results after the user's latest message replaced
+    by one user message that lists each call with its result."""
+    last_user = max(i for i, sent in enumerate(messages) if sent["role"] == "user")
+    answer = messages[last_user + 1 :]
+    calls = {
+        call["id"]: call["function"]
+        for sent in answer
+        if sent["role"] == "assistant"
+        for call in sent.get("tool_calls") or []
+    }
+    results = [
+        described_result(calls[sent["tool_call_id"]], sent["content"])
+        for sent in answer
+        if sent["role"] == "tool"
+    ]
+    if not results:
+        return messages
+    summary = prompts.load("agent/tool_results", results="\n\n".join(results)).strip()
+    return [*messages[: last_user + 1], {"role": "user", "content": summary}]
+
+
+def described_result(function: dict[str, str], result: str) -> str:
+    call = f"{function['name']}({function['arguments']})"
+    return prompts.load("agent/tool_result", call=call, result=result).strip()
 
 
 @dataclass(frozen=True)
