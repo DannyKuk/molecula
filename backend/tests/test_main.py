@@ -1,7 +1,9 @@
 import logging
+import sqlite3
 from collections.abc import Callable
 from dataclasses import replace
 from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -13,6 +15,7 @@ from pydantic import SecretStr
 from fake_llm import ScriptedChatModel, answer_message, tool_call_message
 from molecula import main
 from molecula.agent.agent import ChatAgent
+from molecula.agent.label_filter import DecisionFirstFilterExtractor
 from molecula.agent.llm import LLMConfigError
 from molecula.config import Settings
 from molecula.guard.chat import GuardedChat
@@ -21,6 +24,8 @@ from molecula.main import app
 from molecula.rag.embeddings import embedding_model_id
 from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
+from molecula.services.compounds import CompoundService
+from molecula.services.labels import LabelService
 from molecula.sources.http import SourceClient
 from molecula.store.compounds import CompoundStore, Synonym
 from molecula.store.db import connect
@@ -385,12 +390,38 @@ def test_offline_the_chat_model_sorts_messages(make_settings: Callable[..., Sett
 def test_online_jev_sorts_messages(make_settings: Callable[..., Settings]) -> None:
     settings = make_settings(offline=False, openrouter_api_key=SecretStr("sk-or-test"))
 
-    decision_model = main.input_check_decision_model(settings)
+    decision_model = main.online_decision_model(settings)
     input_check = main.open_input_check(settings, ScriptedChatModel(script=[]))
 
     assert isinstance(input_check, DecisionModelInputCheck)
     assert decision_model is not None
     assert decision_model.model == "jev-1.13"
+
+
+@pytest.mark.parametrize(
+    ("offline", "key", "extractor"),
+    [
+        (False, SecretStr("sk-or-test"), DecisionFirstFilterExtractor),
+        (True, SecretStr("sk-or-test"), FilterExtractor),
+        (False, None, FilterExtractor),
+    ],
+)
+def test_online_jev_extracts_the_label_filter_and_offline_the_chat_model(
+    make_settings: Callable[..., Settings],
+    conn: sqlite3.Connection,
+    tmp_path: Path,
+    offline: bool,
+    key: SecretStr | None,
+    extractor: type[FilterExtractor],
+) -> None:
+    settings = make_settings(offline=offline, openrouter_api_key=key)
+    store = CompoundStore(conn)
+    compounds = CompoundService(store, ConformerFiles(tmp_path), suggestion_cutoff=0.8)
+    labels = LabelService(LabelStore(conn), store)
+
+    found = main.open_filter_extractor(settings, ScriptedChatModel(script=[]), compounds, labels)
+
+    assert type(found) is extractor
 
 
 def test_online_without_an_openrouter_key_the_chat_model_sorts_messages(

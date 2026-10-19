@@ -12,7 +12,6 @@ from fake_llm import DEFAULT_COST, ScriptedChatModel, answer_message, tool_call_
 from molecula import prompts
 from molecula.agent.decisions import DecisionModelUnreachable
 from molecula.rag.filters import (
-    PRODUCT_TYPE,
     SECTION_GROUP_ORDER,
     SECTION_GROUPS,
     Decider,
@@ -22,8 +21,6 @@ from molecula.rag.filters import (
 )
 from molecula.schemas.compounds import Resolution
 from molecula.schemas.decisions import (
-    ChoiceAnswer,
-    ChoiceQuestion,
     DecisionResponse,
     DecisionUsage,
     NoulAnswer,
@@ -374,11 +371,10 @@ def test_a_section_the_model_extracted_too_is_not_repeated(services: Services) -
 
 class Decisions:
     """A decision model that answers every section group's yes/no with the given probability
-    (0.05 for the rest) and the product type with `product`."""
+    (0.05 for the rest)."""
 
-    def __init__(self, groups: dict[str, float] | None = None, product: str = "either") -> None:
+    def __init__(self, groups: dict[str, float] | None = None) -> None:
         self.groups = groups or {}
-        self.product = product
         self.sent: list[tuple[str | list[StateMessage], dict[str, Question]]] = []
 
     async def decide(
@@ -389,12 +385,6 @@ class Decisions:
             group: NoulAnswer(type="noul", noul=self.groups.get(group, 0.05))
             for group in SECTION_GROUP_ORDER
         }
-        answers[PRODUCT_TYPE] = ChoiceAnswer(
-            type="choice",
-            choice=self.product,
-            probabilities={option: float(option == self.product) for option in ("rx", "otc")},
-            confidence=0.9,
-        )
         usage = DecisionUsage(input_tokens=1290, output_tokens=0, cost=0.00005)
         return DecisionResponse(model="typesafe/jev-1.13", answers=answers, usage=usage)
 
@@ -459,14 +449,15 @@ def test_a_question_without_a_drug_searches_the_whole_index(services: Services) 
     assert found.section_groups == ["otc_consumer"]
 
 
-@pytest.mark.parametrize(("option", "product_type"), [("otc", "otc"), ("either", None)])
-def test_the_product_type_choice_narrows_only_when_it_names_one(
-    services: Services, option: str, product_type: str | None
-) -> None:
-    found = decide(services, Decisions(product=option), "How much ibuprofen may I take?")
+def test_the_decision_model_leaves_the_product_type_open(services: Services) -> None:
+    found = decide(services, Decisions(), "How much Advil may I take on prescription?")
 
-    assert found.product_type == product_type
-    assert found.set_ids == (["advil"] if option == "otc" else ["ibuprofen-rx", "advil"])
+    assert found.product_type is None
+    assert found.set_ids == ["advil"]
+    assert decide(services, Decisions(), "How much ibuprofen may I take?").set_ids == [
+        "ibuprofen-rx",
+        "advil",
+    ]
 
 
 def test_the_question_goes_as_its_own_message_apart_from_the_questions(
@@ -490,9 +481,7 @@ def test_each_section_group_is_a_yes_no_question_with_its_description() -> None:
         assert asked[group] == NoulQuestion(
             instructions=prompts.load("rag/label_filter/section", part=description).strip()
         )
-    product = asked[PRODUCT_TYPE]
-    assert isinstance(product, ChoiceQuestion)
-    assert list(product.criteria) == ["rx", "otc", "either"]
+    assert list(asked) == list(SECTION_GROUP_ORDER)
 
 
 def test_the_decision_filter_carries_what_the_call_used(services: Services) -> None:
