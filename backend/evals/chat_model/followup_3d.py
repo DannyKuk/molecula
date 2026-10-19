@@ -15,6 +15,8 @@ statuses it returned, and two text heuristics: whether the answer mentions the v
 (below, shown, view; unten, angezeigt, Ansicht) and whether a sentence says there is no 3D
 structure without saying it is about the drug bound to its target. Every answer the heuristics
 flag, and every answer without the `get_complex` call, is printed under the table to be read.
+For the `no_complex` rows a third heuristic counts the answers that describe the molecule (its
+rings, groups, atoms or bonds): nothing in a `no_complex` result backs such a sentence (#265).
 Each run is cached in data/build/eval/followup_3d/, keyed by model, system prompt and tool
 descriptions, so an interrupted run goes on where it stopped.
 """
@@ -55,6 +57,12 @@ NO_3D = re.compile(
     r"(\bno\b|\bnot\b|n't\b|\bkein\w*|\bnicht\b)[^.!?\n]{0,60}"
     r"(3d|3-d|three-dimensional|structure|model|struktur|modell)"
     r"|(can't|cannot|can not|unable to)\s[^.!?\n]{0,30}(show|render|display)",
+    re.IGNORECASE,
+)
+MOLECULE_PARTS = re.compile(
+    r"\b(rings?|groups?|atoms?|bonds?|sticks?|conformation|hydrogens?|carbons?|oxygens?"
+    r"|nitrogens?|hydroxyl|amide|phenyl|benzene|ringe?|gruppen?|atome?|bindungen|wasserstoff\w*"
+    r"|kohlenstoff\w*|sauerstoff\w*|stickstoff\w*|hydroxy\w*|amid\w*|phenyl\w*|benzol\w*)\b",
     re.IGNORECASE,
 )
 BOUND_TO_TARGET = re.compile(
@@ -116,6 +124,10 @@ class Asked:
             NO_3D.search(sentence) and not BOUND_TO_TARGET.search(sentence)
             for sentence in SENTENCE.findall(self.answer)
         )
+
+    @property
+    def describes_molecule(self) -> bool:
+        return bool(MOLECULE_PARTS.search(self.answer))
 
 
 def main() -> int:
@@ -216,8 +228,8 @@ def read_cache(cache: Path) -> defaultdict[str, list[Asked]]:
 def report(conversations: list[FollowupConversation], asked: dict[str, list[Asked]]) -> str:
     lines = [
         "| Conversation | Turn | get_complex for the drug | Statuses | View mentioned "
-        '| "No 3D" claim | Errors | Seconds p50 | Tools |',
-        "|---|---|---|---|---|---|---|---|---|",
+        '| "No 3D" claim | Describes the molecule | Errors | Seconds p50 | Tools |',
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
     flagged: list[str] = []
     reported: set[str] = set()
@@ -233,16 +245,22 @@ def report(conversations: list[FollowupConversation], asked: dict[str, list[Aske
             results = [a.complex_for(conversation.drug) for a in answers]
             statuses = ", ".join(r["status"] if r else "-" for r in results)
             tools = "; ".join(", ".join(a.tool_calls) or "none" for a in answers)
+            no_complex = conversation.expected == "no_complex"
+            describes = sum(a.describes_molecule for a in answers) if no_complex else "-"
             lines.append(
                 f"| {conversation.id} | {turn} | {sum(r is not None for r in results)} of "
                 f"{len(answers)} | {statuses} | {sum(a.mentions_view for a in answers)} "
-                f"| {sum(a.claims_no_3d for a in answers)} | {sum(a.failed for a in answers)} "
+                f"| {sum(a.claims_no_3d for a in answers)} | {describes} "
+                f"| {sum(a.failed for a in answers)} "
                 f"| {statistics.median(a.seconds for a in answers):.1f} | {tools} |"
             )
             flagged.extend(
                 f"### {conversation.id}, {turn} {number}\n\n{a.answer}\n"
                 for number, (a, r) in enumerate(zip(answers, results, strict=True), 1)
-                if r is None or a.claims_no_3d or not a.mentions_view
+                if r is None
+                or a.claims_no_3d
+                or not a.mentions_view
+                or (no_complex and a.describes_molecule)
             )
     return "\n".join([*lines, "", "## Answers to read", "", *flagged])
 
