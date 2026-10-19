@@ -382,7 +382,10 @@ describe("createScene with metals and cofactors", () => {
   it("shows the metal ions and cofactors, with the metal bonds before the hydrogen bonds", () => {
     const { viewer, metals, cofactors } = metalScene();
 
-    expect(metals[0].style).toEqual({ sphere: expect.objectContaining({ colorscheme: "Jmol" }) });
+    expect(metals[0].style).toEqual({ sphere: { radius: 0.7, color: metalBond } });
+    expect(cofactors[0].style).toEqual(
+      expect.objectContaining({ sphere: { radius: 0.7, color: metalBond } }),
+    );
     expect(cofactors.map((atom) => Object.keys(atom.style!))).toEqual([
       ["stick", "sphere"],
       ["stick"],
@@ -390,6 +393,15 @@ describe("createScene with metals and cofactors", () => {
     ]);
     expect(labels(viewer)).toEqual(["Zn", "Fe", "Glu2", "Thr7A"]);
     expect(lineColors(viewer)).toEqual([metalBond, metalBond, hydrogenBond, hydrogenBond]);
+  });
+
+  it("frames the binding site on the drug and the metals it binds through", () => {
+    const framedSites = (viewer: Viewer) =>
+      viewer.zoomTo.mock.calls.filter(([selection]) => selection && "or" in selection);
+
+    expect(framedSites(metalScene().viewer).length).toBeGreaterThan(0);
+    expect(framedSites(metalScene({ mode: "molecule" }).viewer)).toEqual([]);
+    expect(framedSites(complexScene().viewer)).toEqual([]);
   });
 
   it("adds nothing for a complex without metals or cofactors", () => {
@@ -481,7 +493,7 @@ describe("createScene with metals and cofactors", () => {
     const { viewer, cofactors } = metalScene({ dark: false });
 
     expect(lineColors(viewer)).toEqual(["#9333ea", "#9333ea", "#d97706", "#d97706"]);
-    expect(cofactors[1].style).toEqual({ stick: { radius: 0.1, color: "#64748b" } });
+    expect(cofactors[1].style).toEqual({ stick: { radius: 0.1, color: "#0e7490" } });
   });
 });
 

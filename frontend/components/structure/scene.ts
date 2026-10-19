@@ -1,4 +1,4 @@
-import type { GLModel, GLViewer } from "3dmol";
+import type { AtomSpec, GLModel, GLViewer } from "3dmol";
 
 import type { Complex } from "@/lib/api";
 import {
@@ -62,7 +62,7 @@ const COLORS = {
     labelBackground: "#18181b",
     hbond: "#fbbf24",
     coordination: "#c084fc",
-    cofactor: "#94a3b8",
+    cofactor: "#22d3ee",
   },
   light: {
     trace: "#71717a",
@@ -70,7 +70,7 @@ const COLORS = {
     labelBackground: "#ffffff",
     hbond: "#d97706",
     coordination: "#9333ea",
-    cofactor: "#64748b",
+    cofactor: "#0e7490",
   },
 };
 
@@ -106,9 +106,6 @@ type DrugStyle = {
 };
 
 const MOLECULE_STYLE: DrugStyle = { stick: { radius: 0.15 }, sphere: { scale: 0.25 } };
-
-// Jmol's element colours: 3Dmol's default ones make zinc brown, close to the oxygens' red.
-const METAL_STYLE = { sphere: { radius: 0.7, colorscheme: "Jmol" } };
 
 /** Builds the 3D view in `element`, which must already have its size. */
 export function createScene(
@@ -293,9 +290,15 @@ function complexScene(
       toCap: 1,
     });
 
-  const addLabel = (text: string, position: Point, border: string) =>
+  const addLabel = (
+    text: string,
+    position: Point,
+    border: string,
+    alignment: "topLeft" | "center" = "topLeft",
+  ) =>
     viewer.addLabel(text, {
       position,
+      alignment,
       fontSize: 12,
       fontColor: colors.label,
       backgroundColor: colors.labelBackground,
@@ -314,7 +317,7 @@ function complexScene(
     addDashedLine(line.metal, line.ligand, colors.coordination);
 
   const showMetalLabel = (metal: MetalLabel) =>
-    addLabel(metal.label, metal.position, colors.coordination);
+    addLabel(metal.label, metal.position, colors.coordination, "center");
 
   const contactLines = [
     ...coordinationBonds(complex).map((line) => () => showCoordination(line)),
@@ -324,9 +327,12 @@ function complexScene(
   /** The metal ions and cofactors the drug binds through: part of the site, so the drug docks onto
    * them. */
   const showBindingPartners = () => {
-    metals.setStyle({}, METAL_STYLE);
+    // One colour for every metal, the metal bonds' violet: element colours put magnesium in the
+    // drug's green and zinc in the nitrogens' blue.
+    const metalStyle = { sphere: { radius: 0.7, color: colors.coordination } };
+    metals.setStyle({}, metalStyle);
     cofactors.setStyle({}, { stick: { radius: 0.1, color: colors.cofactor } });
-    cofactors.setStyle({ predicate: (atom) => isMetal(atom.elem) }, METAL_STYLE, true);
+    cofactors.setStyle({ predicate: (atom) => isMetal(atom.elem) }, metalStyle, true);
     metalLabels(complex).forEach(showMetalLabel);
   };
 
@@ -350,6 +356,31 @@ function complexScene(
     viewer.setView(current);
     viewer.setSlab(-SLAB, SLAB);
     return distance;
+  };
+
+  const metalsInSite = metalLabels(complex).length > 0;
+  const site = {
+    or: [
+      { model: ligand },
+      { model: metals },
+      { model: cofactors, predicate: (atom: AtomSpec) => isMetal(atom.elem) },
+    ],
+  };
+
+  /** Where the camera ends up: on the drug, or outside Molecule mode on the drug and the metals it
+   * binds through, so a metal at the drug's edge and its label stay in the frame. The drug must be
+   * in its bound pose. */
+  const endView = (): { target: Point; distance: number } => {
+    if (mode === "molecule" || !metalsInSite) {
+      return { target: center, distance: distanceAt(ZOOM[mode]) };
+    }
+    const current = viewer.getView();
+    viewer.zoomTo(site);
+    viewer.zoom(ZOOM[mode]);
+    const [x, y, z, distance] = viewer.getView();
+    viewer.setView(current);
+    viewer.setSlab(-SLAB, SLAB);
+    return { target: { x: -x, y: -y, z: -z }, distance };
   };
 
   const setMode = (next: ViewMode, animate: boolean) => {
@@ -382,7 +413,8 @@ function complexScene(
       viewer.zoomTo({ model: ligand });
       framed = true;
     }
-    viewer.setView(viewAt(center, distanceAt(ZOOM[mode])));
+    const { target, distance } = endView();
+    viewer.setView(viewAt(target, distance));
     if (mode !== "molecule") contactLines.forEach((show) => show());
     viewer.render();
     turning.start();
@@ -404,7 +436,9 @@ function complexScene(
     const drug = assembly(ligand, ligandStyle);
     const near = distanceAt(ZOOM.molecule);
     const far = distanceAt(REVEAL_ZOOM);
-    const end = distanceAt(ZOOM[mode]);
+    placeLigand(bound);
+    const { target, distance: end } = endView();
+    const drift = { x: target.x - center.x, y: target.y - center.y, z: target.z - center.z };
     const reveal = assemble ? drug.duration + HOLD_MS : 0;
     const docking = reveal + REVEAL_MS;
     const contacts = docking + DOCK_MS;
@@ -446,7 +480,14 @@ function complexScene(
         const progress = (elapsed - docking) / DOCK_MS;
         const positions = dockingPose(bound, approach, progress);
         placeLigand(positions);
-        viewer.setView(viewAt(centroid(positions), far + (end - far) * easeInOut(progress)));
+        const eased = easeInOut(progress);
+        const docked = centroid(positions);
+        const camera = {
+          x: docked.x + drift.x * eased,
+          y: docked.y + drift.y * eased,
+          z: docked.z + drift.z * eased,
+        };
+        viewer.setView(viewAt(camera, far + (end - far) * eased));
         const nextFade = fades
           ? Math.ceil((Math.max(0, progress - FADE_FROM) / (1 - FADE_FROM)) * FADE_STEPS)
           : 0;
@@ -460,7 +501,7 @@ function complexScene(
           placeLigand(bound);
           showTrace(fades ? 0 : proteinSize, TRACE_OPACITY);
           showPocket();
-          viewer.setView(viewAt(center, end));
+          viewer.setView(viewAt(target, end));
         }
         const due = Math.min(
           contactLines.length,
