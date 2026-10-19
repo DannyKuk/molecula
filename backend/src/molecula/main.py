@@ -11,6 +11,7 @@ from langchain_core.language_models import BaseChatModel
 
 from molecula.agent.agent import ChatAgent
 from molecula.agent.decisions import DecisionConfigError, DecisionModel, get_decision_model
+from molecula.agent.label_filter import DecisionFirstFilterExtractor
 from molecula.agent.llm import (
     LLMConfigError,
     chat_model_is_local,
@@ -96,19 +97,33 @@ def open_chat_model(settings: Settings) -> BaseChatModel | None:
 def open_input_check(settings: Settings, chat_model: BaseChatModel) -> InputCheck:
     """The decision model sorts messages online (Jev on OpenRouter by default), the chat model
     offline or when no decision model is configured (#226)."""
-    decision_model = input_check_decision_model(settings)
+    decision_model = online_decision_model(settings)
     if decision_model is None:
         return ChatModelInputCheck(chat_model)
     return DecisionModelInputCheck(decision_model)
 
 
-def input_check_decision_model(settings: Settings) -> DecisionModel | None:
+def open_filter_extractor(
+    settings: Settings,
+    chat_model: BaseChatModel,
+    compounds: CompoundService,
+    labels: LabelService,
+) -> FilterExtractor:
+    """The decision model extracts the label filter online, the chat model when it fails, and
+    the chat model alone offline or when no decision model is configured (#290)."""
+    decision_model = online_decision_model(settings)
+    if decision_model is None:
+        return FilterExtractor(chat_model, compounds, labels)
+    return DecisionFirstFilterExtractor(chat_model, decision_model, compounds, labels)
+
+
+def online_decision_model(settings: Settings) -> DecisionModel | None:
     if settings.offline:
         return None
     try:
         return get_decision_model(settings)
     except DecisionConfigError as error:
-        logger.warning("The chat model sorts messages: %s", error)
+        logger.warning("The chat model sorts messages and extracts label filters: %s", error)
         return None
 
 
@@ -165,8 +180,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             min_score=settings.retrieval_min_score,
             section_group_boost=settings.retrieval_section_group_boost,
         )
-        app.state.filter_extractor = FilterExtractor(
-            chat_model, app.state.compound_service, app.state.label_service
+        app.state.filter_extractor = open_filter_extractor(
+            settings, chat_model, app.state.compound_service, app.state.label_service
         )
         tools = build_tools(
             app.state.compound_service,

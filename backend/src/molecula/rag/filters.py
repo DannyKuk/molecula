@@ -7,7 +7,6 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from molecula import prompts
 from molecula.schemas.compounds import Compound, Resolution
 from molecula.schemas.decisions import (
-    ChoiceQuestion,
     DecisionResponse,
     NoulQuestion,
     Question,
@@ -23,8 +22,6 @@ SECTION_GROUP_ORDER: tuple[str, ...] = get_args(SectionGroup.__value__)
 SECTION_GROUPS: frozenset[str] = frozenset(SECTION_GROUP_ORDER)
 MAX_SECTION_GROUPS = 3
 SECTION_THRESHOLD = 0.5
-PRODUCT_TYPE = "product_type"
-PRODUCT_TYPE_OPTIONS = ("rx", "otc", "either")
 
 
 class FilterExtractor:
@@ -81,9 +78,10 @@ class Decider(Protocol):
 
 
 class DecisionFilterExtractor:
-    """Fills the filter with a decision model in one call: a yes/no question per section group
-    and a choice for the product type. A decision model answers only what it is asked, so the
-    drug names are found in the question by `CompoundService.find_names`."""
+    """Fills the filter with a decision model in one call, a yes/no question per section group.
+    A decision model answers only what it is asked, so the drug names are found in the question
+    by `CompoundService.find_names`. It isn't asked for the product type: Jev set one on 68 of
+    94 questions that didn't say one, which hides a drug's other labels (#287)."""
 
     def __init__(
         self,
@@ -111,7 +109,6 @@ class DecisionFilterExtractor:
         query = LabelQuery(
             substances=self._compounds.find_names(question),
             section_groups=picked_groups(probabilities, self._threshold),
-            product_type=product_type(response.choice(PRODUCT_TYPE).choice),
         )
         return self._check.check(query).model_copy(
             update={"extraction_usage": response.usage.as_usage()}
@@ -119,18 +116,10 @@ class DecisionFilterExtractor:
 
 
 def filter_questions() -> dict[str, Question]:
-    """A yes/no question per section group, keyed by the group, and the product type choice."""
-    questions: dict[str, Question] = {
+    """A yes/no question per section group, keyed by the group."""
+    return {
         group: NoulQuestion(instructions=section_question(group)) for group in SECTION_GROUP_ORDER
     }
-    questions[PRODUCT_TYPE] = ChoiceQuestion(
-        instructions=prompts.load("rag/label_filter/product_type/question").strip(),
-        criteria={
-            option: prompts.load(f"rag/label_filter/product_type/{option}").strip()
-            for option in PRODUCT_TYPE_OPTIONS
-        },
-    )
-    return questions
 
 
 def section_question(group: str) -> str:
@@ -143,11 +132,6 @@ def picked_groups(probabilities: Mapping[str, float], threshold: float) -> list[
     as the chat model may pick."""
     likeliest = sorted(probabilities, key=lambda group: probabilities[group], reverse=True)
     return [group for group in likeliest if probabilities[group] >= threshold][:MAX_SECTION_GROUPS]
-
-
-def product_type(option: str) -> ProductType | None:
-    product_types: dict[str, ProductType] = {"rx": "rx", "otc": "otc"}
-    return product_types.get(option)
 
 
 class FilterCheck:

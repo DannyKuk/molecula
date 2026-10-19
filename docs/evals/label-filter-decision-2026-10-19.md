@@ -20,6 +20,7 @@ Can Jev fill the label filter as well as gpt-oss-20b, and faster (#287, part of 
 | answer key: drug + section group | 94 | 94 | 1 | 0.97 | 0.877 | - |
 | gpt-oss-20b, extracted | 94 | 74 | 1.4 | **0.91** | 0.759 | 3.2 (p95 3.6) |
 | Jev, a yes/no per group at 0.5 | 94 | 83 | 2.0 | **0.90** | 0.733 | **0.27** (p95 0.32) |
+| Jev, as built in #290: without the product-type question | 94 | 82 | 2.0 | **0.90** | 0.738 | **0.27** (p95 0.32) |
 | Jev, one choice over the groups | 94 | 70 | 1 | 0.90 | 0.794 | (a second call) |
 
 The threshold, chosen on these same questions:
@@ -40,7 +41,7 @@ The misspelled names:
 | gpt-oss-20b | 9 | 9 | 0 | 0.44 |
 | Jev (names by code) | 0 | 17 | 1 ("Zyrtek") | 0.06 |
 
-Jev's filter calls cost $0.0051 for the 94 questions and $0.0010 for the 18, at 1,291 input tokens per question.
+Jev's filter calls cost $0.0051 for the 94 questions and $0.0010 for the 18, at 1,291 input tokens per question; without the product-type question (#290), $0.0045 and $0.0009 at 1,144, with the same 17 of 18 typos answered "did you mean". Leaving one question out moved the other answers a little (the right group among the picks 83 → 82), so the questions of one call aren't answered quite independently.
 
 ## What it shows
 
@@ -53,7 +54,7 @@ Jev's filter calls cost $0.0051 for the 94 questions and $0.0010 for the 18, at 
 
 - The drug names come from code (`CompoundService.find_names`), as the first comment on #102 planned: scope names, aliases, label brands with a capital first letter, and words at a ratio of 0.85 or more to one of them, sent to `resolve` as written.
 - `FilterCheck` holds the store check that both extractors share; `FilterExtractor.check` calls it.
-- **Jev fills the filter online, gpt-oss-20b offline**, the same split as the input check, without the product-type question (owner, 2026-10-19). The product type changed no score here and is the one place Jev picks where the question doesn't say. Wiring it in, with a fallback to the chat model when Jev fails, is #290.
+- **Jev fills the filter online, gpt-oss-20b offline**, the same split as the input check, without the product-type question (owner, 2026-10-19). The product type changed no score here and is the one place Jev picks where the question doesn't say. Built in #290, with the chat model's extraction as the fallback when Jev fails. The owner chose Jev without measuring gpt-6-luna, today's online filter: Jev costs less per call and answers in 0.27 s.
 
 ## Limits
 

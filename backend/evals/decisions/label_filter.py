@@ -6,13 +6,13 @@ Jev runs on OpenRouter, so its run needs the network and no `LOCAL_DECISION_BASE
 else goes out: the search runs on the built index.
 
 Each question of `datasets/retrieval_questions.yaml` (with --typos, the misspelled ones) goes to
-`DecisionFilterExtractor`, the way the chat would ask it: one call with a yes/no question per
-section group and a choice for the product type, while the drug names come from the question by
-code. A second call asks one choice over the section groups, for comparison. Both answers are
-cached with their probabilities per model and prompts, so a re-score or the threshold table
-doesn't call the model again; a failed call stops the run, and the next run goes on from the
-cache. The report has the same tables as `evals.chat_model.filters`, then recall@5 per threshold,
-the one-choice variant, the product types picked, and seconds and cost per question.
+`DecisionFilterExtractor`, the way the chat asks it: one call with a yes/no question per section
+group, while the drug names come from the question by code. A second call asks one choice over
+the section groups, for comparison. Both answers are cached with their probabilities per model
+and prompts, so a re-score or the threshold table doesn't call the model again; a failed call
+stops the run, and the next run goes on from the cache. The report has the same tables as
+`evals.chat_model.filters`, then recall@5 per threshold, the one-choice variant, and seconds and
+cost per question.
 """
 
 import argparse
@@ -21,7 +21,6 @@ import hashlib
 import json
 import statistics
 import time
-from collections import Counter
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -113,7 +112,6 @@ def main() -> int:
     print(report(f"{name}, section groups at {SECTION_THRESHOLD}", scored, gold))
     print("\n" + threshold_table(questions, decided, extractor_at, retriever))
     print("\n" + choice_table(questions, found, decided, retriever))
-    print("\n" + product_types(found))
     print("\n" + speed(decided))
     if typos:
         print("\n" + typo_report(questions, found))
@@ -242,15 +240,6 @@ def choice_table(
             "|---|---|---|",
             f"| {sum(s.group_found for s in scored)} | {recall(ranks, 5):.2f} | {mrr(ranks):.3f} |",
         ]
-    )
-
-
-def product_types(found: list[LabelFilter]) -> str:
-    counts = Counter(label_filter.product_type or "either" for label_filter in found)
-    narrowed = sum(any(drug.narrowed for drug in f.drugs) for f in found if f.product_type)
-    return (
-        f"Product type picked: {dict(counts)}; "
-        f"a picked type left out some of the drug's labels in {narrowed} questions"
     )
 
 
