@@ -84,3 +84,59 @@ export const SMALL_COMPLEX: Complex = {
   showcase: false,
   source_url: "https://www.rcsb.org/structure/1ABC",
 };
+
+/**
+ * `SMALL_COMPLEX` with a zinc ion and a three-atom heme-like cofactor around its iron, each binding
+ * a drug atom, and a metal bond to a magnesium the complex doesn't have.
+ */
+export const METAL_COMPLEX: Complex = {
+  ...SMALL_COMPLEX,
+  metals: [{ chain: "A", number: 301, ins_code: "", name: "ZN", element: "Zn", xyz: [10, -2, 0] }],
+  cofactors: [
+    {
+      code: "HEM",
+      chain: "A",
+      number: 601,
+      atoms: [
+        { name: "FE", element: "Fe", xyz: [12, -2, 0] },
+        { name: "NA", element: "N", xyz: [13, -2, 0] },
+        { name: "C1A", element: "C", xyz: [14, -2, 0] },
+      ],
+      bonds: [
+        { atoms: [0, 1], order: "single" },
+        { atoms: [1, 2], order: "aromatic" },
+      ],
+    },
+  ],
+  contacts: [
+    ...SMALL_COMPLEX.contacts,
+    {
+      kind: "coordination",
+      residue: { chain: "A", number: 301, ins_code: "", name: "ZN" },
+      residue_atom: "ZN",
+      ligand_atom: 0,
+      distance: 2.0,
+    },
+    {
+      kind: "coordination",
+      residue: { chain: "A", number: 601, ins_code: "", name: "HEM" },
+      residue_atom: "FE",
+      ligand_atom: 2,
+      distance: 2.0,
+    },
+    {
+      kind: "coordination",
+      residue: { chain: "B", number: 302, ins_code: "", name: "MG" },
+      residue_atom: "MG",
+      ligand_atom: 1,
+      distance: 2.1,
+    },
+    {
+      kind: "contact",
+      residue: { chain: "A", number: 301, ins_code: "", name: "ZN" },
+      residue_atom: "ZN",
+      ligand_atom: 0,
+      distance: 2.0,
+    },
+  ],
+};

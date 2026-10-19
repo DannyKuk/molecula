@@ -7,13 +7,20 @@ import {
   assemblyFrame,
   assemblyOrder,
   centroid,
+  cofactorAtoms,
+  coordinationBonds,
   dockingPose,
   easeInOut,
   hydrogenBonds,
+  isMetal,
   ligandAtoms,
+  metalAtoms,
+  metalLabels,
   pocketSelection,
   proteinAtoms,
+  type CoordinationLine,
   type HydrogenBondLine,
+  type MetalLabel,
   type Point,
 } from "@/lib/complex-scene";
 
@@ -49,8 +56,22 @@ export type Scene = {
 };
 
 const COLORS = {
-  dark: { trace: "#a1a1aa", label: "#fafafa", labelBackground: "#18181b", hbond: "#fbbf24" },
-  light: { trace: "#71717a", label: "#18181b", labelBackground: "#ffffff", hbond: "#d97706" },
+  dark: {
+    trace: "#a1a1aa",
+    label: "#fafafa",
+    labelBackground: "#18181b",
+    hbond: "#fbbf24",
+    coordination: "#c084fc",
+    cofactor: "#94a3b8",
+  },
+  light: {
+    trace: "#71717a",
+    label: "#18181b",
+    labelBackground: "#ffffff",
+    hbond: "#d97706",
+    coordination: "#9333ea",
+    cofactor: "#64748b",
+  },
 };
 
 const ZOOM: Record<ViewMode, number> = { molecule: 0.9, site: 0.75, protein: 0.5 };
@@ -85,6 +106,9 @@ type DrugStyle = {
 };
 
 const MOLECULE_STYLE: DrugStyle = { stick: { radius: 0.15 }, sphere: { scale: 0.25 } };
+
+// Jmol's element colours: 3Dmol's default ones make zinc brown, close to the oxygens' red.
+const METAL_STYLE = { sphere: { radius: 0.7, colorscheme: "Jmol" } };
 
 /** Builds the 3D view in `element`, which must already have its size. */
 export function createScene(
@@ -226,13 +250,16 @@ function complexScene(
   const proteinSize = protein.selectedAtoms({}).length;
   const ligand = viewer.addModel();
   ligand.addAtoms(ligandAtoms(complex.ligand));
+  const metals = viewer.addModel();
+  metals.addAtoms(metalAtoms(complex));
+  const cofactors = viewer.addModel();
+  cofactors.addAtoms(cofactorAtoms(complex));
   const atoms = ligand.selectedAtoms({});
   const bound = atoms.map(({ x, y, z }) => ({ x: x!, y: y!, z: z! }));
   const center = centroid(bound);
   const approach = approachDirection(complex);
   const outside = dockingPose(bound, approach, 0);
   const pocket = pocketSelection(complex);
-  const bonds = hydrogenBonds(complex);
   let mode = options.mode;
   let ligandStyle: DrugStyle = MOLECULE_STYLE;
 
@@ -253,28 +280,59 @@ function complexScene(
 
   const showPocket = () => protein.setStyle(pocket, { stick: { radius: 0.12 } }, true);
 
-  const showContact = (bond: HydrogenBondLine) => {
+  const addDashedLine = (start: Point, end: Point, color: string) =>
     viewer.addCylinder({
-      start: bond.residue,
-      end: bond.ligand,
+      start,
+      end,
       radius: 0.09,
       dashed: true,
       dashLength: 0.25,
       gapLength: 0.15,
-      color: colors.hbond,
+      color,
       fromCap: 1,
       toCap: 1,
     });
-    viewer.addLabel(bond.label, {
-      position: bond.residue,
+
+  const addLabel = (text: string, position: Point, border: string) =>
+    viewer.addLabel(text, {
+      position,
       fontSize: 12,
       fontColor: colors.label,
       backgroundColor: colors.labelBackground,
       backgroundOpacity: 0.85,
-      borderColor: colors.hbond,
+      borderColor: border,
       borderThickness: 1,
       inFront: true,
     });
+
+  const showHydrogenBond = (bond: HydrogenBondLine) => {
+    addDashedLine(bond.residue, bond.ligand, colors.hbond);
+    addLabel(bond.label, bond.residue, colors.hbond);
+  };
+
+  const showCoordination = (line: CoordinationLine) =>
+    addDashedLine(line.metal, line.ligand, colors.coordination);
+
+  const showMetalLabel = (metal: MetalLabel) =>
+    addLabel(metal.label, metal.position, colors.coordination);
+
+  const contactLines = [
+    ...coordinationBonds(complex).map((line) => () => showCoordination(line)),
+    ...hydrogenBonds(complex).map((bond) => () => showHydrogenBond(bond)),
+  ];
+
+  /** The metal ions and cofactors the drug binds through: part of the site, so the drug docks onto
+   * them. */
+  const showBindingPartners = () => {
+    metals.setStyle({}, METAL_STYLE);
+    cofactors.setStyle({}, { stick: { radius: 0.1, color: colors.cofactor } });
+    cofactors.setStyle({ predicate: (atom) => isMetal(atom.elem) }, METAL_STYLE, true);
+    metalLabels(complex).forEach(showMetalLabel);
+  };
+
+  const hideBindingPartners = () => {
+    metals.setStyle({}, {});
+    cofactors.setStyle({}, {});
   };
 
   // 3Dmol's view is [-center x, -center y, -center z, camera distance, rotation quaternion x y z w];
@@ -313,23 +371,28 @@ function complexScene(
     viewer.removeAllShapes();
     viewer.removeAllLabels();
     showTrace(mode === "protein" ? proteinSize : 0, TRACE_OPACITY);
-    if (mode !== "molecule") showPocket();
+    if (mode !== "molecule") {
+      showPocket();
+      showBindingPartners();
+    } else {
+      hideBindingPartners();
+    }
     placeLigand(bound);
     if (!framed) {
       viewer.zoomTo({ model: ligand });
       framed = true;
     }
     viewer.setView(viewAt(center, distanceAt(ZOOM[mode])));
-    if (mode !== "molecule") bonds.forEach(showContact);
+    if (mode !== "molecule") contactLines.forEach((show) => show());
     viewer.render();
     turning.start();
   };
 
   /**
    * The drug builds itself up (`assemble`); outside Molecule mode it does so outside the pocket,
-   * then the camera pulls back while the backbone grows, the drug docks with the camera on it, and
-   * the hydrogen bonds appear one by one. The path in is an illustration; only the end pose is from
-   * the structure.
+   * then the camera pulls back while the backbone grows and the metals and cofactors appear, the
+   * drug docks with the camera on it, and the metal bonds and hydrogen bonds appear one by one. The
+   * path in is an illustration; only the end pose is from the structure.
    */
   const playSequence = (assemble: boolean) => {
     playing.current?.stop();
@@ -345,13 +408,15 @@ function complexScene(
     const reveal = assemble ? drug.duration + HOLD_MS : 0;
     const docking = reveal + REVEAL_MS;
     const contacts = docking + DOCK_MS;
-    const duration = docks ? contacts + bonds.length * CONTACT_MS : drug.duration;
+    const duration = docks ? contacts + contactLines.length * CONTACT_MS : drug.duration;
     const fades = mode === "site";
     let traceStep = -1;
     let fadeStep = -1;
     let shownContacts = 0;
+    let partnersShown = false;
     let assembled = !assemble;
 
+    hideBindingPartners();
     if (docks) showTrace(0, 0);
     placeLigand(docks ? outside : bound);
     if (assemble) drug.show(0);
@@ -363,6 +428,10 @@ function complexScene(
         assembled = elapsed >= drug.duration;
         if (assembled) placeLigand(docks ? outside : bound);
         else drug.show(elapsed);
+      }
+      if (docks && !partnersShown && elapsed >= reveal) {
+        partnersShown = true;
+        showBindingPartners();
       }
       if (docks && elapsed >= reveal && elapsed < docking) {
         const progress = easeInOut((elapsed - reveal) / REVEAL_MS);
@@ -393,8 +462,11 @@ function complexScene(
           showPocket();
           viewer.setView(viewAt(center, end));
         }
-        const due = Math.min(bonds.length, Math.floor((elapsed - contacts) / CONTACT_MS) + 1);
-        bonds.slice(shownContacts, due).forEach(showContact);
+        const due = Math.min(
+          contactLines.length,
+          Math.floor((elapsed - contacts) / CONTACT_MS) + 1,
+        );
+        contactLines.slice(shownContacts, due).forEach((show) => show());
         shownContacts = Math.max(due, 1);
       }
       viewer.render();
@@ -403,7 +475,7 @@ function complexScene(
     const finish = () => {
       playing.current = null;
       step(duration);
-      if (docks) bonds.slice(shownContacts).forEach(showContact);
+      if (docks) contactLines.slice(shownContacts).forEach((show) => show());
       viewer.render();
       turning.start();
     };
