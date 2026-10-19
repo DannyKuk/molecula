@@ -1,6 +1,6 @@
 import type { AtomSelectionSpec, AtomSpec } from "3dmol";
 
-import type { Complex, Residue, Xyz } from "./api";
+import type { Complex, Molecule, Residue, Xyz } from "./api";
 
 export type Point = { x: number; y: number; z: number };
 
@@ -8,9 +8,18 @@ export type Point = { x: number; y: number; z: number };
  * labelled at the residue end. */
 export type HydrogenBondLine = { label: string; residue: Point; ligand: Point };
 
+/** A metal binding a drug atom: a dashed line from the metal to the drug atom. */
+export type CoordinationLine = { metal: Point; ligand: Point };
+
+/** A metal the viewer labels with its element, such as "Zn". */
+export type MetalLabel = { label: string; position: Point };
+
 const SECONDARY_STRUCTURE = { helix: "h", sheet: "s", coil: "c" } as const;
 
 const BOND_ORDER = { single: 1, double: 2, triple: 3, aromatic: 1.5 } as const;
+
+// The elements the ingest counts as metals (`METALS` in `backend/src/molecula/ingest/complexes.py`).
+const METALS = new Set("Li Na K Mg Ca Mn Fe Co Ni Cu Zn Cd Hg Pt".split(" "));
 
 const point = ([x, y, z]: Xyz): Point => ({ x, y, z });
 
@@ -53,12 +62,13 @@ export function proteinAtoms(complex: Complex): AtomSpec[] {
   return atoms.map((atom, index) => ({ ...atom, serial: index, index }));
 }
 
-/** The drug's atoms for 3Dmol, with the bonds and bond orders the complex lists. */
-export function ligandAtoms(ligand: Complex["ligand"]): AtomSpec[] {
-  const atoms: AtomSpec[] = ligand.atoms.map((atom, index) => ({
+/** The drug's or a cofactor's atoms for 3Dmol, with the bonds and bond orders the complex lists.
+ * `first` is the index of the first atom, for a molecule that shares a model with others. */
+export function ligandAtoms(ligand: Molecule, first = 0): AtomSpec[] {
+  const atoms: AtomSpec[] = ligand.atoms.map((atom, i) => ({
     ...point(atom.xyz),
-    serial: index,
-    index,
+    serial: first + i,
+    index: first + i,
     elem: atom.element,
     atom: atom.name,
     resn: ligand.code,
@@ -71,12 +81,51 @@ export function ligandAtoms(ligand: Complex["ligand"]): AtomSpec[] {
   for (const bond of ligand.bonds) {
     const [a, b] = bond.atoms;
     const order = BOND_ORDER[bond.order];
-    atoms[a].bonds!.push(b);
+    atoms[a].bonds!.push(first + b);
     atoms[a].bondOrder!.push(order);
-    atoms[b].bonds!.push(a);
+    atoms[b].bonds!.push(first + a);
     atoms[b].bondOrder!.push(order);
   }
   return atoms;
+}
+
+/** Every cofactor's atoms for 3Dmol in one model, with their bonds. */
+export function cofactorAtoms(complex: Complex): AtomSpec[] {
+  const atoms: AtomSpec[] = [];
+  for (const cofactor of complex.cofactors) atoms.push(...ligandAtoms(cofactor, atoms.length));
+  return atoms;
+}
+
+/** The metal ions for 3Dmol, one unbonded atom each. */
+export function metalAtoms(complex: Complex): AtomSpec[] {
+  return complex.metals.map((metal, index) => ({
+    ...point(metal.xyz),
+    serial: index,
+    index,
+    elem: metal.element,
+    atom: metal.name,
+    resn: metal.name,
+    resi: metal.number,
+    chain: metal.chain,
+    hetflag: true,
+    bonds: [],
+    bondOrder: [],
+  }));
+}
+
+export function isMetal(element: string | undefined): boolean {
+  return element !== undefined && METALS.has(element);
+}
+
+/** The metal ions and the metals inside the cofactors, such as heme's iron, labelled once each. */
+export function metalLabels(complex: Complex): MetalLabel[] {
+  const ions = complex.metals.map((metal) => ({ label: metal.element, xyz: metal.xyz }));
+  const bound = complex.cofactors.flatMap((cofactor) =>
+    cofactor.atoms
+      .filter((atom) => isMetal(atom.element))
+      .map((atom) => ({ label: atom.element, xyz: atom.xyz })),
+  );
+  return [...ions, ...bound].map(({ label, xyz }) => ({ label, position: point(xyz) }));
 }
 
 /** The pocket residues, as a 3Dmol selection. */
@@ -103,6 +152,24 @@ export function hydrogenBonds(complex: Complex): HydrogenBondLine[] {
         ligand: point(ligandAtom.xyz),
       },
     ];
+  });
+}
+
+/** The metal-drug bonds. The metal is an ion, or an atom of a cofactor, such as heme's iron; a
+ * bond whose metal isn't in the complex is left out. */
+export function coordinationBonds(complex: Complex): CoordinationLine[] {
+  const ions = new Map(complex.metals.map((metal) => [residueKey(metal), metal.xyz]));
+  const cofactorAtom = (residue: Residue, name: string) =>
+    complex.cofactors
+      .find((cofactor) => cofactor.chain === residue.chain && cofactor.number === residue.number)
+      ?.atoms.find((atom) => atom.name === name)?.xyz;
+  return complex.contacts.flatMap((contact) => {
+    if (contact.kind !== "coordination") return [];
+    const metal =
+      ions.get(residueKey(contact.residue)) ?? cofactorAtom(contact.residue, contact.residue_atom);
+    const ligandAtom = complex.ligand.atoms[contact.ligand_atom];
+    if (!metal || !ligandAtom) return [];
+    return [{ metal: point(metal), ligand: point(ligandAtom.xyz) }];
   });
 }
 

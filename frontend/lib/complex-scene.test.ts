@@ -6,13 +6,17 @@ import {
   assemblyFrame,
   assemblyOrder,
   centroid,
+  cofactorAtoms,
+  coordinationBonds,
   dockingPose,
   hydrogenBonds,
   ligandAtoms,
+  metalAtoms,
+  metalLabels,
   pocketSelection,
   proteinAtoms,
 } from "./complex-scene";
-import { SMALL_COMPLEX } from "./test-complexes";
+import { METAL_COMPLEX, SMALL_COMPLEX } from "./test-complexes";
 
 describe("proteinAtoms", () => {
   const atoms = proteinAtoms(SMALL_COMPLEX);
@@ -50,6 +54,56 @@ describe("ligandAtoms", () => {
       [[1], [2]],
     ]);
     expect(atoms[0]).toMatchObject({ elem: "N", resn: "LIG", hetflag: true, x: 10 });
+  });
+});
+
+describe("cofactorAtoms", () => {
+  it("numbers the atoms of all cofactors in one sequence, with their bonds", () => {
+    const cofactor = METAL_COMPLEX.cofactors[0];
+    const atoms = cofactorAtoms({ ...METAL_COMPLEX, cofactors: [cofactor, cofactor] });
+
+    expect(atoms.map((atom) => atom.index)).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(atoms[4].bonds).toEqual([3, 5]);
+    expect(atoms[3]).toMatchObject({ elem: "Fe", resn: "HEM", resi: 601, x: 12, y: -2 });
+  });
+
+  it("has no atoms for a complex without cofactors", () => {
+    expect(cofactorAtoms(SMALL_COMPLEX)).toEqual([]);
+  });
+});
+
+describe("metalAtoms", () => {
+  it("places each metal ion as one unbonded atom of its element", () => {
+    expect(metalAtoms(METAL_COMPLEX)).toEqual([
+      expect.objectContaining({ elem: "Zn", resi: 301, chain: "A", x: 10, y: -2, z: 0, bonds: [] }),
+    ]);
+  });
+});
+
+describe("metalLabels", () => {
+  it("labels each metal ion and each metal inside a cofactor by its element", () => {
+    expect(metalLabels(METAL_COMPLEX)).toEqual([
+      { label: "Zn", position: { x: 10, y: -2, z: 0 } },
+      { label: "Fe", position: { x: 12, y: -2, z: 0 } },
+    ]);
+  });
+
+  it("has none for a complex without metals", () => {
+    expect(metalLabels(SMALL_COMPLEX)).toEqual([]);
+  });
+});
+
+describe("coordinationBonds", () => {
+  it("draws each metal bond from the ion or the cofactor's metal atom to the drug atom", () => {
+    expect(coordinationBonds(METAL_COMPLEX)).toEqual([
+      { metal: { x: 10, y: -2, z: 0 }, ligand: { x: 10, y: 0, z: 0 } },
+      { metal: { x: 12, y: -2, z: 0 }, ligand: { x: 12, y: 0, z: 0 } },
+    ]);
+  });
+
+  it("leaves out a bond to a metal the complex doesn't have, and the hydrogen bonds", () => {
+    expect(coordinationBonds(SMALL_COMPLEX)).toEqual([]);
+    expect(coordinationBonds(METAL_COMPLEX)).toHaveLength(2);
   });
 });
 

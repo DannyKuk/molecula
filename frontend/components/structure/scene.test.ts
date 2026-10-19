@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { SMALL_COMPLEX } from "@/lib/test-complexes";
+import type { Complex } from "@/lib/api";
+import { METAL_COMPLEX, SMALL_COMPLEX } from "@/lib/test-complexes";
 
 import { createScene, type SceneOptions } from "./scene";
 
-type FakeAtom = { x: number; y: number; z: number; index?: number; style?: object };
+type FakeAtom = { x: number; y: number; z: number; index?: number; elem?: string; style?: object };
 type Selection = { predicate?: (atom: FakeAtom) => boolean; or?: unknown };
 
 /** Just enough of 3Dmol to see what the scene draws. `sdfAtoms` are what a molecule's SDF holds. */
@@ -86,18 +87,26 @@ function runFrames(ms = 100, until = Infinity) {
   }
 }
 
-function complexScene(sceneOptions: Partial<SceneOptions> = {}) {
+function complexScene(sceneOptions: Partial<SceneOptions> = {}, complex: Complex = SMALL_COMPLEX) {
   const fake = fakeThreeDmol();
   const element = document.createElement("div");
   const scene = createScene(
     fake.lib,
     element,
-    { kind: "complex", complex: SMALL_COMPLEX },
+    { kind: "complex", complex },
     { ...options, ...sceneOptions },
   );
-  const [protein, drug] = fake.models;
+  const [protein, drug, metals, cofactors] = fake.models;
   const grab = () => element.firstChild!.dispatchEvent(new Event("pointerdown"));
-  return { ...fake, scene, protein: protein.atoms, drug: drug.atoms, grab };
+  return {
+    ...fake,
+    scene,
+    protein: protein.atoms,
+    drug: drug.atoms,
+    metals: metals.atoms,
+    cofactors: cofactors.atoms,
+    grab,
+  };
 }
 
 describe("createScene", () => {
@@ -357,6 +366,122 @@ describe("createScene", () => {
 
     expect(viewer.getView().slice(0, 3)).toEqual([-docked.x, -docked.y, -docked.z]);
     expect(viewer.spin).toHaveBeenLastCalledWith("y", expect.any(Number));
+  });
+});
+
+describe("createScene with metals and cofactors", () => {
+  const metalScene = (sceneOptions: Partial<SceneOptions> = {}) =>
+    complexScene(sceneOptions, METAL_COMPLEX);
+  type Viewer = ReturnType<typeof fakeThreeDmol>["viewer"];
+  const labels = (viewer: Viewer) => viewer.addLabel.mock.calls.map(([label]) => label);
+  const lineColors = (viewer: Viewer) =>
+    viewer.addCylinder.mock.calls.map(([line]) => (line as { color: string }).color);
+  const metalBond = "#c084fc";
+  const hydrogenBond = "#fbbf24";
+
+  it("shows the metal ions and cofactors, with the metal bonds before the hydrogen bonds", () => {
+    const { viewer, metals, cofactors } = metalScene();
+
+    expect(metals[0].style).toEqual({ sphere: expect.objectContaining({ colorscheme: "Jmol" }) });
+    expect(cofactors.map((atom) => Object.keys(atom.style!))).toEqual([
+      ["stick", "sphere"],
+      ["stick"],
+      ["stick"],
+    ]);
+    expect(labels(viewer)).toEqual(["Zn", "Fe", "Glu2", "Thr7A"]);
+    expect(lineColors(viewer)).toEqual([metalBond, metalBond, hydrogenBond, hydrogenBond]);
+  });
+
+  it("adds nothing for a complex without metals or cofactors", () => {
+    const { viewer, metals, cofactors } = complexScene();
+
+    expect(metals).toEqual([]);
+    expect(cofactors).toEqual([]);
+    expect(labels(viewer)).toEqual(["Glu2", "Thr7A"]);
+    expect(lineColors(viewer)).toEqual([hydrogenBond, hydrogenBond]);
+  });
+
+  it("hides them in Molecule mode", () => {
+    const { scene, viewer, metals, cofactors } = metalScene();
+    viewer.addCylinder.mockClear();
+    viewer.addLabel.mockClear();
+
+    scene.setMode("molecule", false);
+
+    expect(drawn(metals)).toHaveLength(0);
+    expect(drawn(cofactors)).toHaveLength(0);
+    expect(viewer.addCylinder).not.toHaveBeenCalled();
+    expect(viewer.addLabel).not.toHaveBeenCalled();
+  });
+
+  it("shows them while the backbone grows, before the drug docks, and adds their bonds first", () => {
+    const { scene, viewer, drug, metals, cofactors } = metalScene();
+    viewer.addCylinder.mockClear();
+    viewer.addLabel.mockClear();
+
+    scene.replay();
+    runFrames(100, 700);
+    expect(drawn(metals)).toHaveLength(0);
+    expect(drawn(cofactors)).toHaveLength(0);
+
+    runFrames(100, 300);
+    expect(drawn(metals)).toHaveLength(1);
+    expect(drawn(cofactors)).toHaveLength(3);
+    expect(labels(viewer)).toEqual(["Zn", "Fe"]);
+    expect(centerOf(drug).x).toBeGreaterThan(11 + 10);
+    expect(viewer.addCylinder).not.toHaveBeenCalled();
+
+    runFrames(100, 5300);
+    expect(lineColors(viewer)).toEqual([metalBond]);
+
+    runFrames();
+    expect(lineColors(viewer)).toEqual([metalBond, metalBond, hydrogenBond, hydrogenBond]);
+    expect(labels(viewer)).toEqual(["Zn", "Fe", "Glu2", "Thr7A"]);
+  });
+
+  it("shows them with their bonds when the user grabs the view while the sequence plays", () => {
+    const { scene, viewer, metals, cofactors, grab } = metalScene();
+    scene.replay();
+    runFrames(100, 300);
+    viewer.addCylinder.mockClear();
+    viewer.addLabel.mockClear();
+
+    grab();
+
+    expect(frames.size).toBe(0);
+    expect(drawn(metals)).toHaveLength(1);
+    expect(drawn(cofactors)).toHaveLength(3);
+    expect(lineColors(viewer)).toEqual([metalBond, metalBond, hydrogenBond, hydrogenBond]);
+    expect(labels(viewer)).toEqual(["Zn", "Fe", "Glu2", "Thr7A"]);
+  });
+
+  it("shows them without a sequence when the system asks for reduced motion", () => {
+    const { scene, viewer, metals } = metalScene({ reduceMotion: true });
+    viewer.addCylinder.mockClear();
+
+    scene.replay();
+
+    expect(frames.size).toBe(0);
+    expect(drawn(metals)).toHaveLength(1);
+    expect(lineColors(viewer)).toEqual([metalBond, metalBond, hydrogenBond, hydrogenBond]);
+  });
+
+  it("shows them when a view is built again with its camera", () => {
+    const camera = { view: [1, 2, 3, 40, 0, 0, 0, 1], grabbed: false };
+
+    const { viewer, metals, cofactors } = metalScene({ camera });
+
+    expect(drawn(metals)).toHaveLength(1);
+    expect(drawn(cofactors)).toHaveLength(3);
+    expect(lineColors(viewer)).toEqual([metalBond, metalBond, hydrogenBond, hydrogenBond]);
+    expect(viewer.getView()).toEqual(camera.view);
+  });
+
+  it("uses darker colours on a light background", () => {
+    const { viewer, cofactors } = metalScene({ dark: false });
+
+    expect(lineColors(viewer)).toEqual(["#9333ea", "#9333ea", "#d97706", "#d97706"]);
+    expect(cofactors[1].style).toEqual({ stick: { radius: 0.1, color: "#64748b" } });
   });
 });
 
