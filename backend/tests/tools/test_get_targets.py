@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 import pytest
@@ -80,3 +81,10 @@ def test_bad_argument_is_a_readable_error_result(
     [problem] = InvalidArguments.model_validate_json(str(message.content)).errors
     assert problem.startswith(error)
     assert targets.asked == []
+
+
+def test_each_target_starts_with_its_ref(tool: StructuredTool) -> None:
+    message = call_tool(tool, {"drug": "Gleevec"})
+
+    [target] = json.loads(str(message.content))["targets"]
+    assert next(iter(target)) == "ref"

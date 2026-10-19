@@ -172,3 +172,14 @@ def test_bad_argument_is_a_readable_error_result(
     [problem] = InvalidArguments.model_validate_json(str(message.content)).errors
     assert problem.startswith(error)
     assert extractor.asked == []
+
+
+def test_each_passage_starts_with_its_ref_so_the_number_sits_beside_its_own_text(
+    tool: StructuredTool, retriever: FakeLabelRetriever
+) -> None:
+    retriever.chunks = [IMATINIB_SIDE_EFFECTS, IMATINIB_LOW_SCORE]
+
+    message = call_tool(tool, {"question": SIDE_EFFECTS})
+
+    passages = json.loads(str(message.content))["passages"]
+    assert [list(p)[:2] for p in passages] == [["ref", "id"], ["ref", "id"]]

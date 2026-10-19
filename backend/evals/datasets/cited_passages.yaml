@@ -1,0 +1,66 @@
+# Conversations for the cited-passages eval (#166): several drugs in one question, or a follow-up
+# about another drug than the first turn. Every turn but the last is answered by the agent and sent
+# back as text; the last one is scored. `drugs` are the stored generic names the last question is
+# about. `aliases` name each drug the way a claim or a source may: generic, brand and German names.
+
+aliases:
+  imatinib: [imatinib, gleevec]
+  ibuprofen: [ibuprofen, advil, motrin]
+  naproxen: [naproxen, aleve, naprosyn, anaprox]
+  metformin: [metformin, glucophage]
+  glimepiride: [glimepiride, amaryl]
+  warfarin: [warfarin, coumadin, jantoven]
+  aspirin: [aspirin, acetylsalicylic, acetylsalicyl, bayer]
+  omeprazole: [omeprazole, prilosec]
+  atorvastatin: [atorvastatin, lipitor]
+  lisinopril: [lisinopril, zestril, prinivil, qbrelis]
+  amlodipine: [amlodipine, norvasc]
+  sertraline: [sertraline, zoloft]
+
+conversations:
+  - id: imatinib-then-weights-ibuprofen-naproxen
+    turns:
+      - How does imatinib work?
+      - What are the molecular weights of ibuprofen and of naproxen, and what are they each used for?
+    drugs: [ibuprofen, naproxen]
+  - id: imatinib-warnings-list
+    turns:
+      - What are the main warnings on the imatinib label? Give them as a list.
+    drugs: [imatinib]
+  - id: side-effects-ibuprofen-naproxen
+    turns:
+      - Compare the side effects of ibuprofen and naproxen.
+    drugs: [ibuprofen, naproxen]
+  - id: metformin-then-glimepiride
+    turns:
+      - What is metformin used for?
+      - And glimepiride? What are its most common side effects?
+    drugs: [glimepiride]
+  - id: warfarin-then-aspirin-bleeding
+    turns:
+      - How does warfarin work?
+      - What does the aspirin label warn about bleeding?
+    drugs: [aspirin]
+  - id: weight-and-use-omeprazole
+    turns:
+      - What is the molecular weight of omeprazole and what is it used for?
+    drugs: [omeprazole]
+  - id: uses-atorvastatin-lisinopril-amlodipine
+    turns:
+      - What are atorvastatin, lisinopril and amlodipine each used for?
+    drugs: [atorvastatin, lisinopril, amlodipine]
+  - id: de-metformin-then-ibuprofen
+    turns:
+      - Wie wirkt Metformin?
+      - Und welche Nebenwirkungen hat Ibuprofen?
+    drugs: [ibuprofen]
+    language: de
+  - id: sertraline-use-then-side-effects
+    turns:
+      - What is sertraline used for?
+      - What are its most common side effects?
+    drugs: [sertraline]
+  - id: imatinib-targets-and-warnings
+    turns:
+      - What does imatinib target, and what are the warnings on its label?
+    drugs: [imatinib]
