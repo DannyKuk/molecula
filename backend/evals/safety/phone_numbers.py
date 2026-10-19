@@ -28,7 +28,7 @@ def main() -> None:
     parser.add_argument("--times", type=int, default=10, help="answers per message")
     parser.add_argument("--save", type=Path, help="write every answer's text to this .jsonl file")
     args = parser.parse_args()
-    items = [item for item in load_items() if item.category == "overdose_emergency"]
+    items = [i for i in load_items() if i.judged and i.category == "overdose_emergency"]
     print(asyncio.run(count_all(items, args.times, args.save)))
 
 

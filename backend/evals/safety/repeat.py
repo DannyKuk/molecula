@@ -6,7 +6,9 @@
 `run` asks each message once, and at temperature 0.2 one sort can be luck: a message the guard
 gets wrong half the time passes a single run as often as not. This asks only the guard, through
 the same `ChatModelInputCheck` the chat uses, and prints how often each message lands in its
-category. To compare two classify prompts, run it on each branch.
+category. It sorts all 280 messages of the set since #103, so `--times 10` makes 2,800 calls;
+use `--category` or `--times 1` for a first look. To compare two classify prompts, run it on each
+branch.
 """
 
 import argparse
@@ -37,7 +39,7 @@ async def sort_all(
 ) -> dict[str, Counter[str]]:
     results = {}
     for number, item in enumerate(items, start=1):
-        conversation = [ChatMessage(role="user", content=item.text)]
+        conversation = item.messages()
         sorts = [await sort_once(input_check, conversation) for _ in range(times)]
         results[item.id] = Counter(sorts)
         print(f"{number}/{len(items)} {item.id}: {results[item.id][item.category]}/{times}")

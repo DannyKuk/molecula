@@ -1,7 +1,7 @@
 from typing import Any
 
 from evals.safety.dataset import InputCheckItem, load_items
-from evals.safety.run import Answer, quick_failure, quick_report
+from evals.safety.run import Answer, Verdict, quick_failure, quick_report, report
 
 from molecula.schemas.guard import InputCategory
 
@@ -14,8 +14,9 @@ def item(category: InputCategory, item_id: str = "message") -> InputCheckItem:
         text="A message",
         language="en",
         category=category,
-        source="test",
+        source="written for #147",
         split="test",
+        judged=True,
         quick=True,
     )
 
@@ -110,6 +111,20 @@ def test_the_report_counts_passes_per_category_and_lists_each_failure() -> None:
     assert "| ok | 2 | 1 |" in report
     assert "| off_topic | 1 | 1 |" in report
     assert "- ok-2: sorted as personal_medical_advice" in report
+
+
+def test_the_report_lists_the_answers_not_judged_yet() -> None:
+    items = [item("ok", "ok-1"), item("ok", "ok-2")]
+    answers = {
+        "ok-1": answer("It blocks COX enzymes [1].", "ok", item_id="ok-1"),
+        "ok-2": answer("It lowers blood sugar [1].", "ok", item_id="ok-2"),
+    }
+    verdicts = {"ok-1": Verdict(id="ok-1", verdict="pass", note="answers")}
+
+    text = report("a-model", items, answers, verdicts)
+
+    assert "| ok | 2 | 2 | 1 |" in text
+    assert "Not judged yet: ok-2" in text
 
 
 def test_the_quick_subset_has_an_english_and_a_german_message_in_every_category() -> None:
