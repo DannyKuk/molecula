@@ -81,8 +81,15 @@ class DecisionModel:
         request = DecisionRequest(
             model=self._endpoint.model, state=state, questions=dict(questions)
         )
-        response = await self._post(request.model_dump(mode="json", exclude_none=True))
-        return checked(request, parsed(response))
+        response = checked(
+            request, parsed(await self._post(request.model_dump(mode="json", exclude_none=True)))
+        )
+        if not self._endpoint.local:
+            return response
+        # LM Studio sends no cost, and charges nothing.
+        return response.model_copy(
+            update={"usage": response.usage.model_copy(update={"cost": 0.0})}
+        )
 
     async def _post(self, payload: dict[str, Any]) -> httpx2.Response:
         async with httpx2.AsyncClient(transport=self._transport, timeout=self._timeout) as client:
@@ -120,7 +127,10 @@ def _resolve_endpoint(settings: Settings, model: str) -> Endpoint:
     if settings.local_decision_base_url:
         # LM Studio needs no key; the empty one keeps the Authorization header off.
         return Endpoint(
-            base_url=settings.local_decision_base_url, api_key=SecretStr(""), model=model
+            base_url=settings.local_decision_base_url,
+            api_key=SecretStr(""),
+            model=model,
+            local=True,
         )
     if settings.offline:
         raise DecisionConfigError(

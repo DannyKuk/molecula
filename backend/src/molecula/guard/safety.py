@@ -3,14 +3,15 @@ from dataclasses import dataclass, field
 from typing import Protocol, get_args
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, BaseMessage, SystemMessage
+from langchain_core.messages import SystemMessage
 
 from molecula import prompts
 from molecula.agent.agent import to_langchain
 from molecula.agent.decisions import DecisionModel
-from molecula.schemas.chat import ChatMessage, Usage
+from molecula.schemas.chat import ChatMessage
 from molecula.schemas.decisions import ChoiceAnswer, ChoiceQuestion, DecisionUsage, StateMessage
 from molecula.schemas.guard import InputCategory, SortedMessage
+from molecula.schemas.usage import Usage, usage_of
 
 CATEGORIES: tuple[InputCategory, ...] = get_args(InputCategory.__value__)
 
@@ -103,17 +104,7 @@ def decision_usage(usage: DecisionUsage) -> Usage:
         input_tokens=usage.input_tokens,
         output_tokens=usage.output_tokens,
         total_tokens=usage.input_tokens + usage.output_tokens,
-    )
-
-
-def usage_of(message: BaseMessage) -> Usage:
-    usage = message.usage_metadata if isinstance(message, AIMessage) else None
-    if usage is None:
-        return Usage()
-    return Usage(
-        input_tokens=usage["input_tokens"],
-        output_tokens=usage["output_tokens"],
-        total_tokens=usage["total_tokens"],
+        cost_usd=usage.cost,
     )
 
 

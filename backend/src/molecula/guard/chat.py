@@ -16,9 +16,9 @@ from molecula.schemas.chat import (
     StatusEvent,
     TokenEvent,
     ToolResultEvent,
-    Usage,
 )
 from molecula.schemas.source_check import SourceCheck, SourceCheckFailed
+from molecula.schemas.usage import Usage
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,11 @@ class GuardedChat:
                 event = event.model_copy(
                     update={
                         "category": verdict.category,
-                        "usage": verdict.usage + event.usage + check_usage,
+                        "usage_by_step": {
+                            "input_check": verdict.usage,
+                            **event.usage_by_step,
+                            "source_check": check_usage,
+                        },
                     }
                 )
             yield event
@@ -97,13 +101,14 @@ class GuardedChat:
     async def _check_answer(
         self, answer: str, results: list[ToolResultEvent]
     ) -> tuple[SourceCheckEvent, Usage]:
-        """The check's verdict; a check that fails leaves the answer shown but unchecked."""
+        """The check's verdict; a check that fails leaves the answer shown but unchecked, and
+        what its call used unknown."""
         try:
             async with asyncio.timeout(self._timeout_seconds):
                 checked = await self._source_check.check(answer, results)
         except (SourceCheckFailed, TimeoutError) as error:
             logger.warning("Source check failed: %r", error)
-            return SourceCheckEvent(checked=False), Usage()
+            return SourceCheckEvent(checked=False), Usage.unreported()
         return SourceCheckEvent(checked=True, claims=checked.claims), checked.usage
 
 
@@ -111,5 +116,9 @@ def fixed(verdict: Verdict) -> list[ChatEvent]:
     return [
         TokenEvent(text=fixed_answer(verdict.category)),
         SourcesEvent(sources=[]),
-        DoneEvent(usage=verdict.usage, step_limit_reached=False, category=verdict.category),
+        DoneEvent(
+            usage_by_step={"input_check": verdict.usage},
+            step_limit_reached=False,
+            category=verdict.category,
+        ),
     ]

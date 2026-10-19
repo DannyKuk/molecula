@@ -7,13 +7,14 @@ import openai
 import pytest
 from langchain_core.messages import AIMessage, SystemMessage
 
-from fake_llm import ScriptedChatModel, answer_message, tool_call_message
+from fake_llm import DEFAULT_COST, ScriptedChatModel, answer_message, tool_call_message
 from molecula import prompts
 from molecula.guard.safety import fixed_answer
 from molecula.guard.source_check import ChatModelSourceCheck, cited_sources
-from molecula.schemas.chat import ToolResultEvent, Usage
+from molecula.schemas.chat import ToolResultEvent
 from molecula.schemas.claims import CheckedClaim
 from molecula.schemas.source_check import CheckedAnswer, SourceCheckFailed
+from molecula.schemas.usage import Usage
 
 PASSAGE = {
     "id": "set-1:adverse_reactions:0",
@@ -243,7 +244,9 @@ def test_the_guards_emergency_line_is_not_judged() -> None:
 def test_the_check_carries_the_models_token_usage() -> None:
     checked, _ = check("Headache is common [1].", judged((1, "supported")))
 
-    assert checked.usage == Usage(input_tokens=12, output_tokens=8, total_tokens=20)
+    assert checked.usage == Usage(
+        input_tokens=12, output_tokens=8, total_tokens=20, cost_usd=DEFAULT_COST
+    )
 
 
 def test_an_answer_without_claims_passes_without_a_model_call() -> None:

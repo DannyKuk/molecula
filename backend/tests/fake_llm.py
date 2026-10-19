@@ -17,6 +17,7 @@ from langchain_core.utils.function_calling import convert_to_openai_tool
 from pydantic import Field, InstanceOf
 
 DEFAULT_USAGE = UsageMetadata(input_tokens=12, output_tokens=8, total_tokens=20)
+DEFAULT_COST = 0.0002
 
 
 def tool_call_message(
@@ -34,13 +35,16 @@ class ScriptedChatModel(BaseChatModel):
     """Answers each call, invoked or streamed, with the next message of `script`, or raises it
     when the script holds an exception (a provider error).
 
-    A message without its own `usage_metadata` gets `usage`. `bind_tools` records the tool
+    A message without its own `usage_metadata` gets `usage`, and `cost` as the chat models
+    in `agent/llm.py` keep it; None leaves either out, as a provider that doesn't report it.
+    `bind_tools` records the tool
     names and returns the model itself, so agents that bind tools can drive it. `received`
     holds the messages each call was given.
     """
 
     script: list[InstanceOf[AIMessage] | InstanceOf[Exception]]
-    usage: UsageMetadata = Field(default_factory=lambda: DEFAULT_USAGE.copy())
+    usage: UsageMetadata | None = Field(default_factory=lambda: DEFAULT_USAGE.copy())
+    cost: float | None = DEFAULT_COST
     received: list[list[BaseMessage]] = Field(default_factory=list)
     bound_tools: list[str] = Field(default_factory=list)
 
@@ -90,8 +94,11 @@ class ScriptedChatModel(BaseChatModel):
         message = self.script[len(self.received) - 1]
         if isinstance(message, Exception):
             raise message
-        if message.usage_metadata is None:
+        if message.usage_metadata is None and self.usage is not None:
             message = message.model_copy(update={"usage_metadata": self.usage})
+            if self.cost is not None:
+                metadata = {**message.response_metadata, "token_usage": {"cost": self.cost}}
+                message = message.model_copy(update={"response_metadata": metadata})
         return message
 
 
@@ -112,5 +119,6 @@ def _chunks(message: AIMessage) -> Iterator[AIMessageChunk]:
             for i, call in enumerate(message.tool_calls)
         ],
         usage_metadata=message.usage_metadata,
+        response_metadata=message.response_metadata,
         chunk_position="last",
     )

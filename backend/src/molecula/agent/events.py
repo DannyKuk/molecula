@@ -18,15 +18,16 @@ from molecula.schemas.chat import (
     TokenEvent,
     ToolCallEvent,
     ToolResultEvent,
-    Usage,
 )
 from molecula.schemas.tools import LabelDrugsNotSupported, LabelPassages, ToolResult
+from molecula.schemas.usage import Usage, usage_of
 from molecula.tools.base import Progress, progress_of
 
 
 class AgentRun:
     """Turns the agent graph's stream into chat events, and collects the sources, the answer
-    and the token usage for the end of the answer."""
+    and the usage of the model calls for the end of the answer: the agent's own and those of
+    the label searches' filter extraction."""
 
     def __init__(self, max_steps: int, tools: Sequence[BaseTool]) -> None:
         self.max_steps = max_steps
@@ -34,7 +35,8 @@ class AgentRun:
             tool.name: progress_of(tool) for tool in tools
         }
         self.model_calls = 0
-        self.usage = Usage()
+        self.answer_usage = Usage()
+        self.label_filter_usage = Usage()
         self.calls: dict[str, ToolCall] = {}
         self.sources: dict[tuple[str, str | None, int | None], Source] = {}
         self.answer = ""
@@ -60,10 +62,7 @@ class AgentRun:
     def model_reply(self, message: AIMessage) -> Iterator[ChatEvent]:
         yield from tokens(self.markers.flush())
         self.model_calls += 1
-        if message.usage_metadata:
-            self.usage.input_tokens += message.usage_metadata["input_tokens"]
-            self.usage.output_tokens += message.usage_metadata["output_tokens"]
-            self.usage.total_tokens += message.usage_metadata["total_tokens"]
+        self.answer_usage += usage_of(message)
         if not message.tool_calls:
             self.answer = without_channel_markers(message.text)
         for call in message.tool_calls:
@@ -84,6 +83,9 @@ class AgentRun:
         artifact = message.artifact
         if isinstance(artifact, LabelPassages | LabelDrugsNotSupported):
             yield retrieval_trace(message.tool_call_id, artifact, call)
+            label_filter = artifact.retrieval.filter
+            if label_filter is not None and label_filter.extraction_usage is not None:
+                self.label_filter_usage += label_filter.extraction_usage
         if isinstance(artifact, ToolResult):
             for source in artifact.sources():
                 self.sources.setdefault((source.url, source.section, source.ref), source)
@@ -92,7 +94,10 @@ class AgentRun:
         refs = {source.ref for source in self.sources.values()}
         unknown = [ref for ref in cited_refs(self.answer) if ref not in refs]
         yield SourcesEvent(sources=list(self.sources.values()), unknown_refs=unknown)
-        yield DoneEvent(usage=self.usage, step_limit_reached=self.model_calls >= self.max_steps)
+        yield DoneEvent(
+            usage_by_step={"answer": self.answer_usage, "label_filter": self.label_filter_usage},
+            step_limit_reached=self.model_calls >= self.max_steps,
+        )
 
     def status_of(self, call: ToolCall) -> str:
         """What a tool call is doing, for the user to read while they wait."""

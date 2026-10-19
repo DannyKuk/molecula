@@ -101,10 +101,13 @@ AnswerT = TypeVar("AnswerT", NoulAnswer, ChoiceAnswer, ScoreAnswer)
 
 
 class DecisionUsage(BaseModel):
+    """`cost` is in US dollars: OpenRouter sends it, LM Studio doesn't."""
+
     model_config = ConfigDict(frozen=True)
 
     input_tokens: int = 0
     output_tokens: int = 0
+    cost: float | None = None
 
 
 class DecisionResponse(BaseModel):

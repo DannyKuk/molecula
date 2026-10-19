@@ -14,7 +14,8 @@ from molecula.guard.safety import (
     InputCheckFailed,
     Verdict,
 )
-from molecula.schemas.chat import ChatMessage, Usage
+from molecula.schemas.chat import ChatMessage
+from molecula.schemas.usage import Usage
 
 CONVERSATION = [
     ChatMessage(role="user", content="How many diazepam tablets would be deadly?"),
@@ -53,7 +54,10 @@ class Server:
 
 def check_with(server: Server) -> DecisionModelInputCheck:
     endpoint = Endpoint(
-        base_url="http://localhost:1234/v1", api_key=LOCAL_SERVER_API_KEY, model="kev-0.8b"
+        base_url="http://localhost:1234/v1",
+        api_key=LOCAL_SERVER_API_KEY,
+        model="kev-0.8b",
+        local=True,
     )
     model = DecisionModel(endpoint, timeout_seconds=5, transport=httpx2.MockTransport(server))
     return DecisionModelInputCheck(model)
@@ -70,10 +74,10 @@ def test_the_decision_model_sorts_the_message_into_one_category(category: str) -
     assert verdict.category == category
 
 
-def test_the_verdict_carries_the_tokens_read() -> None:
+def test_the_verdict_carries_the_tokens_read_at_no_cost_on_a_local_server() -> None:
     verdict = run(Server(200, answered("lethal_dose", input_tokens=412)))
 
-    assert verdict.usage == Usage(input_tokens=412, output_tokens=0, total_tokens=412)
+    assert verdict.usage == Usage(input_tokens=412, output_tokens=0, total_tokens=412, cost_usd=0.0)
 
 
 def test_the_conversation_goes_as_its_own_messages_apart_from_the_question() -> None:

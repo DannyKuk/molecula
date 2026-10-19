@@ -7,6 +7,7 @@ import {
 } from "./chat";
 import type { Passage } from "./citations";
 import type { Step } from "./tool-cards";
+import type { Usage } from "./usage";
 
 /**
  * One question and the answer to it, with the steps Molecula took on the way and what their
@@ -15,7 +16,8 @@ import type { Step } from "./tool-cards";
  * cites them with. `sourceCheck` is the source check's verdict, which arrives after `sources`; a
  * fixed answer and a stopped one have none. A question asked while another chat's answer comes in
  * is `queued` until that answer ends. `askedAt` and `answeredAt` are epoch milliseconds; turns
- * saved before they existed have neither.
+ * saved before they existed have neither. `usage` is what the answer's model calls used, from its
+ * `done` event.
  */
 export type Turn = {
   question: string;
@@ -28,6 +30,7 @@ export type Turn = {
   sourceCheck: SourceCheck | null;
   askedAt?: number;
   answeredAt?: number;
+  usage?: Usage;
 };
 
 export function startTurn(question: string): Turn {
@@ -65,7 +68,7 @@ export function applyEvent(turn: Turn, event: ChatEvent): Turn {
     case "source_check":
       return { ...turn, sourceCheck: { checked: event.checked, claims: event.claims } };
     case "done":
-      return { ...turn, state: "done" };
+      return { ...turn, state: "done", usage: event.usage };
     case "error":
       return failTurn(turn, event.message);
     default:

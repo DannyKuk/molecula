@@ -5,7 +5,13 @@ import httpx
 import openai
 import pytest
 
-from fake_llm import ScriptedChatModel, answer_message, tool_call_message
+from fake_llm import (
+    DEFAULT_COST,
+    DEFAULT_USAGE,
+    ScriptedChatModel,
+    answer_message,
+    tool_call_message,
+)
 from guard_fakes import CHECK_USAGE, SOURCE_CHECK_USAGE, FakeCheck, FakeSourceCheck
 from molecula.agent.agent import NO_ANSWER, ChatAgent
 from molecula.agent.decisions import DecisionModelMissing, DecisionModelUnreachable
@@ -20,11 +26,11 @@ from molecula.schemas.chat import (
     SourceCheckEvent,
     StatusEvent,
     TokenEvent,
-    Usage,
 )
 from molecula.schemas.claims import CheckedClaim
 from molecula.schemas.guard import InputCategory
 from molecula.schemas.source_check import SourceCheckFailed
+from molecula.schemas.usage import Usage
 from tool_fakes import (
     FakeComplexService,
     FakeCompoundService,
@@ -32,6 +38,8 @@ from tool_fakes import (
     FakeLabelRetriever,
     FakeTargetService,
 )
+
+AGENT_CALL_USAGE = Usage(**DEFAULT_USAGE, cost_usd=DEFAULT_COST)
 
 QUESTION = [ChatMessage(role="user", content="My son swallowed ten acetaminophen tablets.")]
 
@@ -86,9 +94,13 @@ def test_the_answers_usage_counts_both_checks_too() -> None:
 
     events = run(GuardedChat(FakeCheck("ok"), chat_agent, FakeSourceCheck(), timeout_seconds=5))
 
-    assert done(events).usage == CHECK_USAGE + SOURCE_CHECK_USAGE + Usage(
-        input_tokens=12, output_tokens=8, total_tokens=20
-    )
+    assert done(events).usage_by_step == {
+        "input_check": CHECK_USAGE,
+        "answer": AGENT_CALL_USAGE,
+        "label_filter": Usage(),
+        "source_check": SOURCE_CHECK_USAGE,
+    }
+    assert done(events).usage == CHECK_USAGE + AGENT_CALL_USAGE + SOURCE_CHECK_USAGE
 
 
 def test_the_answer_is_checked_against_its_tool_results_before_done() -> None:
@@ -146,9 +158,8 @@ def test_a_failing_or_slow_source_check_leaves_the_answer_unchecked() -> None:
 
         assert answer(events) == "Imatinib blocks ABL1."
         assert events[-2] == SourceCheckEvent(checked=False)
-        assert done(events).usage == CHECK_USAGE + Usage(
-            input_tokens=12, output_tokens=8, total_tokens=20
-        )
+        assert done(events).usage_by_step["source_check"] == Usage.unreported()
+        assert done(events).usage.cost_usd is None
 
 
 def test_an_agent_that_gives_no_answer_ends_with_its_error_and_no_source_check() -> None:

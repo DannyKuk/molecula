@@ -4,6 +4,7 @@ import type { Turn } from "@/lib/chat-turn";
 import { didYouMeanOf } from "@/lib/did-you-mean";
 import { checkingAnswer } from "@/lib/source-check";
 import { structuresOf } from "@/lib/tool-cards";
+import { formatUsage } from "@/lib/usage";
 
 import { AnswerMarkdown } from "./answer-markdown";
 import { AnswerSources, PrintedSources } from "./answer-sources";
@@ -72,6 +73,11 @@ export function ConversationTurn({ turn, onAsk, chatAnswering, onRetry }: Conver
         </div>
       )}
       {turn.sources && <AnswerSources answer={turn.answer} sources={turn.sources} />}
+      {turn.usage && (
+        <p className="text-xs text-zinc-500 tabular-nums dark:text-zinc-400 print:hidden">
+          {formatUsage(turn.usage)}
+        </p>
+      )}
       {turn.sources && <PrintedSources sources={turn.sources} />}
       {offers.length > 0 && (
         <div className="contents print:hidden">

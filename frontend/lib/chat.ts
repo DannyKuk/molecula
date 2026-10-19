@@ -1,6 +1,7 @@
 import { API_URL } from "./api";
 import { MAX_ANSWER_LENGTH, MAX_MESSAGE_LENGTH, MAX_MESSAGES } from "./chat-limits";
 import { readServerSentEvents } from "./sse";
+import type { Usage } from "./usage";
 
 export type ChatMessage = {
   role: "user" | "assistant";
@@ -40,7 +41,7 @@ export type ChatEvent =
   | { type: "tool_result"; id: string; name: string; status: string | null; result: unknown }
   | { type: "sources"; sources: Source[]; unknown_refs: number[] }
   | ({ type: "source_check" } & SourceCheck)
-  | { type: "done"; step_limit_reached: boolean }
+  | { type: "done"; usage: Usage; step_limit_reached: boolean }
   | { type: "error"; message: string }
   // Read but not shown yet: the retrieval trace comes with #41.
   | { type: "retrieval_trace" };

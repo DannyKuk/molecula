@@ -3,6 +3,7 @@ from typing import Any
 
 import openai
 from langchain_core.language_models import BaseChatModel, LanguageModelInput
+from langchain_core.outputs import ChatGenerationChunk, ChatResult
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
 
@@ -21,7 +22,46 @@ class LLMConfigError(Exception):
     """The settings don't say which chat model to use, or how to reach it."""
 
 
-class LocalChatOpenAI(ChatOpenAI):
+class PricedChatOpenAI(ChatOpenAI):
+    """ChatOpenAI that keeps what a call cost, in US dollars, as `cost` in
+    `response_metadata["token_usage"]`, as OpenRouter reports it in the usage of every response.
+
+    LangChain keeps that usage for a whole response, which structured output reads, but drops
+    it from the last chunk of a stream, which the agent's answers are (#38).
+    """
+
+    def _convert_chunk_to_generation_chunk(
+        self,
+        chunk: dict[str, Any],
+        default_chunk_class: type,
+        base_generation_info: dict[str, Any] | None,
+    ) -> ChatGenerationChunk | None:
+        generation = super()._convert_chunk_to_generation_chunk(
+            chunk, default_chunk_class, base_generation_info
+        )
+        usage = chunk.get("usage")
+        if generation is not None and usage:
+            info = generation.generation_info or {}
+            generation.generation_info = {**info, "token_usage": self.priced(usage)}
+        return generation
+
+    def _create_chat_result(
+        self,
+        response: dict[str, Any] | openai.BaseModel,
+        generation_info: dict[str, Any] | None = None,
+    ) -> ChatResult:
+        result = super()._create_chat_result(response, generation_info)
+        usage = (result.llm_output or {}).get("token_usage")
+        if result.llm_output is not None and usage:
+            result.llm_output["token_usage"] = self.priced(usage)
+        return result
+
+    def priced(self, usage: dict[str, Any]) -> dict[str, Any]:
+        """The response's usage with its `cost`."""
+        return usage
+
+
+class LocalChatOpenAI(PricedChatOpenAI):
     """ChatOpenAI for a local server, where gpt-oss loses the reasoning of its earlier tool calls.
 
     gpt-oss writes its reasoning before each tool call and expects to see it before the earlier
@@ -37,6 +77,9 @@ class LocalChatOpenAI(ChatOpenAI):
         payload = super()._get_request_payload(input_, stop=stop, **kwargs)
         payload["messages"] = with_tool_calls_as_results(payload["messages"])
         return payload
+
+    def priced(self, usage: dict[str, Any]) -> dict[str, Any]:
+        return {**usage, "cost": 0.0}
 
 
 def with_tool_calls_as_results(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -72,7 +115,8 @@ class Endpoint:
     api_key: SecretStr
     model: str
     headers: dict[str, str] = field(default_factory=dict)
-    model_class: type[ChatOpenAI] = ChatOpenAI
+    model_class: type[ChatOpenAI] = PricedChatOpenAI
+    local: bool = False
 
 
 def get_chat_model(settings: Settings) -> BaseChatModel:
@@ -81,7 +125,9 @@ def get_chat_model(settings: Settings) -> BaseChatModel:
     set and the local server otherwise (#230).
 
     The model streams. Every AIMessage it returns, and the last chunk of a stream, carries the
-    call's token counts in `usage_metadata`. Raises LLMConfigError when a setting is missing.
+    call's token counts in `usage_metadata` and its cost in US dollars as `cost` in
+    `response_metadata["token_usage"]` (0 for a local server). Raises LLMConfigError when a
+    setting is missing.
     """
     return _chat_model(settings, settings.llm_reasoning_effort)
 
@@ -147,7 +193,11 @@ def _local_endpoint(base_url: str, model: str | None) -> Endpoint:
             "Set LOCAL_LLM_MODEL to a model the local server has (e.g. one from `ollama list`)."
         )
     return Endpoint(
-        base_url=base_url, api_key=LOCAL_SERVER_API_KEY, model=model, model_class=LocalChatOpenAI
+        base_url=base_url,
+        api_key=LOCAL_SERVER_API_KEY,
+        model=model,
+        model_class=LocalChatOpenAI,
+        local=True,
     )
 
 

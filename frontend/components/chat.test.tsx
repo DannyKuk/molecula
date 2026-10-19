@@ -7,6 +7,7 @@ import { MAX_MESSAGE_LENGTH } from "@/lib/chat-limits";
 import {
   chatFrame,
   DONE,
+  doneFrame,
   IMATINIB_LABEL_SEARCH,
   IMATINIB_SOURCES_EVENT,
   IN_CONVERSATION,
@@ -269,6 +270,22 @@ describe("Chat", () => {
     expect(screen.getByText("Imatinib blocks")).toBeDefined();
     expect(screen.queryByRole("alert")).toBeNull();
     expect(screen.getByRole("button", { name: "Send" })).toBeDefined();
+  });
+
+  it("shows what each answer used, and the chat's total in the header", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+    const first = doneFrame({ total_tokens: 3210, cost_usd: 0.0021 });
+    await streamed(() => stream.send(token("It blocks BCR-ABL.") + first));
+    await screen.findByText("3,210 tokens · $0.0021");
+    askQuestion("What else does it bind?");
+    const second = doneFrame({ total_tokens: 1790, cost_usd: 0.0009 });
+    await streamed(() => stream.send(token("Also KIT.") + second));
+
+    expect(await screen.findByText("1,790 tokens · $0.0009")).toBeDefined();
+    expect(screen.getByText("This chat: 5,000 tokens · $0.003")).toBeDefined();
   });
 
   it("sends the earlier turns with the next question", async () => {

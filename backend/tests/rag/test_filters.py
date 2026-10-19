@@ -6,11 +6,12 @@ from typing import Any
 import pytest
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from fake_llm import ScriptedChatModel, answer_message, tool_call_message
+from fake_llm import DEFAULT_COST, ScriptedChatModel, answer_message, tool_call_message
 from molecula import prompts
 from molecula.rag.filters import SECTION_GROUPS, FilterExtractor
 from molecula.schemas.compounds import Resolution
 from molecula.schemas.retrieval import DrugFilter, LabelQuery
+from molecula.schemas.usage import Usage
 from molecula.services.compounds import CompoundService
 from molecula.services.labels import LabelService
 from molecula.store.compounds import CompoundStore, Synonym
@@ -104,6 +105,20 @@ def test_side_effects_of_a_brand_search_its_drug_and_adverse_reactions(services:
     ]
     assert found.section_groups == ["adverse_reactions"]
     assert found.extraction_error is None
+
+
+def test_the_filter_carries_what_its_extraction_used(services: Services) -> None:
+    filters, _ = extractor(services, query_call(substances=["Gleevec"]), answer_message("no"))
+
+    found = filters.extract("What are the side effects of Gleevec?")
+    failed = filters.extract("What are the side effects of Gleevec?")
+    named = filters.filter_for("What are the side effects of Gleevec?", drug="Gleevec")
+
+    call = Usage(input_tokens=12, output_tokens=8, total_tokens=20, cost_usd=DEFAULT_COST)
+    assert found.extraction_usage == call
+    assert failed.extraction_error is not None
+    assert failed.extraction_usage == call
+    assert named.extraction_usage is None
 
 
 def test_an_interaction_question_searches_both_drugs(services: Services) -> None:

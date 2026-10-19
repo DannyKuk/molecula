@@ -5,11 +5,12 @@ from typing import Any
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-from fake_llm import ScriptedChatModel, answer_message, tool_call_message
+from fake_llm import DEFAULT_COST, ScriptedChatModel, answer_message, tool_call_message
 from molecula import prompts
 from molecula.guard.safety import ChatModelInputCheck, InputCheckFailed, Verdict, fixed_answer
-from molecula.schemas.chat import ChatMessage, Usage
+from molecula.schemas.chat import ChatMessage
 from molecula.schemas.guard import InputCategory
+from molecula.schemas.usage import Usage
 
 QUESTION = [ChatMessage(role="user", content="How does ibuprofen work?")]
 CATEGORIES: list[InputCategory] = [
@@ -45,7 +46,9 @@ def test_the_model_sorts_the_message_into_one_category(category: InputCategory) 
 def test_the_verdict_carries_the_checks_token_usage() -> None:
     input_check, _ = check(sorted_as("ok"))
 
-    assert run(input_check).usage == Usage(input_tokens=12, output_tokens=8, total_tokens=20)
+    assert run(input_check).usage == Usage(
+        input_tokens=12, output_tokens=8, total_tokens=20, cost_usd=DEFAULT_COST
+    )
 
 
 def test_the_conversation_reaches_the_model_apart_from_the_prompt() -> None:
