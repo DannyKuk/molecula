@@ -15,6 +15,7 @@ from molecula.schemas.compounds import (
 from molecula.services import compounds
 from molecula.services.compounds import CompoundService, name_candidates
 from molecula.store.compounds import CompoundStore, Synonym
+from molecula.store.labels import LabelRecord, LabelSection, LabelStore
 from molecula.store.structures import ConformerFiles
 from store_records import compound_record
 
@@ -438,3 +439,67 @@ def test_find_mentions_keeps_every_mention_and_skips_pubchem_synonyms(
 
 def test_find_mentions_in_text_without_a_drug_is_empty(scope_service: CompoundService) -> None:
     assert scope_service.find_mentions("What helps against a headache?") == []
+
+
+@pytest.fixture
+def branded_service(
+    conn: sqlite3.Connection, scope_store: CompoundStore, conformers: ConformerFiles
+) -> CompoundService:
+    """The scope drugs, with label brands as openFDA has them in the built store (2026-10-19)."""
+    labels = LabelStore(conn)
+    for cid, brand in [(5819, "Tirosint SOL"), (1983, "Tylenol 8 HR Arthritis Pain")]:
+        labels.save(cid, (brand_label(brand),), FETCHED_AT)
+    caffeine = compound_record(2519, "caffeine")
+    scope_store.save(caffeine, [Synonym("caffeine", "name")], FETCHED_AT)
+    labels.save(2519, (brand_label("Stay Awake"),), FETCHED_AT)
+    return CompoundService(scope_store, conformers, suggestion_cutoff=SUGGESTION_CUTOFF)
+
+
+def brand_label(brand: str) -> LabelRecord:
+    return LabelRecord(
+        set_id=brand.casefold().replace(" ", "-"),
+        substance="SUBSTANCE",
+        brand=brand,
+        product_type="otc",
+        effective_time="20260101",
+        url="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=label",
+        sections=(LabelSection("adverse_reactions", "adverse_reactions", "Nausea.", False),),
+    )
+
+
+@pytest.mark.parametrize(
+    ("text", "mentions"),
+    [
+        ("How is Tirosint-SOL packaged?", [("Tirosint-SOL", "levothyroxine")]),
+        ("Is TIROSINT SOL a liquid?", [("TIROSINT SOL", "levothyroxine")]),
+        ("Do Stay Awake tablets work?", [("Stay Awake", "caffeine")]),
+        ("How do I stay awake at work?", []),
+        ("Tylenol 8 HR Arthritis Pain?", [("Tylenol 8 HR Arthritis Pain", "acetaminophen")]),
+    ],
+)
+def test_find_mentions_matches_label_brands_only_with_a_capital_first_letter(
+    branded_service: CompoundService, text: str, mentions: list[tuple[str, str]]
+) -> None:
+    assert mentioned(branded_service, text) == mentions
+
+
+def test_find_names_adds_words_close_to_a_drug_name_as_written(
+    scope_service: CompoundService,
+) -> None:
+    names = scope_service.find_names("Is Gleevc or imatinib safer than Zyrtec, or Cetirizin?")
+
+    assert names == ["imatinib", "Zyrtec", "Gleevc", "Cetirizin"]
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "What helps against a headache?",
+        "Does the score raise the risk?",
+        "Is asa safe?",
+    ],
+)
+def test_find_names_leaves_out_ordinary_and_short_words(
+    scope_service: CompoundService, text: str
+) -> None:
+    assert scope_service.find_names(text) == []

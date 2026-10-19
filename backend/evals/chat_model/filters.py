@@ -1,7 +1,7 @@
 """Measure how well a chat model extracts the label filter (#13) on the retrieval questions (#98).
 
     OFFLINE=1 LOCAL_LLM_BASE_URL=http://localhost:1234/v1 LOCAL_LLM_MODEL=qwen/qwen3.8-27b \
-        uv run python -m evals.chat_model.filters
+        uv run python -m evals.chat_model.filters [--typos]
 
 Runs `FilterExtractor.extract` with the chat model the settings point at on every question in
 `datasets/retrieval_questions.yaml`, then searches under the extracted filter. Reports how often
@@ -11,19 +11,25 @@ per question. Each extraction is cached in data/build/eval/filters/, keyed by mo
 question, so a re-score or an interrupted run doesn't call the model again. The cached model
 output is checked against the store by the current code on every run, so changes to name
 resolution and the filter show in the scores.
+
+With --typos it runs the questions of `datasets/retrieval_questions_typos.yaml` instead, the same
+questions with the drug name misspelled, and reports what became of each misspelling (#287).
 """
 
+import argparse
 import hashlib
 import json
+import sqlite3
 import statistics
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from time import perf_counter
+from typing import Any
 
 from evals.chat_model.citations import model_label
-from evals.retrieval.dataset import Question, load_questions
+from evals.retrieval.dataset import Question, load_questions, load_typos
 from evals.retrieval.filters import first_hit_rank, gold_filter, labels_by_drug, mrr, recall
 from langchain_core.callbacks import get_usage_metadata_callback
 
@@ -33,7 +39,7 @@ from molecula.config import Settings, get_settings
 from molecula.rag.embeddings import embedding_model_id, get_embeddings
 from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
-from molecula.schemas.retrieval import LabelFilter
+from molecula.schemas.retrieval import LabelFilter, LabelQuery
 from molecula.services.compounds import CompoundService
 from molecula.services.labels import LabelService
 from molecula.store.compounds import CompoundStore
@@ -68,12 +74,37 @@ class Scored:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--typos", action="store_true", help="run the misspelled questions")
+    typos = parser.parse_args().typos
     settings = get_settings()
     model_name = chat_model_name(settings)
     conn = connect(settings.db_path)
+    extractor = FilterExtractor(get_chat_model(settings), *services(settings, conn))
+    index, retriever = search(settings)
+    questions = load_typos(load_questions()) if typos else load_questions()
+
+    cache = cache_path(settings, model_name)
+    if typos:
+        cache = cache.with_stem(f"{cache.stem}-typos")
+    extractions = extract_all(extractor, questions, cache)
+    scored = [
+        score(question, extraction, extractor, retriever)
+        for question, extraction in zip(questions, extractions, strict=True)
+    ]
+    gold = gold_ranks(questions, retriever, labels_by_drug(index.chunks()))
+    print(report(model_name, scored, gold))
+    if typos:
+        found = [rechecked(extraction.label_filter, extractor) for extraction in extractions]
+        print("\n" + typo_report(questions, found))
+    save(settings, model_name, questions, extractions, scored)
+    conn.close()
+    return 0
+
+
+def services(settings: Settings, conn: sqlite3.Connection) -> tuple[CompoundService, LabelService]:
     compounds = CompoundStore(conn)
-    extractor = FilterExtractor(
-        get_chat_model(settings),
+    return (
         CompoundService(
             compounds,
             ConformerFiles(settings.conformers_dir),
@@ -81,6 +112,10 @@ def main() -> int:
         ),
         LabelService(LabelStore(conn), compounds),
     )
+
+
+def search(settings: Settings) -> tuple[LabelIndex, LabelRetriever]:
+    """The built index and a search over it that keeps every result, for ranking."""
     index = LabelIndex(settings.index_dir)
     index.check_model(embedding_model_id(settings))
     retriever = LabelRetriever(
@@ -90,18 +125,7 @@ def main() -> int:
         min_score=-1.0,
         section_group_boost=settings.retrieval_section_group_boost,
     )
-    questions = load_questions()
-
-    extractions = extract_all(extractor, questions, cache_path(settings, model_name))
-    scored = [
-        score(question, extraction, extractor, retriever)
-        for question, extraction in zip(questions, extractions, strict=True)
-    ]
-    gold = gold_ranks(questions, retriever, labels_by_drug(index.chunks()))
-    print(report(model_name, scored, gold))
-    save(settings, model_name, questions, extractions, scored)
-    conn.close()
-    return 0
+    return index, retriever
 
 
 def cache_path(settings: Settings, model_name: str) -> Path:
@@ -149,11 +173,20 @@ def read_cache(cache: Path) -> dict[str, Extraction]:
         entry = json.loads(line)
         extractions[entry["question_id"]] = Extraction(
             question_id=entry["question_id"],
-            label_filter=LabelFilter.model_validate(entry["label_filter"]),
+            label_filter=cached_filter(entry["label_filter"]),
             seconds=entry["seconds"],
             output_tokens=entry["output_tokens"],
         )
     return extractions
+
+
+def cached_filter(entry: dict[str, Any]) -> LabelFilter:
+    """Only what the model gave: the rest is checked again on every run, and older caches hold
+    the checked part in an earlier shape."""
+    return LabelFilter(
+        extracted=LabelQuery.model_validate(entry["extracted"]),
+        extraction_error=entry["extraction_error"],
+    )
 
 
 def as_json(extraction: Extraction) -> dict[str, object]:
@@ -167,6 +200,16 @@ def score(
     retriever: LabelRetriever,
 ) -> Scored:
     found = rechecked(extraction.label_filter, extractor)
+    return score_filter(question, found, retriever, extraction.seconds, extraction.output_tokens)
+
+
+def score_filter(
+    question: Question,
+    found: LabelFilter,
+    retriever: LabelRetriever,
+    seconds: float,
+    output_tokens: int | None,
+) -> Scored:
     cids = {drug.cid for drug in found.drugs}
     retrieval = retriever.retrieve(question.question, found)
     return Scored(
@@ -177,9 +220,32 @@ def score(
         group_found=question.section_group in found.section_groups,
         group_first=found.section_groups[:1] == [question.section_group],
         rank=first_hit_rank(question, retrieval.chunks),
-        seconds=extraction.seconds,
-        output_tokens=extraction.output_tokens,
+        seconds=seconds,
+        output_tokens=output_tokens,
     )
+
+
+def typo_outcome(question: Question, found: LabelFilter) -> str:
+    """What became of a misspelled drug name: searched as the drug, answered with the drug as a
+    suggestion ("not supported, did you mean"), or lost."""
+    if any(drug.cid == question.cid for drug in found.drugs):
+        return "searched as the drug"
+    suggested = {s.cid for resolution in found.unsupported for s in resolution.suggestions}
+    if question.cid in suggested:
+        return "not supported, the drug suggested"
+    return "lost"
+
+
+def typo_report(questions: list[Question], found: list[LabelFilter]) -> str:
+    outcomes = [typo_outcome(q, f) for q, f in zip(questions, found, strict=True)]
+    lines = ["| What became of the misspelling | Questions |", "|---|---|"]
+    lines += [f"| {outcome} | {outcomes.count(outcome)} |" for outcome in dict.fromkeys(outcomes)]
+    lines += ["", "Per question:"]
+    lines += [
+        f"- {q.id}: {outcome}; names {f.extracted.substances}"
+        for q, f, outcome in zip(questions, found, outcomes, strict=True)
+    ]
+    return "\n".join(lines)
 
 
 def rechecked(cached: LabelFilter, extractor: FilterExtractor) -> LabelFilter:

@@ -1,0 +1,59 @@
+# Retrieval questions (evals/datasets/retrieval_questions.yaml) with the drug name misspelled the
+# way people type it: a letter dropped, doubled, swapped or spelled by sound. Each `id` is the
+# English question's, so it is scored with the same answer key. `typo` is the misspelled name as
+# written. "Singular" for Singulair is also an English word. Written for #287.
+
+- id: imatinib-mechanism
+  question: "How does Gleevc work against leukemia?"
+  typo: Gleevc
+- id: ibuprofen-mechanism
+  question: "Why does ibuprofin bring down pain and fever?"
+  typo: ibuprofin
+- id: atorvastatin-starting-dose
+  question: "What starting dose of atorvastatn does the label recommend for adults?"
+  typo: atorvastatn
+- id: cetirizine-daily-limit
+  question: "According to the Zyrtek package, how many tablets can an adult take in one day?"
+  typo: Zyrtek
+- id: escitalopram-depression-dose
+  question: "Which dose of escitalopam does the label recommend for adults with depression?"
+  typo: escitalopam
+- id: ciprofloxacin-tendons
+  question: "Can ciprofloxin hurt your tendons?"
+  typo: ciprofloxin
+- id: montelukast-mood
+  question: "Can Singular cause mood or behaviour changes?"
+  typo: Singular
+- id: metformin-kidneys
+  question: "Can metfromin be used by people with severe kidney disease?"
+  typo: metfromin
+- id: lisinopril-angioedema
+  question: "Is lisinipril safe for someone whose face and lips swelled up on another ACE inhibitor?"
+  typo: lisinipril
+- id: atorvastatin-common-side-effects
+  question: "What are the most common side effects of Lipiter?"
+  typo: Lipiter
+- id: clopidogrel-contraindications
+  question: "Who should not take Plavx?"
+  typo: Plavx
+- id: naproxen-dosing
+  question: "How many Alleve caplets can I take in a day?"
+  typo: Alleve
+- id: omeprazole-indications
+  question: "Can babies be given Prilosek?"
+  typo: Prilosek
+- id: phenytoin-interactions
+  question: "Why does Dilantn interact with so many other drugs?"
+  typo: Dilantn
+- id: valacyclovir-overdosage
+  question: "What happens to the kidneys in a Valtex overdose?"
+  typo: Valtex
+- id: semaglutide-adverse-reactions
+  question: "Does Ozempik raise your heart rate?"
+  typo: Ozempik
+- id: haloperidol-overdosage
+  question: "What does a haloperidal overdose look like?"
+  typo: haloperidal
+- id: acetaminophen-pharmacology
+  question: "Does acetaminophin bind much to blood proteins?"
+  typo: acetaminophin

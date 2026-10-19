@@ -9,7 +9,7 @@ from molecula import prompts
 from molecula.agent.agent import to_langchain
 from molecula.agent.decisions import DecisionModel
 from molecula.schemas.chat import ChatMessage
-from molecula.schemas.decisions import ChoiceAnswer, ChoiceQuestion, DecisionUsage, StateMessage
+from molecula.schemas.decisions import ChoiceAnswer, ChoiceQuestion, StateMessage
 from molecula.schemas.guard import InputCategory, SortedMessage
 from molecula.schemas.usage import Usage, usage_of
 
@@ -86,7 +86,7 @@ class DecisionModelInputCheck:
         # The conversation goes as its own messages, never into the question: it is untrusted.
         state = [StateMessage(role=m.role, content=m.content) for m in conversation]
         response = await self._model.decide(state, {"category": self._question})
-        return SortedByDecision(response.choice("category"), decision_usage(response.usage))
+        return SortedByDecision(response.choice("category"), response.usage.as_usage())
 
 
 def category_question() -> ChoiceQuestion:
@@ -96,15 +96,6 @@ def category_question() -> ChoiceQuestion:
             category: prompts.load(f"guard/input_check/{category}").strip()
             for category in CATEGORIES
         },
-    )
-
-
-def decision_usage(usage: DecisionUsage) -> Usage:
-    return Usage(
-        input_tokens=usage.input_tokens,
-        output_tokens=usage.output_tokens,
-        total_tokens=usage.input_tokens + usage.output_tokens,
-        cost_usd=usage.cost,
     )
 
 

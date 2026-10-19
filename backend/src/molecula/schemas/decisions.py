@@ -5,6 +5,8 @@ from typing import Annotated, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from molecula.schemas.usage import Usage
+
 # The API's limits: at most 255 options for a choice, 2 to 10 levels for a score.
 MAX_CHOICE_OPTIONS = 255
 MAX_SCORE_LEVELS = 10
@@ -108,6 +110,14 @@ class DecisionUsage(BaseModel):
     input_tokens: int = 0
     output_tokens: int = 0
     cost: float | None = None
+
+    def as_usage(self) -> Usage:
+        return Usage(
+            input_tokens=self.input_tokens,
+            output_tokens=self.output_tokens,
+            total_tokens=self.input_tokens + self.output_tokens,
+            cost_usd=self.cost,
+        )
 
 
 class DecisionResponse(BaseModel):
