@@ -5,7 +5,7 @@ from typing import Any
 
 import httpx
 import pytest
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
 
@@ -332,3 +332,11 @@ def test_a_request_without_tool_calls_goes_unchanged() -> None:
     server.model().invoke([HumanMessage("What is aspirin?")])
 
     assert sent_messages(server) == [("user", "What is aspirin?")]
+
+
+def test_a_request_without_a_user_message_goes_unchanged() -> None:
+    server = LocalServer([chunk({"role": "assistant", "content": "Hello."})])
+
+    server.model().invoke([SystemMessage("Greet.")])
+
+    assert sent_messages(server) == [("system", "Greet.")]

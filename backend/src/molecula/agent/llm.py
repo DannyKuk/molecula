@@ -42,7 +42,7 @@ class LocalChatOpenAI(ChatOpenAI):
 def with_tool_calls_as_results(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """The messages with the tool calls and results after the user's latest message replaced
     by one user message that lists each call with its result."""
-    last_user = max(i for i, sent in enumerate(messages) if sent["role"] == "user")
+    last_user = max((i for i, sent in enumerate(messages) if sent["role"] == "user"), default=-1)
     answer = messages[last_user + 1 :]
     calls = {
         call["id"]: call["function"]
