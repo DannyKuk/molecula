@@ -38,8 +38,12 @@ Each change to the citation prompt, the tool description or the citation parsing
 | `cited_refs` and the chat also read `【n】` (cached answers re-scored) | #129 | **0.96** |
 | main's prompt on main a4823ae (the guard's prompts, the emergency numbers and every tool's `ref` since #129) | main a4823ae | 0.96 |
 | The owner's citation-first prompt: a sentence about a drug needs a `ref` from any tool or is deleted | #208 | 0.96 |
+| main's agent on main 5de6556 (answers at medium reasoning effort since #254) | main 5de6556 | 0.99 |
+| Every result the model can cite starts with its `ref` | #166 | 0.99 |
 
 - **#208 changes nothing measurable here.** Main → #208: every citation valid 0.96 → 0.96, no invalid number in either run, the passage that answers the question cited in 72 of 76 → 75 of 77 answers where it was returned, 1.9 → 1.5 citations per answer, 8.9 → 8.5 s at the median. Strict `[n]` fell from 0.83 to 0.74 because more answers used `【n】` (13 → 20), which `cited_refs` and the chat read. Both runs leave 4 answers uncited, each one saying the labels don't answer. The main run used a worktree at a4823ae with its `src` first on `PYTHONPATH`.
+
+- **#166 changes nothing measurable here either.** Main → `ref` first: every citation valid 0.99 → 0.99, the passage that answers cited in 75 of 79 → 76 of 79 answers where it was returned, `【n】` in 14 → 21 answers. What it fixes is in answers this eval doesn't ask: several drugs, follow-ups and long lists ([cited passages](cited-passages-2026-10-19.md)). Run with `--variant ref-first`, since the change is in code the cache key doesn't see.
 
 ## Reproduce
 
