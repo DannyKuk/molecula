@@ -53,7 +53,7 @@ Jev's filter calls cost $0.0051 for the 94 questions and $0.0010 for the 18, at 
 
 - The drug names come from code (`CompoundService.find_names`), as the first comment on #102 planned: scope names, aliases, label brands with a capital first letter, and words at a ratio of 0.85 or more to one of them, sent to `resolve` as written.
 - `FilterCheck` holds the store check that both extractors share; `FilterExtractor.check` calls it.
-- Whether Jev fills the filter online, with gpt-oss-20b offline, is the owner's call (#287).
+- **Jev fills the filter online, gpt-oss-20b offline**, the same split as the input check, without the product-type question (owner, 2026-10-19). The product type changed no score here and is the one place Jev picks where the question doesn't say. Wiring it in, with a fallback to the chat model when Jev fails, is #290.
 
 ## Limits
 
