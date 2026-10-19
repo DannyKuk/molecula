@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { QUESTION_PARAM, chatLink } from "./chat-link";
+import { CHAT_PARAM, QUESTION_PARAM, chatLink, savedChatLink } from "./chat-link";
 
 describe("chatLink", () => {
   it("puts the encoded question into the home page's query string", () => {
@@ -12,5 +12,13 @@ describe("chatLink", () => {
     const params = new URL(chatLink(question), "http://localhost").searchParams;
 
     expect(params.get(QUESTION_PARAM)).toBe(question);
+  });
+});
+
+describe("savedChatLink", () => {
+  it("names the saved chat in the home page's query string", () => {
+    const params = new URL(savedChatLink("c 1"), "http://localhost").searchParams;
+
+    expect(params.get(CHAT_PARAM)).toBe("c 1");
   });
 });

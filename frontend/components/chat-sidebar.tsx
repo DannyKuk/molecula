@@ -1,10 +1,20 @@
 "use client";
 
 import { cn } from "cn";
-import { History, LoaderCircle, Menu, PanelLeft, Plus, SquarePen, X } from "lucide-react";
+import {
+  ChartColumn,
+  History,
+  LoaderCircle,
+  Menu,
+  PanelLeft,
+  Plus,
+  SquarePen,
+  X,
+} from "lucide-react";
+import Link from "next/link";
 import { type ComponentProps, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -41,6 +51,9 @@ export type ChatListProps = {
 const RAIL_BOOKMARKS = 5;
 const OUTLINED = "border-zinc-500 text-foreground dark:border-zinc-400";
 
+const ICON =
+  "text-zinc-600 hover:text-foreground dark:text-zinc-400 [&_svg:not([class*='size-'])]:size-4.5";
+
 const SIDEBAR_CLASSES =
   "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-zinc-200 bg-zinc-50 md:flex dark:border-zinc-800 dark:bg-[oklch(0.17_0.004_286)] print:hidden";
 
@@ -61,6 +74,14 @@ export function ChatSidebar(props: ChatListProps) {
         <IconButton label="New chat" onClick={props.onNew}>
           <SquarePen />
         </IconButton>
+        <Link
+          href="/benchmarks"
+          aria-label="Benchmarks"
+          title="Benchmarks"
+          className={cn(buttonVariants({ variant: "ghost", size: "icon-lg" }), ICON)}
+        >
+          <ChartColumn />
+        </Link>
         <IconButton
           label={answeringElsewhere ? "Chat history, an answer is coming in" : "Chat history"}
           onClick={() => setExpanded(true)}
@@ -178,8 +199,8 @@ export function ChatDrawer(props: ChatListProps) {
 }
 
 /**
- * "New chat", the bookmarked chats, the others by day, newest first, and what to know about where
- * they are kept.
+ * "New chat", the benchmarks link, the bookmarked chats, the others by day, newest first, and what
+ * to know about where they are kept.
  */
 function ChatList({ onNew, removedBookmark, ...props }: ChatListProps) {
   return (
@@ -189,6 +210,13 @@ function ChatList({ onNew, removedBookmark, ...props }: ChatListProps) {
           <Plus />
           New chat
         </Button>
+        <Link
+          href="/benchmarks"
+          className="mt-1 flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-zinc-600 hover:bg-zinc-200/60 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-800 [&_svg]:size-4"
+        >
+          <ChartColumn />
+          Benchmarks
+        </Link>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
         <ChatGroups {...props} />
@@ -301,10 +329,7 @@ function IconButton({
       size="icon-lg"
       aria-label={label}
       title={label}
-      className={cn(
-        "text-zinc-600 hover:text-foreground dark:text-zinc-400 [&_svg:not([class*='size-'])]:size-4.5",
-        className,
-      )}
+      className={cn(ICON, className)}
       {...props}
     />
   );
