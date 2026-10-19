@@ -7,17 +7,19 @@ import httpx
 import pytest
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_openai import ChatOpenAI
-from pydantic import SecretStr
+from pydantic import BaseModel, SecretStr
 
 from molecula.agent.llm import (
     LLMConfigError,
     LocalChatOpenAI,
+    PricedChatOpenAI,
     chat_model_name,
     get_answer_model,
     get_chat_model,
     get_source_check_model,
 )
 from molecula.config import Settings
+from molecula.schemas.usage import usage_of
 
 LLM_FIELDS: dict[str, Any] = {
     "openrouter_api_key": None,
@@ -259,8 +261,22 @@ def chunk(delta: dict[str, Any], finish_reason: str | None = None) -> str:
     return f"data: {json.dumps(body)}\n\n"
 
 
+def usage_chunk(**usage: Any) -> str:
+    """The last chunk of a stream, with the usage and no choices."""
+    body = {
+        "id": "chatcmpl-1",
+        "object": "chat.completion.chunk",
+        "created": 0,
+        "model": "openai/gpt-oss-20b",
+        "choices": [],
+        "usage": {"prompt_tokens": 100, "completion_tokens": 20, "total_tokens": 120, **usage},
+    }
+    return f"data: {json.dumps(body)}\n\n"
+
+
 class LocalServer:
-    """Stands in for LM Studio: streams `reply` and keeps the request bodies it was sent."""
+    """Stands in for LM Studio, or OpenRouter: streams `reply` and keeps the request bodies it
+    was sent."""
 
     def __init__(self, reply: list[str]) -> None:
         self.reply = reply
@@ -271,8 +287,8 @@ class LocalServer:
         body = "".join(self.reply) + "data: [DONE]\n\n"
         return httpx.Response(200, text=body, headers={"content-type": "text/event-stream"})
 
-    def model(self) -> LocalChatOpenAI:
-        return LocalChatOpenAI(
+    def model(self, model_class: type[PricedChatOpenAI] = LocalChatOpenAI) -> PricedChatOpenAI:
+        return model_class(
             base_url="http://localhost:1234/v1",
             api_key=SecretStr("local"),
             model="openai/gpt-oss-20b",
@@ -340,3 +356,61 @@ def test_a_request_without_a_user_message_goes_unchanged() -> None:
     server.model().invoke([SystemMessage("Greet.")])
 
     assert sent_messages(server) == [("system", "Greet.")]
+
+
+class Verdict(BaseModel):
+    supported: bool
+
+
+def answer_with_usage(**usage: Any) -> list[str]:
+    return [chunk({"role": "assistant", "content": "Aspirin is an NSAID."}), usage_chunk(**usage)]
+
+
+def verdict_with_usage(**usage: Any) -> list[str]:
+    return [chunk({"role": "assistant", "content": '{"supported": true}'}), usage_chunk(**usage)]
+
+
+def test_openrouter_gets_the_model_that_keeps_the_cost() -> None:
+    assert type(get_chat_model(openrouter_settings())) is PricedChatOpenAI
+
+
+def test_a_streamed_answer_keeps_the_cost_openrouter_sends_in_its_last_chunk() -> None:
+    server = LocalServer(answer_with_usage(cost=0.000123))
+
+    message = server.model(PricedChatOpenAI).invoke("What is aspirin?")
+
+    usage = usage_of(message)
+    assert (usage.input_tokens, usage.output_tokens, usage.total_tokens) == (100, 20, 120)
+    assert usage.cost_usd == 0.000123
+
+
+def test_structured_output_keeps_the_cost_too() -> None:
+    server = LocalServer(verdict_with_usage(cost=0.000045))
+    structured = server.model(PricedChatOpenAI).with_structured_output(Verdict, include_raw=True)
+
+    result = structured.invoke("Is it supported?")
+
+    assert result["parsed"] == Verdict(supported=True)
+    assert usage_of(result["raw"]).cost_usd == 0.000045
+
+
+def test_a_response_without_a_cost_leaves_the_cost_unknown() -> None:
+    server = LocalServer(answer_with_usage())
+
+    usage = usage_of(server.model(PricedChatOpenAI).invoke("What is aspirin?"))
+
+    assert usage.total_tokens == 120
+    assert usage.cost_usd is None
+
+
+def test_a_local_server_costs_nothing() -> None:
+    answer = LocalServer(answer_with_usage()).model().invoke("What is aspirin?")
+    verdict = (
+        LocalServer(verdict_with_usage())
+        .model()
+        .with_structured_output(Verdict, include_raw=True)
+        .invoke("Is it supported?")
+    )
+
+    assert usage_of(answer).cost_usd == 0.0
+    assert usage_of(verdict["raw"]).cost_usd == 0.0

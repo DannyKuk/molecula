@@ -8,6 +8,7 @@ from molecula import prompts
 from molecula.schemas.compounds import Compound, Resolution
 from molecula.schemas.labels import Label, ProductType, SectionGroup
 from molecula.schemas.retrieval import DrugFilter, LabelFilter, LabelQuery
+from molecula.schemas.usage import usage_of
 from molecula.services.compounds import CompoundService
 from molecula.services.labels import LabelService
 
@@ -34,10 +35,13 @@ class FilterExtractor:
             [SystemMessage(prompts.load("rag/extract_filters")), HumanMessage(question)]
         )
         query = result["parsed"]
+        usage = usage_of(result["raw"])
         if isinstance(query, LabelQuery):
-            return self.check(query)
+            return self.check(query).model_copy(update={"extraction_usage": usage})
         error = result["parsing_error"] or "the model returned no filter"
-        return LabelFilter(extracted=LabelQuery(), extraction_error=str(error))
+        return LabelFilter(
+            extracted=LabelQuery(), extraction_error=str(error), extraction_usage=usage
+        )
 
     def filter_for(
         self, question: str, *, drug: str | None = None, section: SectionGroup | None = None

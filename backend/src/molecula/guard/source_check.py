@@ -8,8 +8,8 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from molecula import prompts
 from molecula.agent.llm import ChatModelError
 from molecula.guard.claims import split_claims
-from molecula.guard.safety import fixed_answer, usage_of
-from molecula.schemas.chat import ToolResultEvent, Usage
+from molecula.guard.safety import fixed_answer
+from molecula.schemas.chat import ToolResultEvent
 from molecula.schemas.claims import CheckedClaim, Claim
 from molecula.schemas.source_check import (
     CheckedAnswer,
@@ -17,6 +17,7 @@ from molecula.schemas.source_check import (
     ClaimJudgements,
     SourceCheckFailed,
 )
+from molecula.schemas.usage import Usage, usage_of
 
 # Fields of a cited result that say nothing a claim could state: ids, links, scores, flags.
 UNSTATED_FIELDS = frozenset(

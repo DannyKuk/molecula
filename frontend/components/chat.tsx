@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import { type ChatHistory, reopenedTurns } from "@/lib/chat-history";
 import { browserHistory } from "@/lib/chat-history-indexeddb";
 import { structuresOf } from "@/lib/tool-cards";
+import { conversationUsage, formatUsage } from "@/lib/usage";
 import { useChatHistory } from "@/lib/use-chat-history";
 import { useConversations } from "@/lib/use-conversations";
 import { useFollowAnswer } from "@/lib/use-follow-answer";
@@ -51,6 +52,7 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
   useFollowAnswer(conversationRef, sent, answering, showsStructure);
 
   const { removedBookmark, unbookmark } = useBookmarkUndo(saved);
+  const usage = conversationUsage(turns);
   const title =
     saved.conversations.find((conversation) => conversation.id === id)?.title ??
     turns[0]?.question ??
@@ -99,6 +101,12 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
           <div className="flex items-center gap-2">
             <ChatDrawer {...chatList} />
             <h1 className="text-xl font-semibold tracking-tight">Molecula</h1>
+            {usage && (
+              // Each answer shows its own line, so a phone leaves the total out of the header.
+              <p className="hidden text-xs text-zinc-500 tabular-nums sm:block dark:text-zinc-400 print:hidden">
+                This chat: {formatUsage(usage)}
+              </p>
+            )}
           </div>
           <nav className="flex items-center gap-3 text-sm print:hidden">
             <Link href="/drugs" className="font-medium underline-offset-4 hover:underline">

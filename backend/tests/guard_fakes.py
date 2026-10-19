@@ -5,12 +5,13 @@ import asyncio
 from collections.abc import Sequence
 
 from molecula.guard.safety import Verdict
-from molecula.schemas.chat import ChatMessage, ToolResultEvent, Usage
+from molecula.schemas.chat import ChatMessage, ToolResultEvent
 from molecula.schemas.claims import CheckedClaim
 from molecula.schemas.guard import InputCategory
 from molecula.schemas.source_check import CheckedAnswer
+from molecula.schemas.usage import Usage
 
-CHECK_USAGE = Usage(input_tokens=300, output_tokens=5, total_tokens=305)
+CHECK_USAGE = Usage(input_tokens=300, output_tokens=5, total_tokens=305, cost_usd=0.0001)
 
 
 class FakeCheck:
@@ -36,7 +37,7 @@ class FakeCheck:
         return Verdict(self.category, CHECK_USAGE)
 
 
-SOURCE_CHECK_USAGE = Usage(input_tokens=500, output_tokens=40, total_tokens=540)
+SOURCE_CHECK_USAGE = Usage(input_tokens=500, output_tokens=40, total_tokens=540, cost_usd=0.0004)
 
 
 class FakeSourceCheck:

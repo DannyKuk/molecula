@@ -6,6 +6,7 @@ from pydantic import (
     ConfigDict,
     Field,
     StringConstraints,
+    computed_field,
     field_validator,
     model_validator,
 )
@@ -14,6 +15,7 @@ from molecula.guard.validation import has_control_characters
 from molecula.schemas.claims import CheckedClaim
 from molecula.schemas.guard import InputCategory
 from molecula.schemas.retrieval import LabelFilter, RetrievedChunk, Widening
+from molecula.schemas.usage import Usage
 
 # Earlier turns travel as question and answer text only, so ten messages stay around 15k
 # tokens next to the current turn's tools and passages (about 5k, #125). An answer may be longer
@@ -68,21 +70,6 @@ class ChatRequest(BaseModel):
         if self.messages[-1].role != "user":
             raise ValueError("The last message must be the user's.")
         return self
-
-
-class Usage(BaseModel):
-    """Tokens the chat model read and wrote for one answer, over all its calls."""
-
-    input_tokens: int = 0
-    output_tokens: int = 0
-    total_tokens: int = 0
-
-    def __add__(self, other: Usage) -> Usage:
-        return Usage(
-            input_tokens=self.input_tokens + other.input_tokens,
-            output_tokens=self.output_tokens + other.output_tokens,
-            total_tokens=self.total_tokens + other.total_tokens,
-        )
 
 
 class Source(BaseModel):
@@ -182,15 +169,26 @@ class SourceCheckEvent(BaseModel):
     claims: list[CheckedClaim] = []
 
 
+type UsageStep = Literal["input_check", "answer", "label_filter", "source_check"]
+
+
 class DoneEvent(BaseModel):
-    """The answer is complete. `step_limit_reached` means the agent had to answer without
-    further tool calls. `category` is how the guard sorted the question; anything but `ok` and
-    `overdose_emergency` got a fixed answer. It is None from an agent without a guard."""
+    """The answer is complete. `usage` is what all its model calls used, `usage_by_step` the
+    same split by the step that made the calls: the input check, the agent's answer, the label
+    searches' filter extraction and the source check. `step_limit_reached` means the agent had
+    to answer without further tool calls. `category` is how the guard sorted the question;
+    anything but `ok` and `overdose_emergency` got a fixed answer. It is None from an agent
+    without a guard."""
 
     type: Literal["done"] = "done"
-    usage: Usage
+    usage_by_step: dict[UsageStep, Usage] = {}
     step_limit_reached: bool
     category: InputCategory | None = None
+
+    @computed_field
+    @property
+    def usage(self) -> Usage:
+        return sum(self.usage_by_step.values(), Usage())
 
 
 class ErrorEvent(BaseModel):

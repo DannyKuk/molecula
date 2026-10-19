@@ -5,7 +5,7 @@ import httpx
 import openai
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolCall
 
-from fake_llm import ScriptedChatModel, answer_message, tool_call_message
+from fake_llm import DEFAULT_COST, ScriptedChatModel, answer_message, tool_call_message
 from molecula import prompts
 from molecula.agent.agent import NO_ANSWER, ChatAgent
 from molecula.agent.tool_registry import build_tools
@@ -22,6 +22,7 @@ from molecula.schemas.chat import (
     ToolResultEvent,
 )
 from molecula.schemas.retrieval import LabelFilter, LabelQuery
+from molecula.schemas.usage import Usage
 from tool_fakes import (
     IMATINIB,
     IMATINIB_LOW_SCORE,
@@ -142,7 +143,7 @@ def test_a_tool_call_streams_its_steps_then_the_answer_then_done() -> None:
     assert answer(events) == "Imatinib blocks the ABL1 kinase."
 
 
-def test_done_carries_the_token_usage_of_every_model_call() -> None:
+def test_done_carries_the_usage_of_every_model_call() -> None:
     model = ScriptedChatModel(
         script=[tool_call_message("get_targets", {"drug": "imatinib"}), answer_message("ABL1.")]
     )
@@ -150,12 +151,42 @@ def test_done_carries_the_token_usage_of_every_model_call() -> None:
     done = run(agent(model))[-1]
 
     assert isinstance(done, DoneEvent)
-    assert (done.usage.input_tokens, done.usage.output_tokens, done.usage.total_tokens) == (
-        24,
-        16,
-        40,
+    assert done.usage_by_step["answer"] == Usage(
+        input_tokens=24, output_tokens=16, total_tokens=40, cost_usd=2 * DEFAULT_COST
     )
+    assert done.usage == done.usage_by_step["answer"]
     assert not done.step_limit_reached
+
+
+def test_done_counts_the_label_searches_filter_extraction_apart() -> None:
+    extraction = Usage(input_tokens=200, output_tokens=10, total_tokens=210, cost_usd=0.00005)
+    extractor = FakeFilterExtractor()
+    for question in (SIDE_EFFECTS, WARNINGS):
+        extractor.filters[question] = LabelFilter(
+            extracted=LabelQuery(substances=["imatinib"]), extraction_usage=extraction
+        )
+    model = ScriptedChatModel(
+        script=[
+            tool_call_message("search_labels", {"question": SIDE_EFFECTS}, call_id="call_1"),
+            tool_call_message("search_labels", {"question": WARNINGS}, call_id="call_2"),
+            answer_message("Edema [1]."),
+        ]
+    )
+
+    done = run(agent(model, extractor=extractor))[-1]
+
+    assert isinstance(done, DoneEvent)
+    assert done.usage_by_step["label_filter"] == extraction + extraction
+    assert done.usage == done.usage_by_step["answer"] + extraction + extraction
+
+
+def test_a_model_call_without_usage_leaves_the_answers_usage_unknown() -> None:
+    model = ScriptedChatModel(script=[answer_message("Imatinib blocks ABL1.")], usage=None)
+
+    done = run(agent(model))[-1]
+
+    assert isinstance(done, DoneEvent)
+    assert done.usage == Usage.unreported()
 
 
 def test_sources_list_what_the_tools_returned_once_each() -> None:

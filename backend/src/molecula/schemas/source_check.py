@@ -3,8 +3,9 @@ from typing import Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from molecula.schemas.chat import ToolResultEvent, Usage
+from molecula.schemas.chat import ToolResultEvent
 from molecula.schemas.claims import CheckedClaim, ClaimLabel
+from molecula.schemas.usage import Usage
 
 
 class CheckedAnswer(BaseModel):

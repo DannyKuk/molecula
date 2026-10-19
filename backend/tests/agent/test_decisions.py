@@ -145,6 +145,7 @@ def test_kev_answers_every_question_type_with_probabilities() -> None:
     assert urgency.legend == {"0": "Not urgent", "1": "Soon", "2": "Emergency"}
     assert 0 <= urgency.score <= 2
     assert response.usage.input_tokens == 148
+    assert response.usage.cost == 0.0
 
 
 def test_an_answer_of_another_type_cannot_be_read_as_this_one() -> None:
@@ -176,6 +177,7 @@ def test_jev_answers_under_a_dated_model_id_with_openrouter_extras() -> None:
     assert response.choice("topic").probabilities["interaction"] == 1.0
     assert response.score("urgency").probabilities == {"0": 0.73, "1": 0.27, "2": 0.0}
     assert response.usage.output_tokens == 77
+    assert response.usage.cost == pytest.approx(1.8732e-05)
 
 
 def test_a_conversation_goes_as_its_own_messages() -> None:

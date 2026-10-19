@@ -4,6 +4,7 @@ import type { Resolution, Suggestion } from "@/lib/api";
 import type { ChatMessage, Source } from "@/lib/chat";
 import { type ChatHistory, type Conversation, summaryOf } from "@/lib/chat-history";
 import type { Passage } from "@/lib/citations";
+import type { Usage } from "@/lib/usage";
 
 /** The backend's answer for a name outside the supported drugs. */
 export function notSupported(query: string, suggestions: Suggestion[] = []): Resolution {
@@ -22,11 +23,16 @@ export function chatFrame(event: { type: string } & Record<string, unknown>): st
   return `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`;
 }
 
-export const DONE = chatFrame({
-  type: "done",
-  usage: { input_tokens: 0, output_tokens: 0, total_tokens: 0 },
-  step_limit_reached: false,
-});
+/** The end of an answer whose model calls used `usage`. */
+export function doneFrame(usage: Partial<Usage> = {}): string {
+  return chatFrame({
+    type: "done",
+    usage: { input_tokens: 0, output_tokens: 0, total_tokens: 0, cost_usd: 0, ...usage },
+    step_limit_reached: false,
+  });
+}
+
+export const DONE = doneFrame();
 
 /**
  * Replaces `fetch` with a chat backend whose latest stream the test writes one chunk at a time.

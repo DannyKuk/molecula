@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 from molecula.schemas.compounds import Resolution
 from molecula.schemas.labels import ProductType, SectionGroup
+from molecula.schemas.usage import Usage
 
 
 class LabelQuery(BaseModel):
@@ -38,7 +39,8 @@ class LabelFilter(BaseModel):
 
     `unsupported` holds the resolutions of named drugs that aren't in the store, with their
     suggestions, and `ignored_section_groups` the extracted groups that don't exist; both are
-    left out of the search. `extraction_error` says why the model gave no usable query.
+    left out of the search. `extraction_error` says why the model gave no usable query, and
+    `extraction_usage` is what that model call used; it is None when no model was asked.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -50,6 +52,7 @@ class LabelFilter(BaseModel):
     ignored_section_groups: list[str] = []
     product_type: ProductType | None = None
     extraction_error: str | None = None
+    extraction_usage: Usage | None = None
 
     @property
     def names_drugs(self) -> bool:
