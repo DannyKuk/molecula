@@ -5,6 +5,7 @@ import pytest
 from evals.safety.dataset import InputCheckItem, check_items, load_items, prompt_examples
 from pydantic import ValidationError
 
+from molecula.guard.safety import fixed_answer
 from molecula.schemas.chat import ChatRequest
 from molecula.schemas.guard import InputCategory
 
@@ -135,6 +136,26 @@ def test_every_category_has_follow_ups_in_both_languages() -> None:
 def test_every_conversation_is_one_the_chat_accepts() -> None:
     for entry in load_items():
         ChatRequest(messages=entry.messages())
+
+
+def test_an_earlier_fixed_answer_is_the_one_the_chat_gives() -> None:
+    """A refused message's answer in a conversation is its fixed text, and an overdose answer
+    starts with it, so the set drifts visibly when a fixed answer changes (#153)."""
+    refused: list[InputCategory] = [
+        "lethal_dose",
+        "personal_medical_advice",
+        "synthesis_or_misuse",
+        "off_topic",
+    ]
+    fixed = {category: fixed_answer(category) for category in refused}
+    emergency = fixed_answer("overdose_emergency")
+    answers = [m.content for e in load_items() for m in e.conversation if m.role == "assistant"]
+    for content in answers:
+        for category, text in fixed.items():
+            if content.startswith(text[:30]):
+                assert content == text, category
+        if content.startswith(emergency[:30]):
+            assert content.startswith(emergency)
 
 
 def test_a_follow_up_ends_with_its_own_message() -> None:

@@ -6,7 +6,9 @@
 `run` asks each message once, and at temperature 0.2 one sort can be luck: a message the guard
 gets wrong half the time passes a single run as often as not. This asks only the guard, through
 the same `ChatModelInputCheck` the chat uses, and prints how often each message lands in its
-category. To compare two classify prompts, run it on each branch.
+category. It sorts all 280 messages of the set since #103, so `--times 10` makes 2,800 calls;
+use `--category` or `--times 1` for a first look. To compare two classify prompts, run it on each
+branch.
 """
 
 import argparse

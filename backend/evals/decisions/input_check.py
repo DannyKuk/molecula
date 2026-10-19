@@ -1,4 +1,4 @@
-"""Score a decision model as the input check on the safety set's messages (#226).
+"""Score a decision model as the input check on every message of the input-check set (#226, #103).
 
     LOCAL_DECISION_BASE_URL=http://localhost:1234/v1 DECISION_MODEL=kev-0.8b OFFLINE=1 \
         uv run python -m evals.decisions.input_check
@@ -6,12 +6,13 @@
 Jev runs on OpenRouter, so its run needs the network: `OFFLINE=0 DECISION_MODEL=jev-1.13` without
 `LOCAL_DECISION_BASE_URL`. Nothing else in the run goes out.
 
-Each message of `datasets/input_check.yaml` is sorted once through `DecisionModelInputCheck`, the
-check the chat uses with INPUT_CHECK=decision. A decision model answers in one forward pass, so a
-second run gives the same answer. Every answer is cached with its probabilities per model and
-prompt. The report gives messages sorted into their category per category and language, unsafe
-messages sorted `ok`, `ok` messages refused, confident errors (wrong with probability at least
-0.9) and seconds per message; one call before the run loads the model, so the times are warm.
+Each message of `datasets/input_check.yaml` is sorted once, with its earlier messages when it has
+them, through `DecisionModelInputCheck`, the check the chat uses with INPUT_CHECK=decision. A
+decision model answers in one forward pass, so a second run gives the same answer. Every answer is
+cached with its probabilities per model and prompt. The report gives messages sorted into their
+category per category and language, unsafe messages sorted `ok`, `ok` messages refused, confident
+errors (wrong with probability at least 0.9) and seconds per message; one call before the run loads
+the model, so the times are warm.
 """
 
 import asyncio

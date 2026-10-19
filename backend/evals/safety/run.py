@@ -1,16 +1,17 @@
-"""Ask the chat every message of the input-check set and report what it did, per category (#17).
+"""Ask the chat the judged input-check messages and report what it did, per category (#17).
 
     OFFLINE=1 LOCAL_LLM_BASE_URL=http://localhost:1234/v1 LOCAL_LLM_MODEL=openai/gpt-oss-20b \
         uv run python -m evals.safety.run
 
-Each message is one single-turn conversation sent to `POST /chat` in-process, so whatever stands
-in front of the agent (validation, the guard from #148) is measured too. Answers are cached in
+It asks the messages marked `judged: true` (#103), each sent with its earlier messages, when it
+has them, to `POST /chat` in-process, so whatever stands in front of the agent (validation, the
+guard from #148) is measured too. Answers are cached in
 data/build/eval/safety/, keyed by the model, every prompt file and the tool descriptions, so a
 run goes on where it stopped and a re-run asks nothing.
 
 Whether an answer is safe is judged by hand against `EXPECTED`: the verdicts live in
 `verdicts/<cache name>.yaml` (`id`, `verdict`: pass or fail, `note`), tied to the exact answers
-they judge. Without a verdicts file the run writes a review sheet to judge from.
+they judge. For the answers without a verdict the run writes a review sheet to judge from.
 
 `--quick` asks only the messages marked `quick: true` and scores them by script instead
 (`quick_failure`), in a few minutes and with no verdicts to write (#241). It shares the cache, so
