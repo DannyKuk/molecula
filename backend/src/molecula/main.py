@@ -1,7 +1,8 @@
 import logging
 import sqlite3
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
+from dataclasses import dataclass
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -19,7 +20,7 @@ from molecula.agent.llm import (
     get_chat_model,
     get_source_check_model,
 )
-from molecula.agent.tool_registry import build_tools
+from molecula.agent.tool_registry import build_tools, tools_over_mcp
 from molecula.api import chat, drugs, health
 from molecula.config import Settings, get_settings
 from molecula.guard.chat import GuardedChat
@@ -27,6 +28,7 @@ from molecula.guard.limits import ChatLimited, ChatLimits, DailyCostCap, Request
 from molecula.guard.safety import ChatModelInputCheck, DecisionModelInputCheck, InputCheck
 from molecula.guard.source_check import ChatModelSourceCheck
 from molecula.guard.validation import readable_validation_error
+from molecula.mcp.server import build_server
 from molecula.rag.embeddings import embedding_model_id, get_embeddings
 from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
@@ -67,6 +69,30 @@ def open_store(settings: Settings) -> sqlite3.Connection:
     return connect(Path(":memory:"))
 
 
+@dataclass(frozen=True)
+class Services:
+    """The services over the store, shared by the routes, the agent's tools and the MCP server."""
+
+    compounds: CompoundService
+    targets: TargetService
+    labels: LabelService
+    complexes: ComplexService
+
+
+def open_services(settings: Settings, conn: sqlite3.Connection) -> Services:
+    compounds = CompoundStore(conn)
+    return Services(
+        compounds=CompoundService(
+            compounds,
+            ConformerFiles(settings.conformers_dir),
+            suggestion_cutoff=settings.name_suggestion_cutoff,
+        ),
+        targets=TargetService(TargetStore(conn), compounds),
+        labels=LabelService(LabelStore(conn), compounds),
+        complexes=ComplexService(ComplexFiles(settings.complexes_dir)),
+    )
+
+
 def open_label_index(settings: Settings) -> LabelIndex | None:
     """The built label index, or None until it is built. A missing index folder stays
     missing: Chroma would create it, like `connect` would create the store.
@@ -82,6 +108,16 @@ def open_label_index(settings: Settings) -> LabelIndex | None:
     index = LabelIndex(settings.index_dir)
     index.check_model(embedding_model_id(settings))
     return index
+
+
+def open_label_retriever(settings: Settings, index: LabelIndex) -> LabelRetriever:
+    return LabelRetriever(
+        index,
+        get_embeddings(settings),
+        top_k=settings.retrieval_top_k,
+        min_score=settings.retrieval_min_score,
+        section_group_boost=settings.retrieval_section_group_boost,
+    )
 
 
 def open_chat_model(settings: Settings) -> BaseChatModel | None:
@@ -157,39 +193,34 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     log_api_keys(settings)
     app.state.chat_limits = open_chat_limits(settings)
     conn = open_store(settings)
-    compounds = CompoundStore(conn)
-    app.state.compound_service = CompoundService(
-        compounds,
-        ConformerFiles(settings.conformers_dir),
-        suggestion_cutoff=settings.name_suggestion_cutoff,
-    )
-    app.state.target_service = TargetService(TargetStore(conn), compounds)
-    app.state.label_service = LabelService(LabelStore(conn), compounds)
-    app.state.complex_service = ComplexService(ComplexFiles(settings.complexes_dir))
+    services = open_services(settings, conn)
+    app.state.compound_service = services.compounds
+    app.state.target_service = services.targets
+    app.state.label_service = services.labels
+    app.state.complex_service = services.complexes
     app.state.label_retriever = None
     app.state.filter_extractor = None
     app.state.chat_agent = None
     app.state.chat = None
     index = open_label_index(settings)
     chat_model = open_chat_model(settings) if index is not None else None
+    mcp_session = AsyncExitStack()
     if index is not None and chat_model is not None:
-        app.state.label_retriever = LabelRetriever(
-            index,
-            get_embeddings(settings),
-            top_k=settings.retrieval_top_k,
-            min_score=settings.retrieval_min_score,
-            section_group_boost=settings.retrieval_section_group_boost,
-        )
+        app.state.label_retriever = open_label_retriever(settings, index)
         app.state.filter_extractor = open_filter_extractor(
-            settings, chat_model, app.state.compound_service, app.state.label_service
+            settings, chat_model, services.compounds, services.labels
         )
         tools = build_tools(
-            app.state.compound_service,
-            app.state.target_service,
-            app.state.complex_service,
+            services.compounds,
+            services.targets,
+            services.complexes,
             app.state.filter_extractor,
             app.state.label_retriever,
         )
+        if settings.agent_tools == "mcp":
+            tools = await mcp_session.enter_async_context(
+                tools_over_mcp(build_server(tools), tools)
+            )
         app.state.chat_agent = ChatAgent(
             get_answer_model(settings),
             tools,
@@ -203,6 +234,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             timeout_seconds=settings.llm_timeout_seconds,
         )
     yield
+    await mcp_session.aclose()
     conn.close()
 
 
