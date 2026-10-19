@@ -1,13 +1,17 @@
+import json
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+import httpx
 import pytest
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
 
 from molecula.agent.llm import (
     LLMConfigError,
+    LocalChatOpenAI,
     chat_model_name,
     get_answer_model,
     get_chat_model,
@@ -242,3 +246,97 @@ def test_settings_read_from_env_file_reach_the_model(
         "llama3.2",
         0.7,
     )
+
+
+def chunk(delta: dict[str, Any], finish_reason: str | None = None) -> str:
+    body = {
+        "id": "chatcmpl-1",
+        "object": "chat.completion.chunk",
+        "created": 0,
+        "model": "openai/gpt-oss-20b",
+        "choices": [{"index": 0, "delta": delta, "finish_reason": finish_reason}],
+    }
+    return f"data: {json.dumps(body)}\n\n"
+
+
+class LocalServer:
+    """Stands in for LM Studio: streams `reply` and keeps the request bodies it was sent."""
+
+    def __init__(self, reply: list[str]) -> None:
+        self.reply = reply
+        self.requests: list[dict[str, Any]] = []
+
+    def handle(self, request: httpx.Request) -> httpx.Response:
+        self.requests.append(json.loads(request.content))
+        body = "".join(self.reply) + "data: [DONE]\n\n"
+        return httpx.Response(200, text=body, headers={"content-type": "text/event-stream"})
+
+    def model(self) -> LocalChatOpenAI:
+        return LocalChatOpenAI(
+            base_url="http://localhost:1234/v1",
+            api_key=SecretStr("local"),
+            model="openai/gpt-oss-20b",
+            streaming=True,
+            http_client=httpx.Client(transport=httpx.MockTransport(self.handle)),
+        )
+
+    def sent_assistant_messages(self) -> list[dict[str, Any]]:
+        return [m for m in self.requests[-1]["messages"] if m["role"] == "assistant"]
+
+
+def test_a_local_server_gets_the_model_that_keeps_reasoning() -> None:
+    assert isinstance(get_chat_model(local_settings()), LocalChatOpenAI)
+    assert not isinstance(get_chat_model(openrouter_settings()), LocalChatOpenAI)
+
+
+def tool_call(call_id: str, content: str = "") -> AIMessage:
+    return AIMessage(
+        content=content,
+        tool_calls=[{"name": "lookup", "args": {"drug": "aspirin"}, "id": call_id}],
+    )
+
+
+def lookup(call_id: str, content: str = "") -> list[BaseMessage]:
+    return [tool_call(call_id, content), ToolMessage("aspirin: NSAID", tool_call_id=call_id)]
+
+
+def sent_messages(server: LocalServer) -> list[tuple[str, str | None]]:
+    return [(sent["role"], sent.get("content")) for sent in server.requests[-1]["messages"]]
+
+
+def test_earlier_tool_calls_go_back_as_one_message_of_results_after_the_question() -> None:
+    server = LocalServer([chunk({"role": "assistant", "content": "Both are NSAIDs."})])
+
+    server.model().invoke(
+        [
+            HumanMessage("What is aspirin?"),
+            AIMessage("Aspirin relieves pain."),
+            HumanMessage("What are aspirin and ibuprofen?"),
+            *lookup("call_1"),
+            *lookup("call_2"),
+        ]
+    )
+
+    sent = sent_messages(server)
+    assert [role for role, _ in sent] == ["user", "assistant", "user", "user"]
+    assert sent[1] == ("assistant", "Aspirin relieves pain.")
+    results = sent[3][1] or ""
+    assert results.count('<result call="lookup({"drug": "aspirin"})">') == 2
+    assert results.count("aspirin: NSAID") == 2
+    assert all("tool_calls" not in m for m in server.requests[-1]["messages"])
+
+
+def test_a_request_without_tool_calls_goes_unchanged() -> None:
+    server = LocalServer([chunk({"role": "assistant", "content": "Aspirin is an NSAID."})])
+
+    server.model().invoke([HumanMessage("What is aspirin?")])
+
+    assert sent_messages(server) == [("user", "What is aspirin?")]
+
+
+def test_a_request_without_a_user_message_goes_unchanged() -> None:
+    server = LocalServer([chunk({"role": "assistant", "content": "Hello."})])
+
+    server.model().invoke([SystemMessage("Greet.")])
+
+    assert sent_messages(server) == [("system", "Greet.")]
