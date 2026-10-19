@@ -1,0 +1,45 @@
+# The retrieval questions the RAGAs eval judges answers to (#43), written by
+# `python -m evals.rag.export pick`: from each section group of retrieval_questions.yaml,
+# the 3 whose id has the lowest SHA-256, in the order of that file.
+- omeprazole-mechanism
+- dextromethorphan-indication
+- atorvastatin-starting-dose
+- simvastatin-cyp3a4
+- acetaminophen-warfarin
+- ciprofloxacin-tendons
+- lisinopril-angioedema
+- pseudoephedrine-antidepressants
+- imatinib-common-side-effects
+- atorvastatin-common-side-effects
+- bupropion-abuse-dependence
+- zolpidem-abuse-dependence
+- morphine-abuse-dependence
+- omeprazole-clinical-studies
+- sumatriptan-clinical-studies
+- famotidine-clinical-studies
+- acetazolamide-contraindications
+- finasteride-contraindications
+- naproxen-dosing
+- doxycycline-dosing
+- ciprofloxacin-indications
+- sumatriptan-indications
+- phenytoin-interactions
+- diclofenac-otc-consumer
+- naproxen-otc-consumer
+- valacyclovir-overdosage
+- haloperidol-overdosage
+- diclofenac-overdosage
+- diclofenac-patient-information
+- losartan-patient-information
+- risperidone-patient-information
+- esomeprazole-pharmacology
+- oseltamivir-pharmacology
+- dexamethasone-product
+- gabapentin-product
+- levothyroxine-product
+- apixaban-specific-populations
+- ondansetron-specific-populations
+- sumatriptan-specific-populations
+- celecoxib-warnings
+- fluticasone-warnings
+- ondansetron-adverse-reactions
