@@ -68,6 +68,13 @@ class Settings(BaseSettings):
     # Model calls per answer; the last one gets no tools, so the agent answers (#124).
     chat_max_steps: Annotated[int, Field(ge=1, le=20)] = 8
     chat_timeout_seconds: Annotated[float, Field(gt=0)] = 180.0
+    # Questions per client (by IP) to POST /chat, and what the cloud models may cost per UTC day,
+    # so a public instance can't run up the OpenRouter bill (#39).
+    chat_requests_per_minute: Annotated[int, Field(ge=1)] = 10
+    chat_requests_per_day: Annotated[int, Field(ge=1)] = 200
+    daily_cost_limit_usd: Annotated[float, Field(gt=0)] = 2.0
+    # Read the client's IP from X-Forwarded-For, which only a proxy in front may set.
+    trust_proxy: bool = False
     openfda_api_key: SecretStr | None = None
     offline: bool = False
     # The GitHub release `ingest fetch` downloads the store from (#35); a new snapshot bumps it.

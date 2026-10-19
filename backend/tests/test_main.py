@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from dataclasses import replace
 from datetime import UTC, datetime
@@ -400,3 +401,46 @@ def test_online_without_an_openrouter_key_the_chat_model_sorts_messages(
     input_check = main.open_input_check(settings, ScriptedChatModel(script=[]))
 
     assert isinstance(input_check, ChatModelInputCheck)
+
+
+def test_no_response_or_log_line_contains_a_key_value(
+    make_settings: Callable[..., Settings],
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    openrouter_key = "sk-or-v1-0123456789abcdef-test-key"
+    openfda_key = "openfda-test-key-9876543210"
+    settings = make_settings(
+        offline=False,
+        openrouter_api_key=openrouter_key,
+        openfda_api_key=openfda_key,
+        chat_requests_per_minute=1,
+    )
+    monkeypatch.setattr(main, "get_settings", lambda: settings)
+    caplog.set_level(logging.DEBUG)
+
+    with TestClient(app) as client:
+        responses = [
+            client.get("/health"),
+            client.get("/drugs"),
+            client.get("/drugs/resolve", params={"name": "imatinib"}),
+            client.post("/chat", json=QUESTION),
+            client.post("/chat", json=QUESTION),
+            client.post("/chat", json={"messages": []}),
+            client.get("/openapi.json"),
+        ]
+
+    assert [response.status_code for response in responses[3:5]] == [503, 429]
+    assert "OPENROUTER_API_KEY is set" in caplog.text
+    assert "OPENFDA_API_KEY is set" in caplog.text
+    for key in (openrouter_key, openfda_key):
+        assert key not in caplog.text
+        for response in responses:
+            assert key not in response.text
+            assert key not in str(response.headers)
+
+
+def test_retry_after_is_readable_across_origins() -> None:
+    response = TestClient(app).get("/health", headers={"Origin": "http://localhost:3000"})
+
+    assert response.headers["access-control-expose-headers"] == "Retry-After"

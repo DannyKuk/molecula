@@ -77,12 +77,16 @@ export async function* streamChat(
 }
 
 async function failureMessage(response: Response): Promise<string> {
+  const body = (await response.json().catch(() => null)) as {
+    detail?: unknown;
+    retry_after?: unknown;
+  } | null;
+  const detail = typeof body?.detail === "string" ? body.detail : null;
+  // A limit (429, or the day's cost limit as 503) says when to try again; any other 503 means
+  // the chat is off, and its detail is written for whoever runs the backend.
+  if (detail && typeof body?.retry_after === "number") return detail;
   if (response.status === 503) return CHAT_UNAVAILABLE;
-  if (response.status === 422) {
-    const body: unknown = await response.json().catch(() => null);
-    const detail = (body as { detail?: unknown } | null)?.detail;
-    if (typeof detail === "string") return detail;
-  }
+  if (response.status === 422 && detail) return detail;
   return CHAT_FAILED;
 }
 

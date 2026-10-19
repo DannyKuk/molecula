@@ -246,6 +246,28 @@ describe("Chat", () => {
     expect((await screen.findByRole("alert")).textContent).toContain(CHAT_UNAVAILABLE);
   });
 
+  it("shows how long to wait when the backend answers 429", async () => {
+    const detail =
+      "You've asked 10 questions in the last minute, the most Molecula takes. " +
+      "Try again in 42 seconds.";
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(
+          Response.json(
+            { detail, retry_after: 42 },
+            { status: 429, headers: { "Retry-After": "42" } },
+          ),
+        ),
+    );
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+
+    expect((await screen.findByRole("alert")).textContent).toContain("Try again in 42 seconds.");
+  });
+
   it("treats a stream that breaks off before it is done as a failure", async () => {
     const stream = stubChatStream();
     render(<Chat />);

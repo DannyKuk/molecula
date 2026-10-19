@@ -10,8 +10,9 @@ from fake_llm import ScriptedChatModel, answer_message, tool_call_message
 from guard_fakes import FakeCheck, FakeSourceCheck
 from molecula.agent.agent import ChatAgent
 from molecula.agent.tool_registry import build_tools
-from molecula.api.dependencies import chat
+from molecula.api.dependencies import chat, chat_limits
 from molecula.guard.chat import GuardedChat
+from molecula.guard.limits import ChatLimits, RequestLimiter
 from molecula.guard.safety import fixed_answer
 from molecula.main import app
 from molecula.schemas.chat import (
@@ -29,6 +30,8 @@ from tool_fakes import (
     FakeLabelRetriever,
     FakeTargetService,
 )
+
+NO_LIMITS = ChatLimits(RequestLimiter(1000, 1000), None, trust_proxy=False)
 
 QUESTION = {"messages": [{"role": "user", "content": "What does imatinib target?"}]}
 
@@ -49,6 +52,7 @@ def agent(script: list[Any], check: FakeCheck | None = None) -> GuardedChat:
 
 @pytest.fixture
 def client() -> Iterator[TestClient]:
+    app.dependency_overrides[chat_limits] = lambda: NO_LIMITS
     yield TestClient(app)
     app.dependency_overrides.clear()
 

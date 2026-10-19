@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, Request
 
 from molecula.guard.chat import GuardedChat
+from molecula.guard.limits import ChatLimits
 from molecula.services.complexes import ComplexService
 from molecula.services.compounds import CompoundService
 from molecula.services.labels import LabelService
@@ -55,3 +56,24 @@ def chat(request: Request) -> GuardedChat:
 
 
 ChatDep = Annotated[GuardedChat, Depends(chat)]
+
+
+def chat_limits(request: Request) -> ChatLimits:
+    """The app's chat limits, built at startup, once they have counted this request; raises
+    ChatLimited when they turn it away. Tests replace it with an override."""
+    limits: ChatLimits = request.app.state.chat_limits
+    limits.admit(client_ip(request, trust_proxy=limits.trust_proxy))
+    return limits
+
+
+ChatLimitsDep = Annotated[ChatLimits, Depends(chat_limits)]
+
+
+def client_ip(request: Request, *, trust_proxy: bool) -> str:
+    """The address the request came from. Behind a proxy (`trust_proxy`) that is the last
+    X-Forwarded-For entry, the one the proxy added; the entries before it are whatever the
+    client sent, so they are never read."""
+    forwarded = request.headers.get("x-forwarded-for", "")
+    if trust_proxy and forwarded.strip():
+        return forwarded.split(",")[-1].strip()
+    return request.client.host if request.client else "unknown"
