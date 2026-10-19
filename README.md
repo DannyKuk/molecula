@@ -88,7 +88,7 @@ Claude Desktop: add the server to `claude_desktop_config.json` (Settings → Dev
 }
 ```
 
-With `AGENT_TOOLS=mcp` in `.env` the chat gets its tools from this server too, through an in-memory session inside the backend; the answer then shows no sources list or retrieval trace.
+With `AGENT_TOOLS=mcp` in `.env` the chat gets its tools from this server too, through an in-memory session inside the backend; the answer then shows no sources list or retrieval trace, and the daily cost limit doesn't count the label searches' model calls.
 
 ## Layout
 

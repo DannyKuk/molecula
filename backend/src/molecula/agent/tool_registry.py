@@ -46,7 +46,8 @@ async def tools_over_mcp(
     until the context ends, with the progress text of the `local` tool of the same name.
 
     The model reads the same JSON as from a local tool, but the result carries no typed
-    artifact, so the chat's sources, retrieval trace and shared reference numbers stay empty.
+    artifact, so the chat's sources, retrieval trace, shared reference numbers and the label
+    filter's usage stay empty.
     """
     progress = {tool.name: progress_of(tool) for tool in local}
     async with create_connected_server_and_client_session(server) as session:
