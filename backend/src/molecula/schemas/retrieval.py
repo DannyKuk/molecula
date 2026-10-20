@@ -19,6 +19,7 @@ class LabelQuery(BaseModel):
 
 
 type Widening = Literal["labels"]
+type RetrievalMode = Literal["dense", "bm25", "hybrid"]
 
 
 class DrugFilter(BaseModel):
@@ -65,7 +66,11 @@ class LabelFilter(BaseModel):
 
 class RetrievedChunk(BaseModel):
     """A label chunk a search found, with its cosine similarity to the query and what to cite.
-    `in_section_groups` means it is in one of the filter's section groups and ranked higher."""
+    `in_section_groups` means it is in one of the filter's section groups and ranked higher.
+
+    `dense_rank` and `bm25_rank` are its places in the embedding and keyword rankings of the
+    search that found it (None: not in that ranking), and `fused_score` its reciprocal rank
+    fusion score, which orders the chunks in the "bm25" and "hybrid" modes (#44)."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -83,6 +88,9 @@ class RetrievedChunk(BaseModel):
     effective_time: date
     url: str
     in_section_groups: bool = False
+    dense_rank: int | None = None
+    bm25_rank: int | None = None
+    fused_score: float | None = None
 
 
 class Retrieval(BaseModel):

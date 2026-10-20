@@ -115,6 +115,18 @@ class LabelIndex:
             key=lambda chunk: chunk.id,
         )
 
+    def vectors(self, ids: Sequence[str]) -> dict[str, list[float]]:
+        """The stored embedding of each chunk in `ids` that exists."""
+        if not ids or not self._exists():
+            return {}
+        collection = self._client.get_collection(COLLECTION, embedding_function=None)
+        stored = collection.get(ids=list(ids), include=["embeddings"])
+        embeddings = stored["embeddings"] if stored["embeddings"] is not None else []
+        return {
+            id_: [float(value) for value in vector]
+            for id_, vector in zip(stored["ids"], embeddings, strict=True)
+        }
+
     def search(
         self, vector: Sequence[float], n: int, where: dict[str, Any] | None = None
     ) -> list[tuple[Chunk, float]]:

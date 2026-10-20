@@ -28,6 +28,7 @@ from molecula.main import open_label_index
 from molecula.rag.embeddings import get_embeddings
 from molecula.rag.retriever import LabelRetriever
 from molecula.schemas.retrieval import LabelFilter, Retrieval, RetrievedChunk
+from molecula.store.keywords import KeywordIndex
 
 TOP_KS = (5, 10)
 
@@ -80,9 +81,13 @@ def main() -> int:
             top_k=top_k,
             min_score=settings.retrieval_min_score,
             section_group_boost=settings.retrieval_section_group_boost,
+            mode=settings.retrieval_mode,
+            keywords=KeywordIndex(settings.keyword_index_path),
         )
 
-    check_replay(searches, retriever(settings.retrieval_top_k), settings.retrieval_top_k)
+    # The cached answers were made with the embeddings alone; another mode returns other chunks.
+    if settings.retrieval_mode == "dense":
+        check_replay(searches, retriever(settings.retrieval_top_k), settings.retrieval_top_k)
     asked = [q for q in questions if q.id in answers]
     results = [replay(asked, searches, retriever(top_k), top_k) for top_k in args.top_k]
     print(report(results, len(searches)))

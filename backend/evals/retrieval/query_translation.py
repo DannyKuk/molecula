@@ -31,14 +31,14 @@ from molecula import prompts
 from molecula.agent.llm import chat_model_name, get_chat_model
 from molecula.config import Settings, get_settings
 from molecula.rag.embeddings import embedding_model_id, get_embeddings
+from molecula.rag.fusion import reciprocal_rank_fusion
 from molecula.rag.retriever import LabelRetriever
 from molecula.schemas.retrieval import LabelFilter, RetrievedChunk
 from molecula.store.index import LabelIndex
+from molecula.store.keywords import KeywordIndex
 
 GERMAN = Path(__file__).resolve().parents[1] / "datasets" / "retrieval_questions_de.yaml"
 TOP_K = 10
-# The usual constant of reciprocal rank fusion (Cormack et al., 2009).
-RRF_K = 60
 FILTERS = ["whole index", "drug"]
 
 
@@ -71,6 +71,8 @@ def main() -> int:
         top_k=TOP_K,
         min_score=-1.0,
         section_group_boost=settings.retrieval_section_group_boost,
+        mode=settings.retrieval_mode,
+        keywords=KeywordIndex(settings.keyword_index_path),
     )
     set_ids = labels_by_drug(index.chunks())
     questions = load_questions()
@@ -189,14 +191,9 @@ def search(
     results = [retriever.retrieve(query, label_filter).chunks for query in queries]
     if len(results) == 1:
         return results[0]
-    fused: dict[str, float] = defaultdict(float)
-    chunks: dict[str, RetrievedChunk] = {}
-    for chunks_found in results:
-        for rank, chunk in enumerate(chunks_found, start=1):
-            fused[chunk.id] += 1 / (RRF_K + rank)
-            chunks.setdefault(chunk.id, chunk)
-    order = sorted(fused, key=fused.__getitem__, reverse=True)
-    return [chunks[chunk_id] for chunk_id in order[:TOP_K]]
+    chunks = {chunk.id: chunk for chunks_found in reversed(results) for chunk in chunks_found}
+    fused = reciprocal_rank_fusion([[chunk.id for chunk in found] for found in results])
+    return [chunks[chunk_id] for chunk_id in list(fused)[:TOP_K]]
 
 
 def print_changes(

@@ -11,6 +11,7 @@ from molecula.rag.chunking import CountTokens, chunk_labels
 from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
 from molecula.store.index import Chunk, LabelIndex
+from molecula.store.keywords import KeywordIndex
 from molecula.store.labels import LabelRecord, LabelStore
 
 logger = logging.getLogger(__name__)
@@ -23,9 +24,11 @@ def build_index(
     count_tokens: CountTokens,
     embeddings: Embeddings,
     index: LabelIndex,
+    keywords: KeywordIndex,
     model: str,
 ) -> list[Chunk]:
-    """Chunk every label, embed the chunks and replace the index with them."""
+    """Chunk every label, embed the chunks and replace the vector and keyword indexes with
+    them."""
     chunks = chunk_labels(labels, count_tokens)
     vectors: list[list[float]] = []
     for start in range(0, len(chunks), EMBED_BATCH):
@@ -33,6 +36,7 @@ def build_index(
         vectors.extend(embeddings.embed_documents([chunk.text for chunk in batch]))
         logger.info("embedded %d of %d chunks", len(vectors), len(chunks))
     index.rebuild(chunks, vectors, model)
+    keywords.rebuild(chunks)
     return chunks
 
 
@@ -71,6 +75,7 @@ def run(settings: Settings) -> int:
         lambda text: len(tokenizer.tokenize(text)),
         get_embeddings(settings),
         LabelIndex.empty(settings.index_dir),
+        KeywordIndex(settings.keyword_index_path),
         model,
     )
     log_summary(chunks, len(labels), model, perf_counter() - started, settings.index_dir)

@@ -30,6 +30,7 @@ from molecula.sources.http import SourceClient
 from molecula.store.compounds import CompoundStore, Synonym
 from molecula.store.db import connect
 from molecula.store.index import Chunk, IndexModelMismatch, LabelIndex
+from molecula.store.keywords import KeywordIndex
 from molecula.store.labels import LabelStore
 from molecula.store.structures import ComplexFiles, ConformerFiles
 from sse import server_sent_events
@@ -510,3 +511,34 @@ def test_retry_after_is_readable_across_origins() -> None:
     response = TestClient(app).get("/health", headers={"Origin": "http://localhost:3000"})
 
     assert response.headers["access-control-expose-headers"] == "Retry-After"
+
+
+def test_hybrid_mode_fuses_the_keyword_search_when_its_index_is_built(
+    make_settings: Callable[..., Settings], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    settings = make_settings(retrieval_mode="hybrid")
+    build_index(settings, embedding_model_id(settings))
+    KeywordIndex(settings.keyword_index_path).rebuild([CHUNK])
+    monkeypatch.setattr(main, "get_embeddings", lambda settings: UnitEmbeddings())
+
+    retriever = main.open_label_retriever(settings, LabelIndex(settings.index_dir))
+
+    [found] = retriever.retrieve(CHUNK.text).chunks
+    assert found.bm25_rank == 1 and found.fused_score is not None
+
+
+def test_hybrid_mode_without_the_keyword_index_searches_by_embeddings_and_says_how_to_build_it(
+    make_settings: Callable[..., Settings],
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    settings = make_settings(retrieval_mode="hybrid")
+    build_index(settings, embedding_model_id(settings))
+    monkeypatch.setattr(main, "get_embeddings", lambda settings: UnitEmbeddings())
+
+    retriever = main.open_label_retriever(settings, LabelIndex(settings.index_dir))
+
+    [found] = retriever.retrieve(CHUNK.text).chunks
+    assert found.dense_rank == 1 and found.fused_score is None
+    assert "python -m molecula.ingest fetch" in caplog.text
+    assert not settings.keyword_index_path.exists()

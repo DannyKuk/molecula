@@ -26,7 +26,7 @@ Known limits, and how the app handles them:
 | Agent tools | PubChem (properties, 3D), ChEMBL (mechanism → target), RCSB (complex), own contact calculation | verified |
 | Safety | "not medical advice" under the question box; `overdosage` indexed as sensitive, answers put emergency help first; no personal dosing | design decision (§5.5, #92, #100) |
 | Sources in the UI | every chunk has `set_id`, `effective_time` and a DailyMed link | verified |
-| Hybrid search | BM25 next to embeddings: drug names, "QT prolongation", "CYP3A4" need exact matches | design decision |
+| Hybrid search | BM25 next to embeddings: drug names, "QT prolongation", "CYP3A4" need exact matches | built, off by default: it found less than embeddings alone ([hybrid search](decisions/hybrid-search.md), #44) |
 | Tools as an MCP server | the data services exposed through FastMCP (§4) | built (#42) |
 | Remote MCP server | public PubChem MCP at `https://pubchem.caseyjhand.com/mcp` | verified (answered `initialize`); community-run, so the local tools stay the default |
 | RAG evaluation and A/B tests | QA set generated from label sections; dense vs hybrid, query translation on/off | design decision |

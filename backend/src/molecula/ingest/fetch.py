@@ -19,6 +19,8 @@ from molecula.rag.embeddings import (
 )
 from molecula.schemas.store import StoreManifest
 from molecula.sources.http import USER_AGENT
+from molecula.store.index import LabelIndex
+from molecula.store.keywords import KeywordIndex
 from molecula.store.schema import SCHEMA_VERSION
 
 logger = logging.getLogger(__name__)
@@ -219,12 +221,27 @@ def model_step(settings: Settings) -> bool:
     return True
 
 
+def keyword_step(settings: Settings) -> None:
+    """Build the keyword index from the label index when it is missing: store releases made
+    before #44 don't hold it. It takes about a second and no network."""
+    keywords = KeywordIndex(settings.keyword_index_path)
+    if keywords.exists() or not settings.index_dir.exists():
+        return
+    chunks = LabelIndex(settings.index_dir).chunks()
+    keywords.rebuild(chunks)
+    logger.info(
+        "Built the keyword index of %d chunks at %s", len(chunks), settings.keyword_index_path
+    )
+
+
 def run(
     settings: Settings, *, force: bool = False, transport: httpx2.BaseTransport | None = None
 ) -> int:
     """`python -m molecula.ingest fetch`: download the pinned store release and the embedding
-    model when they are missing. It needs the internet once and ignores OFFLINE, which only
-    decides whether the app calls cloud models."""
+    model when they are missing, and build the keyword index the release lacks. It needs the
+    internet once and ignores OFFLINE, which only decides whether the app calls cloud models."""
     store_ready = store_step(settings, force=force, transport=transport)
+    if store_ready:
+        keyword_step(settings)
     model_ready = model_step(settings)
     return 0 if store_ready and model_ready else 1
