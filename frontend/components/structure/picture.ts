@@ -2,7 +2,7 @@ import { ApiError, getComplex, getStructure } from "@/lib/api";
 import type { Picture } from "@/lib/printed-pictures";
 import type { StructureTarget } from "@/lib/tool-cards";
 
-import { createScene, type SceneData } from "./scene";
+import { COLORS, createScene, type SceneData } from "./scene";
 
 // The hidden view's size in CSS pixels. 3Dmol draws an antialiased view at twice that at least, so
 // the picture is 1440 × 960 pixels or more, sharp at the width it prints.
@@ -35,7 +35,7 @@ export async function drawPicture(target: StructureTarget): Promise<Picture> {
   try {
     const scene = createScene(lib, host, data, {
       mode: data.kind === "complex" ? "site" : "molecule",
-      dark: false,
+      colors: COLORS.paper,
       reduceMotion: true,
     });
     const png = scene.picture();

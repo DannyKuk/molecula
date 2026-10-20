@@ -4,7 +4,14 @@ import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "reac
 
 import { useMediaQuery } from "@/lib/use-media-query";
 
-import { createScene, type Camera, type Scene, type SceneData, type ViewMode } from "./scene";
+import {
+  COLORS,
+  createScene,
+  type Camera,
+  type Scene,
+  type SceneData,
+  type ViewMode,
+} from "./scene";
 
 export type StructureViewerHandle = { replay(): void; reset(): void };
 
@@ -87,7 +94,7 @@ export function StructureViewer({
         if (cancelled) return;
         scene.current = createScene(lib, element, data, {
           mode: shownMode.current,
-          dark,
+          colors: dark ? COLORS.screenDark : COLORS.screen,
           reduceMotion,
           camera: saved?.data === data ? saved.camera : undefined,
         });

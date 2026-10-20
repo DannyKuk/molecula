@@ -36,7 +36,7 @@ export type Camera = { view: number[]; grabbed: boolean };
 
 export type SceneOptions = {
   mode: ViewMode;
-  dark: boolean;
+  colors: Palette;
   reduceMotion: boolean;
   camera?: Camera;
 };
@@ -57,31 +57,70 @@ export type Scene = {
   dispose(): void;
 };
 
-// `background` is the card colour (`--card` in globals.css). The view is drawn on it, not on a
-// transparent canvas: Chrome on the owner's AMD GPU showed the transparent white clear colour as
-// solid white, and 3Dmol fades distant atoms into the background colour.
+export type Palette = {
+  background: string;
+  drug: string;
+  pocket: string;
+  trace: string;
+  traceOpacity: number;
+  label: string;
+  labelBackground: string;
+  hbond: string;
+  coordination: string;
+  cofactor: string;
+  /** Element colours in place of 3Dmol's; the elements left out keep 3Dmol's. */
+  elements: Record<string, string>;
+};
+
+// The view is drawn on its background, not on a transparent canvas: Chrome on the owner's AMD GPU
+// showed the transparent white clear colour as solid white, and 3Dmol fades distant atoms into the
+// background colour.
+const SCREEN: Palette = {
+  background: "#1b1d20",
+  drug: "#c6f432",
+  pocket: "#7a8088",
+  trace: "#3a3e44",
+  // The backbone colour is already dim on the dark screen, so it is drawn solid.
+  traceOpacity: 1,
+  label: "#e6e8e3",
+  labelBackground: "#2a2d31",
+  hbond: "#ff7a3d",
+  coordination: "#c084fc",
+  cofactor: "#22d3ee",
+  // 3Dmol's own nitrogen, oxygen and sulfur are too dark or too loud on the screen.
+  elements: { N: "#8ea6ff", O: "#ff6b5e", S: "#f2d16b" },
+};
+
+/**
+ * The colours of the view and its legend: the app's dark screen (#297), a shade darker in dark mode
+ * (`--screen` in globals.css), and the light colours of the picture printed on white paper (#312),
+ * with 3Dmol's green and grey carbons.
+ */
 export const COLORS = {
-  dark: {
-    background: "#232528",
-    trace: "#a1a1aa",
-    label: "#fafafa",
-    labelBackground: "#18181b",
-    hbond: "#fbbf24",
-    coordination: "#c084fc",
-    cofactor: "#22d3ee",
-  },
-  light: {
+  screen: SCREEN,
+  screenDark: { ...SCREEN, background: "#0f1012" },
+  paper: {
     background: "#f2f2ee",
+    drug: "#00ff00",
+    pocket: "#c8c8c8",
     trace: "#71717a",
+    traceOpacity: 0.35,
     label: "#18181b",
     labelBackground: "#ffffff",
     hbond: "#d97706",
     coordination: "#9333ea",
     cofactor: "#0e7490",
+    elements: {},
   },
-};
+} satisfies Record<string, Palette>;
 
-const ZOOM: Record<ViewMode, number> = { molecule: 0.9, site: 0.75, protein: 0.5 };
+/** Colours by element, with `carbon` for the carbons if given, else 3Dmol's light grey. */
+function byElement(elements: Record<string, string>, carbon?: string) {
+  return { prop: "elem", map: carbon ? { ...elements, C: carbon } : elements };
+}
+
+// Zoomed out enough that the drug and its metals clear the title and the switch on the screen.
+const ZOOM: Record<ViewMode, number> = { molecule: 0.8, site: 0.6, protein: 0.5 };
 // Far enough out while the backbone grows to see the protein around the pocket.
 const REVEAL_ZOOM = 0.3;
 
@@ -94,7 +133,6 @@ const CONTACT_MS = 350;
 const TRACE_STEPS = 20;
 const FADE_STEPS = 5;
 const FADE_FROM = 0.6;
-const TRACE_OPACITY = 0.35;
 const SPIN_SPEED = 0.25;
 // Wider than any stored complex: `zoomTo` on the drug would otherwise clip the protein around it.
 const SLAB = 500;
@@ -107,12 +145,17 @@ type Turning = { start(): void; stop(): void; release(): void };
  * a click or drag in the view does. */
 type Playing = { current: { stop(): void; skip(): void } | null };
 
+type Colorscheme = ReturnType<typeof byElement>;
+
 type DrugStyle = {
-  stick: { radius: number; colorscheme?: string };
-  sphere: { scale: number; colorscheme?: string };
+  stick: { radius: number; colorscheme: Colorscheme };
+  sphere: { scale: number; colorscheme: Colorscheme };
 };
 
-const MOLECULE_STYLE: DrugStyle = { stick: { radius: 0.15 }, sphere: { scale: 0.25 } };
+function moleculeStyle(colors: Palette): DrugStyle {
+  const colorscheme = byElement(colors.elements);
+  return { stick: { radius: 0.15, colorscheme }, sphere: { scale: 0.25, colorscheme } };
+}
 
 /** Builds the 3D view in `element`, which must already have its size. */
 export function createScene(
@@ -127,7 +170,7 @@ export function createScene(
   box.style.cssText = "position: absolute; inset: 0;";
   element.append(box);
   const viewer = lib.createViewer(box, {
-    backgroundColor: (options.dark ? COLORS.dark : COLORS.light).background,
+    backgroundColor: options.colors.background,
     antialias: true,
   });
   let wanted = false;
@@ -203,10 +246,11 @@ function moleculeScene(
   common: Common,
 ): Scene {
   const model = viewer.addModel(sdf, "sdf");
-  const drug = assembly(model, MOLECULE_STYLE);
+  const style = moleculeStyle(options.colors);
+  const drug = assembly(model, style);
   const settle = () => {
     playing.current = null;
-    model.setStyle({}, MOLECULE_STYLE);
+    model.setStyle({}, style);
     viewer.render();
     turning.start();
   };
@@ -251,7 +295,7 @@ function complexScene(
   playing: Playing,
   common: Common,
 ): Scene {
-  const colors = options.dark ? COLORS.dark : COLORS.light;
+  const colors = options.colors;
   const protein = viewer.addModel();
   protein.addAtoms(proteinAtoms(complex));
   protein.assignBonds();
@@ -269,7 +313,7 @@ function complexScene(
   const outside = dockingPose(bound, approach, 0);
   const pocket = pocketSelection(complex);
   let mode = options.mode;
-  let ligandStyle: DrugStyle = MOLECULE_STYLE;
+  let ligandStyle = moleculeStyle(colors);
 
   const placeLigand = (positions: Point[]) => {
     atoms.forEach((atom, i) => Object.assign(atom, positions[i]));
@@ -286,7 +330,12 @@ function complexScene(
     );
   };
 
-  const showPocket = () => protein.setStyle(pocket, { stick: { radius: 0.12 } }, true);
+  const showPocket = () =>
+    protein.setStyle(
+      pocket,
+      { stick: { radius: 0.12, colorscheme: byElement(colors.elements, colors.pocket) } },
+      true,
+    );
 
   const addDashedLine = (start: Point, end: Point, color: string) =>
     viewer.addCylinder({
@@ -396,7 +445,7 @@ function complexScene(
 
   const setMode = (next: ViewMode, animate: boolean) => {
     mode = next;
-    const carbons = next === "molecule" ? "default" : "greenCarbon";
+    const carbons = byElement(colors.elements, next === "molecule" ? undefined : colors.drug);
     ligandStyle = {
       stick: { radius: 0.2, colorscheme: carbons },
       sphere: { scale: 0.25, colorscheme: carbons },
@@ -412,7 +461,7 @@ function complexScene(
     turning.stop();
     viewer.removeAllShapes();
     viewer.removeAllLabels();
-    showTrace(mode === "protein" ? proteinSize : 0, TRACE_OPACITY);
+    showTrace(mode === "protein" ? proteinSize : 0, colors.traceOpacity);
     if (mode !== "molecule") {
       showPocket();
       showBindingPartners();
@@ -483,7 +532,7 @@ function complexScene(
         const nextStep = Math.ceil(progress * TRACE_STEPS);
         if (nextStep !== traceStep) {
           traceStep = nextStep;
-          showTrace(Math.round((proteinSize * traceStep) / TRACE_STEPS), TRACE_OPACITY);
+          showTrace(Math.round((proteinSize * traceStep) / TRACE_STEPS), colors.traceOpacity);
         }
         viewer.setView(viewAt(centroid(outside), near + (far - near) * progress));
       }
@@ -504,13 +553,13 @@ function complexScene(
           : 0;
         if (nextFade !== fadeStep) {
           fadeStep = nextFade;
-          showTrace(proteinSize, TRACE_OPACITY * (1 - fadeStep / FADE_STEPS));
+          showTrace(proteinSize, colors.traceOpacity * (1 - fadeStep / FADE_STEPS));
         }
       }
       if (docks && elapsed >= contacts) {
         if (shownContacts === 0) {
           placeLigand(bound);
-          showTrace(fades ? 0 : proteinSize, TRACE_OPACITY);
+          showTrace(fades ? 0 : proteinSize, colors.traceOpacity);
           showPocket();
           viewer.setView(viewAt(target, end));
         }

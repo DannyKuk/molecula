@@ -7,7 +7,10 @@ import { createScene, type Camera, type Scene, type SceneData } from "./scene";
 import { StructureViewer } from "./structure-viewer";
 
 vi.mock("3dmol", () => ({}));
-vi.mock("./scene", () => ({ createScene: vi.fn() }));
+vi.mock("./scene", async (original) => ({
+  ...(await original<typeof import("./scene")>()),
+  createScene: vi.fn(),
+}));
 
 type FakeScene = { [K in keyof Scene]: Mock<Scene[K]> };
 type Report = (entry: Partial<IntersectionObserverEntry>) => void;
