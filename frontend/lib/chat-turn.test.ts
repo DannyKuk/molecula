@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { applyEvent, startTurn, stopTurn } from "./chat-turn";
 import { IMATINIB_PASSAGES, IMATINIB_SOURCES } from "./test-fixtures";
+import { IMATINIB_TRACE } from "./test-tool-results";
 
 function toolResult(name: string, result: unknown) {
   return { type: "tool_result" as const, id: "call_1", name, status: "found", result };
@@ -98,6 +99,28 @@ describe("applyEvent", () => {
         tool: { id: "call_2", name: "get_targets", args: { drug: "imatinib" } },
       },
     ]);
+  });
+
+  it("gives a label search its trace, and a trace for no step changes nothing", () => {
+    const searching = [
+      { type: "status" as const, message: "Searching the Gleevec label" },
+      {
+        type: "tool_call" as const,
+        id: "call_1",
+        name: "search_labels",
+        args: { drug: "Gleevec" },
+      },
+    ].reduce(applyEvent, startTurn("What does Gleevec do?"));
+
+    const traced = applyEvent(searching, { type: "retrieval_trace", ...IMATINIB_TRACE });
+    const stray = applyEvent(searching, {
+      type: "retrieval_trace",
+      ...IMATINIB_TRACE,
+      tool_call_id: "call_9",
+    });
+
+    expect(traced.steps[0].tool?.trace).toMatchObject(IMATINIB_TRACE);
+    expect(stray.steps).toEqual(searching.steps);
   });
 
   it("ignores a tool call without its step and a result without its call", () => {

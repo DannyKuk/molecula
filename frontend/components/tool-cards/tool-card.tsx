@@ -100,7 +100,13 @@ function body(card: ShownCard, answer: string): ReactNode {
       return <NoComplexCard result={card.result} />;
     case "labels":
       return (
-        <LabelsCard result={card.result} drug={card.drug} section={card.section} answer={answer} />
+        <LabelsCard
+          result={card.result}
+          drug={card.drug}
+          section={card.section}
+          trace={card.trace}
+          answer={answer}
+        />
       );
   }
 }

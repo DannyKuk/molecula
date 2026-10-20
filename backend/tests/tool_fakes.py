@@ -205,13 +205,24 @@ class FakeLabelRetriever:
     def retrieve(self, question: str, label_filter: LabelFilter | None = None) -> Retrieval:
         self.searched.append(label_filter)
         if label_filter is not None and label_filter.names_drugs and not label_filter.set_ids:
-            return Retrieval(question=question, filter=label_filter, chunks=[], dropped=[])
+            return Retrieval(
+                question=question,
+                filter=label_filter,
+                chunks=[],
+                dropped=[],
+                mode="dense",
+                min_score=0.0,
+                section_group_boost=0.15,
+            )
         return Retrieval(
             question=question,
             filter=label_filter,
             chunks=self.chunks_by_question.get(question, self.chunks),
             dropped=self.dropped,
             widened=self.widened,
+            mode="dense",
+            min_score=0.0,
+            section_group_boost=0.15,
         )
 
 

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { cardOf, type Card } from "@/lib/tool-cards";
+import { cardOf, type Card, type RetrievalTrace } from "@/lib/tool-cards";
 import {
   ACETAMINOPHEN_NO_COMPLEX,
   COMPARISON_WITH_UNSUPPORTED,
@@ -9,6 +9,7 @@ import {
   GUAIFENESIN_TARGETS,
   IMATINIB_COMPLEX,
   IMATINIB_LABELS,
+  IMATINIB_TRACE,
   METFORMIN_COMPLEX,
   METFORMIN_PROPERTIES,
   METFORMIN_TARGETS,
@@ -213,6 +214,106 @@ describe("search_labels", () => {
     expect(card.textContent).toContain("No US label for fluticasone.");
     expect(card.textContent).toContain("Not supported: Tylenoll.");
     expect(card.textContent).toContain("No passage matched the question.");
+  });
+
+  describe("with its trace", () => {
+    function openTraced(trace: RetrievalTrace, answer = "Imatinib blocks BCR-ABL [1].") {
+      const card = cardOf({
+        id: "call_1",
+        name: "search_labels",
+        args: { drug: "Gleevec", section: "pharmacology" },
+        result: IMATINIB_LABELS,
+        trace,
+      }) as Exclude<Card, { kind: "pending" }>;
+      render(<ToolCard text="Step" card={card} answer={answer} current={false} />);
+      fireEvent.click(screen.getByRole("button", { name: /^Step/ }));
+      return screen.getByRole("button", { name: /^Step/ }).parentElement!;
+    }
+
+    function ranked(card: HTMLElement): HTMLElement[] {
+      return within(within(card).getByRole("list", { name: "Passages by rank" })).getAllByRole(
+        "listitem",
+      );
+    }
+
+    function facts(card: HTMLElement): Record<string, string> {
+      return Object.fromEntries(
+        Array.from(card.querySelectorAll("dt")).map((term) => [
+          term.textContent,
+          term.nextElementSibling?.textContent ?? "",
+        ]),
+      );
+    }
+
+    it("shows each step of the search, the translation as skipped", () => {
+      const card = openTraced(IMATINIB_TRACE);
+
+      expect(facts(card)).toEqual({
+        Translation: "Skipped searched with the question as written",
+        Drugs: "Gleevec → imatinib · 1 labelNamed by the chat model when it called the search.",
+        Sections: "Pharmacology moved to the top, the rest still searched",
+        "Ranked by": "Embeddings: closest in meaning",
+      });
+    });
+
+    it("ranks every candidate with its similarity and the section bonus, marking the cited one", () => {
+      const card = openTraced(IMATINIB_TRACE);
+
+      const rows = ranked(card);
+      expect(rows.map((row) => row.querySelector("summary")?.textContent)).toEqual([
+        "1Mechanism of action · Gleevec+0.15 section asked for0.71[1] cited",
+        "2Pharmacokinetics · Gleevec+0.15 section asked for0.52[2]",
+        "–How supplied · Gleevecdropped, below 0.300.21",
+      ]);
+      expect(rows.map((row) => row.querySelector("[data-cited]") !== null)).toEqual([
+        true,
+        false,
+        false,
+      ]);
+      expect(rows[2].textContent).toContain("Gleevec tablets are supplied");
+      expect(card.textContent).toContain("1 dropped for a similarity below 0.30.");
+      expect(card.textContent).toContain("counts 0.15 higher in the ranking");
+    });
+
+    it("shows a filter the label filter read from the question, with a name outside the store", () => {
+      const card = openTraced({
+        ...IMATINIB_TRACE,
+        filter_source: "model",
+        filter: {
+          ...IMATINIB_TRACE.filter!,
+          unsupported: [{ ...TYLENOLL_NOT_SUPPORTED, status: "not_supported" } as never],
+          section_groups: [],
+        },
+      });
+
+      expect(facts(card).Drugs).toBe(
+        "Gleevec → imatinib · 1 labelTylenoll not supportedRead from the question by the label filter.",
+      );
+      expect(facts(card).Sections).toBe("The whole label");
+    });
+
+    it("shows the ranks of both rankings in hybrid mode", () => {
+      const card = openTraced({
+        ...IMATINIB_TRACE,
+        mode: "hybrid",
+        candidates: IMATINIB_TRACE.candidates.map((candidate, index) => ({
+          ...candidate,
+          bm25_rank: index === 0 ? 4 : null,
+        })),
+      });
+
+      expect(facts(card)["Ranked by"]).toBe("Keywords and embeddings, merged by rank");
+      expect(ranked(card)[0].textContent).toContain("embeddings #1 · keywords #4");
+      expect(card.textContent).not.toContain("section asked for");
+    });
+
+    it("says when a search scored nothing", () => {
+      const card = openTraced({ ...IMATINIB_TRACE, filter: null, candidates: [] }, "");
+
+      expect(facts(card).Drugs).toBe("AnyNo drug named, so every label was searched.");
+      expect(card.textContent).toContain("No passage matched the question.");
+      expect(within(card).queryByRole("list", { name: "Passages by rank" })).toBeNull();
+    });
   });
 
   it("shows a search that named only drugs outside the store as not supported", () => {

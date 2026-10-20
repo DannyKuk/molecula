@@ -99,7 +99,9 @@ class Retrieval(BaseModel):
 
     `widened` lists the parts of the filter given up because the labels it narrowed to have
     none of its section groups: "labels" searched every label of the named drugs (or any
-    product type).
+    product type). `mode` is the ranking the search used, `min_score` the similarity a candidate
+    needed to be kept and `section_group_boost` what a chunk in the filter's section groups
+    counted higher in the ranking.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -109,3 +111,6 @@ class Retrieval(BaseModel):
     chunks: list[RetrievedChunk]
     dropped: list[RetrievedChunk]
     widened: list[Widening] = []
+    mode: RetrievalMode
+    min_score: float
+    section_group_boost: float

@@ -248,6 +248,11 @@ def test_candidates_below_the_threshold_are_dropped_but_kept_for_the_trace(
     assert [chunk.id for chunk in retrieval.chunks] == [IMATINIB_SIDE_EFFECTS.id]
     assert [chunk.id for chunk in retrieval.dropped] == [IMATINIB_MECHANISM.id]
     assert retrieval.dropped[0].score < 0.5 <= retrieval.chunks[0].score
+    assert (retrieval.mode, retrieval.min_score, retrieval.section_group_boost) == (
+        "dense",
+        0.5,
+        BOOST,
+    )
 
 
 def test_the_threshold_applies_to_the_similarity_without_the_boost(index: LabelIndex) -> None:
@@ -408,6 +413,7 @@ def test_hybrid_ranks_by_reciprocal_rank_fusion(
     fused = [chunk.fused_score or 0.0 for chunk in retrieval.chunks]
     assert fused == sorted(fused, reverse=True)
     assert retrieval.chunks[0].dense_rank and retrieval.chunks[0].bm25_rank
+    assert retrieval.mode == "hybrid"
 
 
 def test_keyword_search_alone_keeps_the_cosine_similarity_as_the_score(

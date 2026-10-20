@@ -43,7 +43,13 @@ class FakeRetriever:
 
     def retrieve(self, question: str, label_filter: LabelFilter | None = None) -> Retrieval:
         return Retrieval(
-            question=question, filter=label_filter, chunks=self._chunks[question], dropped=[]
+            question=question,
+            filter=label_filter,
+            chunks=self._chunks[question],
+            dropped=[],
+            mode="dense",
+            min_score=0.0,
+            section_group_boost=0.15,
         )
 
 
