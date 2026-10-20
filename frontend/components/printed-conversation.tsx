@@ -10,7 +10,8 @@ import { structureSubtitle, structureTitle, type StructureTarget } from "@/lib/t
 
 import { OpenFdaCredit } from "./answer-sources";
 import { Disclaimer } from "./disclaimer";
-import { COLORS } from "./structure/scene";
+import { ELEMENT_NAMES } from "./structure/readout";
+import { COLORS, type Palette } from "./structure/scene";
 
 // The pieces of the printed conversation that the screen doesn't show. The rest of the print
 // design is the `@media print` section of `app/globals.css`.
@@ -142,7 +143,11 @@ export function PrintedStructure({
               alt={`${title}, as the 3D view first shows it`}
               className="block w-full border border-rule"
             />
-            {picture.complex && <PictureLegend name={target.name} complex={picture.complex} />}
+            <PictureLegend
+              name={target.name}
+              complex={picture.complex}
+              elements={picture.elements}
+            />
           </div>
           <figcaption className="text-[8pt] leading-snug">
             <p className="text-[10pt] font-semibold">{title}</p>
@@ -167,15 +172,37 @@ function withoutPicture(name: string, picture: Picture | undefined): string {
   return `For the 3D picture of ${name}, print from the chat's export menu ("Print or save as PDF").`;
 }
 
-/** The colours of the binding site, as in the 3D view's legend. The swatches are SVG, because
- * browsers leave out background colours when printing. */
-function PictureLegend({ name, complex }: { name: string; complex: Complex }) {
-  const colors = COLORS.paper;
+/** The colours of the picture, as in the 3D view's legend: the drug's carbons and `elements`, and
+ * in a complex the binding site's. The swatches are SVG, because browsers leave out background
+ * colours when printing. */
+function PictureLegend({
+  name,
+  complex,
+  elements,
+}: {
+  name: string;
+  complex: Complex | null;
+  elements: string[];
+}) {
+  const colors: Palette = COLORS.paper;
   return (
     <ul aria-label="Colours" className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[7.5pt]">
-      <LegendItem label={name}>
+      <LegendItem label={`${name} carbons`}>
         <circle cx="8" cy="4" r="3.5" fill={colors.drug} stroke="#16a34a" strokeWidth="0.75" />
       </LegendItem>
+      {elements.map((element) => (
+        <LegendItem key={element} label={ELEMENT_NAMES[element]}>
+          <circle cx="8" cy="4" r="3" fill={colors.elements[element]} />
+        </LegendItem>
+      ))}
+      {complex && <BindingSiteLegend complex={complex} colors={colors} />}
+    </ul>
+  );
+}
+
+function BindingSiteLegend({ complex, colors }: { complex: Complex; colors: Palette }) {
+  return (
+    <>
       <LegendItem label="hydrogen bond">
         <DashedLine color={colors.hbond} />
       </LegendItem>
@@ -192,7 +219,7 @@ function PictureLegend({ name, complex }: { name: string; complex: Complex }) {
       <LegendItem label="residues within 4 Å">
         <line x1="0" y1="4" x2="16" y2="4" stroke={colors.pocket} strokeWidth="2.5" />
       </LegendItem>
-    </ul>
+    </>
   );
 }
 

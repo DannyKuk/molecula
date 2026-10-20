@@ -92,7 +92,7 @@ const SCREEN: Palette = {
 /**
  * The colours of the view and its legend: the app's dark screen (#297), a shade darker in dark mode
  * (`--screen` in globals.css), and the light colours of the picture printed on white paper (#312),
- * with 3Dmol's green and grey carbons.
+ * which are 3Dmol's own.
  */
 export const COLORS = {
   screen: SCREEN,
@@ -108,13 +108,14 @@ export const COLORS = {
     hbond: "#d97706",
     coordination: "#9333ea",
     cofactor: "#0e7490",
-    elements: {},
+    // 3Dmol's defaults, written out for the printed legend.
+    elements: { N: "#8f8fff", O: "#f00000", S: "#ffc832" },
   },
 } satisfies Record<string, Palette>;
 
-/** Colours by element, with `carbon` for the carbons if given, else 3Dmol's light grey. */
-function byElement(elements: Record<string, string>, carbon?: string) {
-  return { prop: "elem", map: carbon ? { ...elements, C: carbon } : elements };
+/** Colours by element, with `carbon` for the carbons. */
+function byElement(elements: Record<string, string>, carbon: string) {
+  return { prop: "elem", map: { ...elements, C: carbon } };
 }
 
 // Zoomed out enough that the drug and its metals clear the title and the switch on the screen.
@@ -153,9 +154,11 @@ type DrugStyle = {
   sphere: { scale: number; colorscheme: Colorscheme };
 };
 
-function moleculeStyle(colors: Palette): DrugStyle {
-  const colorscheme = byElement(colors.elements);
-  return { stick: { radius: 0.15, colorscheme }, sphere: { scale: 0.25, colorscheme } };
+/** The drug in sticks and balls, with its carbons in the drug's colour in every view, so it looks
+ * the same when the view switches (#318). */
+function drugStyle(colors: Palette, radius: number): DrugStyle {
+  const colorscheme = byElement(colors.elements, colors.drug);
+  return { stick: { radius, colorscheme }, sphere: { scale: 0.25, colorscheme } };
 }
 
 /** Builds the 3D view in `element`, which must already have its size. */
@@ -247,7 +250,7 @@ function moleculeScene(
   common: Common,
 ): Scene {
   const model = viewer.addModel(sdf, "sdf");
-  const style = moleculeStyle(options.colors);
+  const style = drugStyle(options.colors, 0.15);
   const drug = assembly(model, style);
   const settle = () => {
     playing.current = null;
@@ -314,7 +317,7 @@ function complexScene(
   const outside = dockingPose(bound, approach, 0);
   const pocket = pocketResidues(complex);
   let mode = options.mode;
-  let ligandStyle = moleculeStyle(colors);
+  const ligandStyle = drugStyle(colors, 0.2);
 
   const placeLigand = (positions: Point[]) => {
     atoms.forEach((atom, i) => Object.assign(atom, positions[i]));
@@ -487,11 +490,6 @@ function complexScene(
 
   const setMode = (next: ViewMode, animate: boolean) => {
     mode = next;
-    const carbons = byElement(colors.elements, next === "molecule" ? undefined : colors.drug);
-    ligandStyle = {
-      stick: { radius: 0.2, colorscheme: carbons },
-      sphere: { scale: 0.25, colorscheme: carbons },
-    };
     if (animate && next !== "molecule" && !options.reduceMotion) playSequence(false);
     else settle();
   };

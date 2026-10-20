@@ -30,7 +30,12 @@ function turnWith(...tools: ToolRun[]): Turn {
 const IMATINIB = lookup("get_complex", IMATINIB_COMPLEX);
 const ACETAMINOPHEN = lookup("get_complex", ACETAMINOPHEN_NO_COMPLEX);
 
-const READY: Picture = { status: "ready", png: "data:image/png;base64,", complex: null };
+const READY: Picture = {
+  status: "ready",
+  png: "data:image/png;base64,",
+  complex: null,
+  elements: [],
+};
 
 const cids = (targets: StructureTarget[]) => targets.map((target) => target.cid);
 

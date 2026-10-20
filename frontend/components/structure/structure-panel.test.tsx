@@ -6,6 +6,7 @@ import { useImperativeHandle } from "react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { API_URL } from "@/lib/api";
+import IMATINIB_2HYY from "@/lib/fixtures/complex-5291.json";
 import { METAL_COMPLEX, SMALL_COMPLEX } from "@/lib/test-complexes";
 import { IMATINIB_COMPLEX, METFORMIN_COMPLEX } from "@/lib/test-tool-results";
 import type { DrugComplex } from "@/lib/tool-cards";
@@ -112,7 +113,9 @@ describe("StructurePanel", () => {
     expect(await screen.findByText("3 atoms")).toBeDefined();
     expect(screen.getByText("2 residues")).toBeDefined();
     expect(screen.getByText("3 H-bonds")).toBeDefined();
-    expect(swatch("imatinib").backgroundColor).toBe(css(COLORS.screen.drug));
+    expect(swatch("imatinib carbons").backgroundColor).toBe(css(COLORS.screen.drug));
+    expect(swatch("nitrogen").backgroundColor).toBe(css(COLORS.screen.elements.N));
+    expect(swatch("oxygen").backgroundColor).toBe(css(COLORS.screen.elements.O));
     expect(swatch("hydrogen bond").borderColor).toBe(css(COLORS.screen.hbond));
     expect(swatch("metal bond").borderColor).toBe(css(COLORS.screen.coordination));
     expect(swatch("cofactor").borderColor).toBe(css(COLORS.screen.cofactor));
@@ -120,6 +123,21 @@ describe("StructurePanel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Whole protein" }));
     expect(swatch("protein backbone").borderColor).toBe(css(COLORS.screen.trace));
+  });
+
+  it("names the drug's carbons and the nitrogen, oxygen and sulfur the view draws, in every view", async () => {
+    stubFetch(Response.json(IMATINIB_2HYY));
+    render(<StructurePanel target={imatinib} />);
+
+    expect(await screen.findByText("imatinib carbons")).toBeDefined();
+    // The sulfur is the pocket methionines', so it leaves the legend with the pocket.
+    expect(swatch("sulfur").backgroundColor).toBe(css(COLORS.screen.elements.S));
+
+    fireEvent.click(screen.getByRole("button", { name: "Molecule" }));
+    expect(screen.getByText("imatinib carbons")).toBeDefined();
+    expect(screen.getByText("nitrogen")).toBeDefined();
+    expect(screen.getByText("oxygen")).toBeDefined();
+    expect(screen.queryByText("sulfur")).toBeNull();
   });
 
   it("explains the metal bonds and cofactors of a complex that has them", async () => {
@@ -154,6 +172,9 @@ describe("StructurePanel", () => {
     expect(screen.queryByRole("button", { name: "Replay binding" })).toBeNull();
     expect(screen.getByText("11 atoms")).toBeDefined();
     expect(screen.queryByText(/residue/)).toBeNull();
+    expect(swatch("acetaminophen carbons").backgroundColor).toBe(css(COLORS.screen.drug));
+    expect(screen.getByText("nitrogen")).toBeDefined();
+    expect(screen.getByText("oxygen")).toBeDefined();
   });
 
   it("says why a drug without a 3D structure has no view", async () => {
