@@ -4,7 +4,7 @@ import { structuresOf, type StructureTarget } from "./tool-cards";
 
 /** A drug's 3D view as a still picture for paper; `missing` is a drug without a 3D model. */
 export type Picture =
-  | { status: "ready"; png: string; complex: Complex | null }
+  | { status: "ready"; png: string; complex: Complex | null; elements: string[] }
   | { status: "missing" }
   | { status: "failed" };
 

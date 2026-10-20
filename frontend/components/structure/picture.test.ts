@@ -45,7 +45,12 @@ describe("drawPicture", () => {
 
     const picture = await drawPicture(imatinib);
 
-    expect(picture).toEqual({ status: "ready", png: PNG, complex: SMALL_COMPLEX });
+    expect(picture).toEqual({
+      status: "ready",
+      png: PNG,
+      complex: SMALL_COMPLEX,
+      elements: ["N", "O"],
+    });
     const [, host, data, options] = vi.mocked(createScene).mock.calls[0];
     expect(data).toEqual({ kind: "complex", complex: SMALL_COMPLEX });
     expect(options).toEqual({ mode: "site", colors: COLORS.paper, reduceMotion: true });
@@ -60,7 +65,7 @@ describe("drawPicture", () => {
 
     const picture = await drawPicture(insulin);
 
-    expect(picture).toEqual({ status: "ready", png: PNG, complex: null });
+    expect(picture).toEqual({ status: "ready", png: PNG, complex: null, elements: [] });
     const [, , data, options] = vi.mocked(createScene).mock.calls[0];
     expect(data).toEqual({ kind: "molecule", sdf: "SDF" });
     expect(options.mode).toBe("molecule");

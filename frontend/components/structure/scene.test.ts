@@ -88,6 +88,10 @@ function fakeThreeDmol(sdfAtoms: FakeAtom[] = []) {
 
 const drawn = (atoms: FakeAtom[]) => atoms.filter((atom) => Object.keys(atom.style ?? {}).length);
 
+/** The element colours an atom's sticks are drawn in. */
+const colorMap = (atom: FakeAtom) =>
+  (atom.style as { stick: { colorscheme: { map: object } } }).stick.colorscheme.map;
+
 const options: SceneOptions = {
   mode: "site",
   colors: COLORS.screenDark,
@@ -156,17 +160,18 @@ describe("createScene", () => {
     expect(viewer.spin).toHaveBeenLastCalledWith("y", expect.any(Number));
   });
 
-  it("colours the drug's carbons lime next to the protein, and by element on its own", () => {
+  it("colours the drug's carbons lime in every view, and the pocket's grey", () => {
     const { scene, drug, models } = complexScene();
     const elements = { N: "#8ea6ff", O: "#ff6b5e", S: "#f2d16b" };
-    const carbons = () =>
-      (drug[0].style as { stick: { colorscheme: { map: object } } }).stick.colorscheme.map;
     const pocketStyle = vi.spyOn(models[0], "setStyle");
 
-    expect(carbons()).toEqual({ ...elements, C: "#c6f432" });
+    expect(colorMap(drug[0])).toEqual({ ...elements, C: "#c6f432" });
 
     scene.setMode("molecule", false);
-    expect(carbons()).toEqual(elements);
+    expect(colorMap(drug[0])).toEqual({ ...elements, C: "#c6f432" });
+
+    scene.setMode("protein", false);
+    expect(colorMap(drug[0])).toEqual({ ...elements, C: "#c6f432" });
 
     scene.setMode("site", false);
     expect(pocketStyle).toHaveBeenCalledWith(
@@ -189,8 +194,21 @@ describe("createScene", () => {
     );
   });
 
-  it("draws the printed picture in 3Dmol's green carbons and element colours on a light background", () => {
-    const { lib, viewer, drug } = complexScene({ colors: COLORS.paper });
+  it("colours the carbons of a drug without a complex lime too", () => {
+    const { lib, models } = fakeThreeDmol([{ x: 0, y: 0, z: 0, elem: "C" }]);
+    createScene(lib, document.createElement("div"), sdf, options);
+
+    expect(colorMap(models[0].atoms[0])).toEqual({
+      N: "#8ea6ff",
+      O: "#ff6b5e",
+      S: "#f2d16b",
+      C: "#c6f432",
+    });
+  });
+
+  it("draws the printed picture in 3Dmol's green carbons and element colours on a light background, in every view", () => {
+    const paper = { N: "#8f8fff", O: "#f00000", S: "#ffc832", C: "#00ff00" };
+    const { lib, viewer, drug, scene } = complexScene({ colors: COLORS.paper });
     const lineColors = viewer.addCylinder.mock.calls.map(
       ([line]) => (line as { color: string }).color,
     );
@@ -199,11 +217,11 @@ describe("createScene", () => {
       backgroundColor: "#f2f2ee",
       antialias: true,
     });
-    expect((drug[0].style as { stick: { colorscheme: object } }).stick.colorscheme).toEqual({
-      prop: "elem",
-      map: { C: "#00ff00" },
-    });
+    expect(colorMap(drug[0])).toEqual(paper);
     expect(lineColors).toEqual(["#d97706", "#d97706"]);
+
+    scene.setMode("molecule", false);
+    expect(colorMap(drug[0])).toEqual(paper);
   });
 
   it("shows the drug alone in Molecule mode", () => {

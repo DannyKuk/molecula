@@ -19,7 +19,7 @@ import { coordinationBonds } from "@/lib/complex-scene";
 import { structureSubtitle, structureTitle, type StructureTarget } from "@/lib/tool-cards";
 import { useMediaQuery } from "@/lib/use-media-query";
 
-import { readout } from "./readout";
+import { ELEMENT_NAMES, legendElements, readout } from "./readout";
 import { COLORS, type SceneData, type ViewMode } from "./scene";
 import { StructureViewer, type StructureViewerHandle } from "./structure-viewer";
 
@@ -132,13 +132,23 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
 
   const legend = ready && (
     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-2">
+      <LegendItem
+        swatch={<span className="size-2.5 rounded-full" style={fill(COLORS.screen.drug)} />}
+      >
+        {target.name} carbons
+      </LegendItem>
+      {legendElements(ready, mode).map((element) => (
+        <LegendItem
+          key={element}
+          swatch={
+            <span className="size-2 rounded-full" style={fill(COLORS.screen.elements[element])} />
+          }
+        >
+          {ELEMENT_NAMES[element]}
+        </LegendItem>
+      ))}
       {switchable && mode !== "molecule" && (
         <>
-          <LegendItem
-            swatch={<span className="size-2.5 rounded-full" style={fill(COLORS.screen.drug)} />}
-          >
-            {target.name}
-          </LegendItem>
           <LegendItem
             swatch={
               <span className="w-4 border-t-2 border-dashed" style={line(COLORS.screen.hbond)} />

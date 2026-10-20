@@ -17,6 +17,7 @@ import {
   PrintedSources,
   PrintedStructure,
 } from "./printed-conversation";
+import { COLORS } from "./structure/scene";
 
 const PDE5A: Source = {
   kind: "chembl",
@@ -110,7 +111,7 @@ describe("PrintedStructure", () => {
     render(
       <PrintedStructure
         target={imatinib}
-        picture={{ status: "ready", png: PNG, complex: SMALL_COMPLEX }}
+        picture={{ status: "ready", png: PNG, complex: SMALL_COMPLEX, elements: ["N", "O"] }}
       />,
     );
 
@@ -123,35 +124,52 @@ describe("PrintedStructure", () => {
   });
 
   it("draws the legend of the binding site, with metal bonds and cofactors when it has them", () => {
-    const drawn = (complex: Complex): Picture => ({ status: "ready", png: PNG, complex });
+    const drawn = (complex: Complex): Picture => ({
+      status: "ready",
+      png: PNG,
+      complex,
+      elements: ["N", "O"],
+    });
     const { rerender } = render(
       <PrintedStructure target={imatinib} picture={drawn(SMALL_COMPLEX)} />,
     );
-    expect(legend()).toEqual(["imatinib", "hydrogen bond", "residues within 4 Å"]);
+    expect(legend()).toEqual([
+      "imatinib carbons",
+      "nitrogen",
+      "oxygen",
+      "hydrogen bond",
+      "residues within 4 Å",
+    ]);
 
     rerender(<PrintedStructure target={imatinib} picture={drawn(METAL_COMPLEX)} />);
     expect(legend()).toEqual([
-      "imatinib",
+      "imatinib carbons",
+      "nitrogen",
+      "oxygen",
       "hydrogen bond",
       "metal bond",
       "cofactor",
       "residues within 4 Å",
     ]);
     // Drawn, because browsers leave background colours out of print.
-    expect(screen.getByRole("list", { name: "Colours" }).querySelectorAll("svg")).toHaveLength(5);
+    expect(screen.getByRole("list", { name: "Colours" }).querySelectorAll("svg")).toHaveLength(7);
+    const fills = [...screen.getByRole("list", { name: "Colours" }).querySelectorAll("circle")].map(
+      (circle) => circle.getAttribute("fill"),
+    );
+    expect(fills).toEqual([COLORS.paper.drug, COLORS.paper.elements.N, COLORS.paper.elements.O]);
   });
 
-  it("prints a drug without a complex as the molecule alone, without a legend", () => {
+  it("prints a drug without a complex as the molecule alone, with the legend of its colours", () => {
     render(
       <PrintedStructure
         target={acetaminophen}
-        picture={{ status: "ready", png: PNG, complex: null }}
+        picture={{ status: "ready", png: PNG, complex: null, elements: ["N", "O"] }}
       />,
     );
 
     expect(screen.getByRole("img", { name: /^Acetaminophen,/ })).toBeDefined();
     expect(screen.getByText(/the molecule alone/)).toBeDefined();
-    expect(screen.queryByRole("list", { name: "Colours" })).toBeNull();
+    expect(legend()).toEqual(["acetaminophen carbons", "nitrogen", "oxygen"]);
   });
 
   it("prints a line instead of a picture that couldn't be drawn, or a drug without a 3D model", () => {

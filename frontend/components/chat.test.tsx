@@ -1148,7 +1148,9 @@ describe("Chat export", () => {
     );
     expect(printed).toEqual([]);
 
-    await act(async () => finish({ status: "ready", png: PNG, complex: SMALL_COMPLEX }));
+    await act(async () =>
+      finish({ status: "ready", png: PNG, complex: SMALL_COMPLEX, elements: ["N", "O"] }),
+    );
 
     await vi.waitFor(() => expect(printed).toEqual([[PNG]]));
     const figure = screen.getByRole("figure", { name: "3D structure of imatinib" });
@@ -1157,7 +1159,12 @@ describe("Chat export", () => {
 
   it("draws a picture once, also when the chat is printed again", async () => {
     const printed = stubPrint();
-    pictures.draw.mockResolvedValue({ status: "ready", png: PNG, complex: SMALL_COMPLEX });
+    pictures.draw.mockResolvedValue({
+      status: "ready",
+      png: PNG,
+      complex: SMALL_COMPLEX,
+      elements: ["N", "O"],
+    });
     await answerImatinibIn3d();
 
     await pick("Print or save as PDF");
