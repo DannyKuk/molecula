@@ -55,8 +55,12 @@ export type Scene = {
   dispose(): void;
 };
 
+// `background` is the card colour (`--card` in globals.css). The view is drawn on it, not on a
+// transparent canvas: Chrome on the owner's AMD GPU showed the transparent white clear colour as
+// solid white, and 3Dmol fades distant atoms into the background colour.
 const COLORS = {
   dark: {
+    background: "#232528",
     trace: "#a1a1aa",
     label: "#fafafa",
     labelBackground: "#18181b",
@@ -65,6 +69,7 @@ const COLORS = {
     cofactor: "#22d3ee",
   },
   light: {
+    background: "#f2f2ee",
     trace: "#71717a",
     label: "#18181b",
     labelBackground: "#ffffff",
@@ -119,7 +124,10 @@ export function createScene(
   const box = document.createElement("div");
   box.style.cssText = "position: absolute; inset: 0;";
   element.append(box);
-  const viewer = lib.createViewer(box, { backgroundAlpha: 0, antialias: true });
+  const viewer = lib.createViewer(box, {
+    backgroundColor: (options.dark ? COLORS.dark : COLORS.light).background,
+    antialias: true,
+  });
   let wanted = false;
   let onScreen = true;
   let grabbed = false;

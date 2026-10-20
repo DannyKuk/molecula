@@ -180,7 +180,7 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
           mode={mode}
           label={`${title}, in 3D`}
           onError={failed}
-          className="h-[380px] rounded-lg border border-rule"
+          className="h-[380px] rounded-lg border border-rule bg-card"
         />
       ) : (
         <Placeholder
@@ -214,7 +214,7 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
               mode={mode}
               label={`${title}, in 3D`}
               onError={failed}
-              className="min-h-0 flex-1 rounded-lg border border-rule"
+              className="min-h-0 flex-1 rounded-lg border border-rule bg-card"
             />
             {legend}
           </DialogContent>
