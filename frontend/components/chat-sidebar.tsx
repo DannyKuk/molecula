@@ -110,7 +110,7 @@ export function ChatSidebar(props: ChatListProps) {
         </IconButton>
         <span className="pl-1 text-[15px] font-semibold">Chats</span>
       </div>
-      <ChatList {...props} />
+      <ChatList {...props} withMcp />
     </aside>
   );
 }
@@ -207,10 +207,15 @@ export function ChatDrawer(props: ChatListProps) {
 }
 
 /**
- * "New chat", the benchmarks link, the MCP server guide, the bookmarked chats, the others by day,
- * newest first, and what to know about where they are kept.
+ * "New chat", the benchmarks link, the MCP server guide when `withMcp`, the bookmarked chats, the
+ * others by day, newest first, and what to know about where they are kept.
  */
-function ChatList({ onNew, removedBookmark, ...props }: ChatListProps) {
+function ChatList({
+  onNew,
+  removedBookmark,
+  withMcp = false,
+  ...props
+}: ChatListProps & { withMcp?: boolean }) {
   return (
     <>
       <div className="px-3 pt-2 pb-2">
@@ -222,10 +227,13 @@ function ChatList({ onNew, removedBookmark, ...props }: ChatListProps) {
           <ChartColumn />
           Benchmarks
         </Link>
-        <McpDialog trigger={<button type="button" className={LIST_LINK} />}>
-          <Plug />
-          MCP server
-        </McpDialog>
+        {withMcp && (
+          // Connecting an assistant needs a checkout on a computer, so the phone drawer leaves it out.
+          <McpDialog trigger={<button type="button" className={LIST_LINK} />}>
+            <Plug />
+            MCP server
+          </McpDialog>
+        )}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
         <ChatGroups {...props} />
