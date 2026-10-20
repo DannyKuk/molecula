@@ -81,7 +81,7 @@
   --muted-foreground: var(--ink-2);
   --accent: var(--panel);
   --accent-foreground: var(--ink);
-  --destructive: #c4321a;
+  --destructive: oklch(0.577 0.245 27.325);
   --border: var(--rule);
   --input: var(--rule-2);
   --ring: var(--ink-3);
@@ -112,7 +112,7 @@
     --signal: #ff6a26;
     --signal-soft: #3a2014;
     --ok: #7fd18f;
-    --destructive: #ff6b4a;
+    --destructive: oklch(0.704 0.191 22.216);
     --series-drug: #3987e5;
     --series-index: #d95926;
     --rank-first: #9ec5f4;
