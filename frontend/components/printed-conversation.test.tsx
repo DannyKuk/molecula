@@ -1,11 +1,22 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
+import type { Complex } from "@/lib/api";
 import type { Source } from "@/lib/chat";
 import { startTurn, type Turn } from "@/lib/chat-turn";
+import type { Picture } from "@/lib/printed-pictures";
+import { METAL_COMPLEX, SMALL_COMPLEX } from "@/lib/test-complexes";
 import { IMATINIB_SOURCES } from "@/lib/test-fixtures";
+import { IMATINIB_COMPLEX } from "@/lib/test-tool-results";
+import type { DrugComplex, StructureTarget } from "@/lib/tool-cards";
 
-import { askedTime, PrintedEnd, PrintedHeader, PrintedSources } from "./printed-conversation";
+import {
+  askedTime,
+  PrintedEnd,
+  PrintedHeader,
+  PrintedSources,
+  PrintedStructure,
+} from "./printed-conversation";
 
 const PDE5A: Source = {
   kind: "chembl",
@@ -76,6 +87,90 @@ describe("PrintedSources", () => {
     const { container } = render(<PrintedSources sources={[]} />);
 
     expect(container.innerHTML).toBe("");
+  });
+});
+
+describe("PrintedStructure", () => {
+  const imatinib: StructureTarget = {
+    cid: 5291,
+    name: "imatinib",
+    complex: IMATINIB_COMPLEX as DrugComplex,
+  };
+  const acetaminophen: StructureTarget = { cid: 1983, name: "acetaminophen", complex: null };
+  const PNG = "data:image/png;base64,iVBORw0KGgo=";
+
+  function legend(): string[] {
+    const colours = screen.getByRole("list", { name: "Colours" });
+    return within(colours)
+      .getAllByRole("listitem")
+      .map((item) => item.textContent);
+  }
+
+  it("prints the picture with the drug, its target and PDB ID, on paper only", () => {
+    render(
+      <PrintedStructure
+        target={imatinib}
+        picture={{ status: "ready", png: PNG, complex: SMALL_COMPLEX }}
+      />,
+    );
+
+    const figure = screen.getByRole("figure", { name: "3D structure of imatinib" });
+    expect(figure.className).toContain("hidden");
+    expect(figure.className).toContain("print:block");
+    const image = within(figure).getByRole("img", { name: /^Imatinib in ABL1 \(BCR-ABL\),/ });
+    expect(image.getAttribute("src")).toBe(PNG);
+    expect(within(figure).getByText("PDB 2HYY · Homo sapiens · 6 hydrogen bonds")).toBeDefined();
+  });
+
+  it("draws the legend of the binding site, with metal bonds and cofactors when it has them", () => {
+    const drawn = (complex: Complex): Picture => ({ status: "ready", png: PNG, complex });
+    const { rerender } = render(
+      <PrintedStructure target={imatinib} picture={drawn(SMALL_COMPLEX)} />,
+    );
+    expect(legend()).toEqual(["imatinib", "hydrogen bond", "residues within 4 Å"]);
+
+    rerender(<PrintedStructure target={imatinib} picture={drawn(METAL_COMPLEX)} />);
+    expect(legend()).toEqual([
+      "imatinib",
+      "hydrogen bond",
+      "metal bond",
+      "cofactor",
+      "residues within 4 Å",
+    ]);
+    // Drawn, because browsers leave background colours out of print.
+    expect(screen.getByRole("list", { name: "Colours" }).querySelectorAll("svg")).toHaveLength(5);
+  });
+
+  it("prints a drug without a complex as the molecule alone, without a legend", () => {
+    render(
+      <PrintedStructure
+        target={acetaminophen}
+        picture={{ status: "ready", png: PNG, complex: null }}
+      />,
+    );
+
+    expect(screen.getByRole("img", { name: /^Acetaminophen,/ })).toBeDefined();
+    expect(screen.getByText(/the molecule alone/)).toBeDefined();
+    expect(screen.queryByRole("list", { name: "Colours" })).toBeNull();
+  });
+
+  it("prints a line instead of a picture that couldn't be drawn, or a drug without a 3D model", () => {
+    const { rerender } = render(
+      <PrintedStructure target={imatinib} picture={{ status: "failed" }} />,
+    );
+    expect(screen.getByText("The 3D picture of imatinib couldn't be drawn.")).toBeDefined();
+    expect(screen.queryByRole("img")).toBeNull();
+
+    rerender(<PrintedStructure target={acetaminophen} picture={{ status: "missing" }} />);
+    expect(screen.getByText(/^No 3D model: .* acetaminophen is too large\.$/)).toBeDefined();
+  });
+
+  it("points to the export menu when the print didn't start there", () => {
+    render(<PrintedStructure target={imatinib} picture={undefined} />);
+
+    expect(
+      screen.getByText(/^For the 3D picture of imatinib, print from the chat's export menu/),
+    ).toBeDefined();
   });
 });
 

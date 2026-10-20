@@ -52,13 +52,15 @@ export type Scene = {
   /** The camera to build the view again with, or null while the sequence plays. */
   camera(): Camera | null;
   resize(): void;
+  /** The view as it is drawn now, as a PNG data URL. */
+  picture(): string;
   dispose(): void;
 };
 
 // `background` is the card colour (`--card` in globals.css). The view is drawn on it, not on a
 // transparent canvas: Chrome on the owner's AMD GPU showed the transparent white clear colour as
 // solid white, and 3Dmol fades distant atoms into the background colour.
-const COLORS = {
+export const COLORS = {
   dark: {
     background: "#232528",
     trace: "#a1a1aa",
@@ -171,6 +173,7 @@ export function createScene(
       viewer.resize();
       viewer.render();
     },
+    picture: () => viewer.pngURI(),
     dispose: () => {
       playing.current?.stop();
       box.removeEventListener("pointerdown", grab);
@@ -189,7 +192,7 @@ export function createScene(
   return scene;
 }
 
-type Common = Pick<Scene, "setOnScreen" | "camera" | "resize" | "dispose">;
+type Common = Pick<Scene, "setOnScreen" | "camera" | "resize" | "picture" | "dispose">;
 
 function moleculeScene(
   viewer: GLViewer,

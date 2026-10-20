@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CHAT_FAILED, CHAT_UNAVAILABLE } from "@/lib/chat";
 import { MAX_MESSAGE_LENGTH } from "@/lib/chat-limits";
+import type { Picture } from "@/lib/printed-pictures";
+import { SMALL_COMPLEX } from "@/lib/test-complexes";
 import {
   chatFrame,
   chatScrollArea,
@@ -31,6 +33,12 @@ vi.mock("./model-status", () => ({ ModelStatus: () => null }));
 vi.mock("./structure/structure-panel", () => ({
   StructurePanel: ({ target }: { target: StructureTarget }) => <p>3D view of {target.name}</p>,
 }));
+
+const pictures = vi.hoisted(() => ({ draw: vi.fn() }));
+vi.mock("./structure/picture", () => ({ drawPicture: pictures.draw }));
+
+// jsdom doesn't decode images; the chat waits for the printed pictures to be decoded.
+HTMLImageElement.prototype.decode = () => Promise.resolve();
 
 let page: ReturnType<typeof stubPage>;
 
@@ -1100,7 +1108,88 @@ describe("Chat export", () => {
 
     await pick("Print or save as PDF");
 
-    expect(print).toHaveBeenCalledOnce();
+    await vi.waitFor(() => expect(print).toHaveBeenCalledOnce());
+    expect(pictures.draw).not.toHaveBeenCalled();
+  });
+
+  async function answerImatinibIn3d() {
+    const stream = stubChatStream();
+    render(<Chat />);
+    askQuestion("What does imatinib bind to?");
+    await streamed(() => stream.send(IMATINIB_IN_3D + token("It binds ABL1.") + DONE));
+  }
+
+  const PNG = "data:image/png;base64,iVBORw0KGgo=";
+
+  /** A stand-in for `window.print` that notes which pictures were on the page when it was called. */
+  function stubPrint() {
+    const printed: string[][] = [];
+    const print = vi.fn(() => {
+      const images = document.querySelectorAll<HTMLImageElement>("img[data-printed-picture]");
+      printed.push([...images].map((image) => image.src));
+    });
+    vi.stubGlobal("print", print);
+    return printed;
+  }
+
+  it("draws the 3D pictures before it opens the print dialog, and says so meanwhile", async () => {
+    const printed = stubPrint();
+    let finish!: (picture: Picture) => void;
+    pictures.draw.mockReturnValue(new Promise((resolve) => (finish = resolve)));
+    await answerImatinibIn3d();
+
+    await pick("Print or save as PDF");
+
+    expect(
+      await screen.findByRole("menuitem", { name: "Preparing the 3D pictures…" }),
+    ).toBeDefined();
+    expect(pictures.draw).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ cid: 5291, name: "imatinib" }),
+    );
+    expect(printed).toEqual([]);
+
+    await act(async () => finish({ status: "ready", png: PNG, complex: SMALL_COMPLEX }));
+
+    await vi.waitFor(() => expect(printed).toEqual([[PNG]]));
+    const figure = screen.getByRole("figure", { name: "3D structure of imatinib" });
+    expect(within(figure).getByText("PDB 2HYY · Homo sapiens · 6 hydrogen bonds")).toBeDefined();
+  });
+
+  it("draws a picture once, also when the chat is printed again", async () => {
+    const printed = stubPrint();
+    pictures.draw.mockResolvedValue({ status: "ready", png: PNG, complex: SMALL_COMPLEX });
+    await answerImatinibIn3d();
+
+    await pick("Print or save as PDF");
+    await vi.waitFor(() => expect(printed).toHaveLength(1));
+    await pick("Print or save as PDF");
+    await vi.waitFor(() => expect(printed).toHaveLength(2));
+
+    expect(printed[1]).toEqual([PNG]);
+    expect(pictures.draw).toHaveBeenCalledOnce();
+  });
+
+  it("prints a line instead of a picture that can't be drawn, without holding back the print", async () => {
+    const printed = stubPrint();
+    pictures.draw.mockRejectedValue(new Error("WebGL is off"));
+    await answerImatinibIn3d();
+
+    await pick("Print or save as PDF");
+
+    await vi.waitFor(() => expect(printed).toEqual([[]]));
+    expect(screen.getByText("The 3D picture of imatinib couldn't be drawn.")).toBeDefined();
+  });
+
+  it("points to the export menu on paper until the pictures were drawn there", async () => {
+    await answerImatinibIn3d();
+
+    const figure = screen.getByRole("figure", { name: "3D structure of imatinib" });
+    expect(
+      within(figure).getByText(
+        /^For the 3D picture of imatinib, print from the chat's export menu/,
+      ),
+    ).toBeDefined();
+    expect(pictures.draw).not.toHaveBeenCalled();
   });
 
   it("prints how many questions there are and the day above the conversation, on paper only", async () => {

@@ -66,6 +66,7 @@ describe("CopyCheckReport", () => {
       onShow: () => {},
       onAsk: () => {},
       chatAnswering: false,
+      pictures: new Map(),
     };
     const { rerender } = render(<ConversationTurn turn={answering} {...props} />);
 

@@ -3,7 +3,9 @@ import { cn } from "cn";
 import type { Turn } from "@/lib/chat-turn";
 import { didYouMeanOf } from "@/lib/did-you-mean";
 import type { EvidenceTab } from "@/lib/evidence";
+import type { Pictures } from "@/lib/printed-pictures";
 import { checkingAnswer } from "@/lib/source-check";
+import { structuresOf } from "@/lib/tool-cards";
 import { formatUsage } from "@/lib/usage";
 
 import { AnswerMarkdown } from "./answer-markdown";
@@ -11,7 +13,7 @@ import { OpenCitedSources } from "./citation-chip";
 import { CopyCheckReport } from "./copy-check-report";
 import { DidYouMeanButtons } from "./did-you-mean";
 import { EvidencePills } from "./evidence-pills";
-import { askedTime, PrintedSources } from "./printed-conversation";
+import { askedTime, PrintedSources, PrintedStructure } from "./printed-conversation";
 import { SourceCheckBadge } from "./source-check-badge";
 
 type ConversationTurnProps = {
@@ -28,6 +30,8 @@ type ConversationTurnProps = {
   chatAnswering: boolean;
   /** Set on the latest turn only, when it failed. */
   onRetry?: () => void;
+  /** The pictures of the 3D structures for paper, by CID. */
+  pictures: Pictures;
 };
 
 /**
@@ -42,6 +46,7 @@ export function ConversationTurn({
   onAsk,
   chatAnswering,
   onRetry,
+  pictures,
 }: ConversationTurnProps) {
   const answering = turn.state === "answering";
   const offers = answering ? [] : didYouMeanOf(turn.question, turn.steps);
@@ -90,6 +95,9 @@ export function ConversationTurn({
           {formatUsage(turn.usage)}
         </p>
       )}
+      {structuresOf(turn.steps).map((target) => (
+        <PrintedStructure key={target.cid} target={target} picture={pictures.get(target.cid)} />
+      ))}
       {turn.sources && <PrintedSources sources={turn.sources} />}
       {offers.length > 0 && (
         <div className="contents print:hidden">
