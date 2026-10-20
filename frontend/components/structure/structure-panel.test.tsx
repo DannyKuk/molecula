@@ -140,6 +140,23 @@ describe("StructurePanel", () => {
     expect(screen.queryByText("sulfur")).toBeNull();
   });
 
+  it("names a drug's chlorine in its own colour, in every view", async () => {
+    const chlorine = { name: "CL1", element: "Cl", xyz: [13, 0, 0] };
+    stubFetch(
+      Response.json({
+        ...SMALL_COMPLEX,
+        ligand: { ...SMALL_COMPLEX.ligand, atoms: [...SMALL_COMPLEX.ligand.atoms, chlorine] },
+      }),
+    );
+    render(<StructurePanel target={imatinib} />);
+
+    expect(await screen.findByText("chlorine")).toBeDefined();
+    expect(swatch("chlorine").backgroundColor).toBe(css(COLORS.screen.elements.Cl));
+
+    fireEvent.click(screen.getByRole("button", { name: "Molecule" }));
+    expect(screen.getByText("chlorine")).toBeDefined();
+  });
+
   it("explains the metal bonds and cofactors of a complex that has them", async () => {
     stubFetch(Response.json(METAL_COMPLEX));
     render(<StructurePanel target={imatinib} />);
@@ -173,6 +190,7 @@ describe("StructurePanel", () => {
     expect(screen.getByText("11 atoms")).toBeDefined();
     expect(screen.queryByText(/residue/)).toBeNull();
     expect(swatch("acetaminophen carbons").backgroundColor).toBe(css(COLORS.screen.drug));
+    expect(swatch("hydrogen").backgroundColor).toBe(css(COLORS.screen.elements.H));
     expect(screen.getByText("nitrogen")).toBeDefined();
     expect(screen.getByText("oxygen")).toBeDefined();
   });

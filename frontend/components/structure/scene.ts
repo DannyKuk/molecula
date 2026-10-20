@@ -66,7 +66,8 @@ export type Palette = {
   hbond: string;
   coordination: string;
   cofactor: string;
-  /** Element colours in place of 3Dmol's; the elements left out keep 3Dmol's. */
+  /** A colour for every element the legend names (`ELEMENT_NAMES`), so the view never falls back
+   * to 3Dmol's own and the legend shows what is drawn. */
   elements: Record<string, string>;
 };
 
@@ -85,14 +86,25 @@ const SCREEN: Palette = {
   hbond: "#ff7a3d",
   coordination: "#c084fc",
   cofactor: "#22d3ee",
-  // 3Dmol's own nitrogen, oxygen and sulfur are too dark or too loud on the screen.
-  elements: { N: "#8ea6ff", O: "#ff6b5e", S: "#f2d16b" },
+  // 3Dmol's own nitrogen, oxygen and sulfur are too dark or too loud on the screen. Its chlorine
+  // green read as one more of the drug's lime carbons, so chlorine is pink and fluorine a bluer
+  // green than the carbons (#322).
+  elements: {
+    H: "#ffffff",
+    Cl: "#f472b6",
+    F: "#34d399",
+    I: "#a970ff",
+    N: "#8ea6ff",
+    O: "#ff6b5e",
+    P: "#ffa64d",
+    S: "#f2d16b",
+  },
 };
 
 /**
  * The colours of the view and its legend: the app's dark screen (#297), a shade darker in dark mode
  * (`--screen` in globals.css), and the light colours of the picture printed on white paper (#312),
- * which are 3Dmol's own.
+ * mostly 3Dmol's own.
  */
 export const COLORS = {
   screen: SCREEN,
@@ -108,8 +120,19 @@ export const COLORS = {
     hbond: "#d97706",
     coordination: "#9333ea",
     cofactor: "#0e7490",
-    // 3Dmol's defaults, written out for the printed legend.
-    elements: { N: "#8f8fff", O: "#f00000", S: "#ffc832" },
+    // 3Dmol's colours, written out for the printed legend, except three that clash on paper (#322):
+    // its chlorine is the drug's green and its fluorine near sulfur, so they take the screen's hues,
+    // and its white hydrogen wouldn't show.
+    elements: {
+      H: "#b0b0b0",
+      Cl: "#db2777",
+      F: "#34d399",
+      I: "#a020f0",
+      N: "#8f8fff",
+      O: "#f00000",
+      P: "#ffa500",
+      S: "#ffc832",
+    },
   },
 } satisfies Record<string, Palette>;
 

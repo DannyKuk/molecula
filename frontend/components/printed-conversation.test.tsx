@@ -128,13 +128,14 @@ describe("PrintedStructure", () => {
       status: "ready",
       png: PNG,
       complex,
-      elements: ["N", "O"],
+      elements: ["Cl", "N", "O"],
     });
     const { rerender } = render(
       <PrintedStructure target={imatinib} picture={drawn(SMALL_COMPLEX)} />,
     );
     expect(legend()).toEqual([
       "imatinib carbons",
+      "chlorine",
       "nitrogen",
       "oxygen",
       "hydrogen bond",
@@ -144,6 +145,7 @@ describe("PrintedStructure", () => {
     rerender(<PrintedStructure target={imatinib} picture={drawn(METAL_COMPLEX)} />);
     expect(legend()).toEqual([
       "imatinib carbons",
+      "chlorine",
       "nitrogen",
       "oxygen",
       "hydrogen bond",
@@ -152,24 +154,29 @@ describe("PrintedStructure", () => {
       "residues within 4 Å",
     ]);
     // Drawn, because browsers leave background colours out of print.
-    expect(screen.getByRole("list", { name: "Colours" }).querySelectorAll("svg")).toHaveLength(7);
+    expect(screen.getByRole("list", { name: "Colours" }).querySelectorAll("svg")).toHaveLength(8);
     const fills = [...screen.getByRole("list", { name: "Colours" }).querySelectorAll("circle")].map(
       (circle) => circle.getAttribute("fill"),
     );
-    expect(fills).toEqual([COLORS.paper.drug, COLORS.paper.elements.N, COLORS.paper.elements.O]);
+    expect(fills).toEqual([
+      COLORS.paper.drug,
+      COLORS.paper.elements.Cl,
+      COLORS.paper.elements.N,
+      COLORS.paper.elements.O,
+    ]);
   });
 
   it("prints a drug without a complex as the molecule alone, with the legend of its colours", () => {
     render(
       <PrintedStructure
         target={acetaminophen}
-        picture={{ status: "ready", png: PNG, complex: null, elements: ["N", "O"] }}
+        picture={{ status: "ready", png: PNG, complex: null, elements: ["H", "N", "O"] }}
       />,
     );
 
     expect(screen.getByRole("img", { name: /^Acetaminophen,/ })).toBeDefined();
     expect(screen.getByText(/the molecule alone/)).toBeDefined();
-    expect(legend()).toEqual(["acetaminophen carbons", "nitrogen", "oxygen"]);
+    expect(legend()).toEqual(["acetaminophen carbons", "hydrogen", "nitrogen", "oxygen"]);
   });
 
   it("prints a line instead of a picture that couldn't be drawn, or a drug without a 3D model", () => {
