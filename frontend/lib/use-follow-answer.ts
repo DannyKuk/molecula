@@ -7,7 +7,8 @@ const NEAR_END = 48;
 const ABOVE_TOP = 16;
 
 /**
- * Scrolls the chat's `scroller` to its end each time a question is `sent` and then, while
+ * Scrolls the chat's `scroller` to its end each time a `conversation` is shown or a question is
+ * `sent` and then, while
  * `answering`, keeps it there as `content` grows, like a terminal. The reader scrolling up stops
  * that, and scrolling back down to the end starts it again. `onReaderScroll` hears of every move the
  * reader makes, never of the chat's own. Returns `followAgain`, which goes back to the end and
@@ -17,6 +18,7 @@ const ABOVE_TOP = 16;
 export function useFollowAnswer(
   scroller: RefObject<HTMLElement | null>,
   content: RefObject<HTMLElement | null>,
+  conversation: string | null,
   sent: number,
   answering: boolean,
   onReaderScroll: () => void = () => {},
@@ -47,11 +49,12 @@ export function useFollowAnswer(
 
   // Layout effects, so the chat moves before it is painted and stops following in the same
   // commit that turns `answering` off.
+  // An opened chat starts at its newest message (#311); the page's first, empty chat needs no move.
   useLayoutEffect(() => {
-    if (sent === 0 || !scroller.current) return;
+    if ((sent === 0 && conversation === null) || !scroller.current) return;
     atEnd.current = true;
     scrollToEnd(scroller.current, lastTop);
-  }, [scroller, sent]);
+  }, [scroller, conversation, sent]);
 
   useLayoutEffect(() => {
     const area = scroller.current;

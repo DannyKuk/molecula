@@ -3,7 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ChatHistory } from "@/lib/chat-history";
 import { startTurn } from "@/lib/chat-turn";
-import { chatFrame, DONE, memoryHistory, stubChatStream, stubPage } from "@/lib/test-fixtures";
+import {
+  chatFrame,
+  chatScrollArea,
+  DONE,
+  memoryHistory,
+  stubChatStream,
+  stubPage,
+} from "@/lib/test-fixtures";
 import { SIDEBAR_KEY } from "@/lib/use-sidebar-expanded";
 
 import { Chat } from "./chat";
@@ -112,6 +119,33 @@ function historyWith(titles: string[]) {
     });
   });
   return memory;
+}
+
+/** A history that holds one finished chat, "c0", that asked each of `questions` in turn. */
+function historyAsking(questions: string[]) {
+  const memory = memoryHistory();
+  memory.stored.set("c0", {
+    id: "c0",
+    title: questions[0],
+    turns: questions.map((question) => ({
+      ...startTurn(question),
+      answer: `About ${question}.`,
+      state: "done" as const,
+    })),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  });
+  return memory;
+}
+
+/** Where the chat stands: the evidence panel's answer and the question the navigator marks. */
+function shownAnswer() {
+  const evidence = within(screen.getByRole("complementary", { name: "Evidence" }));
+  const questions = screen.getByRole("navigation", { name: "Questions in this chat" });
+  return {
+    panel: evidence.getByRole("heading", { level: 2 }).textContent,
+    navigator: questions.querySelector("button[aria-current]")?.ariaLabel,
+  };
 }
 
 function bookmarkFromRow(title: string) {
@@ -489,6 +523,32 @@ describe("Answers in the background", () => {
     await waitFor(() => expect([...stored.values()].map((c) => c.title)).toEqual([IMATINIB]));
   });
 
+  it("opens a saved chat at its newest message", async () => {
+    await openPage(historyAsking([IMATINIB, SILDENAFIL]).history);
+    page.scrollTo.mockClear();
+
+    fireEvent.click(expandSidebar().getByRole("button", { name: IMATINIB }));
+    await screen.findByText(`About ${SILDENAFIL}.`);
+    await act(async () => {});
+
+    expect(page.scrollTo).toHaveBeenCalledExactlyOnceWith({ top: chatScrollArea().scrollHeight });
+    expect(shownAnswer()).toEqual({
+      panel: "Answer 2 of 2",
+      navigator: `Question 2: ${SILDENAFIL}`,
+    });
+  });
+
+  it("starts New chat empty after an opened chat", async () => {
+    await openPage(historyAsking([IMATINIB, SILDENAFIL]).history);
+    fireEvent.click(expandSidebar().getByRole("button", { name: IMATINIB }));
+    await screen.findByText(`About ${SILDENAFIL}.`);
+
+    fireEvent.click(sidebar().getByRole("button", { name: "New chat" }));
+
+    expect(screen.queryByRole("list", { name: "Conversation" })).toBeNull();
+    expect(screen.queryByRole("navigation", { name: "Questions in this chat" })).toBeNull();
+  });
+
   it("doesn't move the chat for answers coming in to chats that aren't shown", async () => {
     const stream = stubChatStream();
     await openPage(historyWith([SILDENAFIL]).history);
@@ -569,6 +629,16 @@ describe("Chat sidebar", () => {
     render(<Chat history={historyWith(["Imatinib", "Sildenafil"]).history} initialChatId="c1" />);
 
     expect(await screen.findByText("About Sildenafil.")).toBeDefined();
+  });
+
+  it("opens a linked saved chat at its newest message", async () => {
+    render(<Chat history={historyAsking([IMATINIB, SILDENAFIL]).history} initialChatId="c0" />);
+
+    await screen.findByText(`About ${SILDENAFIL}.`);
+    await act(async () => {});
+
+    expect(page.scrollTo).toHaveBeenLastCalledWith({ top: chatScrollArea().scrollHeight });
+    expect(shownAnswer().navigator).toBe(`Question 2: ${SILDENAFIL}`);
   });
 
   it("links to the benchmarks from the rail, the list and the phone drawer", async () => {

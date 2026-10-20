@@ -58,9 +58,7 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
     open,
     startNew,
     remove,
-  } = useConversations(initialQuestion, saved.save, () =>
-    scrollerRef.current?.scrollTo({ top: 0 }),
-  );
+  } = useConversations(initialQuestion, saved.save);
   const conversationRef = useRef<HTMLOListElement>(null);
 
   // Null shows the newest answer on its own default tab; a sent question shows its steps.
@@ -93,6 +91,7 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
   const { followAgain, scrollToTop } = useFollowAnswer(
     scrollerRef,
     conversationRef,
+    id,
     sent,
     answering,
     () => {
