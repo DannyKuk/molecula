@@ -249,6 +249,25 @@ describe("Chat", () => {
     expect(readTurnInChat()).toBe("What is metformin for?");
   });
 
+  it("scrolls the chat to the answer the panel steps to", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+    await answerTwice(stream);
+    stubTurnTops([100, 1300]);
+    page.scrollTo.mockClear();
+
+    await act(async () =>
+      fireEvent.click(within(evidence()).getByRole("button", { name: "Previous answer" })),
+    );
+
+    expect(page.scrollTo).toHaveBeenCalledExactlyOnceWith({ top: 84 });
+    expect(panelHeading()).toBe("Answer 1 of 2");
+    expect(readTurnInChat()).toBe("How does Gleevec work?");
+
+    fireEvent.click(within(evidence()).getByRole("tab", { name: /Steps/ }));
+    expect(page.scrollTo).toHaveBeenCalledOnce();
+  });
+
   it("stays on the answer the reader is on while the page follows the live one", async () => {
     const stream = stubChatStream();
     render(<Chat />);

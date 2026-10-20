@@ -82,12 +82,20 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
     setShown({ turn: live, tab: "3d", fresh: true });
   }
 
-  const followAgain = useFollowAnswer(conversationRef, sent, answering, () => {
+  // The chat and the panel beside it show the same turn. A phone's sheet covers the chat, and its
+  // scroll lock moves the page's scroll position, so there the sheet only opens from the pills.
+  const wide = useMediaQuery(WIDE_SCREEN);
+  const { followAgain, scrollToTop } = useFollowAnswer(conversationRef, sent, answering, () => {
     const list = conversationRef.current;
-    if (!list?.children.length) return;
+    if (!wide || !list?.children.length) return;
     const read = readTurn(list.children);
     if (read !== panelTurn) setShown({ turn: read, tab: defaultTab(turns[read]) });
   });
+  const showInPanel = (next: Shown) => {
+    const turn = conversationRef.current?.children[next.turn ?? newest];
+    if (wide && next.turn !== panelTurn && turn instanceof HTMLElement) scrollToTop(turn);
+    setShown(next);
+  };
   const backToLive =
     live !== null && panelTurn !== live
       ? () => {
@@ -96,7 +104,6 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
         }
       : undefined;
 
-  const wide = useMediaQuery(WIDE_SCREEN);
   const [sheetOpen, setSheetOpen] = useState(false);
   const showEvidence = (next: Shown) => {
     setShown(next);
@@ -106,7 +113,7 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
     <EvidencePanel
       turns={turns}
       shown={{ ...(shown ?? { tab: defaultTab(turns[newest]) }), turn: panelTurn }}
-      onShow={setShown}
+      onShow={showInPanel}
       backToLive={backToLive}
       close={
         !wide && (

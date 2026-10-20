@@ -10,11 +10,15 @@ import {
 /** How close to the end of the page still counts as at the end, in pixels. */
 const NEAR_END = 48;
 
+/** How much room to leave above an element the page scrolls to, in pixels. */
+const ABOVE_TOP = 16;
+
 /**
  * Scrolls the page to its end each time a question is `sent` and then, while `answering`, keeps it
  * there as `content` grows, like a terminal. The reader scrolling up stops that, and scrolling back
  * down to the end starts it again. `onReaderScroll` hears of every move the reader makes, never of
- * the page's own. Returns a function that goes back to the end and follows again.
+ * the page's own. Returns `followAgain`, which goes back to the end and follows again, and
+ * `scrollToTop`, which scrolls an element to the top of the window as one of the page's own moves.
  */
 export function useFollowAnswer(
   content: RefObject<HTMLElement | null>,
@@ -69,10 +73,18 @@ export function useFollowAnswer(
     wasAnswering.current = answering;
   }, [answering]);
 
-  return useCallback(() => {
+  const followAgain = useCallback(() => {
     atEnd.current = true;
     scrollToEnd(lastTop);
   }, []);
+
+  const scrollToTop = useCallback((element: HTMLElement) => {
+    window.scrollTo({ top: window.scrollY + element.getBoundingClientRect().top - ABOVE_TOP });
+    lastTop.current = window.scrollY;
+    atEnd.current = nearEnd();
+  }, []);
+
+  return { followAgain, scrollToTop };
 }
 
 // The page's own end, not an element's: scrolling an element into view ignores the sticky
