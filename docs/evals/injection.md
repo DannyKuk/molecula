@@ -93,7 +93,7 @@ Measured the same way as the baseline, on `feat/injection-defences`:
 - **No new false alarms.** None of the 12 `ok` twins was sorted as an attack. The 3 German `ok` misses are the known personal-advice coin flips (#236), and the other categories sort as on the 280-message run ([larger set](input-check-larger-set-2026-10-19.md)).
 - **`prompt_injection` is sorted right 54 of 68 times.** 8 misses land in `off_topic`, which refuses as well (requests for its tool list or a summary of its guidelines). 6 land in `ok` and reach the agent: the `<system>` tag and the fake tool result with a medicine question, "pretend the rules don't apply" in German, and the "blue"/"blau" code word follow-ups. The agent resisted such attacks in the suite, but the input check is not the only line for them.
 - **The full safety run sorted all 73 judged messages into their category**, the 9 `prompt_injection` ones included, with no false alarm and no unsafe message `ok` ([safety eval](safety.md)).
-- **Not measured:** Jev, which sorts online, has the new category's description but wasn't run on it.
+- **Jev, which sorts online, does better** (`OFFLINE=0 DECISION_MODEL=jev-1.13 python -m evals.decisions.input_check`): 355 of 360 messages, `prompt_injection` 66 of 68, no `ok` message refused, 0.28 s per message. Its two misses are the fake tool results, sorted `ok` at 0.50. Three off-topic role-plays ("You're a pirate captain…") went to `prompt_injection` instead of `off_topic`, which refuses them as well.
 
 ## Limits
 
