@@ -25,6 +25,7 @@ import { EvidencePanel } from "./evidence-panel";
 import { ExportMenu } from "./export-menu";
 import { HelpDialog, HelpGuide } from "./help-guide";
 import { ModelStatus } from "./model-status";
+import { QuestionNavigator } from "./question-navigator";
 import { useBookmarkUndo } from "./saved-chats";
 
 /** Wide enough for the evidence panel beside the chat; narrower screens open it as a sheet. */
@@ -41,6 +42,7 @@ type ChatProps = {
 /** The chat: the saved chats, the conversation so far, the question box and the help guide. */
 export function Chat({ initialQuestion, initialChatId, history = browserHistory }: ChatProps) {
   const saved = useChatHistory(history);
+  const scrollerRef = useRef<HTMLDivElement>(null);
   const {
     id,
     turns,
@@ -55,7 +57,9 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
     open,
     startNew,
     remove,
-  } = useConversations(initialQuestion, saved.save);
+  } = useConversations(initialQuestion, saved.save, () =>
+    scrollerRef.current?.scrollTo({ top: 0 }),
+  );
   const conversationRef = useRef<HTMLOListElement>(null);
 
   // Null shows the newest answer on its own default tab; a sent question shows its steps.
@@ -82,19 +86,33 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
     setShown({ turn: live, tab: "3d", fresh: true });
   }
 
-  // The chat and the panel beside it show the same turn. A phone's sheet covers the chat, and its
-  // scroll lock moves the page's scroll position, so there the sheet only opens from the pills.
+  // The chat and the panel beside it show the same turn. A phone's sheet covers the chat, so
+  // there it opens only from the pills, and the turn it shows follows the chat behind it.
   const wide = useMediaQuery(WIDE_SCREEN);
-  const { followAgain, scrollToTop } = useFollowAnswer(conversationRef, sent, answering, () => {
-    const list = conversationRef.current;
-    if (!wide || !list?.children.length) return;
-    const read = readTurn(list.children);
-    if (read !== panelTurn) setShown({ turn: read, tab: defaultTab(turns[read]) });
-  });
+  const { followAgain, scrollToTop } = useFollowAnswer(
+    scrollerRef,
+    conversationRef,
+    sent,
+    answering,
+    () => {
+      const scroller = scrollerRef.current;
+      const list = conversationRef.current;
+      if (!scroller || !list?.children.length) return;
+      const read = readTurn(scroller, list.children);
+      if (read !== panelTurn) setShown({ turn: read, tab: defaultTab(turns[read]) });
+    },
+  );
+  const scrollToTurn = (index: number) => {
+    const turn = conversationRef.current?.children[index];
+    if (turn instanceof HTMLElement) scrollToTop(turn);
+  };
   const showInPanel = (next: Shown) => {
-    const turn = conversationRef.current?.children[next.turn ?? newest];
-    if (wide && next.turn !== panelTurn && turn instanceof HTMLElement) scrollToTop(turn);
+    if (next.turn !== panelTurn) scrollToTurn(next.turn ?? newest);
     setShown(next);
+  };
+  const jumpTo = (index: number) => {
+    scrollToTurn(index);
+    if (index !== panelTurn) setShown({ turn: index, tab: defaultTab(turns[index]) });
   };
   const backToLive =
     live !== null && panelTurn !== live
@@ -171,10 +189,10 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
   };
 
   return (
-    <div className="flex flex-1">
+    <div className="flex h-dvh print:h-auto">
       <ChatSidebar {...chatList} />
-      <main className="mx-auto flex w-full max-w-3xl min-w-0 flex-1 flex-col px-4 sm:px-6">
-        <header className="flex items-center justify-between gap-4 py-4">
+      <main className="flex min-w-0 flex-1 flex-col">
+        <header className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <ChatDrawer {...chatList} />
             <h1 className="text-[17px] font-semibold tracking-tight">Molecula</h1>
@@ -202,45 +220,67 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
             <HelpDialog onAsk={ask} />
           </nav>
         </header>
-        <div className="flex flex-1 flex-col gap-6 pb-12">
-          {turns.length === 0 ? (
-            <EmptyState onAsk={ask} />
-          ) : (
-            <>
-              <PrintedTitle title={title} />
-              <ol
-                // Keyed by conversation, so an opened chat doesn't keep the last one's open steps.
-                key={id}
-                ref={conversationRef}
-                aria-label="Conversation"
-                className="flex flex-col gap-8"
-              >
-                {turns.map((turn, index) => (
-                  <ConversationTurn
-                    key={index}
-                    turn={turn}
-                    number={index + 1}
-                    active={index === panelTurn}
-                    onShow={(tab, refs) => showEvidence({ turn: index, tab, refs })}
-                    onAsk={ask}
-                    chatAnswering={pendingAnswer}
-                    onRetry={index === turns.length - 1 ? retry : undefined}
-                  />
-                ))}
-              </ol>
-            </>
-          )}
-        </div>
-        <div className="sticky bottom-0 flex flex-col gap-2 border-t border-rule bg-background py-3 print:static print:border-0">
-          <div className="contents print:hidden">
-            <ChatComposer answering={pendingAnswer} onSend={ask} onStop={stop} />
+        <div className="relative min-h-0 flex-1">
+          <div
+            ref={scrollerRef}
+            data-chat-scroll
+            className="thin-scrollbar scrollbar-on-hover h-full overflow-y-auto [scrollbar-gutter:stable] print:h-auto print:overflow-visible"
+          >
+            <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-4 sm:px-6">
+              <div className="flex flex-1 flex-col gap-6 pr-3 pb-6 sm:pr-0">
+                {turns.length === 0 ? (
+                  <EmptyState onAsk={ask} />
+                ) : (
+                  <>
+                    <PrintedTitle title={title} />
+                    <ol
+                      // Keyed by conversation, so an opened chat doesn't keep the last one's open steps.
+                      key={id}
+                      ref={conversationRef}
+                      aria-label="Conversation"
+                      className="flex flex-col gap-8"
+                    >
+                      {turns.map((turn, index) => (
+                        <ConversationTurn
+                          key={index}
+                          turn={turn}
+                          number={index + 1}
+                          active={index === panelTurn}
+                          onShow={(tab, refs) => showEvidence({ turn: index, tab, refs })}
+                          onAsk={ask}
+                          chatAnswering={pendingAnswer}
+                          onRetry={index === turns.length - 1 ? retry : undefined}
+                        />
+                      ))}
+                    </ol>
+                  </>
+                )}
+              </div>
+              {/* Inside the scroll area, so its scrollbar runs beside the question box and the end
+                  of the conversation stops above it. */}
+              <div className="pointer-events-none sticky bottom-0 z-10 bg-[linear-gradient(transparent,var(--background)_1.5rem)] pt-6 print:static">
+                <div className="pointer-events-auto flex flex-col gap-2 pb-3">
+                  <div className="contents print:hidden">
+                    <ChatComposer answering={pendingAnswer} onSend={ask} onStop={stop} />
+                  </div>
+                  {saved.available === false && (
+                    <p className="text-sm text-ink print:hidden">
+                      History is off in this browser, so this chat isn&apos;t saved.
+                    </p>
+                  )}
+                  <Disclaimer />
+                </div>
+              </div>
+            </div>
           </div>
-          {saved.available === false && (
-            <p className="text-sm text-ink print:hidden">
-              History is off in this browser, so this chat isn&apos;t saved.
-            </p>
+          {turns.length > 1 && (
+            <QuestionNavigator
+              questions={turns.map((turn) => turn.question)}
+              read={panelTurn}
+              live={live}
+              onJump={jumpTo}
+            />
           )}
-          <Disclaimer />
         </div>
       </main>
       {wide && evidence && (

@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -6,6 +6,7 @@ import { CHAT_FAILED, CHAT_UNAVAILABLE } from "@/lib/chat";
 import { MAX_MESSAGE_LENGTH } from "@/lib/chat-limits";
 import {
   chatFrame,
+  chatScrollArea,
   DONE,
   doneFrame,
   IMATINIB_LABEL_SEARCH,
@@ -38,6 +39,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  // Unmounted first: a render that lands after the globals are gone can't find `matchMedia`.
+  cleanup();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   vi.useRealTimers();
@@ -90,7 +93,7 @@ function readTurnInChat(): string | null | undefined {
   return conversation().querySelector("[data-turn][aria-current] h2")?.textContent;
 }
 
-/** Puts the conversation's turns this far down the page, so the reader can scroll to them. */
+/** Puts the conversation's turns this far down the chat, so the reader can scroll to them. */
 function stubTurnTops(tops: number[]) {
   const rect = HTMLElement.prototype.getBoundingClientRect;
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
@@ -98,7 +101,7 @@ function stubTurnTops(tops: number[]) {
   ) {
     if (!this.hasAttribute("data-turn")) return rect.call(this);
     const index = Array.from(this.parentElement?.children ?? []).indexOf(this);
-    return { top: tops[index] - window.scrollY } as DOMRect;
+    return { top: tops[index] - chatScrollArea().scrollTop } as DOMRect;
   });
 }
 
@@ -268,7 +271,7 @@ describe("Chat", () => {
     expect(page.scrollTo).toHaveBeenCalledOnce();
   });
 
-  it("stays on the answer the reader is on while the page follows the live one", async () => {
+  it("stays on the answer the reader is on while the chat follows the live one", async () => {
     const stream = stubChatStream();
     render(<Chat />);
     await answerTwice(stream);
@@ -292,7 +295,7 @@ describe("Chat", () => {
     expect(panelHeading()).toBe("Answer 3 of 3");
     expect(selectedTab()).toBe("Steps1");
     expect(page.scrollTo).toHaveBeenCalledExactlyOnceWith({
-      top: document.documentElement.scrollHeight,
+      top: chatScrollArea().scrollHeight,
     });
     expect(liveAnswerButton()).toBeNull();
   });
@@ -345,6 +348,105 @@ describe("Chat", () => {
     expect(within(sheet).getByText("Looking up Gleevec")).toBeDefined();
     fireEvent.click(within(sheet).getByRole("button", { name: "Close" }));
     expect(screen.queryByText("Looking up Gleevec")).toBeNull();
+  });
+
+  describe("question navigator", () => {
+    function questions(): HTMLElement {
+      return screen.getByRole("navigation", { name: "Questions in this chat" });
+    }
+
+    /** The question the navigator marks as being read. */
+    function readDash(): string | null | undefined {
+      return questions().querySelector("button[aria-current]")?.getAttribute("aria-label");
+    }
+
+    it("has a dash per question once there are two, and marks the one being read", async () => {
+      const stream = stubChatStream();
+      render(<Chat />);
+      askQuestion("How does Gleevec work?");
+      await streamed(() => stream.send(token("It blocks BCR-ABL.") + DONE));
+      expect(screen.queryByRole("navigation", { name: "Questions in this chat" })).toBeNull();
+
+      askQuestion("What is metformin for?");
+      await streamed(() => stream.send(token("It lowers sugar.") + DONE));
+      expect(
+        within(questions())
+          .getAllByRole("button")
+          .map((dash) => dash.ariaLabel),
+      ).toEqual(["Question 1: How does Gleevec work?", "Question 2: What is metformin for?"]);
+      expect(readDash()).toBe("Question 2: What is metformin for?");
+
+      stubTurnTops([100, 1300]);
+      act(() => page.scrollBy(-700));
+      expect(readDash()).toBe("Question 1: How does Gleevec work?");
+    });
+
+    it("jumps to a question from its dash and opens its answer", async () => {
+      const stream = stubChatStream();
+      render(<Chat />);
+      await answerTwice(stream);
+      stubTurnTops([100, 1300]);
+      page.scrollTo.mockClear();
+
+      fireEvent.click(within(questions()).getByRole("button", { name: /^Question 1:/ }));
+
+      expect(page.scrollTo).toHaveBeenCalledExactlyOnceWith({ top: 84 });
+      expect(panelHeading()).toBe("Answer 1 of 2");
+      expect(readTurnInChat()).toBe("How does Gleevec work?");
+      expect(readDash()).toBe("Question 1: How does Gleevec work?");
+    });
+
+    it("jumps to a question from the list of questions", async () => {
+      const stream = stubChatStream();
+      render(<Chat />);
+      await answerTwice(stream);
+      stubTurnTops([100, 1300]);
+
+      fireEvent.click(within(questions()).getByText("How does Gleevec work?"));
+
+      expect(panelHeading()).toBe("Answer 1 of 2");
+    });
+
+    it("keeps the tab the reader picked when jumping to the answer the panel shows", async () => {
+      const stream = stubChatStream();
+      render(<Chat />);
+      await answerTwice(stream);
+      stubTurnTops([100, 1300]);
+      fireEvent.click(within(evidence()).getByRole("tab", { name: /Steps/ }));
+      page.scrollTo.mockClear();
+
+      fireEvent.click(within(questions()).getByRole("button", { name: /^Question 2:/ }));
+
+      expect(page.scrollTo).toHaveBeenCalledOnce();
+      expect(selectedTab()).toBe("Steps1");
+    });
+
+    it("marks the dash of the answer coming in", async () => {
+      const stream = stubChatStream();
+      render(<Chat />);
+      await answerTwice(stream);
+
+      askQuestion("What does sildenafil bind to?");
+      await streamed(() => stream.send(status("Looking up sildenafil")));
+      const live = () => questions().querySelector("button[data-live]")?.ariaLabel;
+      expect(live()).toBe("Question 3: What does sildenafil bind to?");
+
+      await streamed(() => stream.send(DONE));
+      expect(live()).toBeUndefined();
+    });
+
+    it("follows the reader on a phone too, where the chat no longer shares the page's scroll", async () => {
+      page = stubPage({ phone: true });
+      const stream = stubChatStream();
+      render(<Chat />);
+      await answerTwice(stream);
+      stubTurnTops([100, 1300]);
+
+      act(() => page.scrollBy(-700));
+
+      expect(readDash()).toBe("Question 1: How does Gleevec work?");
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
   });
 
   it("opens a step into what its tool returned, and merges property lookups when done", async () => {
@@ -694,7 +796,7 @@ describe("Chat", () => {
     });
   });
 
-  it("scrolls to the end of the page once the sent question is on it, each time one is sent", async () => {
+  it("scrolls to the end of the chat once the sent question is on it, each time one is sent", async () => {
     const stream = stubChatStream();
     const conversationWhenScrolled: string[] = [];
     page.scrollTo.mockImplementation(() => {
@@ -717,10 +819,10 @@ describe("Chat", () => {
     expect(conversationWhenScrolled[0]).toContain("How does Gleevec work?");
     expect(conversationWhenScrolled[1]).toContain("It blocks BCR-ABL.");
     expect(conversationWhenScrolled[2]).toContain("What does sildenafil bind to?");
-    expect(page.scrollTo).toHaveBeenLastCalledWith({ top: document.documentElement.scrollHeight });
+    expect(page.scrollTo).toHaveBeenLastCalledWith({ top: chatScrollArea().scrollHeight });
   });
 
-  it("scrolls to the end of the page again on Retry", async () => {
+  it("scrolls to the end of the chat again on Retry", async () => {
     const stream = stubChatStream();
     render(<Chat />);
 
@@ -760,7 +862,7 @@ describe("Chat", () => {
     expect(page.scrollTo).toHaveBeenCalledTimes(1);
   });
 
-  it("follows the answer to the end of the page while it streams in", async () => {
+  it("follows the answer to the end of the chat while it streams in", async () => {
     const stream = stubChatStream();
     render(<Chat />);
 
@@ -788,7 +890,7 @@ describe("Chat", () => {
     expect(page.scrollTo).toHaveBeenCalledOnce();
   });
 
-  it("stops following when the reader scrolls up just after the page followed", async () => {
+  it("stops following when the reader scrolls up just after the chat followed", async () => {
     const stream = stubChatStream();
     render(<Chat />);
 
@@ -802,7 +904,7 @@ describe("Chat", () => {
     expect(page.scrollTo).not.toHaveBeenCalled();
   });
 
-  it("keeps following when a scroll event lands just after the page grew", async () => {
+  it("keeps following when a scroll event lands just after the chat grew", async () => {
     const stream = stubChatStream();
     render(<Chat />);
 

@@ -155,9 +155,34 @@
     @apply font-sans;
     scrollbar-gutter: stable;
   }
-  /* That space shows the root's background, so beside the evidence panel it takes the panel's
-     colour instead of leaving a strip of the page at the panel's edge while nothing scrolls. */
-  html:has(aside[data-evidence]) {
-    background: var(--panel);
+  /* The chat scrolls in its own area (#296), so its page never does and needs no space kept. */
+  html:has([data-chat-scroll]) {
+    scrollbar-gutter: auto;
+  }
+}
+
+/* Thin rounded scrollbars for the chat and the evidence panel (#296); `scrollbar-on-hover` shows
+   the chat's only while the pointer is over it. Chrome and Safari draw the ::-webkit-scrollbar
+   ones, which they ignore once the standard properties are set, so those are left to Firefox. */
+@layer components {
+  .thin-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  .thin-scrollbar::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background: var(--rule-2) padding-box;
+  }
+  .scrollbar-on-hover:not(:hover)::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+  @supports not selector(::-webkit-scrollbar) {
+    .thin-scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: var(--rule-2) transparent;
+    }
+    .scrollbar-on-hover:not(:hover) {
+      scrollbar-color: transparent transparent;
+    }
   }
 }

@@ -69,15 +69,23 @@ export function stubChatStream(opening = "") {
 /** Matches a question in the conversation, not the printed title that repeats the first one. */
 export const IN_CONVERSATION = { selector: "[data-turn] > h2" };
 
-const WINDOW_HEIGHT = 800;
+const AREA_HEIGHT = 800;
+
+/** The chat's scroll area, which `stubPage` gives a height and a scroll position. */
+export function chatScrollArea(): HTMLElement {
+  const area = document.querySelector<HTMLElement>("[data-chat-scroll]");
+  if (!area) throw new Error("The chat's scroll area isn't on the page.");
+  return area;
+}
 
 /**
- * Gives jsdom, which has no layout, a page to scroll: its height, the window's and the scroll
- * position. `window.scrollTo` moves it, and resize observers hear when the page grows. The window is
- * as wide as a desktop's unless `phone` is set, which only matters to `min-width` media queries.
+ * Gives jsdom, which has no layout, a chat to scroll: the height of its scroll area, of what the
+ * area holds and its scroll position. `scrollTo` on the area moves it, and resize observers hear
+ * when the chat grows. The window is as wide as a desktop's unless `phone` is set, which only
+ * matters to `min-width` media queries.
  */
 export function stubPage({ phone = false } = {}) {
-  const page = { height: 2000, top: 2000 - WINDOW_HEIGHT };
+  const page = { height: 2000, top: 2000 - AREA_HEIGHT };
   vi.stubGlobal("matchMedia", (query: string) => ({
     matches: query.includes("min-width") && !phone,
     addEventListener: () => {},
@@ -85,17 +93,20 @@ export function stubPage({ phone = false } = {}) {
   }));
   const observers = new Set<() => void>();
   const scrollTo = vi.fn(({ top }: ScrollToOptions) => {
-    page.top = Math.min(top ?? page.top, page.height - WINDOW_HEIGHT);
+    page.top = Math.min(top ?? page.top, page.height - AREA_HEIGHT);
     // A browser tells of the move after the call returns.
-    queueMicrotask(() => window.dispatchEvent(new Event("scroll")));
+    queueMicrotask(() => chatScrollArea().dispatchEvent(new Event("scroll")));
   });
-  Object.defineProperty(document.documentElement, "scrollHeight", {
-    configurable: true,
-    get: () => page.height,
-  });
-  Object.defineProperty(window, "innerHeight", { configurable: true, value: WINDOW_HEIGHT });
-  Object.defineProperty(window, "scrollY", { configurable: true, get: () => page.top });
-  vi.stubGlobal("scrollTo", scrollTo);
+  stubChatArea("scrollTop", () => page.top);
+  stubChatArea("scrollHeight", () => page.height);
+  stubChatArea("clientHeight", () => AREA_HEIGHT);
+  // Other elements scroll too, such as the evidence panel's tab list; only the chat's area counts.
+  HTMLElement.prototype.scrollTo = function (
+    this: HTMLElement,
+    options?: ScrollToOptions | number,
+  ) {
+    if (this.hasAttribute("data-chat-scroll") && typeof options === "object") scrollTo(options);
+  };
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -113,16 +124,16 @@ export function stubPage({ phone = false } = {}) {
   );
   return {
     scrollTo,
-    /** The reader scrolls the page by `pixels`, up when negative. */
+    /** The reader scrolls the chat by `pixels`, up when negative. */
     scrollBy(pixels: number) {
-      page.top = Math.max(0, Math.min(page.top + pixels, page.height - WINDOW_HEIGHT));
-      window.dispatchEvent(new Event("scroll"));
+      page.top = Math.max(0, Math.min(page.top + pixels, page.height - AREA_HEIGHT));
+      chatScrollArea().dispatchEvent(new Event("scroll"));
     },
-    /** The page gets `pixels` taller, before its resize observers hear of it. */
+    /** The chat gets `pixels` taller, before its resize observers hear of it. */
     lengthen(pixels: number) {
       page.height += pixels;
     },
-    /** The page gets `pixels` taller and its resize observers hear of it. */
+    /** The chat gets `pixels` taller and its resize observers hear of it. */
     grow(pixels = 300) {
       page.height += pixels;
       observers.forEach((notify) => notify());
@@ -205,4 +216,21 @@ export function memoryHistory({ failing = false } = {}) {
     putBookmarks: (ids) => answer(() => void (bookmarks.ids = [...ids])),
   };
   return { history, stored, bookmarks };
+}
+
+/** Makes `property` of the chat's scroll area read `value`; every other element keeps jsdom's. */
+function stubChatArea(
+  property: "scrollTop" | "scrollHeight" | "clientHeight",
+  value: () => number,
+) {
+  const jsdom = Object.getOwnPropertyDescriptor(Element.prototype, property);
+  Object.defineProperty(HTMLElement.prototype, property, {
+    configurable: true,
+    get(this: HTMLElement) {
+      return this.hasAttribute("data-chat-scroll") ? value() : jsdom?.get?.call(this);
+    },
+    set(this: HTMLElement, top: number) {
+      jsdom?.set?.call(this, top);
+    },
+  });
 }

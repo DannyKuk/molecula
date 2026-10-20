@@ -108,7 +108,7 @@ export function EvidencePanel({ turns, shown, onShow, backToLive, close }: Evide
           </Tabs.Tab>
         </Tabs.List>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+      <div className="thin-scrollbar min-h-0 flex-1 overflow-y-auto p-4">
         <Tabs.Panel value="3d">
           <StructureTab turns={turns} index={index} cid={shown.cid} onShow={onShow} />
         </Tabs.Panel>

@@ -489,7 +489,7 @@ describe("Answers in the background", () => {
     await waitFor(() => expect([...stored.values()].map((c) => c.title)).toEqual([IMATINIB]));
   });
 
-  it("doesn't move the page for answers coming in to chats that aren't shown", async () => {
+  it("doesn't move the chat for answers coming in to chats that aren't shown", async () => {
     const stream = stubChatStream();
     await openPage(historyWith([SILDENAFIL]).history);
     askQuestion(IMATINIB);
