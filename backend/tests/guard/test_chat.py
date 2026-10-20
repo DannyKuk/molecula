@@ -283,6 +283,7 @@ def test_an_answer_that_repeats_the_system_prompt_is_cut_before_the_canary(
     assert [r.getMessage() for r in caplog.records] == [
         "Stopped an answer whose token event held the system prompt's canary"
     ]
+    assert CANARY not in caplog.text
     assert "Molecula system prompt" not in caplog.text
 
 
