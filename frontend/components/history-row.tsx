@@ -71,8 +71,8 @@ export function HistoryRow({
   return (
     <li
       className={cn(
-        "group flex items-center rounded-md text-sm hover:bg-zinc-100 dark:hover:bg-zinc-900",
-        active && "bg-zinc-200 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-800",
+        "group flex items-center rounded-md text-sm hover:bg-rule",
+        active && "bg-card hover:bg-card",
       )}
     >
       <button
@@ -102,7 +102,7 @@ export function HistoryRow({
 function ProgressMark({ progress }: { progress: "answering" | "queued" }) {
   const label = progress === "answering" ? "Answering" : "Waiting for another answer";
   return (
-    <span role="img" aria-label={label} title={label} className="px-1 text-zinc-500">
+    <span role="img" aria-label={label} title={label} className="px-1 text-ink-3">
       {progress === "answering" ? (
         <LoaderCircle aria-hidden className="size-3.5 animate-spin motion-reduce:animate-none" />
       ) : (
@@ -127,10 +127,7 @@ function BookmarkButton({ title, bookmarked, onToggle }: BookmarkButtonProps) {
       aria-label={label}
       title={label}
       onClick={onToggle}
-      className={cn(
-        "hidden text-zinc-600 pointer-fine:inline-flex dark:text-zinc-400",
-        SHOWN_ON_HOVER,
-      )}
+      className={cn("hidden text-ink-2 pointer-fine:inline-flex", SHOWN_ON_HOVER)}
     >
       <Bookmark className={cn(bookmarked && "fill-current")} />
     </Button>
@@ -164,7 +161,7 @@ function RowMenu({
             size="icon-sm"
             aria-label={`Options: ${title}`}
             className={cn(
-              "mr-1 text-zinc-600 dark:text-zinc-400",
+              "mr-1 text-ink-2",
               !alwaysShown && [SHOWN_ON_HOVER, "pointer-fine:aria-expanded:opacity-100"],
             )}
           />
@@ -202,7 +199,7 @@ function RenameField({ title, onDone }: { title: string; onDone: (title: string 
   };
 
   return (
-    <div className="flex flex-col gap-0.5 rounded-md bg-zinc-200 p-0.5 dark:bg-zinc-800">
+    <div className="flex flex-col gap-0.5 rounded-md bg-rule p-0.5">
       <input
         aria-label="Chat title"
         value={draft}
@@ -218,9 +215,9 @@ function RenameField({ title, onDone }: { title: string; onDone: (title: string 
             finish(false);
           }
         }}
-        className="w-full rounded-md border border-zinc-600 bg-background px-2 py-1.25 text-sm outline-2 outline-ring/50 dark:border-zinc-400"
+        className="w-full rounded-md border border-ink-3 bg-background px-2 py-1.25 text-sm outline-2 outline-ring/50"
       />
-      <span className="px-1 pb-0.5 text-[11px] text-zinc-500">Enter saves · Esc cancels</span>
+      <span className="px-1 pb-0.5 text-[11px] text-ink-3">Enter saves · Esc cancels</span>
     </div>
   );
 }
@@ -236,7 +233,7 @@ function DeleteConfirm({ title, onDelete, onCancel }: DeleteConfirmProps) {
     >
       <p className="text-[13px] leading-4.5">
         Delete this chat? It can&apos;t be undone.
-        <span className="block truncate text-zinc-600 dark:text-zinc-400">{title}</span>
+        <span className="block truncate text-ink-2">{title}</span>
       </p>
       <div className="flex gap-1.5">
         <Button variant="destructive" size="sm" onClick={onDelete}>

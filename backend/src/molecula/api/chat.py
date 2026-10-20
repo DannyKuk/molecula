@@ -4,9 +4,9 @@ from collections.abc import AsyncIterator
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from molecula.api.dependencies import ChatDep, ChatLimitsDep
+from molecula.api.dependencies import ChatDep, ChatLimitsDep, ChatModelDep
 from molecula.guard.limits import ChatLimited, ChatLimits
-from molecula.schemas.chat import ChatEvent, ChatRequest, DoneEvent, ErrorEvent
+from molecula.schemas.chat import ChatEvent, ChatModel, ChatRequest, DoneEvent, ErrorEvent
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +34,12 @@ async def chat(request: ChatRequest, limits: ChatLimitsDep, guarded: ChatDep) ->
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache"},
     )
+
+
+@router.get("/chat/model", responses={503: {"description": "Chat is off"}})
+def model(chat_model: ChatModelDep) -> ChatModel:
+    """The model that writes the answers and whether it runs locally, for the chat's header."""
+    return chat_model
 
 
 async def counted(events: AsyncIterator[ChatEvent], limits: ChatLimits) -> AsyncIterator[ChatEvent]:

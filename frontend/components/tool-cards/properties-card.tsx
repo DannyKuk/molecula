@@ -50,7 +50,7 @@ export function PropertiesCard({ drugs }: { drugs: (DrugProperties | DrugNotSupp
           )}
           <tbody>
             {PROPERTIES.map((property) => (
-              <tr key={property.label} className="border-t border-zinc-200 dark:border-zinc-800">
+              <tr key={property.label} className="border-t border-rule">
                 <th scope="row" className="px-2 py-1 text-left align-top font-normal">
                   {property.label}
                   {property.hint && (

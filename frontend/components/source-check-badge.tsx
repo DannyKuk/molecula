@@ -7,14 +7,11 @@ const BADGE =
   "inline-flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-2xl border px-3 py-1 text-sm";
 
 const TONES: Record<CheckSummary["kind"] | "checking", string> = {
-  checking:
-    "border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-200",
-  backed:
-    "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200",
+  checking: "border-rule bg-card text-ink-2 [&_svg]:text-signal",
+  backed: "border-rule bg-card text-ink-2 [&_svg]:text-ok",
   unbacked:
     "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200",
-  unchecked:
-    "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400",
+  unchecked: "border-rule bg-card text-ink-2",
 };
 
 const ICONS = { backed: ShieldCheck, unbacked: ShieldAlert, unchecked: Shield };

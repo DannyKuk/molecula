@@ -23,7 +23,7 @@ export const BAND_CLASSES: Record<RankBand, string> = {
   first: "bg-rank-first",
   top5: "bg-rank-top5",
   top10: "bg-rank-top10",
-  missed: "ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700",
+  missed: "ring-1 ring-inset ring-rule-2",
 };
 
 const GROUP_SHORT = { cpu: "Local CPU", gpu: "GPU", cloud: "Cloud" };
@@ -46,7 +46,7 @@ export function RankLegend() {
     ["missed", "Not in the top 10"],
   ];
   return (
-    <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+    <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-xs text-ink-2">
       {items.map(([band, label]) => (
         <span key={band} className="inline-flex items-center gap-1.5">
           <i className={cn("size-3.5 rounded-[4px]", BAND_CLASSES[band])} />
@@ -129,7 +129,7 @@ const GridTable = memo(function GridTable({
               {i > 0 && <th className="w-2 min-w-2" />}
               <th
                 colSpan={size}
-                className="max-w-0 pt-1.5 pl-0.5 text-left text-[10px] font-medium whitespace-nowrap text-zinc-500"
+                className="max-w-0 pt-1.5 pl-0.5 text-left text-[10px] font-medium whitespace-nowrap text-ink-3"
               >
                 {GROUP_SHORT[group]}
               </th>
@@ -137,7 +137,7 @@ const GridTable = memo(function GridTable({
           ))}
         </tr>
         <tr>
-          <th className="sticky top-0 left-0 z-[3] bg-background px-2 text-left align-bottom text-xs font-normal text-zinc-600 dark:text-zinc-400">
+          <th className="sticky top-0 left-0 z-[3] bg-background px-2 text-left align-bottom text-xs font-normal text-ink-2">
             Question
           </th>
           {models.map((m) => (
@@ -150,7 +150,7 @@ const GridTable = memo(function GridTable({
                   aria-label={`Open ${m.name}`}
                   onClick={() => onModel(m.label)}
                   className={cn(
-                    "rotate-180 py-1.5 text-[0.72rem] font-medium whitespace-nowrap text-zinc-600 [writing-mode:vertical-rl] hover:text-foreground hover:underline dark:text-zinc-400",
+                    "rotate-180 py-1.5 text-[0.72rem] font-medium whitespace-nowrap text-ink-2 [writing-mode:vertical-rl] hover:text-foreground hover:underline",
                     m.isApp &&
                       "font-semibold text-app-model-foreground dark:text-app-model-foreground",
                   )}
@@ -179,7 +179,7 @@ const GridTable = memo(function GridTable({
                     {separatorBefore(m) && <td className="border-t" />}
                     <td
                       title={`${m.name}: ${hits} of ${section.questions.length} in the top 5`}
-                      className="border-t pt-3 text-center align-bottom text-[10px] text-zinc-500 tabular-nums"
+                      className="border-t pt-3 text-center align-bottom text-[10px] text-ink-3 tabular-nums"
                     >
                       {hits}
                     </td>
@@ -204,10 +204,7 @@ const GridTable = memo(function GridTable({
                       className="block w-24 truncate px-2 text-left text-xs/5 sm:w-[250px]"
                     >
                       {q.drug}
-                      <span className="hidden text-zinc-600 sm:inline dark:text-zinc-400">
-                        {" "}
-                        · {q.question}
-                      </span>
+                      <span className="hidden text-ink-2 sm:inline"> · {q.question}</span>
                     </button>
                   </td>
                   {models.map((m, col) => {
@@ -271,7 +268,7 @@ function CellTip({
         <b>{rank === null ? "Not in the top 10" : `Answer ${rankText(rank)}`}</b>
         {isHit(rank) ? " (a hit)" : " (a miss)"}
       </div>
-      <div className="text-zinc-600 dark:text-zinc-400">
+      <div className="text-ink-2">
         {sectionName(q.section_group)} · {SCOPES[scope].toLowerCase()}
       </div>
     </FloatingTip>

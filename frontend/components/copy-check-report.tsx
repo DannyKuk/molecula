@@ -32,7 +32,7 @@ export function CopyCheckReport({ turn }: { turn: Turn }) {
     <button
       type="button"
       onClick={copy}
-      className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-200"
+      className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-ink-3 hover:bg-panel hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3"
     >
       <Icon aria-hidden className="size-3.5" />
       <span aria-live="polite">

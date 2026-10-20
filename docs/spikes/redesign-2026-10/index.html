@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Molecula design prototypes</title>
+<style>
+  :root { --bg:#f4f4f5; --fg:#18181b; --muted:#71717a; --line:#e4e4e7; --on:#18181b; --on-fg:#fff; --panel:#fff; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0b0b0d; --fg:#f4f4f5; --muted:#a1a1aa; --line:#27272a; --on:#f4f4f5; --on-fg:#18181b; --panel:#141417; } }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--fg); font:14px/1.4 system-ui, "Segoe UI", sans-serif; }
+  body { display:flex; flex-direction:column; }
+  header { display:flex; flex-wrap:wrap; align-items:center; gap:10px 20px; padding:10px 16px; border-bottom:1px solid var(--line); background:var(--panel); }
+  .brand { font-weight:650; } .brand small { font-weight:400; color:var(--muted); margin-left:6px; }
+  .group { display:flex; align-items:center; gap:6px; }
+  .group > span { color:var(--muted); font-size:12px; margin-right:2px; }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:9px; padding:2px; background:var(--bg); }
+  .seg button { border:0; background:none; color:var(--fg); font:inherit; padding:5px 11px; border-radius:7px; cursor:pointer; }
+  .seg button[aria-pressed="true"] { background:var(--on); color:var(--on-fg); }
+  .note { flex-basis:100%; color:var(--muted); font-size:13px; margin:0; }
+  .note b { color:var(--fg); font-weight:600; }
+  main { flex:1; display:flex; justify-content:center; padding:0; min-height:0; }
+  main.phone { padding:18px; }
+  iframe { border:0; width:100%; height:100%; background:transparent; }
+  main.phone iframe { width:390px; height:min(844px, 100%); border-radius:28px; box-shadow:0 0 0 10px #000, 0 20px 60px rgba(0,0,0,.35); }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Molecula<small>design prototypes · throwaway</small></div>
+  <div class="group"><span>Design</span><div class="seg" id="design">
+    <button data-v="a">A · Lab journal</button><button data-v="b">B · Deep field</button><button data-v="c">C · Clinical clean</button><button data-v="d">D · Journal + panel</button><button data-v="e">E · Sage</button><button data-v="f">F · Slate</button><button data-v="g">G · Swiss pharma</button><button data-v="h">H · Cyanotype</button><button data-v="i">I · Risograph</button><button data-v="j">J · Instrument</button><button data-v="l">J2 · Instrument, calmer</button><button data-v="k">K · Clean room</button>
+  </div></div>
+  <div class="group"><span>Screen</span><div class="seg" id="screen">
+    <button data-v="answer">Answer</button><button data-v="start">Start</button>
+  </div></div>
+  <div class="group"><span>Theme</span><div class="seg" id="theme">
+    <button data-v="system">System</button><button data-v="light">Light</button><button data-v="dark">Dark</button>
+  </div></div>
+  <div class="group"><span>Width</span><div class="seg" id="width">
+    <button data-v="desktop">Desktop</button><button data-v="phone">Phone</button>
+  </div></div>
+  <p class="note" id="note"></p>
+</header>
+<main id="stage"><iframe id="frame" title="Design prototype"></iframe></main>
+<script>
+  const notes = {
+    a: "<b>Lab journal.</b> Warm paper, a serif reading face, ink colours. The answer reads like an article; the 3D view is a captioned figure; steps are a quiet “Method” line. Same single-column layout as today.",
+    b: "<b>Deep field.</b> Dark first, built around the molecule: navy gradient, glass panels, amber pocket. The 3D view is the centrepiece of the turn; steps are a glowing pipeline. Same single-column layout as today. Palette and fonts from your earlier molecula-prototype.",
+    c: "<b>Clinical clean.</b> Crisp product look, one teal accent. <b>Changes the layout:</b> chat on the left, an evidence panel on the right with the 3D view, steps and sources; a citation opens its passage there. This reverses the #21 pick (3D between steps and answer) on wide screens; on a phone it falls back to one column.",
+  };
+  notes.d = "<b>Journal + evidence panel.</b> C's layout in A's colours. Three questions in one chat: scroll and the panel follows the question you're reading (marked by the line on its left); ‹ › steps through answers. Press ▶ to ask the third question live: steps fill in, the 3D tab lights up when the structure arrives, then the answer streams and is checked. On a phone the panel is a sheet that opens from the pills.";
+  notes.e = "<b>Sage.</b> Design D in a muted botanical green-grey with an ochre accent. Same layout, fonts and demo as D; only the colours change.";
+  notes.f = "<b>Slate.</b> Design D in cool grey and navy ink with a cobalt accent. Same layout, fonts and demo as D; only the colours change.";
+  notes.g = "<b>Swiss pharma.</b> After the 1960s Swiss pharmaceutical posters: white, black and one red, bold condensed type, hard black rules, square corners. Each question gets a big number that turns red while you read it. The drug is black in 3D, the hydrogen bonds red.";
+  notes.h = "<b>Cyanotype.</b> A blueprint print: one Prussian blue on paper, graph-paper grids behind the panel and the 3D view, typewriter labels. The only warm colour is the drug itself, in orange. In dark mode it flips to white on deep blue, like a real cyanotype.";
+  notes.i = "<b>Risograph.</b> A zine-like riso print: fluorescent pink and blue inks on cream, slightly misaligned print shadows on headings, halftone dots, source tags as tilted stickers, yellow labels in the 3D view.";
+  notes.j = "<b>Instrument.</b> Future lab, warm: light-grey lab-hardware surfaces, one signal orange, monospace readouts and status lights. The 3D view is a dark instrument screen even in light mode, with viewfinder corners and a readout (atoms, residues, H-bonds); the drug is lime-green on it. Soft contrast, no pure black or white.";
+  notes.k = "<b>Clean room.</b> Future lab, cool: very light grey-white surfaces, a mint signal colour, a measuring grid behind the 3D view, the same viewfinder corners, readouts and status lights as J. Calmer and more clinical.";
+  notes.l = "<b>Instrument, calmer.</b> J's grey and orange with about half the details: monospace only for small labels, orange only for the question you're reading, the Ask button, anything live, the steps and the sources, quiet grey source tags, more space; the ruler stays. The dark 3D screen, its corners and readout stay.";
+  const state = { design: "d", screen: "answer", theme: "system", width: "desktop" };
+  try { Object.assign(state, JSON.parse(localStorage.getItem("molecula-proto") || "{}")); } catch {}
+  for (const [k, v] of new URLSearchParams(location.search)) if (k in state) state[k] = v;
+  function render() {
+    for (const k of ["design", "screen", "theme", "width"])
+      document.querySelectorAll(`#${k} button`).forEach((b) => b.setAttribute("aria-pressed", b.dataset.v === state[k]));
+    document.getElementById("note").innerHTML = notes[state.design];
+    document.getElementById("stage").className = state.width === "phone" ? "phone" : "";
+    const palette = { e: "sage", f: "slate" }[state.design];
+    const skin = { g: "swiss", h: "cyano", i: "riso", j: "lab", k: "clean", l: "lab" }[state.design];
+    const src = `${palette || skin ? "d" : state.design}.html?screen=${state.screen}&theme=${state.theme}${palette ? `&palette=${palette}` : ""}${skin ? `&skin=${skin}` : ""}${state.design === "l" ? "&calm=1" : ""}`;
+    const frame = document.getElementById("frame");
+    if (!frame.src.endsWith(src)) frame.src = src;
+    try { localStorage.setItem("molecula-proto", JSON.stringify(state)); } catch {}
+  }
+  for (const k of ["design", "screen", "theme", "width"])
+    document.querySelectorAll(`#${k} button`).forEach((b) => b.addEventListener("click", () => { state[k] = b.dataset.v; render(); }));
+  render();
+</script>
+</body>
+</html>

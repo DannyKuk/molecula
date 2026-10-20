@@ -79,7 +79,7 @@ function RecallChart({ name, drug, index, others, floor, height, detailed }: Rec
         height={height}
         role="img"
         aria-label={`${name}: answer in the top 5 for ${percent(drug[4])} within the drug, ${percent(index[4])} over the whole index`}
-        className="block overflow-visible text-[11px] [&_text]:fill-zinc-500"
+        className="block overflow-visible text-[11px] [&_text]:fill-ink-3"
         onPointerMove={(e) => {
           const left = e.currentTarget.getBoundingClientRect().left;
           const k = Math.round(((e.clientX - left - margin.left) / plotWidth) * 9 + 1);
@@ -94,7 +94,7 @@ function RecallChart({ name, drug, index, others, floor, height, detailed }: Rec
               x2={margin.left + plotWidth}
               y1={y(tick)}
               y2={y(tick)}
-              className="stroke-zinc-100 dark:stroke-zinc-900"
+              className="stroke-rule"
             />
             <text x={margin.left - 6} y={y(tick) + 4} textAnchor="end" className="tabular-nums">
               {percent(tick)}
@@ -106,7 +106,7 @@ function RecallChart({ name, drug, index, others, floor, height, detailed }: Rec
           x2={margin.left + plotWidth}
           y1={y(floor)}
           y2={y(floor)}
-          className="stroke-zinc-300 dark:stroke-zinc-700"
+          className="stroke-rule-2"
         />
         {[1, 5, 10].map((k) => (
           <text key={k} x={x(k)} y={margin.top + plotHeight + 16} textAnchor="middle">
@@ -129,7 +129,7 @@ function RecallChart({ name, drug, index, others, floor, height, detailed }: Rec
               y1={margin.top}
               y2={margin.top + plotHeight}
               strokeDasharray="3 3"
-              className="stroke-zinc-500"
+              className="stroke-ink-3"
             />
             <text x={x(5) + 4} y={margin.top + 10} className="text-[10px]">
               top 5
@@ -138,7 +138,7 @@ function RecallChart({ name, drug, index, others, floor, height, detailed }: Rec
         )}
         <g fill="none" strokeLinejoin="round" strokeLinecap="round">
           {others.map((curve, i) => (
-            <path key={i} d={path(curve)} className="stroke-zinc-300 dark:stroke-zinc-700" />
+            <path key={i} d={path(curve)} className="stroke-rule-2" />
           ))}
           {[...SERIES].reverse().map((s) => (
             <path key={s.key} d={path(values[s.key])} strokeWidth={2} className={s.stroke} />
@@ -152,7 +152,7 @@ function RecallChart({ name, drug, index, others, floor, height, detailed }: Rec
               y1={margin.top}
               y2={margin.top + plotHeight}
               strokeDasharray="2 3"
-              className="stroke-zinc-500"
+              className="stroke-ink-3"
             />
             {SERIES.map((s) => (
               <circle
@@ -187,7 +187,7 @@ function RecallChart({ name, drug, index, others, floor, height, detailed }: Rec
 
 export function RecallLegend() {
   return (
-    <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[0.8125rem] text-zinc-600 dark:text-zinc-400">
+    <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[0.8125rem] text-ink-2">
       <span className="inline-flex items-center gap-1.5">
         <i className="h-0.5 w-4 rounded-full bg-series-drug" />
         Within the drug (what the app does)
@@ -197,7 +197,7 @@ export function RecallLegend() {
         Over the whole index
       </span>
       <span className="inline-flex items-center gap-1.5">
-        <i className="h-0.5 w-4 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+        <i className="h-0.5 w-4 rounded-full bg-rule-2" />
         The other models, within the drug
       </span>
     </div>

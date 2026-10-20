@@ -24,7 +24,7 @@ const MODES: { mode: ViewMode; label: string }[] = [
 ];
 
 const BUTTON =
-  "rounded-md border border-zinc-300 px-3 py-1 text-sm hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-700 dark:hover:bg-zinc-900";
+  "rounded-md border border-rule-2 px-3 py-1 text-sm hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3";
 
 /**
  * The 3D view of a drug the answer looked up, under the answer: the drug in its target's binding
@@ -73,7 +73,7 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
     <div
       role="group"
       aria-label="What the 3D view shows"
-      className="inline-flex rounded-lg bg-zinc-100 p-0.5 dark:bg-zinc-900"
+      className="inline-flex rounded-lg bg-panel p-0.5"
     >
       {MODES.map((option) => (
         <button
@@ -81,10 +81,8 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
           type="button"
           aria-pressed={mode === option.mode}
           onClick={() => setMode(option.mode)}
-          className={`rounded-md px-3 py-1 text-sm focus-visible:outline-2 focus-visible:outline-zinc-500 ${
-            mode === option.mode
-              ? "bg-white shadow-sm dark:bg-zinc-700"
-              : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+          className={`rounded-md px-3 py-1 text-sm focus-visible:outline-2 focus-visible:outline-ink-3 ${
+            mode === option.mode ? "bg-card shadow-sm" : "text-ink-2 hover:text-ink"
           }`}
         >
           {option.label}
@@ -107,7 +105,7 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
   );
 
   const legend = ready && (
-    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400">
+    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-2">
       {switchable && mode !== "molecule" && (
         <>
           <LegendItem swatch={<span className="size-2.5 rounded-full bg-green-500" />}>
@@ -128,13 +126,11 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
               cofactor
             </LegendItem>
           )}
-          <LegendItem swatch={<span className="w-4 border-t-2 border-zinc-400" />}>
+          <LegendItem swatch={<span className="w-4 border-t-2 border-ink-3" />}>
             residues within 4 Å
           </LegendItem>
           {mode === "protein" && (
-            <LegendItem
-              swatch={<span className="w-4 border-t-4 border-zinc-300 dark:border-zinc-600" />}
-            >
+            <LegendItem swatch={<span className="w-4 border-t-4 border-rule-2" />}>
               protein backbone
             </LegendItem>
           )}
@@ -148,13 +144,13 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
     <section
       data-structure={target.cid}
       aria-label={`3D view of ${target.name}`}
-      className="flex scroll-mt-4 flex-col gap-2 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
+      className="flex scroll-mt-4 flex-col gap-2 rounded-xl border border-rule p-3"
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <span className="font-medium">{title}</span>{" "}
           {loaded.status !== "missing" && (
-            <span className="text-sm text-zinc-500">{subtitle(target)}</span>
+            <span className="text-sm text-ink-3">{subtitle(target)}</span>
           )}
         </div>
         {ready && (
@@ -167,13 +163,13 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
         )}
       </div>
       {target.complex?.caption && (
-        <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-200">
+        <p className="rounded-md border border-rule-2 bg-panel px-3 py-2 text-sm text-ink">
           {target.complex.caption}
         </p>
       )}
       {modeSwitch}
       {loaded.status === "missing" ? (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-sm text-ink-2">
           No 3D model: Molecula has them for small-molecule drugs only, and {target.name} is too
           large.
         </p>
@@ -184,7 +180,7 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
           mode={mode}
           label={`${title}, in 3D`}
           onError={failed}
-          className="h-[380px] rounded-lg border border-zinc-200 dark:border-zinc-800"
+          className="h-[380px] rounded-lg border border-rule"
         />
       ) : (
         <Placeholder
@@ -204,8 +200,7 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
           >
             <div className="flex items-start justify-between gap-4">
               <DialogTitle className="font-medium">
-                {title}{" "}
-                <span className="text-sm font-normal text-zinc-500">{subtitle(target)}</span>
+                {title} <span className="text-sm font-normal text-ink-3">{subtitle(target)}</span>
               </DialogTitle>
               <div className="flex flex-wrap justify-end gap-2">
                 {controls(fullScreenViewer)}
@@ -219,7 +214,7 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
               mode={mode}
               label={`${title}, in 3D`}
               onError={failed}
-              className="min-h-0 flex-1 rounded-lg border border-zinc-200 dark:border-zinc-800"
+              className="min-h-0 flex-1 rounded-lg border border-rule"
             />
             {legend}
           </DialogContent>
@@ -251,7 +246,7 @@ function LegendItem({ swatch, children }: { swatch: ReactNode; children: ReactNo
 
 function Placeholder({ loaded, onRetry }: { loaded: Loaded; onRetry: () => void }) {
   return (
-    <div className="flex h-[380px] items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-zinc-50 p-6 text-center text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+    <div className="flex h-[380px] items-center justify-center rounded-lg border border-dashed border-rule-2 bg-card p-6 text-center text-sm text-ink-2">
       {loaded.status === "loading" && <p role="status">Loading the 3D structure…</p>}
       {loaded.status === "failed" && (
         <div role="alert">

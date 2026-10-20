@@ -30,7 +30,7 @@ const DOC_URL = "https://github.com/DannyKuk/molecula/blob/main/docs/decisions/e
 type View =
   { kind: "question"; question: number; model: string | null } | { kind: "model"; label: string };
 
-const MUTED = "text-zinc-600 dark:text-zinc-400";
+const MUTED = "text-ink-2";
 
 /** The embedding comparison: the hit grid with a detail panel beside it (a sheet on a phone),
  * then the recall curves, the costs and how it was measured. */
@@ -210,7 +210,7 @@ export function EmbeddingBenchmark({ run }: { run: EmbeddingRun }) {
                       if (wide) hubRef.current?.scrollIntoView({ behavior: "smooth" });
                     }}
                     className={cn(
-                      "flex min-w-0 flex-col gap-0.5 rounded-lg border px-2 pt-2.5 pb-1 text-left hover:border-zinc-400 dark:hover:border-zinc-600",
+                      "flex min-w-0 flex-col gap-0.5 rounded-lg border px-2 pt-2.5 pb-1 text-left hover:border-ink-3",
                       m.isApp && "border-app-model-foreground ring-1 ring-app-model-foreground",
                     )}
                   >

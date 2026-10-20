@@ -8,6 +8,8 @@ import { SIDEBAR_KEY } from "@/lib/use-sidebar-expanded";
 
 import { Chat } from "./chat";
 
+vi.mock("./model-status", () => ({ ModelStatus: () => null }));
+
 const IMATINIB = "How does imatinib work?";
 const SILDENAFIL = "What does sildenafil bind to?";
 

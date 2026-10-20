@@ -80,7 +80,7 @@ describe("source check in the answer", () => {
 
     expect(marks(container)).toEqual([]);
     expect(container.textContent).toBe(
-      "Imatinib is cleared mostly in the feces Gleevec · Mechanism of action[1] Gleevec · Pharmacokinetics[2]." +
+      "Imatinib is cleared mostly in the feces 1Gleevec · Mechanism of action[1] 2Gleevec · Pharmacokinetics[2]." +
         "Checked against the sources· Every fact is in Molecula's sources.",
     );
     fireEvent.click(

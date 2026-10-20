@@ -17,7 +17,7 @@ const COLUMNS = [
 const APP_ROW = "bg-[color-mix(in_oklab,var(--app-model)_45%,var(--background))]";
 
 function Note({ children }: { children: React.ReactNode }) {
-  return <span className="block text-[0.72rem] font-normal text-zinc-500">{children}</span>;
+  return <span className="block text-[0.72rem] font-normal text-ink-3">{children}</span>;
 }
 
 /** Recall@5 against what each model costs: CPU time per question, index size, download size. */
@@ -29,7 +29,7 @@ export function TradeoffTable({ benchmark }: { benchmark: Benchmark }) {
     <div className="max-w-full overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="text-xs text-zinc-600 dark:text-zinc-400">
+          <tr className="text-xs text-ink-2">
             <th className="sticky left-0 border-b bg-background px-2.5 py-2 text-left align-bottom font-medium">
               Model
             </th>
@@ -49,7 +49,7 @@ export function TradeoffTable({ benchmark }: { benchmark: Benchmark }) {
               <tr>
                 <td
                   colSpan={COLUMNS.length + 1}
-                  className="border-b border-zinc-300 px-2.5 pt-4 pb-2 text-xs font-semibold text-zinc-600 dark:border-zinc-700 dark:text-zinc-400"
+                  className="border-b border-rule-2 px-2.5 pt-4 pb-2 text-xs font-semibold text-ink-2"
                 >
                   {GROUP_NAMES[group]}
                 </td>
@@ -78,7 +78,7 @@ export function TradeoffTable({ benchmark }: { benchmark: Benchmark }) {
                             style={{ width: Math.max(2, Math.round(((recall - 0.7) / 0.3) * 64)) }}
                             className={cn(
                               "h-2 rounded-r",
-                              m.isApp ? "bg-series-drug" : "bg-zinc-300 dark:bg-zinc-700",
+                              m.isApp ? "bg-series-drug" : "bg-rule-2",
                             )}
                           />
                           {percent(recall)}

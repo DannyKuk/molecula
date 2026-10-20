@@ -18,7 +18,7 @@ export function DidYouMeanButtons({ offers, onAsk, disabled }: DidYouMeanButtons
           title={question}
           disabled={disabled}
           onClick={() => onAsk(question)}
-          className="rounded-full border border-zinc-300 px-3 py-1 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+          className="rounded-full border border-rule-2 px-3 py-1 hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Did you mean <strong className="font-semibold">{suggestion.alias}</strong>
           {suggestion.alias.toLowerCase() !== suggestion.name.toLowerCase() &&

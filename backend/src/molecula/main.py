@@ -16,6 +16,7 @@ from molecula.agent.label_filter import DecisionFirstFilterExtractor
 from molecula.agent.llm import (
     LLMConfigError,
     chat_model_is_local,
+    chat_model_name,
     get_answer_model,
     get_chat_model,
     get_source_check_model,
@@ -32,6 +33,7 @@ from molecula.mcp.server import build_server
 from molecula.rag.embeddings import embedding_model_id, get_embeddings
 from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
+from molecula.schemas.chat import ChatModel
 from molecula.services.complexes import ComplexService
 from molecula.services.compounds import CompoundService
 from molecula.services.labels import LabelService
@@ -202,6 +204,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.filter_extractor = None
     app.state.chat_agent = None
     app.state.chat = None
+    app.state.chat_model = None
     index = open_label_index(settings)
     chat_model = open_chat_model(settings) if index is not None else None
     mcp_session = AsyncExitStack()
@@ -232,6 +235,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             app.state.chat_agent,
             ChatModelSourceCheck(get_source_check_model(settings)),
             timeout_seconds=settings.llm_timeout_seconds,
+        )
+        app.state.chat_model = ChatModel(
+            name=chat_model_name(settings), local=chat_model_is_local(settings)
         )
     yield
     await mcp_session.aclose()

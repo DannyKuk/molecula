@@ -82,17 +82,13 @@ const components: Components = {
   h3: ({ children }) => <h3 className="mt-4 mb-2 font-semibold">{children}</h3>,
   h4: ({ children }) => <h4 className="mt-3 mb-1 font-semibold">{children}</h4>,
   blockquote: ({ children }) => (
-    <blockquote className="my-3 border-l-2 border-zinc-300 pl-3 text-zinc-700 dark:border-zinc-700 dark:text-zinc-300">
-      {children}
-    </blockquote>
+    <blockquote className="my-3 border-l-2 border-rule-2 pl-3 text-ink-2">{children}</blockquote>
   ),
   code: ({ children }) => (
-    <code className="rounded bg-zinc-100 px-1 font-mono text-sm dark:bg-zinc-900">{children}</code>
+    <code className="rounded bg-panel px-1 font-mono text-sm">{children}</code>
   ),
   pre: ({ children }) => (
-    <pre className="my-3 overflow-x-auto rounded-lg bg-zinc-100 p-3 dark:bg-zinc-900">
-      {children}
-    </pre>
+    <pre className="my-3 overflow-x-auto rounded-lg bg-panel p-3">{children}</pre>
   ),
   table: ({ children }) => (
     <div className="my-3 overflow-x-auto">
@@ -100,13 +96,9 @@ const components: Components = {
     </div>
   ),
   th: ({ children }) => (
-    <th className="border border-zinc-300 bg-zinc-50 px-2 py-1 text-left font-semibold dark:border-zinc-700 dark:bg-zinc-900">
-      {children}
-    </th>
+    <th className="border border-rule-2 bg-card px-2 py-1 text-left font-semibold">{children}</th>
   ),
-  td: ({ children }) => (
-    <td className="border border-zinc-300 px-2 py-1 align-top dark:border-zinc-700">{children}</td>
-  ),
+  td: ({ children }) => <td className="border border-rule-2 px-2 py-1 align-top">{children}</td>,
 };
 
 /** The answer as Markdown, GitHub style (tables, strikethrough). Raw HTML shows as text, never
@@ -128,7 +120,7 @@ export function AnswerMarkdown({
   return (
     <CitationsContext value={citations}>
       <CheckedClaimsContext value={claims}>
-        <div className="leading-relaxed break-words">
+        <div className="text-[16.5px] leading-[1.78] break-words">
           <Markdown
             remarkPlugins={[remarkGfm, [remarkSourceCheck, marks], remarkCitations]}
             components={components}

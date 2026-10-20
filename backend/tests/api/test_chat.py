@@ -21,6 +21,7 @@ from molecula.schemas.chat import (
     MAX_MESSAGES,
     ChatEvent,
     ChatMessage,
+    ChatModel,
 )
 from sse import server_sent_events
 from tool_fakes import (
@@ -193,6 +194,21 @@ def test_chat_without_an_agent_answers_503(client: TestClient) -> None:
 
     assert response.status_code == 503
     assert "Chat is off" in response.json()["detail"]
+
+
+def test_the_chat_names_its_model(client: TestClient) -> None:
+    app.state.chat_model = ChatModel(name="openai/gpt-oss-20b", local=True)
+
+    response = client.get("/chat/model")
+
+    assert response.status_code == 200
+    assert response.json() == {"name": "openai/gpt-oss-20b", "local": True}
+
+
+def test_the_model_answers_503_while_the_chat_is_off(client: TestClient) -> None:
+    app.state.chat_model = None
+
+    assert client.get("/chat/model").status_code == 503
 
 
 def test_an_earlier_answer_may_be_longer_than_a_question(client: TestClient) -> None:

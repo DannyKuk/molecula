@@ -4,6 +4,12 @@ export type HealthResponse = {
   status: "ok";
 };
 
+/** The model that writes the answers (`ChatModel` in `backend/src/molecula/schemas/chat.py`). */
+export type ChatModel = {
+  name: string;
+  local: boolean;
+};
+
 export type Drug = {
   cid: number;
   name: string;
@@ -111,6 +117,11 @@ async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
 
 export function getHealth(signal?: AbortSignal): Promise<HealthResponse> {
   return getJson<HealthResponse>("/health", signal);
+}
+
+/** The model that writes the answers; fails with 503 while the chat is off. */
+export function getChatModel(signal?: AbortSignal): Promise<ChatModel> {
+  return getJson<ChatModel>("/chat/model", signal);
 }
 
 /** Every drug in the store, sorted by name. */

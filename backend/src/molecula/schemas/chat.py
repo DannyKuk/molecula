@@ -47,6 +47,13 @@ class ChatMessage(BaseModel):
         return self
 
 
+class ChatModel(BaseModel):
+    """The model that writes the answers, as the chat's header names it."""
+
+    name: str
+    local: bool
+
+
 class ChatRequest(BaseModel):
     """The conversation so far, oldest first, ending with the user's new message. A longer
     conversation is sent as its latest messages."""

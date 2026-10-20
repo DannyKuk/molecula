@@ -22,7 +22,7 @@ import {
 
 export function Pill({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs whitespace-nowrap text-zinc-600 dark:text-zinc-400">
+    <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs whitespace-nowrap text-ink-2">
       {children}
     </span>
   );
@@ -59,13 +59,13 @@ export function QuestionView({
       <div className="flex flex-wrap items-center gap-1.5">
         <Pill>{sectionName(question.section_group)}</Pill>
         <Pill>{question.drug}</Pill>
-        <span className="text-xs text-zinc-600 dark:text-zinc-400">
+        <span className="text-xs text-ink-2">
           Question {question.index + 1} of {benchmark.questions.length}
         </span>
       </div>
       <p className="text-lg/relaxed font-semibold tracking-tight">{question.question}</p>
-      <div className="flex flex-col gap-1.5 border-l-3 border-zinc-300 py-0.5 pl-3 text-sm dark:border-zinc-700">
-        <span className="text-xs text-zinc-600 dark:text-zinc-400">
+      <div className="flex flex-col gap-1.5 border-l-3 border-rule-2 py-0.5 pl-3 text-sm">
+        <span className="text-xs text-ink-2">
           Answer key: a passage counts as a hit if it contains
         </span>
         <blockquote>
@@ -73,11 +73,11 @@ export function QuestionView({
         </blockquote>
         {question.pooled_evidence.length > 0 && (
           <>
-            <span className="text-xs text-zinc-600 dark:text-zinc-400">
+            <span className="text-xs text-ink-2">
               or, found later in other words ({question.pooled_evidence.length}):
             </span>
             {question.pooled_evidence.map((text) => (
-              <blockquote key={text} className="text-zinc-600 dark:text-zinc-400">
+              <blockquote key={text} className="text-ink-2">
                 “{text}”
               </blockquote>
             ))}
@@ -93,7 +93,7 @@ export function QuestionView({
       </p>
       <div className="flex flex-col gap-2.5">
         <h3 className="font-semibold">What each model ranked first</h3>
-        <p className="text-xs text-zinc-600 dark:text-zinc-400">
+        <p className="text-xs text-ink-2">
           The top passage within {question.drug}&apos;s labels. {passages.length} different
           passages; models that picked the same one share a card.
         </p>
@@ -116,7 +116,7 @@ function PassageCard({ question, top }: { question: Question; top: TopPassage })
     <article
       className={cn(
         "flex min-w-0 flex-col gap-2 rounded-lg border px-3.5 py-3",
-        top.holdsAnswer && "border-zinc-300 dark:border-zinc-700",
+        top.holdsAnswer && "border-rule-2",
       )}
     >
       <div className="flex flex-wrap items-center justify-between gap-x-2.5 gap-y-1.5">
@@ -126,7 +126,7 @@ function PassageCard({ question, top }: { question: Question; top: TopPassage })
         <span
           className={cn(
             "inline-flex items-center gap-1 text-xs font-medium whitespace-nowrap",
-            !top.holdsAnswer && "text-zinc-600 dark:text-zinc-400",
+            !top.holdsAnswer && "text-ink-2",
           )}
         >
           <Verdict aria-hidden className="size-3.5" />
@@ -138,7 +138,7 @@ function PassageCard({ question, top }: { question: Question; top: TopPassage })
           <li
             key={m.label}
             className={cn(
-              "rounded-full border px-2 py-px text-[0.72rem] whitespace-nowrap text-zinc-600 dark:text-zinc-400",
+              "rounded-full border px-2 py-px text-[0.72rem] whitespace-nowrap text-ink-2",
               m.isApp &&
                 "border-transparent bg-app-model font-semibold text-app-model-foreground dark:text-app-model-foreground",
             )}
@@ -147,7 +147,7 @@ function PassageCard({ question, top }: { question: Question; top: TopPassage })
           </li>
         ))}
       </ul>
-      <p className="text-[0.8125rem]/5 whitespace-pre-wrap text-zinc-600 [overflow-wrap:anywhere] dark:text-zinc-400">
+      <p className="text-[0.8125rem]/5 whitespace-pre-wrap text-ink-2 [overflow-wrap:anywhere]">
         {from > 0 && "… "}
         <MarkedText text={text} ranges={ranges} from={from} to={to} />
         {to < text.length && " …"}
