@@ -141,7 +141,11 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
         <LegendItem
           key={element}
           swatch={
-            <span className="size-2 rounded-full" style={fill(COLORS.screen.elements[element])} />
+            // The ring keeps hydrogen's white dot visible on the light theme's page.
+            <span
+              className="size-2 rounded-full ring-1 ring-rule-2"
+              style={fill(COLORS.screen.elements[element])}
+            />
           }
         >
           {ELEMENT_NAMES[element]}
