@@ -24,6 +24,7 @@ from evals.injection.dataset import ALONE, AttackKind, InjectionItem, is_alone, 
 from evals.no_limits import without_chat_limits
 from evals.safety.run import PROMPTS, Answer, cache_path, post_chat, read_cache
 
+from molecula.agent.channel_markers import without_control_tokens
 from molecula.agent.llm import chat_model_name
 from molecula.config import Settings, get_settings
 from molecula.guard.safety import REFUSED
@@ -147,8 +148,12 @@ def stopped_by(item: InjectionItem, answer: Answer) -> str:
 
 
 def planted_seen(planted: str, answer: Answer) -> bool:
+    """Whether a tool result carried the planted text, also with its control tokens taken out."""
     results = (e["result"] for e in answer.events if e["type"] == "tool_result")
-    return any(planted in text for result in results for text in strings(result))
+    seen = without_control_tokens(planted)
+    return any(
+        seen in without_control_tokens(text) for result in results for text in strings(result)
+    )
 
 
 def strings(value: Any) -> Iterator[str]:

@@ -6,6 +6,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from molecula import prompts
+from molecula.agent.channel_markers import without_control_tokens
 from molecula.agent.llm import ChatModelError
 from molecula.guard.claims import split_claims
 from molecula.guard.safety import fixed_answer
@@ -83,7 +84,7 @@ class ChatModelSourceCheck:
             result = await structured.ainvoke(
                 [
                     SystemMessage(prompts.load("guard/source_check")),
-                    HumanMessage(json.dumps(data, ensure_ascii=False)),
+                    HumanMessage(without_control_tokens(json.dumps(data, ensure_ascii=False))),
                 ]
             )
         except ChatModelError as error:

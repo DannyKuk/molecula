@@ -104,8 +104,8 @@ def test_every_category_is_an_option_with_its_description() -> None:
 
 
 def test_a_choice_that_is_no_category_fails_the_check() -> None:
-    with pytest.raises(InputCheckFailed, match="prompt_injection"):
-        run(Server(200, answered("prompt_injection")))
+    with pytest.raises(InputCheckFailed, match="jailbreak"):
+        run(Server(200, answered("jailbreak")))
 
 
 def test_a_decision_model_error_reaches_the_guard_as_it_is() -> None:

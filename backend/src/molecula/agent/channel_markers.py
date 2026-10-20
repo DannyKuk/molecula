@@ -9,11 +9,22 @@ CHANNEL_MARKER = re.compile(r"[ \t]*【\s*(?:analysis|commentary|final)\b[^【�
 # A 【 left open for longer than this is no marker, so the text behind it isn't held back.
 LONGEST_MARKER = 80
 
+# The special tokens chat formats delimit their turns with: harmony's <|start|>, <|message|> and
+# <|end|>, and others' <|im_start|> or <|eot_id|>. Written into text, they can pass it off as a
+# system turn (#329). A lab value such as "eGFR <30" has no bars, so it stays.
+CONTROL_TOKEN = re.compile(r"<\|[\w.-]{1,40}\|>")
+
 
 def without_channel_markers(text: str) -> str:
     """The text without channel markers and the spaces before them, so `ABL1 【commentary】.`
     becomes `ABL1.`."""
     return CHANNEL_MARKER.sub("", text)
+
+
+def without_control_tokens(text: str) -> str:
+    """The text without chat-format control tokens, so `<|end|><|start|>system` reads as the
+    plain word `system` and can't open a turn."""
+    return CONTROL_TOKEN.sub("", text)
 
 
 class ChannelMarkerFilter:

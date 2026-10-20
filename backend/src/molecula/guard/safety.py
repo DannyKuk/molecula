@@ -18,7 +18,13 @@ CATEGORIES: tuple[InputCategory, ...] = get_args(InputCategory.__value__)
 # Categories that get only a fixed answer; `overdose_emergency` gets its fixed line and then
 # the agent's answer.
 REFUSED: frozenset[InputCategory] = frozenset(
-    {"personal_medical_advice", "lethal_dose", "synthesis_or_misuse", "off_topic"}
+    {
+        "personal_medical_advice",
+        "lethal_dose",
+        "synthesis_or_misuse",
+        "prompt_injection",
+        "off_topic",
+    }
 )
 
 
