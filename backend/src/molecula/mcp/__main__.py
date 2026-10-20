@@ -37,7 +37,7 @@ def open_server(settings: Settings, conn: sqlite3.Connection, *, host: str, port
         open_filter_extractor(settings, chat_model, services.compounds, services.labels),
         open_label_retriever(settings, index),
     )
-    return build_server(tools, host=host, port=port)
+    return build_server(tools, number_sources=True, host=host, port=port)
 
 
 def main(argv: list[str] | None = None) -> None:

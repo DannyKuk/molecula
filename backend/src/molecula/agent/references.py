@@ -6,22 +6,10 @@ from langchain.agents.middleware import AgentMiddleware, ToolCallRequest
 from langchain_core.messages import ToolMessage
 from langgraph.types import Command
 
-from molecula.schemas.tools import ToolResult
+from molecula.schemas.tools import References, ToolResult
 
 # gpt-oss often cites in its own full-width brackets, 【1】, even when asked for [1] (#129).
 CITATION = re.compile(r"[\[【](\d+(?:\s*,\s*\d+)*)[\]】]")
-
-
-class References:
-    """The reference numbers of one answer's sources, from 1 in the order they were found. A
-    label passage is keyed by its chunk id, any other source by its URL, so a passage or page
-    that two tool calls find keeps its first number."""
-
-    def __init__(self) -> None:
-        self._refs: dict[str, int] = {}
-
-    def ref_of(self, key: str) -> int:
-        return self._refs.setdefault(key, len(self._refs) + 1)
 
 
 class NumberSources(AgentMiddleware):

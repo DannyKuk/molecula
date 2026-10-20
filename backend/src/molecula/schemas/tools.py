@@ -46,6 +46,18 @@ class SearchLabelsArgs(BaseModel):
     section: SectionGroup | None = None
 
 
+class References:
+    """The reference numbers of one answer's sources (or one MCP session's), from 1 in the
+    order they were found. A label passage is keyed by its chunk id, any other source by its
+    URL, so a passage or page that two tool calls find keeps its first number."""
+
+    def __init__(self) -> None:
+        self._refs: dict[str, int] = {}
+
+    def ref_of(self, key: str) -> int:
+        return self._refs.setdefault(key, len(self._refs) + 1)
+
+
 class ToolResult(BaseModel):
     """What a tool returns. `sources` are where its facts come from, for the user to check.
 
