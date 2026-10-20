@@ -136,4 +136,7 @@ def retrieval_trace(
         filter_source="agent" if call and call["args"].get("drug") else "model",
         widened=retrieval.widened,
         candidates=candidates,
+        mode=retrieval.mode,
+        min_score=retrieval.min_score,
+        section_group_boost=retrieval.section_group_boost,
     )

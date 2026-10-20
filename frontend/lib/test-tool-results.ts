@@ -1,3 +1,5 @@
+import type { RetrievalTrace } from "./tool-cards";
+
 // Tool results recorded from the local store (search_labels from a gpt-oss-20b answer), trimmed.
 
 /** `resolve_drug` for Gleevec. */
@@ -327,6 +329,7 @@ export const IMATINIB_LABELS = {
   unsupported: [],
   passages: [
     {
+      id: "211ef2da-2868-4a77-8055-1cb2cd78e24b:mechanism_of_action:0",
       ref: 1,
       text: "12.1 Mechanism of Action Imatinib mesylate is a protein-tyrosine kinase inhibitor that inhibits the BCR-ABL tyrosine kinase, the constitutive abnormal tyrosine ",
       substance: "IMATINIB MESYLATE",
@@ -336,6 +339,7 @@ export const IMATINIB_LABELS = {
       url: "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=211ef2da-2868-4a77-8055-1cb2cd78e24b",
     },
     {
+      id: "211ef2da-2868-4a77-8055-1cb2cd78e24b:pharmacokinetics:3",
       ref: 2,
       text: "Unchanged imatinib accounted for 25% of the dose (5% urine, 20% feces), the remainder being metabolites. Following oral administration in healthy volunteers, th",
       substance: "IMATINIB MESYLATE",
@@ -345,4 +349,52 @@ export const IMATINIB_LABELS = {
       url: "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=211ef2da-2868-4a77-8055-1cb2cd78e24b",
     },
   ],
+};
+
+const IMATINIB_DROPPED = {
+  id: "211ef2da-2868-4a77-8055-1cb2cd78e24b:how_supplied:0",
+  text: "Gleevec tablets are supplied as 100 mg and 400 mg film-coated tablets.",
+  score: 0.21,
+  substance: "IMATINIB MESYLATE",
+  brand: "Gleevec",
+  section: "how_supplied",
+  url: "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=211ef2da-2868-4a77-8055-1cb2cd78e24b",
+  in_section_groups: false,
+  dense_rank: 3,
+  bm25_rank: null,
+  kept: false,
+};
+
+/** The trace of the search in `IMATINIB_LABELS`, the agent naming Gleevec and pharmacology. Its
+ * real run kept every candidate (the app's minimum similarity is 0.00); this one drops one below
+ * a minimum of 0.30 to show how a dropped passage looks. */
+export const IMATINIB_TRACE: RetrievalTrace = {
+  tool_call_id: "call_1",
+  question: IMATINIB_LABELS.question,
+  translation: [],
+  filter: {
+    drugs: [
+      {
+        name: "Gleevec",
+        generic: "imatinib",
+        set_ids: ["211ef2da-2868-4a77-8055-1cb2cd78e24b"],
+        narrowed: false,
+      },
+    ],
+    unsupported: [],
+    section_groups: ["pharmacology"],
+    ignored_section_groups: [],
+    product_type: null,
+    extraction_error: null,
+  },
+  filter_source: "agent",
+  widened: [],
+  candidates: [
+    { ...IMATINIB_LABELS.passages[0], score: 0.71, in_section_groups: true, dense_rank: 1 },
+    { ...IMATINIB_LABELS.passages[1], score: 0.52, in_section_groups: true, dense_rank: 2 },
+    IMATINIB_DROPPED,
+  ].map((candidate) => ({ bm25_rank: null, kept: true, ...candidate })),
+  mode: "dense",
+  min_score: 0.3,
+  section_group_boost: 0.15,
 };

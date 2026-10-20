@@ -1,12 +1,58 @@
-import type { Suggestion } from "./api";
+import type { Resolution, Suggestion } from "./api";
 
 /** A tool the model called, and what it returned once it has (`ToolCallEvent` and
- * `ToolResultEvent` in `backend/src/molecula/schemas/chat.py`). */
+ * `ToolResultEvent` in `backend/src/molecula/schemas/chat.py`). A label search also has its
+ * `trace`; searches saved before the trace was kept have none. */
 export type ToolRun = {
   id: string;
   name: string;
   args: Record<string, unknown>;
   result?: unknown;
+  trace?: RetrievalTrace;
+};
+
+/** A label chunk a search scored, kept or dropped below `min_score` (`Candidate` in
+ * `backend/src/molecula/schemas/chat.py`). The ranks are null outside the ranking they belong to. */
+export type Candidate = {
+  id: string;
+  text: string;
+  score: number;
+  substance: string;
+  brand: string | null;
+  section: string;
+  url: string;
+  in_section_groups: boolean;
+  dense_rank: number | null;
+  bm25_rank: number | null;
+  kept: boolean;
+};
+
+export type DrugFilter = { name: string; generic: string; set_ids: string[]; narrowed: boolean };
+
+/** What a label search was narrowed to (`LabelFilter` in `schemas/retrieval.py`). */
+export type LabelFilter = {
+  drugs: DrugFilter[];
+  unsupported: Resolution[];
+  section_groups: string[];
+  ignored_section_groups: string[];
+  product_type: "rx" | "otc" | null;
+  extraction_error: string | null;
+};
+
+/** How one label search ran (`RetrievalTraceEvent` in `schemas/chat.py`): the question it
+ * searched with, who chose its filter, the filter (null: the whole index), the ranking and every
+ * candidate it scored, kept ones first and best first. */
+export type RetrievalTrace = {
+  tool_call_id: string;
+  question: string;
+  translation: { step: string; output: string }[];
+  filter: LabelFilter | null;
+  filter_source: "model" | "agent";
+  widened: "labels"[];
+  candidates: Candidate[];
+  mode: "dense" | "bm25" | "hybrid";
+  min_score: number;
+  section_group_boost: number;
 };
 
 /** A step of the answer: the progress line, and the tool call it announced, if any. */
@@ -85,6 +131,7 @@ export type DrugComplex = {
 export type NoComplex = { status: "no_complex"; cid: number; name: string };
 
 export type LabelPassage = {
+  id: string;
   ref: number;
   text: string;
   substance: string;
@@ -112,7 +159,13 @@ export type Card =
   | { kind: "targets"; result: DrugTargetList }
   | { kind: "complex"; result: DrugComplex }
   | { kind: "no_complex"; result: NoComplex }
-  | { kind: "labels"; result: LabelPassages; drug: string | null; section: string | null };
+  | {
+      kind: "labels";
+      result: LabelPassages;
+      drug: string | null;
+      section: string | null;
+      trace: RetrievalTrace | null;
+    };
 
 /** A step as the list shows it; a step without a card is a plain line. */
 export type CardStep = { text: string; card: Card | null };
@@ -152,6 +205,7 @@ export function cardOf(tool: ToolRun | undefined): Card | null {
         result: result as LabelPassages,
         drug: stringArg(tool.args.drug),
         section: stringArg(tool.args.section),
+        trace: tool.trace ?? null,
       };
     default:
       return null;

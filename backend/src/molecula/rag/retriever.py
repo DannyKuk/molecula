@@ -74,7 +74,15 @@ class LabelRetriever:
         falls back to the prescription label's.
         """
         if label_filter is not None and label_filter.names_drugs and not label_filter.set_ids:
-            return Retrieval(question=question, filter=label_filter, chunks=[], dropped=[])
+            return Retrieval(
+                question=question,
+                filter=label_filter,
+                chunks=[],
+                dropped=[],
+                mode=self._mode,
+                min_score=self._min_score,
+                section_group_boost=self._section_group_boost,
+            )
         query = Query(question, self._embeddings.embed_query(question))
         candidates, widened = self._candidates(query, label_filter)
         return Retrieval(
@@ -83,6 +91,9 @@ class LabelRetriever:
             chunks=[c for c in candidates if c.score >= self._min_score],
             dropped=[c for c in candidates if c.score < self._min_score],
             widened=widened,
+            mode=self._mode,
+            min_score=self._min_score,
+            section_group_boost=self._section_group_boost,
         )
 
     def _candidates(

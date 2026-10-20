@@ -1,6 +1,7 @@
 import { API_URL } from "./api";
 import { MAX_ANSWER_LENGTH, MAX_MESSAGE_LENGTH, MAX_MESSAGES } from "./chat-limits";
 import { readServerSentEvents } from "./sse";
+import type { RetrievalTrace } from "./tool-cards";
 import type { Usage } from "./usage";
 
 export type ChatMessage = {
@@ -45,8 +46,7 @@ export type ChatEvent =
   | ({ type: "source_check" } & SourceCheck)
   | { type: "done"; usage: Usage; step_limit_reached: boolean }
   | { type: "error"; message: string }
-  // Read but not shown yet: the retrieval trace comes with #41.
-  | { type: "retrieval_trace" };
+  | ({ type: "retrieval_trace" } & RetrievalTrace);
 
 export const CHAT_UNAVAILABLE = "The chat is currently unavailable. Try again later.";
 export const CHAT_FAILED = "Something went wrong while answering. Try again.";

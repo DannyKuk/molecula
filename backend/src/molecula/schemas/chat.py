@@ -14,7 +14,7 @@ from pydantic import (
 from molecula.guard.validation import has_control_characters
 from molecula.schemas.claims import CheckedClaim
 from molecula.schemas.guard import InputCategory
-from molecula.schemas.retrieval import LabelFilter, RetrievedChunk, Widening
+from molecula.schemas.retrieval import LabelFilter, RetrievalMode, RetrievedChunk, Widening
 from molecula.schemas.usage import Usage
 
 # Earlier turns travel as question and answer text only, so ten messages stay around 15k
@@ -160,7 +160,10 @@ class RetrievalTraceEvent(BaseModel):
 
     `filter_source` says who chose the filter: `model` when the chat model extracted it from
     the question, `agent` when the agent named the drug and `filter.extracted` holds its
-    arguments. `translation` is empty until a query translation step is built (#114).
+    arguments. `translation` stays empty: #114 measured a query translation step and didn't
+    build it. `mode` is the ranking the search used, `min_score` the similarity a candidate needed
+    to be kept and `section_group_boost` what a candidate in the filter's section groups counted
+    higher in the ranking.
     """
 
     type: Literal["retrieval_trace"] = "retrieval_trace"
@@ -171,6 +174,9 @@ class RetrievalTraceEvent(BaseModel):
     filter_source: Literal["model", "agent"]
     widened: list[Widening]
     candidates: list[Candidate]
+    mode: RetrievalMode
+    min_score: float
+    section_group_boost: float
 
 
 class SourceCheckEvent(BaseModel):

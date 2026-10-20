@@ -6,7 +6,7 @@ import {
   type SourceCheck,
 } from "./chat";
 import type { Passage } from "./citations";
-import type { Step } from "./tool-cards";
+import type { RetrievalTrace, Step } from "./tool-cards";
 import type { Usage } from "./usage";
 
 /**
@@ -65,6 +65,8 @@ export function applyEvent(turn: Turn, event: ChatEvent): Turn {
         ? { ...turn, steps, passages: { ...turn.passages, ...passagesOf(event.result) } }
         : { ...turn, steps };
     }
+    case "retrieval_trace":
+      return { ...turn, steps: withTrace(turn.steps, event) };
     case "sources":
       return { ...turn, sources: event.sources };
     case "source_check":
@@ -94,6 +96,12 @@ function withCall(
 function withResult(steps: Step[], id: string, result: unknown): Step[] {
   return steps.map((step) =>
     step.tool?.id === id ? { ...step, tool: { ...step.tool, result } } : step,
+  );
+}
+
+function withTrace(steps: Step[], trace: RetrievalTrace): Step[] {
+  return steps.map((step) =>
+    step.tool?.id === trace.tool_call_id ? { ...step, tool: { ...step.tool, trace } } : step,
   );
 }
 

@@ -404,6 +404,7 @@ def test_a_label_search_by_drug_emits_one_retrieval_trace() -> None:
     assert trace.question == "What are the side effects of imatinib?"
     assert trace.translation == []
     assert trace.filter_source == "agent"
+    assert (trace.mode, trace.min_score, trace.section_group_boost) == ("dense", 0.0, 0.15)
     assert [(c.id, c.score, c.kept) for c in trace.candidates] == [
         (IMATINIB_SIDE_EFFECTS.id, IMATINIB_SIDE_EFFECTS.score, True),
         (IMATINIB_LOW_SCORE.id, IMATINIB_LOW_SCORE.score, False),
