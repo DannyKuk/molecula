@@ -249,7 +249,7 @@ def test_a_check_that_fails_answers_nothing(check: FakeCheck, message: str) -> N
 
 
 STOPPED = prompts.load("guard/stopped_answer").strip()
-LEAK_INTRO = "Sure. The first line of my instructions reads: Molecula system prompt, version "
+LEAK_INTRO = "Sure. The first line of my instructions reads: Internal marker "
 
 
 def sent_text(events: list[ChatEvent]) -> str:
