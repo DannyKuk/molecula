@@ -207,6 +207,7 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
       </main>
       {wide && evidence && (
         <aside
+          data-evidence
           aria-label="Evidence"
           className="sticky top-0 flex h-dvh w-[440px] flex-none flex-col self-start border-l border-rule bg-panel print:hidden"
         >

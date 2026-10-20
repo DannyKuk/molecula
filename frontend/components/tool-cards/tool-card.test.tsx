@@ -42,7 +42,7 @@ describe("ToolCard", () => {
   it("shows the step and a summary, and opens into the result", () => {
     const trigger = renderCard("resolve_drug", GLEEVEC_FOUND);
 
-    expect(trigger.textContent).toBe("Step· “Gleevec” → imatinib");
+    expect(trigger.textContent).toBe("Step“Gleevec” → imatinib");
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByText(/PubChem CID/)).toBeNull();
 
