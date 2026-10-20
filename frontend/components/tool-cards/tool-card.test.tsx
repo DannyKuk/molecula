@@ -17,6 +17,7 @@ import {
 } from "@/lib/test-tool-results";
 
 import { ToolCard } from "./tool-card";
+import { ShowStructure } from "./view-in-3d";
 
 type Args = Record<string, unknown>;
 
@@ -146,34 +147,24 @@ describe("get_complex", () => {
     expect(within(card).getByRole("button", { name: "Show all 10" })).toBeDefined();
   });
 
-  it("scrolls to the drug's 3D view in the same turn", () => {
+  it("opens the drug's 3D view in the evidence panel", () => {
     const card = cardOf({ id: "call_1", name: "get_complex", args: {}, result: IMATINIB_COMPLEX });
-    const { container } = render(
-      <>
-        <div data-turn>
-          <section data-structure="5291" />
-        </div>
-        <div data-turn>
-          <ToolCard
-            text="Step"
-            card={card as Exclude<Card, { kind: "pending" }>}
-            answer=""
-            current={false}
-          />
-          <section data-structure="5291" />
-        </div>
-      </>,
+    const show = vi.fn();
+    render(
+      <ShowStructure value={show}>
+        <ToolCard
+          text="Step"
+          card={card as Exclude<Card, { kind: "pending" }>}
+          answer=""
+          current={false}
+        />
+      </ShowStructure>,
     );
-    vi.stubGlobal("matchMedia", () => ({ matches: false }));
-    const [earlierView, view] = container.querySelectorAll("section");
-    earlierView.scrollIntoView = vi.fn();
-    view.scrollIntoView = vi.fn();
 
     fireEvent.click(screen.getByRole("button", { name: /^Step/ }));
     fireEvent.click(screen.getByRole("button", { name: "View in 3D" }));
 
-    expect(view.scrollIntoView).toHaveBeenCalledOnce();
-    expect(earlierView.scrollIntoView).not.toHaveBeenCalled();
+    expect(show).toHaveBeenCalledExactlyOnceWith(5291);
   });
 
   it("puts a stand-in structure's caption first and says when there are no hydrogen bonds", () => {

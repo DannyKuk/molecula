@@ -4,20 +4,18 @@ import { type RefObject, useEffect, useLayoutEffect, useRef } from "react";
 const NEAR_END = 48;
 
 /**
- * Scrolls the page to its end each time a question is `sent` and then, while `answering` and not
- * `paused`, keeps it there as `content` grows, like a terminal. The reader scrolling up stops that,
- * and scrolling back down to the end starts it again.
+ * Scrolls the page to its end each time a question is `sent` and then, while `answering`, keeps it
+ * there as `content` grows, like a terminal. The reader scrolling up stops that, and scrolling back
+ * down to the end starts it again.
  */
 export function useFollowAnswer(
   content: RefObject<HTMLElement | null>,
   sent: number,
   answering: boolean,
-  paused: boolean,
 ) {
-  const following = answering && !paused;
   const atEnd = useRef(true);
   const lastTop = useRef(0);
-  const wasFollowing = useRef(false);
+  const wasAnswering = useRef(false);
 
   useEffect(() => {
     lastTop.current = window.scrollY;
@@ -34,7 +32,7 @@ export function useFollowAnswer(
   }, []);
 
   // Layout effects, so the page moves before it is painted and stops following in the same
-  // commit that turns `following` off.
+  // commit that turns `answering` off.
   useLayoutEffect(() => {
     if (sent === 0) return;
     atEnd.current = true;
@@ -43,20 +41,20 @@ export function useFollowAnswer(
 
   useLayoutEffect(() => {
     const element = content.current;
-    if (!following || !element) return;
+    if (!answering || !element) return;
     const growth = new ResizeObserver(() => {
       if (atEnd.current) scrollToEnd(lastTop);
     });
     growth.observe(element);
     return () => growth.disconnect();
-  }, [content, following]);
+  }, [content, answering]);
 
-  // The sources and the openFDA credit appear in the same commit that ends the answer, after the
-  // last growth the observer saw, so a finished answer is followed to its end once more.
+  // The pills and the usage line appear in the same commit that ends the answer, after the last
+  // growth the observer saw, so a finished answer is followed to its end once more.
   useLayoutEffect(() => {
-    if (wasFollowing.current && !following && !paused && atEnd.current) scrollToEnd(lastTop);
-    wasFollowing.current = following;
-  }, [following, paused]);
+    if (wasAnswering.current && !answering && atEnd.current) scrollToEnd(lastTop);
+    wasAnswering.current = answering;
+  }, [answering]);
 }
 
 // The page's own end, not an element's: scrolling an element into view ignores the sticky

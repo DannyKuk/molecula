@@ -64,6 +64,19 @@ function conversationText(): string {
   return document.querySelector('ol[aria-label="Conversation"]')?.textContent ?? "";
 }
 
+function conversation(): HTMLElement {
+  return screen.getByRole("list", { name: "Conversation" });
+}
+
+function evidence(): HTMLElement {
+  return screen.getByRole("complementary", { name: "Evidence" });
+}
+
+/** The evidence panel's open tab, with its count: "Sources4". */
+function selectedTab(): string | null {
+  return within(evidence()).getByRole("tab", { selected: true }).textContent;
+}
+
 async function streamed(send: () => void) {
   await act(async () => send());
 }
@@ -117,32 +130,92 @@ describe("Chat", () => {
     expect(stream.sentMessages()).toEqual([{ role: "user", content: "How does Gleevec work?" }]);
   });
 
-  it("shows the steps live while answering and folds them away when done", async () => {
+  it("shows the current step under the question and every step live in the panel", async () => {
     const stream = stubChatStream();
     render(<Chat />);
 
     askQuestion("How does Gleevec work?");
-    expect(await screen.findByText("Thinking…")).toBeDefined();
+    expect(within(conversation()).getByText("Thinking…")).toBeDefined();
     await streamed(() => stream.send(status("Looking up Gleevec")));
     await streamed(() => stream.send(status("Searching the imatinib label")));
 
-    const progress = await screen.findByRole("list", { name: "Progress" });
+    expect(within(conversation()).getByText("Searching the imatinib label…")).toBeDefined();
+    const progress = within(evidence()).getByRole("list", { name: "Progress" });
     expect(
       within(progress)
         .getAllByRole("listitem")
         .map((item) => item.textContent),
     ).toEqual(["Looking up Gleevec", "Searching the imatinib label"]);
-    expect(screen.queryByText("Thinking…")).toBeNull();
+    expect(within(conversation()).queryByRole("list", { name: "Progress" })).toBeNull();
 
-    await streamed(() => stream.send(token("Imatinib blocks BCR-ABL.")));
+    await streamed(() => stream.send(token("Imatinib blocks BCR-ABL.") + DONE));
+
+    expect(within(conversation()).queryByText(/Searching the imatinib label/)).toBeNull();
+    expect(within(conversation()).getByRole("button", { name: "2 steps" })).toBeDefined();
+    expect(within(conversation()).getByText("no 3D")).toBeDefined();
+  });
+
+  it("shows the newest answer in the panel and an earlier one from its pills", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("Show imatinib bound to its target in 3D.");
+    await streamed(() => stream.send(IMATINIB_IN_3D + token("It sits in the ATP pocket.") + DONE));
+    await screen.findByText("It sits in the ATP pocket.");
+    askQuestion("What is metformin for?");
+    await streamed(() => stream.send(status("Looking up metformin")));
+
+    expect(within(evidence()).getByRole("heading", { level: 2 }).textContent).toBe("Answer 2 of 2");
+    expect(selectedTab()).toBe("Steps1");
+
+    await streamed(() => stream.send(token("It lowers blood sugar.") + DONE));
+    fireEvent.click(within(conversation()).getByRole("button", { name: "3D · 2HYY" }));
+
+    expect(within(evidence()).getByRole("heading", { level: 2 }).textContent).toBe("Answer 1 of 2");
+    expect(within(evidence()).getByText("3D view of imatinib")).toBeDefined();
+
+    fireEvent.click(within(evidence()).getByRole("button", { name: "Next answer" }));
+    expect(selectedTab()).toBe("Sources");
+  });
+
+  it("opens the sources a citation chip cites in the panel, highlighted", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does imatinib work?");
+    await streamed(() =>
+      stream.send(IMATINIB_LABEL_SEARCH + token("It blocks BCR-ABL [2].") + IMATINIB_SOURCES_EVENT),
+    );
     await streamed(() => stream.send(DONE));
+    fireEvent.click(screen.getByRole("button", { name: "Sources: Gleevec · Pharmacokinetics" }));
 
-    const toggle = await screen.findByRole("button", { name: "2 steps" });
-    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(selectedTab()).toBe("Sources4");
+    const cards = within(evidence()).getAllByRole("listitem");
+    expect(cards.map((card) => card.hasAttribute("data-highlighted"))).toEqual([
+      false,
+      true,
+      false,
+      false,
+    ]);
+  });
+
+  it("opens the panel as a sheet from the pills on a phone", async () => {
+    page = stubPage({ phone: true });
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+    await streamed(() => stream.send(status("Looking up Gleevec") + token("It blocks BCR-ABL.")));
+    await streamed(() => stream.send(DONE));
+    expect(screen.queryByRole("complementary", { name: "Evidence" })).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "1 step" }));
+
+    const sheet = await screen.findByRole("dialog", { name: "Evidence" });
+    expect(within(sheet).getByText("Looking up Gleevec")).toBeDefined();
+    fireEvent.click(within(sheet).getByRole("button", { name: "Close" }));
     expect(screen.queryByText("Looking up Gleevec")).toBeNull();
-
-    fireEvent.click(toggle);
-    expect(screen.getByText("Looking up Gleevec")).toBeDefined();
   });
 
   it("opens a step into what its tool returned, and merges property lookups when done", async () => {
@@ -614,33 +687,15 @@ describe("Chat", () => {
     expect(page.scrollTo).toHaveBeenCalledOnce();
   });
 
-  it("stops following once the answer shows a 3D view", async () => {
+  it("keeps following an answer that looked up a 3D view, which shows in the panel", async () => {
     const stream = stubChatStream();
     render(<Chat />);
 
     askQuestion("Show imatinib bound to its target in 3D.");
-    await streamed(() => stream.send(IMATINIB_IN_3D));
-    expect(await screen.findByText("3D view of imatinib")).toBeDefined();
-    page.scrollTo.mockClear();
-    await streamed(() => stream.send(token("Imatinib sits in the ATP pocket.")));
-    page.grow();
-
-    expect(page.scrollTo).not.toHaveBeenCalled();
-  });
-
-  it("follows a new answer after an earlier one showed a 3D view", async () => {
-    const stream = stubChatStream();
-    render(<Chat />);
-
-    askQuestion("Show imatinib bound to its target in 3D.");
-    await streamed(() => stream.send(IMATINIB_IN_3D + token("It sits in the ATP pocket.") + DONE));
-    await screen.findByText("It sits in the ATP pocket.");
-    askQuestion("What else does it bind?");
-    await streamed(() => stream.send(token("KIT and PDGFR.")));
+    await streamed(() => stream.send(IMATINIB_IN_3D + token("Imatinib sits in the ATP pocket.")));
     page.scrollTo.mockClear();
     page.grow();
 
-    expect(screen.getByText("3D view of imatinib")).toBeDefined();
     expect(page.scrollTo).toHaveBeenCalledOnce();
   });
 
@@ -663,18 +718,6 @@ describe("Chat", () => {
     askQuestion("How does Gleevec work?");
     await streamed(() => stream.send(token("It blocks BCR-ABL.")));
     page.scrollBy(-200);
-    page.scrollTo.mockClear();
-    await streamed(() => stream.send(DONE));
-
-    expect(page.scrollTo).not.toHaveBeenCalled();
-  });
-
-  it("doesn't scroll at the end of an answer that shows a 3D view", async () => {
-    const stream = stubChatStream();
-    render(<Chat />);
-
-    askQuestion("Show imatinib bound to its target in 3D.");
-    await streamed(() => stream.send(IMATINIB_IN_3D + token("It sits in the ATP pocket.")));
     page.scrollTo.mockClear();
     await streamed(() => stream.send(DONE));
 

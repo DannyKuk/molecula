@@ -87,12 +87,15 @@ export function HelpGuide({ onAsk }: { onAsk: (question: string) => void }) {
         </p>
         <p>
           A small tag after a fact, like &ldquo;Gleevec · Warnings and cautions&rdquo;, names the
-          label section it comes from. Point at it or tap it to read the passage and open the label
-          on DailyMed. Check the passage before relying on the fact.
+          label section it comes from. Point at it to read the passage, or click it to see the
+          passage with the answer&apos;s other sources. Check the passage before relying on the
+          fact.
         </p>
         <p>
-          Above each answer, &ldquo;steps&rdquo; lists what Molecula looked up. Click a step to see
-          what it found: the label passages, the properties, the targets or the 3D complex.
+          The evidence behind an answer sits in a panel beside the chat, or in a sheet from the
+          bottom on a phone: the 3D view, the sources with a link to each label on DailyMed, and the
+          steps Molecula took. The pills under each question open it on that answer. Click a step to
+          see what it found: the label passages, the properties, the targets or the 3D complex.
         </p>
       </section>
     </div>

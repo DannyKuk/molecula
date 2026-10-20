@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import type { Source } from "@/lib/chat";
 import {
   citedSources,
+  excerpt,
   isLabel,
   labelDate,
   sectionName,
@@ -17,13 +18,15 @@ import {
 /** The answer's sources and passages, or null while the answer is still streaming. */
 export const CitationsContext = createContext<Citations | null>(null);
 
-const EXCERPT_LENGTH = 320;
+/** Opens the evidence panel's Sources tab on the cited sources, or null where there is no panel. */
+export const OpenCitedSources = createContext<((refs: number[]) => void) | null>(null);
 
 /**
  * A run of citations such as `[2][3]` as one chip naming the first source it cites (a label
  * section, or a PubChem, ChEMBL or RCSB page), with "+1" for each other one. Its popover shows
- * every cited passage with a link to the label on DailyMed, and every cited page with its link. While the answer streams the citation stays as written; a number that
- * points at no passage is left out. `spaced` says a space stood before the citation; it is kept
+ * every cited passage with a link to the label on DailyMed, and every cited page with its link;
+ * clicking it opens them on the evidence panel's Sources tab. While the answer streams the
+ * citation stays as written; a number that points at no passage is left out. `spaced` says a space stood before the citation; it is kept
  * with the chip and left out with it. A `found` chip is one the answer didn't write: the source
  * check found these results hold the sentence before it (#220).
  */
@@ -39,6 +42,7 @@ export function CitationChip({
   children: ReactNode;
 }) {
   const citations = useContext(CitationsContext);
+  const openSources = useContext(OpenCitedSources);
   if (!citations) return <>{children}</>;
   const sources = citedSources(refs, citations.sources);
   if (sources.length === 0) return null;
@@ -47,10 +51,16 @@ export function CitationChip({
   return (
     <>
       {spaced && " "}
-      <Popover>
+      <Popover
+        onOpenChange={(_open, details) => {
+          // A click opens the Sources tab instead; on a phone the popover would cover its sheet.
+          if (openSources && details.reason === "trigger-press") details.cancel();
+        }}
+      >
         <PopoverTrigger
           openOnHover
           delay={150}
+          onClick={() => openSources?.(refs)}
           aria-label={`${found ? "Found by the source check" : "Sources"}: ${labels.join(", ")}`}
           className="mx-0.5 inline-flex max-w-full items-center gap-1.5 rounded-md bg-panel py-0.5 pr-2 pl-1.5 align-middle text-xs font-medium text-ink-2 hover:bg-ink hover:text-page focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3 print:hidden"
         >
@@ -129,8 +139,4 @@ function CitedPage({ source }: { source: Source }) {
 /** "2, 3": the numbers the printed source list gives these sources. */
 function printedRefs(sources: Source[]): string {
   return [...new Set(sources.map((source) => source.ref))].join(", ");
-}
-
-function excerpt(text: string): string {
-  return text.length > EXCERPT_LENGTH ? `${text.slice(0, EXCERPT_LENGTH).trimEnd()}…` : text;
 }

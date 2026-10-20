@@ -88,6 +88,13 @@ function sourceLine(source: Source): string {
   return `${where} – ${what} – ${source.url}`;
 }
 
+const EXCERPT_LENGTH = 320;
+
+/** The start of a passage, as much as a popover or a source card shows. */
+export function excerpt(text: string): string {
+  return text.length > EXCERPT_LENGTH ? `${text.slice(0, EXCERPT_LENGTH).trimEnd()}…` : text;
+}
+
 /** "2026-07-13" → "Jul 13, 2026". */
 export function labelDate(isoDate: string): string {
   return new Date(`${isoDate}T00:00:00Z`).toLocaleDateString("en-US", {
