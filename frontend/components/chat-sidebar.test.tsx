@@ -653,6 +653,36 @@ describe("Chat sidebar", () => {
 
     expect(expandSidebar().getByRole("link", benchmarks).getAttribute("href")).toBe("/benchmarks");
   });
+
+  it("opens the MCP server guide from the rail", async () => {
+    await openPage(memoryHistory().history);
+
+    fireEvent.click(rail().getByRole("button", { name: "MCP server" }));
+
+    expect(
+      await screen.findByRole("dialog", { name: "Use Molecula in your AI assistant" }),
+    ).toBeTruthy();
+  });
+
+  it("leaves the MCP server guide out of the phone drawer", async () => {
+    await openPage(memoryHistory().history);
+
+    fireEvent.click(screen.getByRole("button", { name: "Open chats" }));
+    const drawer = within(await screen.findByRole("dialog", { name: "Chats" }));
+
+    expect(drawer.getByRole("link", { name: "Benchmarks" })).toBeTruthy();
+    expect(drawer.queryByRole("button", { name: "MCP server" })).toBeNull();
+  });
+
+  it("opens the MCP server guide from the expanded list", async () => {
+    await openPage(memoryHistory().history);
+
+    fireEvent.click(expandSidebar().getByRole("button", { name: "MCP server" }));
+
+    expect(
+      await screen.findByRole("dialog", { name: "Use Molecula in your AI assistant" }),
+    ).toBeTruthy();
+  });
 });
 
 describe("Chat bookmarks", () => {
