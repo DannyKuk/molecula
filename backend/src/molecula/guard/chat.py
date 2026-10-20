@@ -5,6 +5,7 @@ from contextlib import aclosing
 
 from molecula import prompts
 from molecula.agent.agent import ChatAgent
+from molecula.agent.channel_markers import without_control_tokens
 from molecula.agent.decisions import DecisionModelError
 from molecula.agent.llm import ChatModelError, describe_provider_error
 from molecula.guard.canary import CanaryWatch, PromptLeaked
@@ -55,6 +56,7 @@ class GuardedChat:
         `token`, `sources` and `done`. `done` carries the category. An input check that fails
         ends with an `error` event and no answer. An answer that repeats the system prompt ends
         with `replace_answer`, `sources` and `done`, unchecked."""
+        conversation = without_control_tokens_in(conversation)
         yield StatusEvent(message=CHECKING)
         try:
             async with asyncio.timeout(self._timeout_seconds):
@@ -165,4 +167,13 @@ def fixed(verdict: Verdict) -> list[ChatEvent]:
             step_limit_reached=False,
             category=verdict.category,
         ),
+    ]
+
+
+def without_control_tokens_in(conversation: Sequence[ChatMessage]) -> list[ChatMessage]:
+    """The conversation without chat-format control tokens, before the input check or the agent
+    reads it, so a message can't open a system turn of its own (#329)."""
+    return [
+        message.model_copy(update={"content": without_control_tokens(message.content)})
+        for message in conversation
     ]

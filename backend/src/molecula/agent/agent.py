@@ -1,15 +1,29 @@
 import asyncio
 import logging
 from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
+from typing import Any
 
 from langchain.agents import create_agent
-from langchain.agents.middleware import AgentMiddleware, ModelRequest, ModelResponse
+from langchain.agents.middleware import (
+    AgentMiddleware,
+    ModelRequest,
+    ModelResponse,
+    ToolCallRequest,
+)
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, AnyMessage, BaseMessage, HumanMessage, SystemMessage
+from langchain_core.messages import (
+    AIMessage,
+    AnyMessage,
+    BaseMessage,
+    HumanMessage,
+    SystemMessage,
+    ToolMessage,
+)
 from langchain_core.tools import BaseTool
+from langgraph.types import Command
 
 from molecula import prompts
-from molecula.agent.channel_markers import without_channel_markers
+from molecula.agent.channel_markers import without_channel_markers, without_control_tokens
 from molecula.agent.events import AgentRun
 from molecula.agent.llm import ChatModelError, describe_provider_error
 from molecula.agent.references import NumberSources
@@ -41,7 +55,7 @@ class ChatAgent:
             model,
             tools,
             system_prompt=prompts.load("agent/system", canary=canary),
-            middleware=[StepLimit(max_steps), NumberSources()],
+            middleware=[StepLimit(max_steps), WithoutControlTokens(), NumberSources()],
             context_schema=References,
         )
         self._tools = tools
@@ -114,6 +128,22 @@ class StepLimit(AgentMiddleware):
             result=[without_tool_calls(message) for message in response.result],
             structured_response=response.structured_response,
         )
+
+
+class WithoutControlTokens(AgentMiddleware):
+    """Takes chat-format control tokens out of every tool result before the model reads it, so
+    label text can't pass itself off as a system turn (#329). It wraps `NumberSources`, which
+    writes the result's content afresh."""
+
+    async def awrap_tool_call(
+        self,
+        request: ToolCallRequest,
+        handler: Callable[[ToolCallRequest], Awaitable[ToolMessage | Command[Any]]],
+    ) -> ToolMessage | Command[Any]:
+        message = await handler(request)
+        if isinstance(message, ToolMessage) and isinstance(message.content, str):
+            return message.model_copy(update={"content": without_control_tokens(message.content)})
+        return message
 
 
 def steps_taken(messages: Sequence[AnyMessage]) -> int:
