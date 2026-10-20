@@ -47,9 +47,9 @@ class SearchLabelsArgs(BaseModel):
 
 
 class References:
-    """The reference numbers of one answer's sources (of one session's, over MCP), from 1 in
-    the order they were found. A label passage is keyed by its chunk id, any other source by
-    its URL, so a passage or page that two tool calls find keeps its first number."""
+    """The reference numbers of one answer's sources (or one MCP session's), from 1 in the
+    order they were found. A label passage is keyed by its chunk id, any other source by its
+    URL, so a passage or page that two tool calls find keeps its first number."""
 
     def __init__(self) -> None:
         self._refs: dict[str, int] = {}
