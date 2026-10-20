@@ -653,6 +653,23 @@ describe("Chat sidebar", () => {
 
     expect(expandSidebar().getByRole("link", benchmarks).getAttribute("href")).toBe("/benchmarks");
   });
+
+  it("opens the MCP server guide from the rail, the list and the phone drawer", async () => {
+    await openPage(memoryHistory().history);
+    const mcp = { name: "MCP server" };
+    const guide = { name: "Use Molecula in your AI assistant" };
+
+    fireEvent.click(rail().getByRole("button", mcp));
+    fireEvent.click(
+      within(await screen.findByRole("dialog", guide)).getByRole("button", { name: "Close" }),
+    );
+    await waitFor(() => expect(screen.queryByRole("dialog", guide)).toBeNull());
+
+    fireEvent.click(screen.getByRole("button", { name: "Open chats" }));
+    const drawer = within(await screen.findByRole("dialog", { name: "Chats" }));
+    fireEvent.click(drawer.getByRole("button", mcp));
+    expect(await screen.findByRole("dialog", guide)).toBeTruthy();
+  });
 });
 
 describe("Chat bookmarks", () => {

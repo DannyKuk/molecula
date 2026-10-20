@@ -64,7 +64,7 @@ npm run format:check && npm run lint && npm test && npm run build
 
 ### MCP server
 
-The agent's six tools (`resolve_drug`, `get_properties`, `get_targets`, `get_complex`, `search_labels`, `compare_drugs`) are also an MCP server, with the same descriptions and answers. It reads the same `.env` and store as the backend and takes about 30 seconds to start while it loads the embedding model. Every tool but `search_labels` reads only the store; each label search also makes one model call to read the filter from the question (Jev online, the local chat model with `OFFLINE=1`), as in the chat.
+The agent's six tools (`resolve_drug`, `get_properties`, `get_targets`, `get_complex`, `search_labels`, `compare_drugs`) are also an MCP server, with the same descriptions and answers. It reads the same `.env` and store as the backend and takes about 30 seconds to start while it loads the embedding model. Every tool but `search_labels` reads only the store; each label search also makes one model call to read the filter from the question (Jev online, the local chat model with `OFFLINE=1`), as in the chat. The app shows the same setup under "MCP server" in the chat sidebar (#301).
 
 ```
 cd backend

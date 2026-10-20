@@ -7,6 +7,7 @@ import {
   LoaderCircle,
   Menu,
   PanelLeft,
+  Plug,
   Plus,
   SquarePen,
   X,
@@ -27,6 +28,7 @@ import { bookmarkedOf, type ConversationSummary, groupChats } from "@/lib/chat-h
 import { useSidebarExpanded } from "@/lib/use-sidebar-expanded";
 
 import { HistoryRow } from "./history-row";
+import { McpDialog } from "./mcp-dialog";
 
 export type ChatListProps = {
   /** Null until the history has loaded, false when the browser doesn't keep it. */
@@ -53,6 +55,9 @@ const OUTLINED = "border-ink-3 text-foreground";
 
 const ICON =
   "text-ink-2 hover:bg-rule hover:text-foreground [&_svg:not([class*='size-'])]:size-4.5";
+
+const LIST_LINK =
+  "flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-ink-2 hover:bg-rule hover:text-foreground [&_svg]:size-4";
 
 const SIDEBAR_CLASSES =
   "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-rule bg-panel md:flex print:hidden";
@@ -82,6 +87,9 @@ export function ChatSidebar(props: ChatListProps) {
         >
           <ChartColumn />
         </Link>
+        <McpDialog trigger={<IconButton label="MCP server" />}>
+          <Plug />
+        </McpDialog>
         <IconButton
           label={answeringElsewhere ? "Chat history, an answer is coming in" : "Chat history"}
           onClick={() => setExpanded(true)}
@@ -199,8 +207,8 @@ export function ChatDrawer(props: ChatListProps) {
 }
 
 /**
- * "New chat", the benchmarks link, the bookmarked chats, the others by day, newest first, and what
- * to know about where they are kept.
+ * "New chat", the benchmarks link, the MCP server guide, the bookmarked chats, the others by day,
+ * newest first, and what to know about where they are kept.
  */
 function ChatList({ onNew, removedBookmark, ...props }: ChatListProps) {
   return (
@@ -210,13 +218,14 @@ function ChatList({ onNew, removedBookmark, ...props }: ChatListProps) {
           <Plus />
           New chat
         </Button>
-        <Link
-          href="/benchmarks"
-          className="mt-1 flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-ink-2 hover:bg-rule hover:text-foreground [&_svg]:size-4"
-        >
+        <Link href="/benchmarks" className={cn(LIST_LINK, "mt-1")}>
           <ChartColumn />
           Benchmarks
         </Link>
+        <McpDialog trigger={<button type="button" className={LIST_LINK} />}>
+          <Plug />
+          MCP server
+        </McpDialog>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
         <ChatGroups {...props} />
