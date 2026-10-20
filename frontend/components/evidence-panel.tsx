@@ -27,6 +27,8 @@ type EvidencePanelProps = {
   /** What to show, with `turn` already resolved to an index. */
   shown: Shown & { turn: number };
   onShow: (shown: Shown) => void;
+  /** Goes back to the answer coming in, set while the panel shows another one. */
+  backToLive?: () => void;
   /** A close button, when the panel is a sheet. */
   close?: ReactNode;
 };
@@ -38,7 +40,7 @@ const NAV =
   "grid size-7 place-items-center rounded-md border border-rule-2 bg-card text-ink-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-ink-3 disabled:opacity-35";
 
 /** The 3D view, the sources and the steps of one answer, beside the chat or in a sheet. */
-export function EvidencePanel({ turns, shown, onShow, close }: EvidencePanelProps) {
+export function EvidencePanel({ turns, shown, onShow, backToLive, close }: EvidencePanelProps) {
   const index = shown.turn;
   const turn = turns[index];
   const steps = shownSteps(turn);
@@ -56,6 +58,16 @@ export function EvidencePanel({ turns, shown, onShow, close }: EvidencePanelProp
             Answer {index + 1} of {turns.length}
           </h2>
           <p className="min-w-0 flex-1 truncate text-sm text-ink">{turn.question}</p>
+          {backToLive && (
+            <button
+              type="button"
+              onClick={backToLive}
+              className="inline-flex h-7 items-center gap-1.5 rounded-full border border-signal px-2.5 text-xs font-medium whitespace-nowrap text-signal hover:bg-signal-soft focus-visible:outline-2 focus-visible:outline-ink-3"
+            >
+              <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-signal" />
+              Live answer
+            </button>
+          )}
           <button
             type="button"
             aria-label="Previous answer"
@@ -79,6 +91,12 @@ export function EvidencePanel({ turns, shown, onShow, close }: EvidencePanelProp
         <Tabs.List aria-label="Evidence" className="mt-2 flex gap-0.5">
           <Tabs.Tab value="3d" className={TAB}>
             3D
+            {shown.fresh && (
+              <>
+                <span aria-hidden className="size-1.5 rounded-full bg-signal" />
+                <span className="sr-only">, new</span>
+              </>
+            )}
           </Tabs.Tab>
           <Tabs.Tab value="sources" className={TAB}>
             Sources

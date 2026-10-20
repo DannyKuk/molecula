@@ -48,6 +48,7 @@ export function ConversationTurn({
   return (
     <li
       data-turn
+      aria-current={active || undefined}
       className={cn(
         "relative flex flex-col gap-3 print:break-inside-avoid print:border-t print:pt-6",
         active && "before:absolute before:inset-y-0 before:-left-4 before:w-px before:bg-signal",

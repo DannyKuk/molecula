@@ -86,6 +86,8 @@ export function stubPage({ phone = false } = {}) {
   const observers = new Set<() => void>();
   const scrollTo = vi.fn(({ top }: ScrollToOptions) => {
     page.top = Math.min(top ?? page.top, page.height - WINDOW_HEIGHT);
+    // A browser tells of the move after the call returns.
+    queueMicrotask(() => window.dispatchEvent(new Event("scroll")));
   });
   Object.defineProperty(document.documentElement, "scrollHeight", {
     configurable: true,

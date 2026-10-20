@@ -77,8 +77,43 @@ function selectedTab(): string | null {
   return within(evidence()).getByRole("tab", { selected: true }).textContent;
 }
 
+function panelHeading(): string | null {
+  return within(evidence()).getByRole("heading", { level: 2 }).textContent;
+}
+
+function liveAnswerButton(): HTMLElement | null {
+  return within(evidence()).queryByRole("button", { name: "Live answer" });
+}
+
+/** The question of the turn the chat marks as being read. */
+function readTurnInChat(): string | null | undefined {
+  return conversation().querySelector("[data-turn][aria-current] h2")?.textContent;
+}
+
+/** Puts the conversation's turns this far down the page, so the reader can scroll to them. */
+function stubTurnTops(tops: number[]) {
+  const rect = HTMLElement.prototype.getBoundingClientRect;
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    if (!this.hasAttribute("data-turn")) return rect.call(this);
+    const index = Array.from(this.parentElement?.children ?? []).indexOf(this);
+    return { top: tops[index] - window.scrollY } as DOMRect;
+  });
+}
+
 async function streamed(send: () => void) {
   await act(async () => send());
+}
+
+/** Asks about Gleevec and then metformin, each answered after one step. */
+async function answerTwice(stream: ReturnType<typeof stubChatStream>) {
+  askQuestion("How does Gleevec work?");
+  await streamed(() => stream.send(status("Looking up Gleevec") + token("It blocks BCR-ABL.")));
+  await streamed(() => stream.send(DONE));
+  askQuestion("What is metformin for?");
+  await streamed(() => stream.send(status("Looking up metformin") + token("It lowers sugar.")));
+  await streamed(() => stream.send(DONE));
 }
 
 function token(text: string): string {
@@ -197,6 +232,100 @@ describe("Chat", () => {
       false,
       false,
     ]);
+  });
+
+  it("follows the turn the reader scrolls to and marks it in the chat", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+    await answerTwice(stream);
+    stubTurnTops([100, 1300]);
+
+    act(() => page.scrollBy(-700));
+    expect(panelHeading()).toBe("Answer 1 of 2");
+    expect(readTurnInChat()).toBe("How does Gleevec work?");
+
+    act(() => page.scrollBy(500));
+    expect(panelHeading()).toBe("Answer 2 of 2");
+    expect(readTurnInChat()).toBe("What is metformin for?");
+  });
+
+  it("scrolls the chat to the answer the panel steps to", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+    await answerTwice(stream);
+    stubTurnTops([100, 1300]);
+    page.scrollTo.mockClear();
+
+    await act(async () =>
+      fireEvent.click(within(evidence()).getByRole("button", { name: "Previous answer" })),
+    );
+
+    expect(page.scrollTo).toHaveBeenCalledExactlyOnceWith({ top: 84 });
+    expect(panelHeading()).toBe("Answer 1 of 2");
+    expect(readTurnInChat()).toBe("How does Gleevec work?");
+
+    fireEvent.click(within(evidence()).getByRole("tab", { name: /Steps/ }));
+    expect(page.scrollTo).toHaveBeenCalledOnce();
+  });
+
+  it("stays on the answer the reader is on while the page follows the live one", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+    await answerTwice(stream);
+    stubTurnTops([100, 1300, 1900]);
+    askQuestion("What does sildenafil bind to?");
+    await streamed(() => stream.send(status("Looking up sildenafil")));
+
+    act(() => page.scrollBy(-1000));
+    expect(panelHeading()).toBe("Answer 1 of 3");
+    act(() => page.scrollBy(1000));
+    expect(panelHeading()).toBe("Answer 3 of 3");
+    expect(liveAnswerButton()).toBeNull();
+
+    fireEvent.click(within(conversation()).getAllByRole("button", { name: "1 step" })[1]);
+    page.grow();
+    await streamed(() => stream.send(token("It blocks PDE5.")));
+    expect(panelHeading()).toBe("Answer 2 of 3");
+
+    page.scrollTo.mockClear();
+    fireEvent.click(within(evidence()).getByRole("button", { name: "Live answer" }));
+    expect(panelHeading()).toBe("Answer 3 of 3");
+    expect(selectedTab()).toBe("Steps1");
+    expect(page.scrollTo).toHaveBeenCalledExactlyOnceWith({
+      top: document.documentElement.scrollHeight,
+    });
+    expect(liveAnswerButton()).toBeNull();
+  });
+
+  it("opens the 3D tab once, marked new, when the live answer's structure arrives", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+
+    askQuestion("Show imatinib bound to its target in 3D.");
+    await streamed(() => stream.send(IMATINIB_IN_3D));
+    expect(selectedTab()).toBe("3D, new");
+    expect(within(evidence()).getByText("3D view of imatinib")).toBeDefined();
+
+    fireEvent.click(within(evidence()).getByRole("tab", { name: /Steps/ }));
+    await streamed(() => stream.send(token("It sits in the ATP pocket.")));
+    expect(selectedTab()).toBe("Steps1");
+  });
+
+  it("opens the 3D tab when the reader comes back to a live answer whose structure arrived", async () => {
+    const stream = stubChatStream();
+    render(<Chat />);
+    await answerTwice(stream);
+
+    askQuestion("Show imatinib bound to its target in 3D.");
+    await streamed(() => stream.send(status("Looking up imatinib")));
+    fireEvent.click(within(conversation()).getAllByRole("button", { name: "1 step" })[0]);
+    await streamed(() => stream.send(IMATINIB_IN_3D));
+    expect(panelHeading()).toBe("Answer 1 of 3");
+    expect(selectedTab()).toBe("Steps1");
+
+    fireEvent.click(within(evidence()).getByRole("button", { name: "Live answer" }));
+    expect(panelHeading()).toBe("Answer 3 of 3");
+    expect(selectedTab()).toBe("3D, new");
   });
 
   it("opens the panel as a sheet from the pills on a phone", async () => {

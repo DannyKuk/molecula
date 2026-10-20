@@ -140,6 +140,32 @@ describe("EvidencePanel", () => {
     expect(onShow).toHaveBeenCalledExactlyOnceWith({ turn: 0, tab: "3d", cid: 5291 });
   });
 
+  it("offers to go back to the live answer only when it shows another one", () => {
+    const backToLive = vi.fn();
+    const { rerender } = render(
+      <EvidencePanel
+        turns={[IMATINIB_TURN, startTurn("What is metformin for?")]}
+        shown={{ turn: 0, tab: "3d", fresh: true }}
+        onShow={vi.fn()}
+        backToLive={backToLive}
+      />,
+    );
+
+    expect(screen.getByRole("tab", { name: "3D, new" })).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Live answer" }));
+    expect(backToLive).toHaveBeenCalledOnce();
+
+    rerender(
+      <EvidencePanel
+        turns={[IMATINIB_TURN, startTurn("What is metformin for?")]}
+        shown={{ turn: 1, tab: "steps" }}
+        onShow={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Live answer" })).toBeNull();
+    expect(screen.getByRole("tab", { name: "3D" })).toBeDefined();
+  });
+
   it("lists the steps and opens a structure from them in the 3D tab", () => {
     const onShow = renderPanel([IMATINIB_TURN], { turn: 0, tab: "steps" });
 
