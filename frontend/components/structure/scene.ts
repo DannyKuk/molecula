@@ -104,7 +104,7 @@ const SCREEN: Palette = {
 /**
  * The colours of the view and its legend: the app's dark screen (#297), a shade darker in dark mode
  * (`--screen` in globals.css), and the light colours of the picture printed on white paper (#312),
- * which are 3Dmol's own.
+ * mostly 3Dmol's own.
  */
 export const COLORS = {
   screen: SCREEN,
