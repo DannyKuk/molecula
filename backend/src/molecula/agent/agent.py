@@ -12,8 +12,9 @@ from molecula import prompts
 from molecula.agent.channel_markers import without_channel_markers
 from molecula.agent.events import AgentRun
 from molecula.agent.llm import ChatModelError, describe_provider_error
-from molecula.agent.references import NumberSources, References
+from molecula.agent.references import NumberSources
 from molecula.schemas.chat import ChatEvent, ChatMessage, ErrorEvent
+from molecula.schemas.tools import References
 
 logger = logging.getLogger(__name__)
 

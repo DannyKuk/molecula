@@ -88,7 +88,9 @@ Claude Desktop: add the server to `claude_desktop_config.json` (Settings → Dev
 }
 ```
 
-With `AGENT_TOOLS=mcp` in `.env` the chat gets its tools from this server too, through an in-memory session inside the backend; the answer then shows no sources list or retrieval trace, and the daily cost limit doesn't count the label searches' model calls.
+Every result names where its facts come from. Each source has a `ref`, the number the model cites it with as `[ref]`, counted per MCP session: the same PubChem page or label passage keeps its number across calls, and two calls never share one. The result's `structuredContent` also lists its sources (kind, name, URL, label section and date, `ref`), so a client can show where an answer came from (#299).
+
+With `AGENT_TOOLS=mcp` in `.env` the chat gets its tools from this server too, through an in-memory session inside the backend; the answer then shows no sources list or retrieval trace, and the daily cost limit doesn't count the label searches' model calls (#316).
 
 ## Layout
 

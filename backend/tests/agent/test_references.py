@@ -1,4 +1,5 @@
-from molecula.agent.references import References, cited_refs
+from molecula.agent.references import cited_refs
+from molecula.schemas.tools import References
 
 
 def test_a_passage_found_again_keeps_its_first_number() -> None:
