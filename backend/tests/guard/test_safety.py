@@ -19,6 +19,7 @@ CATEGORIES: list[InputCategory] = [
     "personal_medical_advice",
     "lethal_dose",
     "synthesis_or_misuse",
+    "prompt_injection",
     "off_topic",
 ]
 
