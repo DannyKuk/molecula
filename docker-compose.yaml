@@ -34,6 +34,26 @@ services:
       retries: 3
       start_period: 10s
 
+  # The agent's tools for any MCP client, over streamable HTTP at http://localhost:8001/mcp (#42).
+  # Only with `--profile mcp`: it loads its own copy of the embedding model. No auth, so the port
+  # is published on this machine only.
+  mcp:
+    profiles: ["mcp"]
+    build: ./backend
+    command: ["python", "-m", "molecula.mcp", "--transport", "streamable-http", "--host", "0.0.0.0"]
+    depends_on:
+      fetch:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:8001:8001"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - ./data:/data
+
   frontend:
     build:
       context: ./frontend

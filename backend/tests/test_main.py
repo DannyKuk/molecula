@@ -276,10 +276,7 @@ class UnitEmbeddings(Embeddings):
         return [1.0, 0.0, 0.0]
 
 
-def test_chat_answers_from_the_stored_labels_offline(
-    settings: Settings, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr(settings, "offline", True)
+def store_the_mechanism_label(settings: Settings) -> None:
     conn = connect(settings.db_path)
     fetched = datetime(2026, 10, 11, tzinfo=UTC)
     CompoundStore(conn).save(
@@ -290,7 +287,10 @@ def test_chat_answers_from_the_stored_labels_offline(
     LabelIndex(settings.index_dir).rebuild(
         [MECHANISM], [[1.0, 0.0, 0.0]], embedding_model_id(settings)
     )
-    model = ScriptedChatModel(
+
+
+def search_the_mechanism_then_answer() -> ScriptedChatModel:
+    return ScriptedChatModel(
         script=[
             tool_call_message("SortedMessage", {"category": "ok"}),
             tool_call_message(
@@ -305,7 +305,14 @@ def test_chat_answers_from_the_stored_labels_offline(
             judged_supported(),
         ]
     )
-    use_models(monkeypatch, model)
+
+
+def test_chat_answers_from_the_stored_labels_offline(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "offline", True)
+    store_the_mechanism_label(settings)
+    use_models(monkeypatch, search_the_mechanism_then_answer())
 
     with TestClient(app) as client:
         response = client.post("/chat", json=QUESTION)
@@ -330,6 +337,34 @@ def test_chat_answers_from_the_stored_labels_offline(
     assert events["done"]["category"] == "ok"
     assert events["source_check"]["checked"] is True
     assert [c["label"] for c in events["source_check"]["claims"]] == ["supported"]
+
+
+def test_with_mcp_agent_tools_the_chat_answers_through_the_mcp_server(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "offline", True)
+    monkeypatch.setattr(settings, "agent_tools", "mcp")
+    store_the_mechanism_label(settings)
+    use_models(monkeypatch, search_the_mechanism_then_answer())
+
+    with TestClient(app) as client:
+        response = client.post("/chat", json=QUESTION)
+
+    events = list(server_sent_events(response.text))
+    by_name = dict(events)
+    assert by_name["tool_call"]["name"] == "search_labels"
+    assert "Searching the imatinib label" in [
+        data["message"] for name, data in events if name == "status"
+    ]
+    passages = by_name["tool_result"]["result"]["passages"]
+    assert [(p["ref"], p["id"], p["text"]) for p in passages] == [(1, MECHANISM.id, MECHANISM.text)]
+    answer = "".join(data["text"] for name, data in events if name == "token")
+    assert answer == "It blocks the BCR-ABL kinase."
+    assert by_name["source_check"]["checked"] is True
+    assert by_name["done"]["category"] == "ok"
+    # Over MCP the tool result carries no typed artifact, so these stay empty (#42).
+    assert "retrieval_trace" not in by_name
+    assert by_name["sources"]["sources"] == []
 
 
 def test_chat_describes_the_stored_complex_offline(

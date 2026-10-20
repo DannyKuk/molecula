@@ -1,10 +1,14 @@
+import asyncio
+import json
 from typing import Any
 
 import pytest
+from langchain_core.messages import ToolMessage
 from langchain_core.tools import BaseTool
 
 from fake_llm import ScriptedChatModel
-from molecula.agent.tool_registry import build_tools
+from molecula.agent.tool_registry import build_tools, tools_over_mcp
+from molecula.mcp.server import build_server
 from molecula.schemas.tools import DrugTargetList, LabelPassages
 from molecula.tools.base import progress_of
 from tool_fakes import (
@@ -98,3 +102,36 @@ def test_progress_text_names_what_the_call_is_doing(
 
     assert progress is not None
     assert progress(args) == expected
+
+
+def test_tools_over_mcp_are_the_servers_tools_with_the_local_progress_texts() -> None:
+    local = tools()
+
+    async def load() -> list[BaseTool]:
+        async with tools_over_mcp(build_server(local), local) as served:
+            return served
+
+    served = asyncio.run(load())
+
+    assert [tool.name for tool in served] == TOOL_NAMES
+    assert [tool.description for tool in served] == [tool.description for tool in local]
+    progress = progress_of(named(served, "get_targets"))
+    assert progress is not None
+    assert progress({"drug": "imatinib"}) == "Finding the targets of imatinib"
+
+
+def test_a_tool_over_mcp_gives_the_model_the_same_json_as_the_local_tool() -> None:
+    local = tools()
+    call = {"type": "tool_call", "name": "get_targets", "args": {"drug": "Gleevec"}, "id": "c1"}
+
+    async def call_over_mcp() -> ToolMessage:
+        async with tools_over_mcp(build_server(local), local) as served:
+            return await named(served, "get_targets").ainvoke(call)
+
+    message = asyncio.run(call_over_mcp())
+
+    assert message.status == "success"
+    assert json.loads(message.text) == json.loads(
+        str(call_tool(named(local, "get_targets"), call["args"]).content)
+    )
+    assert message.artifact is None

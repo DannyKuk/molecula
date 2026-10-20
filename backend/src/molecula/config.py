@@ -68,6 +68,9 @@ class Settings(BaseSettings):
     # Model calls per answer; the last one gets no tools, so the agent answers (#124).
     chat_max_steps: Annotated[int, Field(ge=1, le=20)] = 8
     chat_timeout_seconds: Annotated[float, Field(gt=0)] = 180.0
+    # "mcp" gives the agent its tools through the MCP server in molecula.mcp, so the chat runs
+    # through the same server any MCP client uses (#42).
+    agent_tools: Literal["local", "mcp"] = "local"
     # Questions per client (by IP) to POST /chat, and what the cloud models may cost per UTC day,
     # so a public instance can't run up the OpenRouter bill (#39).
     chat_requests_per_minute: Annotated[int, Field(ge=1)] = 10

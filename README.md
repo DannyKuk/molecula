@@ -62,6 +62,34 @@ npm run dev                       # http://localhost:3000
 npm run format:check && npm run lint && npm test && npm run build
 ```
 
+### MCP server
+
+The agent's six tools (`resolve_drug`, `get_properties`, `get_targets`, `get_complex`, `search_labels`, `compare_drugs`) are also an MCP server, with the same descriptions and answers. It reads the same `.env` and store as the backend and takes about 30 seconds to start while it loads the embedding model. Every tool but `search_labels` reads only the store; each label search also makes one model call to read the filter from the question (Jev online, the local chat model with `OFFLINE=1`), as in the chat.
+
+```
+cd backend
+uv run python -m molecula.mcp                                     # stdio
+uv run python -m molecula.mcp --transport streamable-http         # http://localhost:8001/mcp
+docker compose --profile mcp up --build                           # the same, in Docker
+```
+
+[MCP Inspector](https://github.com/modelcontextprotocol/inspector): run `npx @modelcontextprotocol/inspector uv --directory backend run python -m molecula.mcp` from the repo root for stdio, or start it with no arguments and connect to `http://localhost:8001/mcp` with the Streamable HTTP transport. The HTTP server has no auth and answers only requests addressed to localhost.
+
+Claude Desktop: add the server to `claude_desktop_config.json` (Settings → Developer → Edit Config), with the path to your checkout, and restart Claude Desktop:
+
+```json
+{
+  "mcpServers": {
+    "molecula": {
+      "command": "uv",
+      "args": ["--directory", "/path/to/molecula/backend", "run", "python", "-m", "molecula.mcp"]
+    }
+  }
+}
+```
+
+With `AGENT_TOOLS=mcp` in `.env` the chat gets its tools from this server too, through an in-memory session inside the backend; the answer then shows no sources list or retrieval trace, and the daily cost limit doesn't count the label searches' model calls.
+
 ## Layout
 
 ```
