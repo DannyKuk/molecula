@@ -1,4 +1,4 @@
-import type { AtomSpec, GLModel, GLViewer } from "3dmol";
+import type { AtomSpec, GLModel, GLShape, GLViewer, Label } from "3dmol";
 
 import type { Complex } from "@/lib/api";
 import {
@@ -16,10 +16,8 @@ import {
   ligandAtoms,
   metalAtoms,
   metalLabels,
-  pocketSelection,
+  pocketResidues,
   proteinAtoms,
-  type CoordinationLine,
-  type HydrogenBondLine,
   type MetalLabel,
   type Point,
 } from "@/lib/complex-scene";
@@ -128,11 +126,14 @@ const HOLD_MS = 300;
 const REVEAL_MS = 2800;
 const DOCK_MS = 2600;
 const CONTACT_MS = 350;
-// The backbone grows and fades in steps: each one restyles the whole protein, which for the largest
-// complexes (thousands of residues) is too slow to do on every frame.
+// The backbone grows, and then fades out while the pocket grows in, in steps: each one restyles the
+// whole protein, which for the largest complexes (thousands of residues) is too slow to do on every
+// frame.
 const TRACE_STEPS = 20;
 const FADE_STEPS = 5;
 const FADE_FROM = 0.6;
+// A bond's line reaches its residue in this share of the bond's turn; its label fades in after.
+const LINE_SHARE = 0.7;
 const SPIN_SPEED = 0.25;
 // Wider than any stored complex: `zoomTo` on the drug would otherwise clip the protein around it.
 const SLAB = 500;
@@ -311,7 +312,7 @@ function complexScene(
   const center = centroid(bound);
   const approach = approachDirection(complex);
   const outside = dockingPose(bound, approach, 0);
-  const pocket = pocketSelection(complex);
+  const pocket = pocketResidues(complex);
   let mode = options.mode;
   let ligandStyle = moleculeStyle(colors);
 
@@ -330,12 +331,16 @@ function complexScene(
     );
   };
 
-  const showPocket = () =>
+  /** The pocket residues, `amount` (0 to 1) of them, nearest the drug first. */
+  const showPocket = (amount = 1) => {
+    const shown = pocket.slice(0, Math.ceil(amount * pocket.length));
+    if (shown.length === 0) return;
     protein.setStyle(
-      pocket,
+      { or: shown },
       { stick: { radius: 0.12, colorscheme: byElement(colors.elements, colors.pocket) } },
       true,
     );
+  };
 
   const addDashedLine = (start: Point, end: Point, color: string) =>
     viewer.addCylinder({
@@ -355,34 +360,71 @@ function complexScene(
     position: Point,
     border: string,
     alignment: "topLeft" | "center" = "topLeft",
+    opacity = 1,
   ) =>
     viewer.addLabel(text, {
       position,
       alignment,
       fontSize: 12,
       fontColor: colors.label,
+      fontOpacity: opacity,
       backgroundColor: colors.labelBackground,
-      backgroundOpacity: 0.85,
+      backgroundOpacity: 0.85 * opacity,
       borderColor: border,
+      borderOpacity: opacity,
       borderThickness: 1,
       inFront: true,
     });
 
-  const showHydrogenBond = (bond: HydrogenBondLine) => {
-    addDashedLine(bond.residue, bond.ligand, colors.hbond);
-    addLabel(bond.label, bond.residue, colors.hbond);
-  };
+  /** A metal bond or hydrogen bond: a dashed line from the metal or residue atom to the drug atom,
+   * a hydrogen bond labelled at the residue end. */
+  type Bond = { from: Point; to: Point; color: string; label: string | null };
+  type Drawn = { line?: GLShape; label?: Label };
 
-  const showCoordination = (line: CoordinationLine) =>
-    addDashedLine(line.metal, line.ligand, colors.coordination);
+  /** Draws `bond` `amount` (0 to 1) of the way in, in place of what `drawn` holds of it: the line
+   * reaches out from the drug to the residue, then the label fades in. */
+  const drawBond = ({ from, to, color, label }: Bond, amount: number, drawn: Drawn) => {
+    if (drawn.line) viewer.removeShape(drawn.line);
+    if (drawn.label) viewer.removeLabel(drawn.label);
+    drawn.line = undefined;
+    drawn.label = undefined;
+    if (amount <= 0) return;
+    const reach = easeInOut(Math.min(1, amount / LINE_SHARE));
+    const tip = {
+      x: to.x + (from.x - to.x) * reach,
+      y: to.y + (from.y - to.y) * reach,
+      z: to.z + (from.z - to.z) * reach,
+    };
+    drawn.line = addDashedLine(tip, to, color);
+    const labelIn = (amount - LINE_SHARE) / (1 - LINE_SHARE);
+    if (label && labelIn > 0) drawn.label = addLabel(label, from, color, "topLeft", labelIn);
+  };
 
   const showMetalLabel = (metal: MetalLabel) =>
     addLabel(metal.label, metal.position, colors.coordination, "center");
 
-  const contactLines = [
-    ...coordinationBonds(complex).map((line) => () => showCoordination(line)),
-    ...hydrogenBonds(complex).map((bond) => () => showHydrogenBond(bond)),
+  const bonds: Bond[] = [
+    ...coordinationBonds(complex).map((line) => ({
+      from: line.metal,
+      to: line.ligand,
+      color: colors.coordination,
+      label: null,
+    })),
+    ...hydrogenBonds(complex).map((bond) => ({
+      from: bond.residue,
+      to: bond.ligand,
+      color: colors.hbond,
+      label: bond.label,
+    })),
   ];
+
+  /** One function per bond that draws it `amount` (0 to 1) of the way in, replacing what it drew
+   * before. Made again after the shapes and labels are cleared: 3Dmol reuses shape ids. */
+  const bondDrawers = () =>
+    bonds.map((bond) => {
+      const drawn: Drawn = {};
+      return (amount: number) => drawBond(bond, amount, drawn);
+    });
 
   /** The metal ions and cofactors the drug binds through: part of the site, so the drug docks onto
    * them. */
@@ -475,7 +517,7 @@ function complexScene(
     }
     const { target, distance } = endView();
     viewer.setView(viewAt(target, distance));
-    if (mode !== "molecule") contactLines.forEach((show) => show());
+    if (mode !== "molecule") bondDrawers().forEach((draw) => draw(1));
     viewer.render();
     turning.start();
   };
@@ -483,8 +525,9 @@ function complexScene(
   /**
    * The drug builds itself up (`assemble`); outside Molecule mode it does so outside the pocket,
    * then the camera pulls back while the backbone grows and the metals and cofactors appear, the
-   * drug docks with the camera on it, and the metal bonds and hydrogen bonds appear one by one. The
-   * path in is an illustration; only the end pose is from the structure.
+   * drug docks with the camera on it while the pocket's residues grow in around it, nearest first,
+   * and the metal bonds and hydrogen bonds reach out from the drug one by one. The path in is an
+   * illustration; only the end pose is from the structure.
    */
   const playSequence = (assemble: boolean) => {
     playing.current?.stop();
@@ -502,11 +545,13 @@ function complexScene(
     const reveal = assemble ? drug.duration + HOLD_MS : 0;
     const docking = reveal + REVEAL_MS;
     const contacts = docking + DOCK_MS;
-    const duration = docks ? contacts + contactLines.length * CONTACT_MS : drug.duration;
+    const bondLines = bondDrawers();
+    const duration = docks ? contacts + bondLines.length * CONTACT_MS : drug.duration;
     const fades = mode === "site";
     let traceStep = -1;
     let fadeStep = -1;
-    let shownContacts = 0;
+    let drawnBonds = 0;
+    let inPose = false;
     let partnersShown = false;
     let assembled = !assemble;
 
@@ -548,27 +593,34 @@ function complexScene(
           z: docked.z + drift.z * eased,
         };
         viewer.setView(viewAt(camera, far + (end - far) * eased));
-        const nextFade = fades
-          ? Math.ceil((Math.max(0, progress - FADE_FROM) / (1 - FADE_FROM)) * FADE_STEPS)
-          : 0;
+        const nextFade = Math.ceil(
+          (Math.max(0, progress - FADE_FROM) / (1 - FADE_FROM)) * FADE_STEPS,
+        );
         if (nextFade !== fadeStep) {
           fadeStep = nextFade;
-          showTrace(proteinSize, colors.traceOpacity * (1 - fadeStep / FADE_STEPS));
+          const shown = fadeStep / FADE_STEPS;
+          showTrace(proteinSize, colors.traceOpacity * (fades ? 1 - shown : 1));
+          showPocket(shown);
         }
       }
       if (docks && elapsed >= contacts) {
-        if (shownContacts === 0) {
+        if (!inPose) {
+          inPose = true;
           placeLigand(bound);
-          showTrace(fades ? 0 : proteinSize, colors.traceOpacity);
-          showPocket();
           viewer.setView(viewAt(target, end));
+          // A slow frame can end the docking before the last pocket step.
+          if (fadeStep !== FADE_STEPS) {
+            showTrace(fades ? 0 : proteinSize, colors.traceOpacity);
+            showPocket();
+          }
         }
-        const due = Math.min(
-          contactLines.length,
-          Math.floor((elapsed - contacts) / CONTACT_MS) + 1,
-        );
-        contactLines.slice(shownContacts, due).forEach((show) => show());
-        shownContacts = Math.max(due, 1);
+        // The bonds come in one after the other, each over its own CONTACT_MS.
+        for (let i = drawnBonds; i < bondLines.length; i++) {
+          const amount = Math.min(1, (elapsed - contacts - i * CONTACT_MS) / CONTACT_MS);
+          if (amount <= 0) break;
+          bondLines[i](amount);
+          if (amount === 1) drawnBonds = i + 1;
+        }
       }
       viewer.render();
     };
@@ -576,7 +628,7 @@ function complexScene(
     const finish = () => {
       playing.current = null;
       step(duration);
-      if (docks) contactLines.slice(shownContacts).forEach((show) => show());
+      if (docks) bondLines.slice(drawnBonds).forEach((draw) => draw(1));
       viewer.render();
       turning.start();
     };

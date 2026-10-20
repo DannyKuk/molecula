@@ -13,7 +13,7 @@ import {
   ligandAtoms,
   metalAtoms,
   metalLabels,
-  pocketSelection,
+  pocketResidues,
   proteinAtoms,
   type Point,
 } from "./complex-scene";
@@ -119,14 +119,14 @@ describe("coordinationBonds", () => {
   });
 });
 
-describe("pocketSelection", () => {
-  it("selects the pocket residues by chain and number", () => {
-    expect(pocketSelection(SMALL_COMPLEX)).toEqual({
-      or: [
-        { chain: "A", resi: 2 },
-        { chain: "A", resi: 7 },
-      ],
-    });
+describe("pocketResidues", () => {
+  it("selects the pocket residues by chain and number, nearest the drug first", () => {
+    const reversed = { ...SMALL_COMPLEX, pocket: [...SMALL_COMPLEX.pocket].reverse() };
+
+    expect(pocketResidues(reversed)).toEqual([
+      { chain: "A", resi: 2 },
+      { chain: "A", resi: 7 },
+    ]);
   });
 });
 
