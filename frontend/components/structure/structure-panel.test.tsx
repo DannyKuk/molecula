@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useImperativeHandle } from "react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -7,6 +10,7 @@ import { METAL_COMPLEX, SMALL_COMPLEX } from "@/lib/test-complexes";
 import { IMATINIB_COMPLEX, METFORMIN_COMPLEX } from "@/lib/test-tool-results";
 import type { DrugComplex } from "@/lib/tool-cards";
 
+import { COLORS } from "./scene";
 import { StructurePanel } from "./structure-panel";
 import type { StructureViewerHandle } from "./structure-viewer";
 
@@ -72,6 +76,10 @@ function stubFetch(...responses: (Response | Error)[]) {
 
 const imatinib = { cid: 5291, name: "imatinib", complex: IMATINIB_COMPLEX as DrugComplex };
 const acetaminophen = { cid: 1983, name: "acetaminophen", complex: null };
+const ACETAMINOPHEN_SDF = readFileSync(
+  path.join(__dirname, "../../lib/fixtures/structure-1983.sdf"),
+  "utf8",
+);
 
 describe("StructurePanel", () => {
   it("shows a drug with a complex in its binding site, and switches what the view shows", async () => {
@@ -97,6 +105,23 @@ describe("StructurePanel", () => {
     expect(screen.queryByRole("button", { name: "Replay binding" })).toBeNull();
   });
 
+  it("puts the counts on the screen, and draws the legend in the view's colours", async () => {
+    stubFetch(Response.json(METAL_COMPLEX));
+    render(<StructurePanel target={imatinib} />);
+
+    expect(await screen.findByText("3 atoms")).toBeDefined();
+    expect(screen.getByText("2 residues")).toBeDefined();
+    expect(screen.getByText("3 H-bonds")).toBeDefined();
+    expect(swatch("imatinib").backgroundColor).toBe(css(COLORS.screen.drug));
+    expect(swatch("hydrogen bond").borderColor).toBe(css(COLORS.screen.hbond));
+    expect(swatch("metal bond").borderColor).toBe(css(COLORS.screen.coordination));
+    expect(swatch("cofactor").borderColor).toBe(css(COLORS.screen.cofactor));
+    expect(swatch("residues within 4 Å").borderColor).toBe(css(COLORS.screen.pocket));
+
+    fireEvent.click(screen.getByRole("button", { name: "Whole protein" }));
+    expect(swatch("protein backbone").borderColor).toBe(css(COLORS.screen.trace));
+  });
+
   it("explains the metal bonds and cofactors of a complex that has them", async () => {
     stubFetch(Response.json(METAL_COMPLEX));
     render(<StructurePanel target={imatinib} />);
@@ -119,7 +144,7 @@ describe("StructurePanel", () => {
   });
 
   it("shows a drug without a complex as the molecule alone, without the switch", async () => {
-    const fetchMock = stubFetch(new Response("1983\n$$$$\n"));
+    const fetchMock = stubFetch(new Response(ACETAMINOPHEN_SDF));
     render(<StructurePanel target={acetaminophen} />);
 
     const view = await screen.findByRole("img", { name: "Acetaminophen, in 3D" });
@@ -127,6 +152,8 @@ describe("StructurePanel", () => {
     expect(view.dataset).toMatchObject({ kind: "molecule", mode: "molecule" });
     expect(screen.queryByRole("group", { name: "What the 3D view shows" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Replay binding" })).toBeNull();
+    expect(screen.getByText("11 atoms")).toBeDefined();
+    expect(screen.queryByText(/residue/)).toBeNull();
   });
 
   it("says why a drug without a 3D structure has no view", async () => {
@@ -215,4 +242,17 @@ function pressed(): string | null {
       .getAllByRole("button")
       .find((button) => button.getAttribute("aria-pressed") === "true")?.textContent ?? null
   );
+}
+
+/** The style of the swatch beside a legend entry. */
+function swatch(entry: string): CSSStyleDeclaration {
+  const item = screen.getByText(entry);
+  return (item.firstElementChild!.firstElementChild as HTMLElement).style;
+}
+
+/** A colour as the browser writes it back in a style. */
+function css(color: string): string {
+  const element = document.createElement("span");
+  element.style.color = color;
+  return element.style.color;
 }

@@ -167,19 +167,14 @@ function withoutPicture(name: string, picture: Picture | undefined): string {
   return `For the 3D picture of ${name}, print from the chat's export menu ("Print or save as PDF").`;
 }
 
-// 3Dmol's `greenCarbon` and default carbon colours, which the picture draws the drug and the
-// residues around it in; the line colours are the scene's light ones.
-const DRUG_GREEN = "#00ff00";
-const RESIDUE_GREY = "#c8c8c8";
-
 /** The colours of the binding site, as in the 3D view's legend. The swatches are SVG, because
  * browsers leave out background colours when printing. */
 function PictureLegend({ name, complex }: { name: string; complex: Complex }) {
-  const colors = COLORS.light;
+  const colors = COLORS.paper;
   return (
     <ul aria-label="Colours" className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[7.5pt]">
       <LegendItem label={name}>
-        <circle cx="8" cy="4" r="3.5" fill={DRUG_GREEN} stroke="#16a34a" strokeWidth="0.75" />
+        <circle cx="8" cy="4" r="3.5" fill={colors.drug} stroke="#16a34a" strokeWidth="0.75" />
       </LegendItem>
       <LegendItem label="hydrogen bond">
         <DashedLine color={colors.hbond} />
@@ -195,7 +190,7 @@ function PictureLegend({ name, complex }: { name: string; complex: Complex }) {
         </LegendItem>
       )}
       <LegendItem label="residues within 4 Å">
-        <line x1="0" y1="4" x2="16" y2="4" stroke={RESIDUE_GREY} strokeWidth="2.5" />
+        <line x1="0" y1="4" x2="16" y2="4" stroke={colors.pocket} strokeWidth="2.5" />
       </LegendItem>
     </ul>
   );

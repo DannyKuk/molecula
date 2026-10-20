@@ -48,6 +48,9 @@
   --color-signal: var(--signal);
   --color-signal-soft: var(--signal-soft);
   --color-ok: var(--ok);
+  --color-screen: var(--screen);
+  --color-screen-ink: var(--screen-ink);
+  --color-screen-dim: var(--screen-dim);
 }
 
 /* Dark mode is for the screen only, so a page printed from a dark browser comes out dark on white. */
@@ -68,6 +71,10 @@
   --signal: #f2550f;
   --signal-soft: #ffe4d6;
   --ok: #3c8c4e;
+  /* The 3D view is a dark screen in both themes (#297). */
+  --screen: #1b1d20;
+  --screen-ink: #d9dcd6;
+  --screen-dim: #7e848b;
   --background: var(--page);
   --foreground: var(--ink);
   --card-foreground: var(--ink);
@@ -112,6 +119,7 @@
     --signal: #ff6a26;
     --signal-soft: #3a2014;
     --ok: #7fd18f;
+    --screen: #0f1012;
     --destructive: oklch(0.704 0.191 22.216);
     --series-drug: #3987e5;
     --series-index: #d95926;
@@ -275,5 +283,21 @@
     .scrollbar-on-hover:not(:hover) {
       scrollbar-color: transparent transparent;
     }
+  }
+}
+
+/* The thin corner marks of a viewfinder just inside the edge of the 3D screen (#297). */
+@layer components {
+  .viewfinder {
+    --mark: color-mix(in srgb, var(--screen-dim) 55%, transparent);
+    background:
+      linear-gradient(var(--mark), var(--mark)) top left / 14px 1px no-repeat,
+      linear-gradient(var(--mark), var(--mark)) top left / 1px 14px no-repeat,
+      linear-gradient(var(--mark), var(--mark)) top right / 14px 1px no-repeat,
+      linear-gradient(var(--mark), var(--mark)) top right / 1px 14px no-repeat,
+      linear-gradient(var(--mark), var(--mark)) bottom left / 14px 1px no-repeat,
+      linear-gradient(var(--mark), var(--mark)) bottom left / 1px 14px no-repeat,
+      linear-gradient(var(--mark), var(--mark)) bottom right / 14px 1px no-repeat,
+      linear-gradient(var(--mark), var(--mark)) bottom right / 1px 14px no-repeat;
   }
 }

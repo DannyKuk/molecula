@@ -5,11 +5,14 @@ import { SMALL_COMPLEX } from "@/lib/test-complexes";
 import type { DrugComplex, StructureTarget } from "@/lib/tool-cards";
 
 import { drawPicture } from "./picture";
-import { createScene, type Scene } from "./scene";
+import { COLORS, createScene, type Scene } from "./scene";
 
 // jsdom has no WebGL: the scene is a stand-in that hands back a picture.
 vi.mock("3dmol", () => ({}));
-vi.mock("./scene", () => ({ createScene: vi.fn() }));
+vi.mock("./scene", async (original) => ({
+  ...(await original<typeof import("./scene")>()),
+  createScene: vi.fn(),
+}));
 vi.mock("@/lib/api", async (original) => ({
   ...(await original<typeof import("@/lib/api")>()),
   getComplex: vi.fn(),
@@ -45,7 +48,7 @@ describe("drawPicture", () => {
     expect(picture).toEqual({ status: "ready", png: PNG, complex: SMALL_COMPLEX });
     const [, host, data, options] = vi.mocked(createScene).mock.calls[0];
     expect(data).toEqual({ kind: "complex", complex: SMALL_COMPLEX });
-    expect(options).toEqual({ mode: "site", dark: false, reduceMotion: true });
+    expect(options).toEqual({ mode: "site", colors: COLORS.paper, reduceMotion: true });
     expect(host.style.width).toBe("720px");
     expect(scene.dispose).toHaveBeenCalledOnce();
     expect(document.body.children).toHaveLength(0);

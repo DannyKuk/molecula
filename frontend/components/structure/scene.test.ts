@@ -3,14 +3,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Complex } from "@/lib/api";
 import { METAL_COMPLEX, SMALL_COMPLEX } from "@/lib/test-complexes";
 
-import { createScene, type SceneOptions } from "./scene";
+import { COLORS, createScene, type SceneOptions } from "./scene";
 
 type FakeAtom = { x: number; y: number; z: number; index?: number; elem?: string; style?: object };
 type Selection = { predicate?: (atom: FakeAtom) => boolean; or?: unknown };
 
 /** Just enough of 3Dmol to see what the scene draws. `sdfAtoms` are what a molecule's SDF holds. */
 function fakeThreeDmol(sdfAtoms: FakeAtom[] = []) {
-  const models: { atoms: FakeAtom[] }[] = [];
+  const models: {
+    atoms: FakeAtom[];
+    setStyle: (selection: Selection, style: object, add?: boolean) => void;
+  }[] = [];
   let view = [0, 0, 0, 100, 0, 0, 0, 1];
   const selects = (selection: Selection, atom: FakeAtom) =>
     selection.predicate ? selection.predicate(atom) : !selection.or;
@@ -54,7 +57,11 @@ function fakeThreeDmol(sdfAtoms: FakeAtom[] = []) {
 
 const drawn = (atoms: FakeAtom[]) => atoms.filter((atom) => Object.keys(atom.style ?? {}).length);
 
-const options: SceneOptions = { mode: "site", dark: true, reduceMotion: false };
+const options: SceneOptions = {
+  mode: "site",
+  colors: COLORS.screenDark,
+  reduceMotion: false,
+};
 
 const frames = new Map<number, FrameRequestCallback>();
 let lastFrame = 0;
@@ -118,14 +125,54 @@ describe("createScene", () => {
     expect(viewer.spin).toHaveBeenLastCalledWith("y", expect.any(Number));
   });
 
-  it("colours the drug's carbons green next to the protein, and by element on its own", () => {
-    const { scene, drug } = complexScene();
-    const carbons = () => (drug[0].style as { stick: { colorscheme?: string } }).stick.colorscheme;
+  it("colours the drug's carbons lime next to the protein, and by element on its own", () => {
+    const { scene, drug, models } = complexScene();
+    const elements = { N: "#8ea6ff", O: "#ff6b5e", S: "#f2d16b" };
+    const carbons = () =>
+      (drug[0].style as { stick: { colorscheme: { map: object } } }).stick.colorscheme.map;
+    const pocketStyle = vi.spyOn(models[0], "setStyle");
 
-    expect(carbons()).toBe("greenCarbon");
+    expect(carbons()).toEqual({ ...elements, C: "#c6f432" });
 
     scene.setMode("molecule", false);
-    expect(carbons()).toBe("default");
+    expect(carbons()).toEqual(elements);
+
+    scene.setMode("site", false);
+    expect(pocketStyle).toHaveBeenCalledWith(
+      { or: expect.any(Array) },
+      {
+        stick: { radius: 0.12, colorscheme: { prop: "elem", map: { ...elements, C: "#7a8088" } } },
+      },
+      true,
+    );
+  });
+
+  it("draws on the dark screen's colour in both themes", () => {
+    expect(complexScene().lib.createViewer).toHaveBeenCalledWith(expect.anything(), {
+      backgroundColor: "#0f1012",
+      antialias: true,
+    });
+    expect(complexScene({ colors: COLORS.screen }).lib.createViewer).toHaveBeenCalledWith(
+      expect.anything(),
+      { backgroundColor: "#1b1d20", antialias: true },
+    );
+  });
+
+  it("draws the printed picture in 3Dmol's green carbons and element colours on a light background", () => {
+    const { lib, viewer, drug } = complexScene({ colors: COLORS.paper });
+    const lineColors = viewer.addCylinder.mock.calls.map(
+      ([line]) => (line as { color: string }).color,
+    );
+
+    expect(lib.createViewer).toHaveBeenCalledWith(expect.anything(), {
+      backgroundColor: "#f2f2ee",
+      antialias: true,
+    });
+    expect((drug[0].style as { stick: { colorscheme: object } }).stick.colorscheme).toEqual({
+      prop: "elem",
+      map: { C: "#00ff00" },
+    });
+    expect(lineColors).toEqual(["#d97706", "#d97706"]);
   });
 
   it("shows the drug alone in Molecule mode", () => {
@@ -377,7 +424,7 @@ describe("createScene with metals and cofactors", () => {
   const lineColors = (viewer: Viewer) =>
     viewer.addCylinder.mock.calls.map(([line]) => (line as { color: string }).color);
   const metalBond = "#c084fc";
-  const hydrogenBond = "#fbbf24";
+  const hydrogenBond = "#ff7a3d";
 
   it("shows the metal ions and cofactors, with the metal bonds before the hydrogen bonds", () => {
     const { viewer, metals, cofactors } = metalScene();
@@ -489,11 +536,10 @@ describe("createScene with metals and cofactors", () => {
     expect(viewer.getView()).toEqual(camera.view);
   });
 
-  it("uses darker colours on a light background", () => {
-    const { viewer, cofactors } = metalScene({ dark: false });
+  it("draws the cofactors in cyan", () => {
+    const { cofactors } = metalScene();
 
-    expect(lineColors(viewer)).toEqual(["#9333ea", "#9333ea", "#d97706", "#d97706"]);
-    expect(cofactors[1].style).toEqual({ stick: { radius: 0.1, color: "#0e7490" } });
+    expect(cofactors[1].style).toEqual({ stick: { radius: 0.1, color: "#22d3ee" } });
   });
 });
 
