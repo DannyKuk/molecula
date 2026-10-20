@@ -132,7 +132,7 @@ def tool_descriptions(app: FastAPI) -> str:
 
 def cache_path(settings: Settings, model_name: str, descriptions: str, variant: str = "") -> Path:
     name = answer_label(settings, model_name)
-    setup = f"{name}\n{prompts.load('agent/system')}\n{descriptions}"
+    setup = f"{name}\n{prompts.template('agent/system').text}\n{descriptions}"
     if variant:
         setup += f"\n{variant}"
     key = hashlib.sha256(setup.encode()).hexdigest()[:12]
@@ -292,7 +292,7 @@ def save(
     path = settings.build_dir / "eval" / f"citations-{model_name.replace('/', '_')}-{stamp}.json"
     payload = {
         "model": model_name,
-        "prompt": prompts.load("agent/system"),
+        "prompt": prompts.template("agent/system").text,
         "questions": [question.model_dump() for question in questions],
         "answers": [asdict(answer) for answer in answers],
         "scored": [asdict(s) for s in scored],

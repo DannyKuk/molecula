@@ -266,7 +266,7 @@ async def earlier_answer(agent: ChatAgent, messages: list[ChatMessage], turn: st
 
 def cache_path(settings: Settings, descriptions: str, variant: str) -> Path:
     name = answer_label(settings, chat_model_name(settings))
-    setup = f"{name}\n{prompts.load('agent/system')}\n{descriptions}\n{variant}"
+    setup = f"{name}\n{prompts.template('agent/system').text}\n{descriptions}\n{variant}"
     key = hashlib.sha256(setup.encode()).hexdigest()[:12]
     slug = name.replace("/", "_") + (f"-{variant}" if variant else "")
     return settings.build_dir / "eval" / "cited_passages" / f"{slug}-{key}.jsonl"

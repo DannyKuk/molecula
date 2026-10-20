@@ -6,7 +6,7 @@ import openai
 import pytest
 from fastapi.testclient import TestClient
 
-from fake_llm import ScriptedChatModel, answer_message, tool_call_message
+from fake_llm import CANARY, ScriptedChatModel, answer_message, tool_call_message
 from guard_fakes import FakeCheck, FakeSourceCheck
 from molecula.agent.agent import ChatAgent
 from molecula.agent.tool_registry import build_tools
@@ -47,7 +47,9 @@ def agent(script: list[Any], check: FakeCheck | None = None) -> GuardedChat:
         FakeFilterExtractor(),
         FakeLabelRetriever(),
     )
-    chat_agent = ChatAgent(ScriptedChatModel(script=script), tools, max_steps=5, timeout_seconds=10)
+    chat_agent = ChatAgent(
+        ScriptedChatModel(script=script), tools, canary=CANARY, max_steps=5, timeout_seconds=10
+    )
     return GuardedChat(check or FakeCheck(), chat_agent, FakeSourceCheck(), timeout_seconds=5)
 
 

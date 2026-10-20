@@ -25,26 +25,33 @@ NO_ANSWER = "Molecula couldn't finish this answer. Ask again, or ask a narrower 
 
 class ChatAgent:
     """The tool-calling agent behind the chat: it answers a conversation and reports each step
-    as a `ChatEvent`."""
+    as a `ChatEvent`. `canary` goes into the first line of the system prompt, so an answer that
+    contains it is repeating the prompt (#203)."""
 
     def __init__(
         self,
         model: BaseChatModel,
         tools: Sequence[BaseTool],
         *,
+        canary: str,
         max_steps: int,
         timeout_seconds: float,
     ) -> None:
         self._graph = create_agent(
             model,
             tools,
-            system_prompt=prompts.load("agent/system"),
+            system_prompt=prompts.load("agent/system", canary=canary),
             middleware=[StepLimit(max_steps), NumberSources()],
             context_schema=References,
         )
         self._tools = tools
+        self._canary = canary
         self._max_steps = max_steps
         self._timeout_seconds = timeout_seconds
+
+    @property
+    def canary(self) -> str:
+        return self._canary
 
     async def stream(self, conversation: Sequence[ChatMessage]) -> AsyncIterator[ChatEvent]:
         """Status, tool calls and results, answer tokens and retrieval traces as they happen,

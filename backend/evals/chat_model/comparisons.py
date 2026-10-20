@@ -114,7 +114,7 @@ async def ask(agent: ChatAgent, question: ComparisonQuestion) -> Asked:
 
 def cache_path(settings: Settings, descriptions: str) -> Path:
     name = answer_label(settings, chat_model_name(settings))
-    setup = f"{name}\n{prompts.load('agent/system')}\n{descriptions}"
+    setup = f"{name}\n{prompts.template('agent/system').text}\n{descriptions}"
     key = hashlib.sha256(setup.encode()).hexdigest()[:12]
     return settings.build_dir / "eval" / "comparisons" / f"{name.replace('/', '_')}-{key}.jsonl"
 

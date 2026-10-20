@@ -1,4 +1,5 @@
 import logging
+import secrets
 import sqlite3
 from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack, asynccontextmanager
@@ -242,6 +243,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.chat_agent = ChatAgent(
             get_answer_model(settings),
             tools,
+            canary=secrets.token_hex(16),
             max_steps=settings.chat_max_steps,
             timeout_seconds=settings.chat_timeout_seconds,
         )

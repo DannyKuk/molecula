@@ -57,6 +57,8 @@ export function applyEvent(turn: Turn, event: ChatEvent): Turn {
       return { ...turn, steps: withCall(turn.steps, event) };
     case "token":
       return { ...turn, answer: turn.answer + event.text };
+    case "replace_answer":
+      return { ...turn, answer: event.text, sources: null, sourceCheck: null };
     case "tool_result": {
       const steps = withResult(turn.steps, event.id, event.result);
       return event.name === "search_labels"

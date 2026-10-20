@@ -137,6 +137,14 @@ class TokenEvent(BaseModel):
     text: str
 
 
+class ReplaceAnswerEvent(BaseModel):
+    """The answer streamed so far is withdrawn: show `text` in its place. The guard sends it
+    when an answer repeats the system prompt (#203)."""
+
+    type: Literal["replace_answer"] = "replace_answer"
+    text: str
+
+
 class SourcesEvent(BaseModel):
     """Where the answer's facts come from. A citation is `[n]` or, from some models, `【n】`.
     `unknown_refs` are numbers the answer cites that no source has: show them as plain text,
@@ -210,6 +218,7 @@ type ChatEvent = Annotated[
     | ToolCallEvent
     | ToolResultEvent
     | TokenEvent
+    | ReplaceAnswerEvent
     | SourcesEvent
     | RetrievalTraceEvent
     | SourceCheckEvent
