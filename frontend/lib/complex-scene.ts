@@ -27,6 +27,8 @@ const METAL_LABEL_OFFSET = 1.2;
 
 const point = ([x, y, z]: Xyz): Point => ({ x, y, z });
 
+const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+
 const residueKey = (residue: Residue) => `${residue.chain}:${residue.number}:${residue.ins_code}`;
 
 /**
@@ -145,9 +147,18 @@ function awayFrom(origin: Point, from: Point, distance: number): Point {
   return { x: from.x + d.x * scale, y: from.y + d.y * scale, z: from.z + d.z * scale };
 }
 
-/** The pocket residues, as a 3Dmol selection. */
-export function pocketSelection(complex: Complex): AtomSelectionSpec {
-  return { or: complex.pocket.map((residue) => ({ chain: residue.chain, resi: residue.number })) };
+/** The pocket residues as 3Dmol selections, nearest the drug first, so the pocket can grow
+ * outwards from it. */
+export function pocketResidues(complex: Complex): AtomSelectionSpec[] {
+  const drug = complex.ligand.atoms.map((atom) => point(atom.xyz));
+  const reach = (residue: Complex["pocket"][number]) =>
+    Math.min(
+      ...residue.atoms.flatMap((atom) => drug.map((other) => distance(point(atom.xyz), other))),
+    );
+  return complex.pocket
+    .map((residue) => ({ residue, reach: reach(residue) }))
+    .sort((a, b) => a.reach - b.reach)
+    .map(({ residue }) => ({ chain: residue.chain, resi: residue.number }));
 }
 
 /** The hydrogen bonds, labelled like "Glu286". A bond whose residue atom isn't in the pocket is

@@ -5,18 +5,40 @@ import { METAL_COMPLEX, SMALL_COMPLEX } from "@/lib/test-complexes";
 
 import { COLORS, createScene, type SceneOptions } from "./scene";
 
-type FakeAtom = { x: number; y: number; z: number; index?: number; elem?: string; style?: object };
-type Selection = { predicate?: (atom: FakeAtom) => boolean; or?: unknown };
+type FakeAtom = {
+  x: number;
+  y: number;
+  z: number;
+  index?: number;
+  elem?: string;
+  chain?: string;
+  resi?: number;
+  style?: object;
+};
+type Selection = {
+  predicate?: (atom: FakeAtom) => boolean;
+  or?: { chain?: string; resi?: number }[];
+};
+type Line = { start: Point; end: Point; color: string };
+type Label = { text: string; opacity: number };
+type Point = { x: number; y: number; z: number };
 
-/** Just enough of 3Dmol to see what the scene draws. `sdfAtoms` are what a molecule's SDF holds. */
+/** Just enough of 3Dmol to see what the scene draws. `sdfAtoms` are what a molecule's SDF holds.
+ * `lines` and `labels` hold what is on screen now. Of the `or` selections, only residues by chain
+ * and number select atoms. */
 function fakeThreeDmol(sdfAtoms: FakeAtom[] = []) {
   const models: {
     atoms: FakeAtom[];
     setStyle: (selection: Selection, style: object, add?: boolean) => void;
   }[] = [];
+  const lines = new Set<Line>();
+  const labels = new Set<Label>();
   let view = [0, 0, 0, 100, 0, 0, 0, 1];
-  const selects = (selection: Selection, atom: FakeAtom) =>
-    selection.predicate ? selection.predicate(atom) : !selection.or;
+  const selects = (selection: Selection, atom: FakeAtom) => {
+    if (selection.predicate) return selection.predicate(atom);
+    if (!selection.or) return true;
+    return selection.or.some((part) => part.chain === atom.chain && part.resi === atom.resi);
+  };
   const viewer = {
     addModel: vi.fn((sdf?: string) => {
       const model = {
@@ -33,10 +55,19 @@ function fakeThreeDmol(sdfAtoms: FakeAtom[] = []) {
       models.push(model);
       return model;
     }),
-    addCylinder: vi.fn(),
-    addLabel: vi.fn(),
-    removeAllShapes: vi.fn(),
-    removeAllLabels: vi.fn(),
+    addCylinder: vi.fn((line: Line) => {
+      lines.add(line);
+      return line;
+    }),
+    removeShape: vi.fn((line: Line) => lines.delete(line)),
+    addLabel: vi.fn((text: string, spec: { fontOpacity?: number }) => {
+      const label = { text, opacity: spec.fontOpacity ?? 1 };
+      labels.add(label);
+      return label;
+    }),
+    removeLabel: vi.fn((label: Label) => labels.delete(label)),
+    removeAllShapes: vi.fn(() => lines.clear()),
+    removeAllLabels: vi.fn(() => labels.clear()),
     zoomTo: vi.fn(),
     zoom: vi.fn((factor: number) => {
       view = [...view.slice(0, 3), 100 / factor, ...view.slice(4)];
@@ -52,7 +83,7 @@ function fakeThreeDmol(sdfAtoms: FakeAtom[] = []) {
     clear: vi.fn(),
   };
   const lib = { createViewer: vi.fn(() => viewer) } as unknown as typeof import("3dmol");
-  return { lib, viewer, models };
+  return { lib, viewer, models, lines, labels };
 }
 
 const drawn = (atoms: FakeAtom[]) => atoms.filter((atom) => Object.keys(atom.style ?? {}).length);
@@ -187,10 +218,10 @@ describe("createScene", () => {
   });
 
   it("builds the drug up outside the pocket, grows the backbone, docks it and adds the bonds one by one", () => {
-    const { scene, viewer, protein, drug } = complexScene();
-    viewer.addCylinder.mockClear();
+    const { scene, viewer, protein, drug, lines, labels } = complexScene();
 
     scene.replay();
+    expect(lines.size).toBe(0);
     expect(drawn(drug)).toHaveLength(0);
     expect(drawn(protein)).toHaveLength(0);
     expect(centerOf(drug).x).toBeGreaterThan(11 + 10);
@@ -208,13 +239,47 @@ describe("createScene", () => {
 
     runFrames(100, 4800);
     expect(drug.map((atom) => Math.round(atom.x))).toEqual([10, 11, 12]);
-    expect(viewer.addCylinder).toHaveBeenCalledTimes(1);
+    expect(lines.size).toBe(1);
     expect(viewer.spin).not.toHaveBeenLastCalledWith("y", expect.anything());
 
     runFrames();
-    expect(viewer.addCylinder).toHaveBeenCalledTimes(2);
-    expect(drawn(protein).map((atom) => atom.index)).toEqual([]);
+    expect(lines.size).toBe(2);
+    expect([...labels]).toEqual([
+      { text: "Glu2", opacity: 1 },
+      { text: "Thr7A", opacity: 1 },
+    ]);
+    expect(drawn(protein).map((atom) => atom.resi)).toEqual([2, 2, 7]);
     expect(viewer.spin).toHaveBeenLastCalledWith("y", expect.any(Number));
+  });
+
+  it("grows the pocket in around the drug, nearest first, while it docks, then draws each bond out from the drug before its label fades in", () => {
+    const { scene, protein, drug, lines, labels } = complexScene();
+    const pocketShown = () =>
+      drawn(protein)
+        .filter((atom) => "stick" in atom.style!)
+        .map((atom) => atom.resi);
+    const awayFromPose = () =>
+      Math.hypot(centerOf(drug).x - 11, centerOf(drug).y, centerOf(drug).z);
+    const glu2Line = () => [...lines].find((line) => line.end.x === 10);
+    const seen = { nearestOnly: false, lineWithoutLabel: false, fadingLabel: false };
+
+    scene.replay();
+    while (frames.size > 0) {
+      runFrames(20, 20);
+      if (pocketShown().join() === "2,2" && awayFromPose() > 0.01) seen.nearestOnly = true;
+      const line = glu2Line();
+      if (line && line.start.x > 8 && ![...labels].some((label) => label.text === "Glu2")) {
+        seen.lineWithoutLabel = true;
+      }
+      if ([...labels].some((label) => label.opacity > 0 && label.opacity < 1)) {
+        seen.fadingLabel = true;
+      }
+    }
+
+    expect(seen).toEqual({ nearestOnly: true, lineWithoutLabel: true, fadingLabel: true });
+    expect(glu2Line()).toEqual(
+      expect.objectContaining({ start: { x: 8, y: 0, z: 0 }, end: { x: 10, y: 0, z: 0 } }),
+    );
   });
 
   it("keeps the backbone at the end in Whole protein", () => {
@@ -240,7 +305,7 @@ describe("createScene", () => {
   });
 
   it("docks the drug without building it up again when leaving Molecule mode", () => {
-    const { scene, viewer, drug } = complexScene({ mode: "molecule" });
+    const { scene, viewer, drug, lines } = complexScene({ mode: "molecule" });
 
     scene.setMode("site", true);
     runFrames(100, 100);
@@ -251,7 +316,7 @@ describe("createScene", () => {
 
     runFrames();
     expect(drug.map((atom) => Math.round(atom.x))).toEqual([10, 11, 12]);
-    expect(viewer.addCylinder).toHaveBeenCalledTimes(2);
+    expect(lines.size).toBe(2);
   });
 
   it("jumps to the end when the user grabs the view while the sequence plays", () => {
@@ -267,6 +332,23 @@ describe("createScene", () => {
     expect(drug.map((atom) => Math.round(atom.x))).toEqual([10, 11, 12]);
     expect(viewer.addCylinder).toHaveBeenCalledTimes(2);
     expect(viewer.spin).toHaveBeenLastCalledWith(false);
+  });
+
+  it("draws the whole pocket and every bond in full when the user grabs the view while a bond grows", () => {
+    const { scene, protein, lines, labels, grab } = complexScene();
+    scene.replay();
+    while (frames.size > 0 && lines.size === 0) runFrames(20, 20);
+    runFrames(20, 100);
+
+    grab();
+
+    expect(frames.size).toBe(0);
+    expect(drawn(protein).map((atom) => atom.resi)).toEqual([2, 2, 7]);
+    expect([...lines].map(({ start, end }) => [start.x, end.x])).toEqual([
+      [8, 10],
+      [12, 12],
+    ]);
+    expect([...labels].map((label) => label.opacity)).toEqual([1, 1]);
   });
 
   it("jumps to the end on Reset while the sequence plays, and turns again", () => {
@@ -474,7 +556,9 @@ describe("createScene with metals and cofactors", () => {
   });
 
   it("shows them while the backbone grows, before the drug docks, and adds their bonds first", () => {
-    const { scene, viewer, drug, metals, cofactors } = metalScene();
+    const { scene, viewer, drug, metals, cofactors, lines, labels: shown } = metalScene();
+    const shownColors = () => [...lines].map((line) => line.color);
+    const shownLabels = () => [...shown].map((label) => label.text);
     viewer.addCylinder.mockClear();
     viewer.addLabel.mockClear();
 
@@ -491,11 +575,11 @@ describe("createScene with metals and cofactors", () => {
     expect(viewer.addCylinder).not.toHaveBeenCalled();
 
     runFrames(100, 5300);
-    expect(lineColors(viewer)).toEqual([metalBond]);
+    expect(shownColors()).toEqual([metalBond]);
 
     runFrames();
-    expect(lineColors(viewer)).toEqual([metalBond, metalBond, hydrogenBond, hydrogenBond]);
-    expect(labels(viewer)).toEqual(["Zn", "Fe", "Glu2", "Thr7A"]);
+    expect(shownColors()).toEqual([metalBond, metalBond, hydrogenBond, hydrogenBond]);
+    expect(shownLabels()).toEqual(["Zn", "Fe", "Glu2", "Thr7A"]);
   });
 
   it("shows them with their bonds when the user grabs the view while the sequence plays", () => {
