@@ -25,6 +25,7 @@ import { EvidencePanel } from "./evidence-panel";
 import { ExportMenu } from "./export-menu";
 import { HelpDialog, HelpGuide } from "./help-guide";
 import { ModelStatus } from "./model-status";
+import { PrintedEnd, PrintedHeader } from "./printed-conversation";
 import { QuestionNavigator } from "./question-navigator";
 import { useBookmarkUndo } from "./saved-chats";
 
@@ -192,19 +193,19 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
     <div className="flex h-dvh print:h-auto">
       <ChatSidebar {...chatList} />
       <main className="flex min-w-0 flex-1 flex-col">
-        <header className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+        <header className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-4 sm:px-6 print:hidden">
           <div className="flex items-center gap-3">
             <ChatDrawer {...chatList} />
             <h1 className="text-[17px] font-semibold tracking-tight">Molecula</h1>
             <ModelStatus />
             {usage && (
               // Each answer shows its own line, so a phone leaves the total out of the header.
-              <p className="hidden font-mono text-[11px] text-ink-3 tabular-nums sm:block print:hidden">
+              <p className="hidden font-mono text-[11px] text-ink-3 tabular-nums sm:block">
                 This chat: {formatUsage(usage)}
               </p>
             )}
           </div>
-          <nav className="flex items-center gap-4 text-[13.5px] text-ink-2 print:hidden">
+          <nav className="flex items-center gap-4 text-[13.5px] text-ink-2">
             <Link href="/drugs" className="font-medium underline-offset-4 hover:underline">
               Supported drugs
             </Link>
@@ -232,7 +233,7 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
                   <EmptyState onAsk={ask} />
                 ) : (
                   <>
-                    <PrintedTitle title={title} />
+                    <PrintedHeader title={title} questions={turns.map((turn) => turn.question)} />
                     <ol
                       // Keyed by conversation, so an opened chat doesn't keep the last one's open steps.
                       key={id}
@@ -253,18 +254,17 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
                         />
                       ))}
                     </ol>
+                    <PrintedEnd turns={turns} />
                   </>
                 )}
               </div>
               {/* Inside the scroll area, so its scrollbar runs beside the question box and the end
                   of the conversation stops above it. */}
-              <div className="pointer-events-none sticky bottom-0 z-10 bg-[linear-gradient(transparent,var(--background)_1.5rem)] pt-6 print:static">
+              <div className="pointer-events-none sticky bottom-0 z-10 bg-[linear-gradient(transparent,var(--background)_1.5rem)] pt-6 print:hidden">
                 <div className="pointer-events-auto flex flex-col gap-2 pb-3">
-                  <div className="contents print:hidden">
-                    <ChatComposer answering={pendingAnswer} onSend={ask} onStop={stop} />
-                  </div>
+                  <ChatComposer answering={pendingAnswer} onSend={ask} onStop={stop} />
                   {saved.available === false && (
-                    <p className="text-sm text-ink print:hidden">
+                    <p className="text-sm text-ink">
                       History is off in this browser, so this chat isn&apos;t saved.
                     </p>
                   )}
@@ -301,21 +301,6 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
         </Dialog>
       )}
     </div>
-  );
-}
-
-/** The conversation's title and the day it was printed, at the top of the first page. */
-function PrintedTitle({ title }: { title: string }) {
-  const printedOn = new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-  return (
-    <section aria-label="Printed conversation" className="hidden print:block">
-      <h2 className="text-lg font-semibold">{title}</h2>
-      <p className="text-sm text-ink-2">Printed on {printedOn}</p>
-    </section>
   );
 }
 
