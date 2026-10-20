@@ -37,6 +37,8 @@ export type SourceCheck = { checked: boolean; claims: CheckedClaim[] };
 export type ChatEvent =
   | { type: "status"; message: string }
   | { type: "token"; text: string }
+  // The guard withdrew the answer so far, because it repeated the system prompt (#203).
+  | { type: "replace_answer"; text: string }
   | { type: "tool_call"; id: string; name: string; args: Record<string, unknown> }
   | { type: "tool_result"; id: string; name: string; status: string | null; result: unknown }
   | { type: "sources"; sources: Source[]; unknown_refs: number[] }

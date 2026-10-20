@@ -3,7 +3,7 @@ from collections.abc import Callable, Iterator
 import pytest
 from fastapi.testclient import TestClient
 
-from fake_llm import ScriptedChatModel, answer_message
+from fake_llm import CANARY, ScriptedChatModel, answer_message
 from guard_fakes import FakeCheck, FakeSourceCheck
 from molecula.agent.agent import ChatAgent
 from molecula.agent.tool_registry import build_tools
@@ -34,7 +34,7 @@ def guarded(answers: int) -> GuardedChat:
         FakeLabelRetriever(),
     )
     model = ScriptedChatModel(script=[answer_message("Imatinib blocks ABL1.")] * answers)
-    agent = ChatAgent(model, tools, max_steps=5, timeout_seconds=10)
+    agent = ChatAgent(model, tools, canary=CANARY, max_steps=5, timeout_seconds=10)
     return GuardedChat(FakeCheck(), agent, FakeSourceCheck(), timeout_seconds=5)
 
 

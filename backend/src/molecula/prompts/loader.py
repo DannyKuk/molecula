@@ -26,6 +26,8 @@ class PromptVariableError(PromptError):
 @dataclass(frozen=True)
 class Template:
     name: str
+    # The file as written, placeholders unfilled: what a cache keyed by the prompt hashes.
+    text: str
     # Literal text alternating with placeholder names, as `string.Formatter.parse` splits it.
     parts: tuple[tuple[str, str | None], ...]
 
@@ -65,7 +67,7 @@ def parse(name: str, text: str) -> Template:
                 f"prompt {name!r}: bad placeholder {{{written}}}; placeholders are {{name}} "
                 "and literal braces are written as {{ and }}"
             )
-    return Template(name, tuple((literal, field) for literal, field, _, _ in fields))
+    return Template(name, text, tuple((literal, field) for literal, field, _, _ in fields))
 
 
 class PromptLoader:
@@ -113,3 +115,8 @@ default_loader = PromptLoader()
 def load(name: str, /, **variables: object) -> str:
     """The prompt `name` with its `{placeholders}` filled; see `PromptLoader.load`."""
     return default_loader.load(name, **variables)
+
+
+def template(name: str) -> Template:
+    """The prompt `name` as parsed, before its placeholders are filled."""
+    return default_loader.template(name)

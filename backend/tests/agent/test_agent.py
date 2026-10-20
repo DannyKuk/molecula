@@ -5,7 +5,7 @@ import httpx
 import openai
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolCall
 
-from fake_llm import DEFAULT_COST, ScriptedChatModel, answer_message, tool_call_message
+from fake_llm import CANARY, DEFAULT_COST, ScriptedChatModel, answer_message, tool_call_message
 from molecula import prompts
 from molecula.agent.agent import NO_ANSWER, ChatAgent
 from molecula.agent.tool_registry import build_tools
@@ -66,7 +66,9 @@ def agent(
         extractor or FakeFilterExtractor(),
         retriever or FakeLabelRetriever(),
     )
-    return ChatAgent(model, tools, max_steps=max_steps, timeout_seconds=timeout_seconds)
+    return ChatAgent(
+        model, tools, canary=CANARY, max_steps=max_steps, timeout_seconds=timeout_seconds
+    )
 
 
 def run(chat: ChatAgent, conversation: Sequence[ChatMessage] = QUESTION) -> list[ChatEvent]:
@@ -221,7 +223,7 @@ def test_the_system_prompt_and_the_conversation_reach_the_model() -> None:
 
     system, *messages = model.received[0]
     assert isinstance(system, SystemMessage)
-    assert system.text == prompts.load("agent/system")
+    assert system.text == prompts.load("agent/system", canary=CANARY)
     assert [(type(m), m.text) for m in messages] == [
         (HumanMessage, "How does imatinib work?"),
         (AIMessage, "It inhibits the BCR-ABL kinase."),
@@ -320,7 +322,7 @@ def test_at_the_step_limit_the_model_answers_without_further_tool_calls() -> Non
     assert done.step_limit_reached
     last_system = model.received[1][0]
     assert last_system.text == prompts.load(
-        "agent/step_limit", system_prompt=prompts.load("agent/system")
+        "agent/step_limit", system_prompt=prompts.load("agent/system", canary=CANARY)
     )
 
 
@@ -339,7 +341,7 @@ def test_a_last_step_that_only_calls_a_tool_ends_with_an_error_not_an_empty_answ
     assert isinstance(error, ErrorEvent)
     assert error.message == NO_ANSWER
     assert model.received[1][0].text == prompts.load(
-        "agent/step_limit", system_prompt=prompts.load("agent/system")
+        "agent/step_limit", system_prompt=prompts.load("agent/system", canary=CANARY)
     )
 
 
@@ -366,7 +368,7 @@ def test_earlier_turns_dont_count_towards_the_step_limit() -> None:
     events = run(agent(model, max_steps=2), [*history, *QUESTION])
 
     assert kinds(events) == ["status", "tool_call", "tool_result", "token", "sources", "done"]
-    assert model.received[0][0].text == prompts.load("agent/system")
+    assert model.received[0][0].text == prompts.load("agent/system", canary=CANARY)
 
 
 def test_a_label_search_by_drug_emits_one_retrieval_trace() -> None:

@@ -18,6 +18,8 @@ from pydantic import Field, InstanceOf
 
 DEFAULT_USAGE = UsageMetadata(input_tokens=12, output_tokens=8, total_tokens=20)
 DEFAULT_COST = 0.0002
+# What `secrets.token_hex(16)` gives `ChatAgent` in the app: 32 hex digits.
+CANARY = "5eed" * 8
 
 
 def tool_call_message(
@@ -39,7 +41,8 @@ class ScriptedChatModel(BaseChatModel):
     in `agent/llm.py` keep it; None leaves either out, as a provider that doesn't report it.
     `bind_tools` records the tool
     names and returns the model itself, so agents that bind tools can drive it. `received`
-    holds the messages each call was given.
+    holds the messages each call was given. A streamed answer comes a word at a time, or in
+    pieces of `chunk_size` characters when that is set.
     """
 
     script: list[InstanceOf[AIMessage] | InstanceOf[Exception]]
@@ -47,6 +50,7 @@ class ScriptedChatModel(BaseChatModel):
     cost: float | None = DEFAULT_COST
     received: list[list[BaseMessage]] = Field(default_factory=list)
     bound_tools: list[str] = Field(default_factory=list)
+    chunk_size: int | None = None
 
     @property
     def _llm_type(self) -> str:
@@ -78,7 +82,7 @@ class ScriptedChatModel(BaseChatModel):
         run_manager: CallbackManagerForLLMRun | None = None,
         **kwargs: Any,
     ) -> Iterator[ChatGenerationChunk]:
-        for message_chunk in _chunks(self._next_message(messages)):
+        for message_chunk in _chunks(self._next_message(messages), self.chunk_size):
             chunk = ChatGenerationChunk(message=message_chunk)
             if run_manager:
                 run_manager.on_llm_new_token(chunk.text, chunk=chunk)
@@ -102,11 +106,15 @@ class ScriptedChatModel(BaseChatModel):
         return message
 
 
-def _chunks(message: AIMessage) -> Iterator[AIMessageChunk]:
-    """The message split the way a provider streams it: text a word at a time, then one chunk
-    with the tool calls and the token usage."""
+def _chunks(message: AIMessage, size: int | None) -> Iterator[AIMessageChunk]:
+    """The message split the way a provider streams it: text a word (or `size` characters) at
+    a time, then one chunk with the tool calls and the token usage."""
     text = message.content if isinstance(message.content, str) else ""
-    for token in re.split(r"(\s+)", text):
+    if size is None:
+        pieces = re.split(r"(\s+)", text)
+    else:
+        pieces = [text[start : start + size] for start in range(0, len(text), size)]
+    for token in pieces:
         if token:
             yield AIMessageChunk(content=token, id=message.id)
     yield AIMessageChunk(

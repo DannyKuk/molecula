@@ -4,7 +4,9 @@ from molecula.prompts.loader import (
     PromptLoader,
     PromptNotFound,
     PromptVariableError,
+    Template,
     load,
+    template,
 )
 
 __all__ = [
@@ -13,5 +15,7 @@ __all__ = [
     "PromptLoader",
     "PromptNotFound",
     "PromptVariableError",
+    "Template",
     "load",
+    "template",
 ]
