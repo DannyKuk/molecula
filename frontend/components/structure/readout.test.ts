@@ -3,11 +3,12 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import type { Complex } from "@/lib/api";
+import type { Atom, Complex, Molecule } from "@/lib/api";
 import imatinib from "@/lib/fixtures/complex-5291.json";
 import { SMALL_COMPLEX } from "@/lib/test-complexes";
 
-import { legendElements, readout } from "./readout";
+import { ELEMENT_NAMES, legendElements, readout } from "./readout";
+import { COLORS, type SceneData } from "./scene";
 
 const acetaminophen = readFileSync(
   path.join(__dirname, "../../lib/fixtures/structure-1983.sdf"),
@@ -45,17 +46,60 @@ describe("readout", () => {
 describe("legendElements", () => {
   const complex = { kind: "complex", complex: imatinib as unknown as Complex } as const;
 
-  it("lists the nitrogen, oxygen and sulfur the view draws: the drug's, and the pocket's outside Molecule view", () => {
+  it("lists the elements the view draws besides carbon: the drug's, and the pocket's outside Molecule view", () => {
     expect(legendElements(complex, "molecule")).toEqual(["N", "O"]);
     expect(legendElements(complex, "site")).toEqual(["N", "O", "S"]);
     expect(legendElements(complex, "protein")).toEqual(["N", "O", "S"]);
   });
 
-  it("lists the elements of a molecule without a complex, and none for a file it can't read", () => {
+  it("lists a drug's chlorine, fluorine and iodine and a nucleotide's phosphorus, but not a cofactor's", () => {
+    const halogens: Atom[] = [
+      { name: "CL1", element: "Cl", xyz: [13, 0, 0] },
+      { name: "F1", element: "F", xyz: [14, 0, 0] },
+      { name: "I1", element: "I", xyz: [15, 0, 0] },
+    ];
+    const nucleotide: Complex["pocket"][number] = {
+      chain: "B",
+      number: 5,
+      ins_code: "",
+      name: "DA",
+      atoms: [{ name: "P", element: "P", xyz: [0, 6, 0] }],
+    };
+    const cofactor: Molecule = {
+      code: "ATP",
+      chain: "A",
+      number: 601,
+      atoms: [{ name: "PA", element: "P", xyz: [20, 0, 0] }],
+      bonds: [],
+    };
+    const data: SceneData = {
+      kind: "complex",
+      complex: {
+        ...SMALL_COMPLEX,
+        ligand: { ...SMALL_COMPLEX.ligand, atoms: [...SMALL_COMPLEX.ligand.atoms, ...halogens] },
+        pocket: [...SMALL_COMPLEX.pocket, nucleotide],
+        cofactors: [cofactor],
+      },
+    };
+
+    expect(legendElements(data, "molecule")).toEqual(["Cl", "F", "I", "N", "O"]);
+    expect(legendElements(data, "site")).toEqual(["Cl", "F", "I", "N", "O", "P"]);
+  });
+
+  it("lists the hydrogens of a molecule without a complex, and nothing for a file it can't read", () => {
     expect(legendElements({ kind: "molecule", sdf: acetaminophen }, "molecule")).toEqual([
+      "H",
       "N",
       "O",
     ]);
     expect(legendElements({ kind: "molecule", sdf: "1983\n$$$$\n" }, "molecule")).toEqual([]);
+  });
+});
+
+describe("ELEMENT_NAMES", () => {
+  it("has a colour for every element it names, on the screen and on paper", () => {
+    for (const colors of [COLORS.screen, COLORS.screenDark, COLORS.paper]) {
+      expect(Object.keys(colors.elements).sort()).toEqual(Object.keys(ELEMENT_NAMES).sort());
+    }
   });
 });

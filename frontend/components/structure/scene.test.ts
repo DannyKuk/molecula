@@ -92,6 +92,17 @@ const drawn = (atoms: FakeAtom[]) => atoms.filter((atom) => Object.keys(atom.sty
 const colorMap = (atom: FakeAtom) =>
   (atom.style as { stick: { colorscheme: { map: object } } }).stick.colorscheme.map;
 
+const SCREEN_ELEMENTS = {
+  H: "#ffffff",
+  Cl: "#f472b6",
+  F: "#34d399",
+  I: "#a970ff",
+  N: "#8ea6ff",
+  O: "#ff6b5e",
+  P: "#ffa64d",
+  S: "#f2d16b",
+};
+
 const options: SceneOptions = {
   mode: "site",
   colors: COLORS.screenDark,
@@ -162,7 +173,7 @@ describe("createScene", () => {
 
   it("colours the drug's carbons lime in every view, and the pocket's grey", () => {
     const { scene, drug, models } = complexScene();
-    const elements = { N: "#8ea6ff", O: "#ff6b5e", S: "#f2d16b" };
+    const elements = SCREEN_ELEMENTS;
     const pocketStyle = vi.spyOn(models[0], "setStyle");
 
     expect(colorMap(drug[0])).toEqual({ ...elements, C: "#c6f432" });
@@ -198,16 +209,30 @@ describe("createScene", () => {
     const { lib, models } = fakeThreeDmol([{ x: 0, y: 0, z: 0, elem: "C" }]);
     createScene(lib, document.createElement("div"), sdf, options);
 
-    expect(colorMap(models[0].atoms[0])).toEqual({
-      N: "#8ea6ff",
-      O: "#ff6b5e",
-      S: "#f2d16b",
-      C: "#c6f432",
-    });
+    expect(colorMap(models[0].atoms[0])).toEqual({ ...SCREEN_ELEMENTS, C: "#c6f432" });
+  });
+
+  it("draws chlorine pink and fluorine green, apart from the drug's lime carbons and sulfur's yellow", () => {
+    const { lib, models } = fakeThreeDmol([{ x: 0, y: 0, z: 0, elem: "Cl" }]);
+    createScene(lib, document.createElement("div"), sdf, options);
+    const colors = colorMap(models[0].atoms[0]) as Record<string, string>;
+
+    expect([colors.Cl, colors.F]).toEqual(["#f472b6", "#34d399"]);
+    expect(new Set([colors.C, colors.Cl, colors.F, colors.S]).size).toBe(4);
   });
 
   it("draws the printed picture in 3Dmol's green carbons and element colours on a light background, in every view", () => {
-    const paper = { N: "#8f8fff", O: "#f00000", S: "#ffc832", C: "#00ff00" };
+    const paper = {
+      H: "#b0b0b0",
+      Cl: "#db2777",
+      F: "#34d399",
+      I: "#a020f0",
+      N: "#8f8fff",
+      O: "#f00000",
+      P: "#ffa500",
+      S: "#ffc832",
+      C: "#00ff00",
+    };
     const { lib, viewer, drug, scene } = complexScene({ colors: COLORS.paper });
     const lineColors = viewer.addCylinder.mock.calls.map(
       ([line]) => (line as { color: string }).color,

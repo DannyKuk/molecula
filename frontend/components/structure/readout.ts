@@ -7,8 +7,10 @@ import type { SceneData, ViewMode } from "./scene";
  */
 export function readout(data: SceneData): string[] {
   if (data.kind === "molecule") {
-    const elements = sdfHeavyElements(data.sdf);
-    return elements === null ? [] : [count(elements.length, "atom")];
+    const elements = sdfElements(data.sdf);
+    return elements === null
+      ? []
+      : [count(elements.filter((element) => element !== "H").length, "atom")];
   }
   const { ligand, pocket, contacts } = data.complex;
   return [
@@ -18,15 +20,25 @@ export function readout(data: SceneData): string[] {
   ];
 }
 
-/** The elements the legend explains beside the drug's carbons, as it names them. */
-export const ELEMENT_NAMES: Record<string, string> = { N: "nitrogen", O: "oxygen", S: "sulfur" };
+/** The elements the legend explains beside the drug's carbons, as it names them, in the order of a
+ * molecular formula after its carbons: hydrogen, then the rest alphabetically. */
+export const ELEMENT_NAMES: Record<string, string> = {
+  H: "hydrogen",
+  Cl: "chlorine",
+  F: "fluorine",
+  I: "iodine",
+  N: "nitrogen",
+  O: "oxygen",
+  P: "phosphorus",
+  S: "sulfur",
+};
 
 /** Which of those elements the view draws in `mode`: the drug's, and outside Molecule view also the
  * pocket's. */
 export function legendElements(data: SceneData, mode: ViewMode): string[] {
   const drawn = new Set(
     data.kind === "molecule"
-      ? (sdfHeavyElements(data.sdf) ?? [])
+      ? (sdfElements(data.sdf) ?? [])
       : [
           ...data.complex.ligand.atoms,
           ...(mode === "molecule" ? [] : data.complex.pocket.flatMap((residue) => residue.atoms)),
@@ -35,16 +47,12 @@ export function legendElements(data: SceneData, mode: ViewMode): string[] {
   return Object.keys(ELEMENT_NAMES).filter((element) => drawn.has(element));
 }
 
-/** The elements of the atoms other than hydrogen in a V2000 molfile, or null if it has no counts
- * line. */
-function sdfHeavyElements(sdf: string): string[] | null {
+/** The elements of the atoms in a V2000 molfile, or null if it has no counts line. */
+function sdfElements(sdf: string): string[] | null {
   const lines = sdf.split(/\r?\n/);
   const atoms = Number.parseInt(lines[3]?.slice(0, 3) ?? "", 10);
   if (Number.isNaN(atoms)) return null;
-  return lines
-    .slice(4, 4 + atoms)
-    .map((line) => line.trim().split(/\s+/)[3])
-    .filter((element) => element !== "H");
+  return lines.slice(4, 4 + atoms).map((line) => line.trim().split(/\s+/)[3]);
 }
 
 function count(n: number, noun: string): string {
