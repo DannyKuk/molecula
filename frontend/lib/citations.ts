@@ -64,28 +64,33 @@ export function sourceLabel(source: Source): string {
     : `${siteName(source)} · ${source.name}`;
 }
 
-/** "[1] Gleevec – Mechanism of action – https://…" for a label passage, "[4] PubChem – imatinib –
- * https://…" for a page, by the numbers the answer cites them with. Passages of the same label
- * section share one line: "[2, 3] Gleevec – Pharmacokinetics – https://…". */
-export function sourceLines(sources: Source[]): string[] {
-  const refsByLine = new Map<string, number[]>();
+/** One line of a source list: what the source is, its link, and the numbers the answer cites it
+ * with. */
+export type SourceEntry = { refs: number[]; where: string; what: string; url: string };
+
+/** The answer's sources as a list, by the numbers the answer cites them with. Passages of the same
+ * label section share one entry, with all their numbers. */
+export function sourceEntries(sources: Source[]): SourceEntry[] {
+  const entries = new Map<string, SourceEntry>();
   for (const source of sources) {
-    const line = sourceLine(source);
-    refsByLine.set(line, [
-      ...(refsByLine.get(line) ?? []),
-      ...(source.ref === null ? [] : [source.ref]),
-    ]);
+    const [where, what] = isLabel(source)
+      ? [source.name, sectionName(source.section)]
+      : [siteName(source), source.name];
+    const key = `${where} – ${what} – ${source.url}`;
+    const entry = entries.get(key) ?? { refs: [], where, what, url: source.url };
+    if (source.ref !== null) entry.refs.push(source.ref);
+    entries.set(key, entry);
   }
-  return [...refsByLine].map(([line, refs]) =>
-    refs.length ? `[${refs.join(", ")}] ${line}` : line,
-  );
+  return [...entries.values()];
 }
 
-function sourceLine(source: Source): string {
-  const [where, what] = isLabel(source)
-    ? [source.name, sectionName(source.section)]
-    : [siteName(source), source.name];
-  return `${where} – ${what} – ${source.url}`;
+/** "[1] Gleevec – Mechanism of action – https://…" for a label passage, "[4] PubChem – imatinib –
+ * https://…" for a page; "[2, 3] Gleevec – Pharmacokinetics – https://…" for an entry with two. */
+export function sourceLines(sources: Source[]): string[] {
+  return sourceEntries(sources).map(({ refs, where, what, url }) => {
+    const line = `${where} – ${what} – ${url}`;
+    return refs.length ? `[${refs.join(", ")}] ${line}` : line;
+  });
 }
 
 const EXCERPT_LENGTH = 320;

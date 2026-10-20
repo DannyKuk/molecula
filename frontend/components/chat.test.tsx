@@ -1103,7 +1103,7 @@ describe("Chat export", () => {
     expect(print).toHaveBeenCalledOnce();
   });
 
-  it("prints the chat's title and the day above the conversation, on paper only", async () => {
+  it("prints how many questions there are and the day above the conversation, on paper only", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(2026, 9, 17, 12));
     await answerGleevec();
@@ -1111,31 +1111,26 @@ describe("Chat export", () => {
     const printed = screen.getByRole("region", { name: "Printed conversation" });
     expect(printed.className).toContain("hidden");
     expect(printed.className).toContain("print:block");
-    expect(within(printed).getByRole("heading", { name: "How does Gleevec work?" })).toBeDefined();
-    expect(within(printed).getByText("Printed on October 17, 2026")).toBeDefined();
+    expect(within(printed).getByText("1 question · Printed on October 17, 2026")).toBeDefined();
   });
 
-  it("marks each printed message as the user's or Molecula's, on paper only", async () => {
+  it("prints when each question was asked beside its number", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 9, 17, 9, 30));
     await answerGleevec();
 
-    const conversation = within(screen.getByRole("list", { name: "Conversation" }));
-    for (const speaker of ["You", "Molecula"]) {
-      const label = conversation.getByText(speaker);
-      expect(label.className).toContain("hidden");
-      expect(label.className).toContain("print:block");
-    }
+    const label = screen.getByText(/^Q-01 · Query/);
+    const asked = within(label).getByText("Oct 17, 2026, 09:30");
+    expect(asked.className).toContain("hidden");
+    expect(asked.className).toContain("print:inline");
   });
 
-  it("names Molecula on paper only once an answer has started", async () => {
-    const stream = stubChatStream();
-    render(<Chat />);
+  it("ends the printed conversation with the disclaimer and the openFDA credit", async () => {
+    await answerGleevec();
 
-    askQuestion("How does Gleevec work?");
-    const conversation = within(screen.getByRole("list", { name: "Conversation" }));
-    expect(conversation.getByText("You")).toBeDefined();
-    expect(conversation.queryByText("Molecula")).toBeNull();
-
-    await streamed(() => stream.send(token("It blocks BCR-ABL.")));
-    expect(conversation.getByText("Molecula")).toBeDefined();
+    const end = screen.getByRole("region", { name: "End of the printed conversation" });
+    expect(end.className).toContain("print:block");
+    expect(within(end).getByText(/Molecula is an AI assistant/)).toBeDefined();
+    expect(within(end).getByText(/^Data provided by the U\.S\. Food/)).toBeDefined();
   });
 });

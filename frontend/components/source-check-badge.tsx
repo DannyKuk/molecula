@@ -28,7 +28,7 @@ export function SourceCheckBadge({
   const summary = check && checkSummary(check);
   if (!checking && !summary) return null;
   return (
-    <div role="status" className="self-start">
+    <div role="status" data-source-check className="self-start">
       {checking || !summary ? (
         <p className={`${BADGE} ${TONES.checking}`}>
           <LoaderCircle aria-hidden className="size-4 shrink-0 animate-spin" />

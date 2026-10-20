@@ -7,11 +7,11 @@ import { checkingAnswer } from "@/lib/source-check";
 import { formatUsage } from "@/lib/usage";
 
 import { AnswerMarkdown } from "./answer-markdown";
-import { PrintedSources } from "./answer-sources";
 import { OpenCitedSources } from "./citation-chip";
 import { CopyCheckReport } from "./copy-check-report";
 import { DidYouMeanButtons } from "./did-you-mean";
 import { EvidencePills } from "./evidence-pills";
+import { askedTime, PrintedSources } from "./printed-conversation";
 import { SourceCheckBadge } from "./source-check-badge";
 
 type ConversationTurnProps = {
@@ -50,20 +50,17 @@ export function ConversationTurn({
       data-turn
       aria-current={active || undefined}
       className={cn(
-        "relative flex flex-col gap-3 print:break-inside-avoid print:border-t print:pt-6",
+        "relative flex flex-col gap-3",
         active && "before:absolute before:inset-y-0 before:-left-4 before:w-px before:bg-signal",
-        "print:before:hidden",
       )}
     >
-      <TurnLabel number={number} active={active} />
-      <PrintedSpeaker>You</PrintedSpeaker>
-      <h2 className="mb-1 text-[27px] leading-tight font-semibold tracking-tight break-words whitespace-pre-wrap print:text-base">
+      <TurnLabel number={number} active={active} askedAt={turn.askedAt} />
+      <h2 className="mb-1 text-[27px] leading-tight font-semibold tracking-tight break-words whitespace-pre-wrap">
         {turn.question}
       </h2>
       <div className="contents print:hidden">
         <EvidencePills turn={turn} onShow={onShow} />
       </div>
-      {(turn.answer || !answering) && <PrintedSpeaker>Molecula</PrintedSpeaker>}
       {turn.state === "queued" && (
         <p role="status" className="text-sm text-ink-2">
           Waiting for the answer in another chat to finish…
@@ -121,30 +118,35 @@ export function ConversationTurn({
   );
 }
 
-/** "Q-01 · Query" with a status light, lit on the turn the reader is on. */
-function TurnLabel({ number, active }: { number: number; active: boolean }) {
+/** "Q-01 · Query" with a status light, lit on the turn the reader is on. Paper adds when the
+ * question was asked. */
+function TurnLabel({
+  number,
+  active,
+  askedAt,
+}: {
+  number: number;
+  active: boolean;
+  askedAt?: number;
+}) {
   return (
     <p
+      data-turn-label
       className={cn(
-        "flex items-center gap-2 font-mono text-[11px] tracking-wider uppercase print:hidden",
+        "flex items-center gap-2 font-mono text-[11px] tracking-wider uppercase",
         active ? "text-ink" : "text-ink-3",
       )}
     >
       <span
         aria-hidden
-        className={cn("size-[5px] rounded-full", active ? "bg-signal" : "bg-rule-2")}
+        className={cn("size-[5px] rounded-full print:hidden", active ? "bg-signal" : "bg-rule-2")}
       />
       Q-{String(number).padStart(2, "0")} · Query
+      {askedAt !== undefined && (
+        <span className="ml-auto hidden text-ink-3 tabular-nums print:inline">
+          {askedTime(askedAt)}
+        </span>
+      )}
     </p>
-  );
-}
-
-/**
- * Who wrote the message below it, on paper only, where the question prints at the answer's size
- * and without its label.
- */
-function PrintedSpeaker({ children }: { children: string }) {
-  return (
-    <p className="hidden text-xs font-semibold text-ink-2 print:-mb-2 print:block">{children}</p>
   );
 }

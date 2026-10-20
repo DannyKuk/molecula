@@ -120,7 +120,7 @@ export function AnswerMarkdown({
   return (
     <CitationsContext value={citations}>
       <CheckedClaimsContext value={claims}>
-        <div className="text-[16.5px] leading-[1.78] break-words">
+        <div data-answer className="text-[16.5px] leading-[1.78] break-words">
           <Markdown
             remarkPlugins={[remarkGfm, [remarkSourceCheck, marks], remarkCitations]}
             components={components}
