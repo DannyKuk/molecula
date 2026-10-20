@@ -21,13 +21,11 @@ type Asked = { id: string; question: string; earlier: Turn[]; askedAt: number };
  * The chats this page has answered, the one on screen and the answers coming in. One answer
  * streams at a time, into its own chat also while another chat is shown; a question asked in a
  * chat meanwhile waits in line as a queued turn and starts once the answers before it end. Each
- * answer is saved under its chat's id when it is asked, when it starts and when it ends. Showing
- * another chat calls `scrollToStart`.
+ * answer is saved under its chat's id when it is asked, when it starts and when it ends.
  */
 export function useConversations(
   initialQuestion: string | undefined,
   save: (id: string, turns: Turn[]) => void,
-  scrollToStart: () => void = () => {},
 ) {
   const [shown, setShown] = useState<{ id: string | null; turns: Turn[] }>({ id: null, turns: [] });
   const [busy, setBusy] = useState<{ answeringId: string | null; queuedIds: string[] }>({
@@ -157,7 +155,6 @@ export function useConversations(
   const show = (id: string | null, turns: Turn[]) => {
     shownIdRef.current = id;
     setShown({ id, turns });
-    scrollToStart();
   };
 
   const { id, turns } = shown;
