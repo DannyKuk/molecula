@@ -213,3 +213,21 @@ export function structuresOf(steps: Step[]): StructureTarget[] {
   }
   return [...targets.values()];
 }
+
+/** "Imatinib in ABL1", or the drug's name alone when it has no complex. */
+export function structureTitle(target: StructureTarget): string {
+  const name = target.name.charAt(0).toUpperCase() + target.name.slice(1);
+  return target.complex
+    ? `${name} in ${target.complex.target ?? `PDB ${target.complex.pdb_id}`}`
+    : name;
+}
+
+/** "PDB 2HYY · Homo sapiens · 5 hydrogen bonds", or why the drug shows alone. */
+export function structureSubtitle(target: StructureTarget): string {
+  if (!target.complex) return "the molecule alone: no reviewed structure with its target";
+  const { pdb_id, organism, hydrogen_bonds } = target.complex;
+  const bonds = hydrogen_bonds.length;
+  return [`PDB ${pdb_id}`, organism, `${bonds} hydrogen ${bonds === 1 ? "bond" : "bonds"}`]
+    .filter(Boolean)
+    .join(" · ");
+}

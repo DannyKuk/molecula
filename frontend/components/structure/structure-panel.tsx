@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObjec
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ApiError, getComplex, getStructure } from "@/lib/api";
 import { coordinationBonds } from "@/lib/complex-scene";
-import type { StructureTarget } from "@/lib/tool-cards";
+import { structureSubtitle, structureTitle, type StructureTarget } from "@/lib/tool-cards";
 import { useMediaQuery } from "@/lib/use-media-query";
 
 import type { SceneData, ViewMode } from "./scene";
@@ -61,10 +61,8 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
     return () => abort.abort();
   }, [target.cid, hasComplex, attempt]);
 
-  const name = target.name.charAt(0).toUpperCase() + target.name.slice(1);
-  const title = target.complex
-    ? `${name} in ${target.complex.target ?? `PDB ${target.complex.pdb_id}`}`
-    : name;
+  const title = structureTitle(target);
+  const subtitle = structureSubtitle(target);
   const ready = loaded.status === "ready" ? loaded.data : null;
   const complex = ready?.kind === "complex" ? ready.complex : null;
   const switchable = complex !== null;
@@ -149,9 +147,7 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <span className="font-medium">{title}</span>{" "}
-          {loaded.status !== "missing" && (
-            <span className="text-sm text-ink-3">{subtitle(target)}</span>
-          )}
+          {loaded.status !== "missing" && <span className="text-sm text-ink-3">{subtitle}</span>}
         </div>
         {ready && (
           <div className="flex flex-wrap gap-2">
@@ -200,7 +196,7 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
           >
             <div className="flex items-start justify-between gap-4">
               <DialogTitle className="font-medium">
-                {title} <span className="text-sm font-normal text-ink-3">{subtitle(target)}</span>
+                {title} <span className="text-sm font-normal text-ink-3">{subtitle}</span>
               </DialogTitle>
               <div className="flex flex-wrap justify-end gap-2">
                 {controls(fullScreenViewer)}
@@ -222,15 +218,6 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
       )}
     </section>
   );
-}
-
-function subtitle(target: StructureTarget): string {
-  if (!target.complex) return "the molecule alone: no reviewed structure with its target";
-  const { pdb_id, organism, hydrogen_bonds } = target.complex;
-  const bonds = hydrogen_bonds.length;
-  return [`PDB ${pdb_id}`, organism, `${bonds} hydrogen ${bonds === 1 ? "bond" : "bonds"}`]
-    .filter(Boolean)
-    .join(" · ");
 }
 
 function LegendItem({ swatch, children }: { swatch: ReactNode; children: ReactNode }) {

@@ -24,6 +24,7 @@ function fakeScene(): FakeScene {
     setOnScreen: vi.fn<Scene["setOnScreen"]>(),
     camera: vi.fn<Scene["camera"]>(() => null),
     resize: vi.fn<Scene["resize"]>(),
+    picture: vi.fn<Scene["picture"]>(() => ""),
     dispose: vi.fn<Scene["dispose"]>(),
   };
 }

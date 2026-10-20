@@ -1,11 +1,16 @@
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 
+import type { Complex } from "@/lib/api";
 import type { Source } from "@/lib/chat";
 import type { Turn } from "@/lib/chat-turn";
 import { isLabel, sourceEntries } from "@/lib/citations";
+import { coordinationBonds } from "@/lib/complex-scene";
+import type { Picture } from "@/lib/printed-pictures";
+import { structureSubtitle, structureTitle, type StructureTarget } from "@/lib/tool-cards";
 
 import { OpenFdaCredit } from "./answer-sources";
 import { Disclaimer } from "./disclaimer";
+import { COLORS } from "./structure/scene";
 
 // The pieces of the printed conversation that the screen doesn't show. The rest of the print
 // design is the `@media print` section of `app/globals.css`.
@@ -105,6 +110,110 @@ export function PrintedSources({ sources }: { sources: Source[] }) {
       </ul>
     </section>
   );
+}
+
+/**
+ * A drug the answer showed in 3D, as a still picture of the view's start with what it shows and a
+ * colour legend. Without a picture it prints one line saying why: the drug has no 3D model, the
+ * picture couldn't be drawn, or it was never drawn because the print didn't start from the menu.
+ */
+export function PrintedStructure({
+  target,
+  picture,
+}: {
+  target: StructureTarget;
+  picture: Picture | undefined;
+}) {
+  const title = structureTitle(target);
+  return (
+    <figure
+      aria-label={`3D structure of ${target.name}`}
+      className="hidden break-inside-avoid print:block"
+    >
+      <p className="font-mono text-[7pt] tracking-wider text-ink-3 uppercase">3D structure</p>
+      {picture?.status === "ready" ? (
+        <div className="mt-1 grid grid-cols-[58%_1fr] gap-x-4 border-t border-rule-2 pt-2">
+          <div>
+            {/* A data URL drawn in the browser, which next/image can't optimise. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              data-printed-picture
+              src={picture.png}
+              alt={`${title}, as the 3D view first shows it`}
+              className="block w-full border border-rule"
+            />
+            {picture.complex && <PictureLegend name={target.name} complex={picture.complex} />}
+          </div>
+          <figcaption className="text-[8pt] leading-snug">
+            <p className="text-[10pt] font-semibold">{title}</p>
+            <p className="mt-0.5 font-mono text-[7.5pt] text-ink-2">{structureSubtitle(target)}</p>
+            {target.complex?.caption && <p className="mt-2">{target.complex.caption}</p>}
+          </figcaption>
+        </div>
+      ) : (
+        <p className="mt-1 border-t border-rule-2 pt-1 text-[8pt] text-ink-2">
+          {withoutPicture(target.name, picture)}
+        </p>
+      )}
+    </figure>
+  );
+}
+
+function withoutPicture(name: string, picture: Picture | undefined): string {
+  if (picture?.status === "missing") {
+    return `No 3D model: Molecula has them for small-molecule drugs only, and ${name} is too large.`;
+  }
+  if (picture?.status === "failed") return `The 3D picture of ${name} couldn't be drawn.`;
+  return `For the 3D picture of ${name}, print from the chat's export menu ("Print or save as PDF").`;
+}
+
+// 3Dmol's `greenCarbon` and default carbon colours, which the picture draws the drug and the
+// residues around it in; the line colours are the scene's light ones.
+const DRUG_GREEN = "#00ff00";
+const RESIDUE_GREY = "#c8c8c8";
+
+/** The colours of the binding site, as in the 3D view's legend. The swatches are SVG, because
+ * browsers leave out background colours when printing. */
+function PictureLegend({ name, complex }: { name: string; complex: Complex }) {
+  const colors = COLORS.light;
+  return (
+    <ul aria-label="Colours" className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[7.5pt]">
+      <LegendItem label={name}>
+        <circle cx="8" cy="4" r="3.5" fill={DRUG_GREEN} stroke="#16a34a" strokeWidth="0.75" />
+      </LegendItem>
+      <LegendItem label="hydrogen bond">
+        <DashedLine color={colors.hbond} />
+      </LegendItem>
+      {coordinationBonds(complex).length > 0 && (
+        <LegendItem label="metal bond">
+          <DashedLine color={colors.coordination} />
+        </LegendItem>
+      )}
+      {complex.cofactors.length > 0 && (
+        <LegendItem label="cofactor">
+          <line x1="0" y1="4" x2="16" y2="4" stroke={colors.cofactor} strokeWidth="2" />
+        </LegendItem>
+      )}
+      <LegendItem label="residues within 4 Å">
+        <line x1="0" y1="4" x2="16" y2="4" stroke={RESIDUE_GREY} strokeWidth="2.5" />
+      </LegendItem>
+    </ul>
+  );
+}
+
+function LegendItem({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <li className="inline-flex items-center gap-1">
+      <svg aria-hidden viewBox="0 0 16 8" className="h-[6pt] w-[12pt]">
+        {children}
+      </svg>
+      {label}
+    </li>
+  );
+}
+
+function DashedLine({ color }: { color: string }) {
+  return <line x1="0" y1="4" x2="16" y2="4" stroke={color} strokeWidth="2" strokeDasharray="3 2" />;
 }
 
 /** The end of the printed conversation: the disclaimer, and the openFDA credit once when an answer

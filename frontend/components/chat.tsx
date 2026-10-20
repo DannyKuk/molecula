@@ -16,6 +16,7 @@ import { useChatHistory } from "@/lib/use-chat-history";
 import { useConversations } from "@/lib/use-conversations";
 import { useFollowAnswer } from "@/lib/use-follow-answer";
 import { useMediaQuery } from "@/lib/use-media-query";
+import { usePrintedPictures } from "@/lib/use-printed-pictures";
 
 import { ChatComposer } from "./chat-composer";
 import { ChatDrawer, type ChatListProps, ChatSidebar } from "./chat-sidebar";
@@ -28,6 +29,7 @@ import { ModelStatus } from "./model-status";
 import { PrintedEnd, PrintedHeader } from "./printed-conversation";
 import { QuestionNavigator } from "./question-navigator";
 import { useBookmarkUndo } from "./saved-chats";
+import { drawPicture } from "./structure/picture";
 
 /** Wide enough for the evidence panel beside the chat; narrower screens open it as a sheet. */
 export const WIDE_SCREEN = "(min-width: 900px)";
@@ -60,6 +62,7 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
     remove,
   } = useConversations(initialQuestion, saved.save);
   const conversationRef = useRef<HTMLOListElement>(null);
+  const printed = usePrintedPictures(turns, drawPicture);
 
   // Null shows the newest answer on its own default tab; a sent question shows its steps.
   const [shown, setShown] = useState<Shown | null>(null);
@@ -215,7 +218,12 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
               Benchmarks
             </Link>
             {turns.length > 0 && (
-              <ExportMenu title={title} turns={turns} disabled={pendingAnswer} />
+              <ExportMenu
+                title={title}
+                turns={turns}
+                disabled={pendingAnswer}
+                onPreparePrint={printed.prepare}
+              />
             )}
             <HelpDialog onAsk={ask} />
           </nav>
@@ -250,6 +258,7 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
                           onAsk={ask}
                           chatAnswering={pendingAnswer}
                           onRetry={index === turns.length - 1 ? retry : undefined}
+                          pictures={printed.pictures}
                         />
                       ))}
                     </ol>
