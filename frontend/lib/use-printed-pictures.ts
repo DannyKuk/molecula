@@ -7,7 +7,8 @@ import { drawPictures, picturesToDraw, type DrawPicture, type Pictures } from ".
 /**
  * The pictures of the conversation's 3D structures for paper. `prepare` draws the missing ones,
  * puts them on the page and resolves once the browser has decoded them, so a print dialog opened
- * after it shows them. A drug's picture is kept for later prints, also of other chats.
+ * after it shows them. A drug's picture is kept for later prints, also of other chats, while the
+ * chat page is open.
  */
 export function usePrintedPictures(turns: Turn[], draw: DrawPicture) {
   const [pictures, setPictures] = useState<Pictures>(() => new Map());
