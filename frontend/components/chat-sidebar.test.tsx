@@ -670,6 +670,16 @@ describe("Chat sidebar", () => {
     fireEvent.click(drawer.getByRole("button", mcp));
     expect(await screen.findByRole("dialog", guide)).toBeTruthy();
   });
+
+  it("opens the MCP server guide from the expanded list", async () => {
+    await openPage(memoryHistory().history);
+
+    fireEvent.click(expandSidebar().getByRole("button", { name: "MCP server" }));
+
+    expect(
+      await screen.findByRole("dialog", { name: "Use Molecula in your AI assistant" }),
+    ).toBeTruthy();
+  });
 });
 
 describe("Chat bookmarks", () => {
