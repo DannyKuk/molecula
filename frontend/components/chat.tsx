@@ -9,6 +9,8 @@ import { SheetContent } from "@/components/ui/sheet";
 import { type ChatHistory, reopenedTurns } from "@/lib/chat-history";
 import { browserHistory } from "@/lib/chat-history-indexeddb";
 import { defaultTab, type Shown } from "@/lib/evidence";
+import { readTurn } from "@/lib/read-turn";
+import { structuresOf } from "@/lib/tool-cards";
 import { conversationUsage, formatUsage } from "@/lib/usage";
 import { useChatHistory } from "@/lib/use-chat-history";
 import { useConversations } from "@/lib/use-conversations";
@@ -55,7 +57,6 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
     remove,
   } = useConversations(initialQuestion, saved.save);
   const conversationRef = useRef<HTMLOListElement>(null);
-  useFollowAnswer(conversationRef, sent, answering);
 
   // Null shows the newest answer on its own default tab; a sent question shows its steps.
   const [shown, setShown] = useState<Shown | null>(null);
@@ -64,19 +65,49 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
     setShownFor({ id, sent });
     setShown(shownFor.sent !== sent ? { turn: null, tab: "steps" } : null);
   }
+  const newest = turns.length - 1;
+  const panelTurn = Math.min(shown?.turn ?? newest, newest);
+  const live = pendingAnswer ? newest : null;
+
+  // A live answer's 3D tab opens by itself once, when its structure arrives while the panel shows it.
+  const [opened3dFor, setOpened3dFor] = useState<string | null>(null);
+  const liveQuestion = `${id}:${sent}`;
+  if (
+    live !== null &&
+    live === panelTurn &&
+    opened3dFor !== liveQuestion &&
+    structuresOf(turns[live].steps).length > 0
+  ) {
+    setOpened3dFor(liveQuestion);
+    setShown({ turn: live, tab: "3d", fresh: true });
+  }
+
+  const followAgain = useFollowAnswer(conversationRef, sent, answering, () => {
+    const list = conversationRef.current;
+    if (!list?.children.length) return;
+    const read = readTurn(list.children);
+    if (read !== panelTurn) setShown({ turn: read, tab: defaultTab(turns[read]) });
+  });
+  const backToLive =
+    live !== null && panelTurn !== live
+      ? () => {
+          setShown(null);
+          followAgain();
+        }
+      : undefined;
+
   const wide = useMediaQuery(WIDE_SCREEN);
   const [sheetOpen, setSheetOpen] = useState(false);
   const showEvidence = (next: Shown) => {
     setShown(next);
     if (!wide) setSheetOpen(true);
   };
-  const newest = turns.length - 1;
-  const panelTurn = Math.min(shown?.turn ?? newest, newest);
   const evidence = turns.length > 0 && (
     <EvidencePanel
       turns={turns}
       shown={{ ...(shown ?? { tab: defaultTab(turns[newest]) }), turn: panelTurn }}
       onShow={setShown}
+      backToLive={backToLive}
       close={
         !wide && (
           <DialogClose

@@ -9,9 +9,16 @@ export type EvidenceTab = "3d" | "sources" | "steps";
 /**
  * What the evidence panel shows: a turn's tab, by the turn's index, or the newest turn's when
  * `turn` is null. `cid` picks one of the turn's structures; `refs` are the sources a citation chip
- * opened, highlighted on the Sources tab.
+ * opened, highlighted on the Sources tab. `fresh` marks a 3D tab the panel opened by itself, for a
+ * structure that just arrived, until the reader picks a tab.
  */
-export type Shown = { turn: number | null; tab: EvidenceTab; cid?: number; refs?: number[] };
+export type Shown = {
+  turn: number | null;
+  tab: EvidenceTab;
+  cid?: number;
+  refs?: number[];
+  fresh?: boolean;
+};
 
 /** The tab a turn opens on: its steps while it answers, else its 3D view, else its sources. */
 export function defaultTab(turn: Turn): EvidenceTab {

@@ -94,8 +94,10 @@ export function HelpGuide({ onAsk }: { onAsk: (question: string) => void }) {
         <p>
           The evidence behind an answer sits in a panel beside the chat, or in a sheet from the
           bottom on a phone: the 3D view, the sources with a link to each label on DailyMed, and the
-          steps Molecula took. The pills under each question open it on that answer. Click a step to
-          see what it found: the label passages, the properties, the targets or the 3D complex.
+          steps Molecula took. It follows the question you scroll to, and the pills under each
+          question open it on that answer. While you read an earlier answer, &ldquo;Live
+          answer&rdquo; takes you back to the one coming in. Click a step to see what it found: the
+          label passages, the properties, the targets or the 3D complex.
         </p>
       </section>
     </div>
