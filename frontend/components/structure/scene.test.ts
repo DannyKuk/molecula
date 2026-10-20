@@ -252,7 +252,7 @@ describe("createScene", () => {
     expect(viewer.spin).toHaveBeenLastCalledWith("y", expect.any(Number));
   });
 
-  it("grows the pocket in nearest the drug first while it docks, then draws each bond out from the drug before its label fades in", () => {
+  it("grows the pocket in around the drug, nearest first, while it docks, then draws each bond out from the drug before its label fades in", () => {
     const { scene, protein, drug, lines, labels } = complexScene();
     const pocketShown = () =>
       drawn(protein)
