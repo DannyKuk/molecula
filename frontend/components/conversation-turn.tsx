@@ -2,24 +2,26 @@ import { cn } from "cn";
 
 import type { Turn } from "@/lib/chat-turn";
 import { didYouMeanOf } from "@/lib/did-you-mean";
+import type { EvidenceTab } from "@/lib/evidence";
 import { checkingAnswer } from "@/lib/source-check";
-import { structuresOf } from "@/lib/tool-cards";
 import { formatUsage } from "@/lib/usage";
 
 import { AnswerMarkdown } from "./answer-markdown";
-import { AnswerSources, PrintedSources } from "./answer-sources";
+import { PrintedSources } from "./answer-sources";
+import { OpenCitedSources } from "./citation-chip";
 import { CopyCheckReport } from "./copy-check-report";
 import { DidYouMeanButtons } from "./did-you-mean";
-import { ProgressSteps } from "./progress-steps";
+import { EvidencePills } from "./evidence-pills";
 import { SourceCheckBadge } from "./source-check-badge";
-import { StructurePanel } from "./structure/structure-panel";
 
 type ConversationTurnProps = {
   turn: Turn;
   /** The question's place in the conversation, from 1. */
   number: number;
-  /** The turn the reader is on: its label lights up. */
+  /** The turn the evidence panel shows: its label lights up. */
   active: boolean;
+  /** Opens a tab of the evidence panel on this turn, on the cited sources for a citation chip. */
+  onShow: (tab: EvidenceTab, refs?: number[]) => void;
   /** Asks a new question, from a suggested name for one the tools didn't find. */
   onAsk: (question: string) => void;
   /** Whether any turn's answer is still coming in. */
@@ -28,11 +30,15 @@ type ConversationTurnProps = {
   onRetry?: () => void;
 };
 
-/** One question, the steps taken for it and the answer as far as it has arrived. */
+/**
+ * One question and the answer as far as it has arrived, with pills that open its steps, sources
+ * and 3D view in the evidence panel.
+ */
 export function ConversationTurn({
   turn,
   number,
   active,
+  onShow,
   onAsk,
   chatAnswering,
   onRetry,
@@ -54,29 +60,22 @@ export function ConversationTurn({
         {turn.question}
       </h2>
       <div className="contents print:hidden">
-        <ProgressSteps steps={turn.steps} live={answering} answer={turn.answer} />
-        {/* Above the answer, so the streaming text doesn't push the 3D view off screen. */}
-        {structuresOf(turn.steps).map((target) => (
-          <StructurePanel key={target.cid} target={target} />
-        ))}
+        <EvidencePills turn={turn} onShow={onShow} />
       </div>
       {(turn.answer || !answering) && <PrintedSpeaker>Molecula</PrintedSpeaker>}
-      {answering && turn.steps.length === 0 && !turn.answer && (
-        <p role="status" className="text-sm text-ink-2">
-          Thinking…
-        </p>
-      )}
       {turn.state === "queued" && (
         <p role="status" className="text-sm text-ink-2">
           Waiting for the answer in another chat to finish…
         </p>
       )}
       {turn.answer && (
-        <AnswerMarkdown
-          text={turn.answer}
-          citations={turn.sources && { sources: turn.sources, passages: turn.passages }}
-          sourceCheck={turn.sourceCheck}
-        />
+        <OpenCitedSources value={(refs) => onShow("sources", refs)}>
+          <AnswerMarkdown
+            text={turn.answer}
+            citations={turn.sources && { sources: turn.sources, passages: turn.passages }}
+            sourceCheck={turn.sourceCheck}
+          />
+        </OpenCitedSources>
       )}
       {turn.answer && (
         <div className="flex flex-wrap items-center gap-2 empty:hidden">
@@ -88,7 +87,6 @@ export function ConversationTurn({
           )}
         </div>
       )}
-      {turn.sources && <AnswerSources answer={turn.answer} sources={turn.sources} />}
       {turn.usage && (
         <p className="font-mono text-[11px] text-ink-3 tabular-nums print:hidden">
           {formatUsage(turn.usage)}

@@ -73,10 +73,16 @@ const WINDOW_HEIGHT = 800;
 
 /**
  * Gives jsdom, which has no layout, a page to scroll: its height, the window's and the scroll
- * position. `window.scrollTo` moves it, and resize observers hear when the page grows.
+ * position. `window.scrollTo` moves it, and resize observers hear when the page grows. The window is
+ * as wide as a desktop's unless `phone` is set, which only matters to `min-width` media queries.
  */
-export function stubPage() {
+export function stubPage({ phone = false } = {}) {
   const page = { height: 2000, top: 2000 - WINDOW_HEIGHT };
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: query.includes("min-width") && !phone,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
   const observers = new Set<() => void>();
   const scrollTo = vi.fn(({ top }: ScrollToOptions) => {
     page.top = Math.min(top ?? page.top, page.height - WINDOW_HEIGHT);

@@ -155,4 +155,9 @@
     @apply font-sans;
     scrollbar-gutter: stable;
   }
+  /* That space shows the root's background, so beside the evidence panel it takes the panel's
+     colour instead of leaving a strip of the page at the panel's edge while nothing scrolls. */
+  html:has(aside[data-evidence]) {
+    background: var(--panel);
+  }
 }

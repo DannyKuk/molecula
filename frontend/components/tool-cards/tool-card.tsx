@@ -17,8 +17,8 @@ import { TargetsCard } from "./targets-card";
 type ShownCard = Exclude<Card, { kind: "pending" }>;
 
 /**
- * A step that ran a tool. It looks like every other step, a dot and its text, with a short
- * summary of the result; clicking it opens what the tool returned underneath.
+ * A step that ran a tool. It looks like every other step, a mark and its text, with a short
+ * summary of the result on the line under it; clicking it opens what the tool returned.
  */
 export function ToolCard({
   text,
@@ -33,14 +33,16 @@ export function ToolCard({
 }) {
   return (
     <Collapsible>
-      <CollapsibleTrigger className="group flex flex-wrap items-center gap-x-2 gap-y-1 rounded text-left text-ink-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3">
+      <CollapsibleTrigger className="group grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-0.5 rounded text-left text-ink-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3">
         <StepDot current={current} />
-        <span className="underline-offset-4 group-hover:underline">{text}</span>
-        <span className="font-mono text-xs text-ink-3">· {summary(card)}</span>
-        <ChevronRight
-          aria-hidden
-          className="size-3.5 shrink-0 transition-transform group-data-[panel-open]:rotate-90"
-        />
+        <span className="flex items-center gap-1">
+          <span className="underline-offset-4 group-hover:underline">{text}</span>
+          <ChevronRight
+            aria-hidden
+            className="size-3.5 shrink-0 transition-transform group-data-[panel-open]:rotate-90"
+          />
+        </span>
+        <span className="col-start-2 font-mono text-xs text-ink-3">{summary(card)}</span>
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-1.5 mb-2 ml-[2px] border-l border-rule pl-4">
         {body(card, answer)}

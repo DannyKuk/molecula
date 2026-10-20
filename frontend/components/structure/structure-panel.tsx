@@ -27,8 +27,8 @@ const BUTTON =
   "rounded-md border border-rule-2 px-3 py-1 text-sm hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3";
 
 /**
- * The 3D view of a drug the answer looked up, under the answer: the drug in its target's binding
- * site when Molecula has a reviewed complex, else the molecule alone.
+ * The 3D view of a drug the answer looked up, in the evidence panel: the drug in its target's
+ * binding site when Molecula has a reviewed complex, else the molecule alone.
  */
 export function StructurePanel({ target }: { target: StructureTarget }) {
   const [loaded, setLoaded] = useState<Loaded>({ status: "loading" });
@@ -180,7 +180,7 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
           mode={mode}
           label={`${title}, in 3D`}
           onError={failed}
-          className="h-[380px] rounded-lg border border-rule"
+          className="h-[380px] rounded-lg border border-rule bg-card"
         />
       ) : (
         <Placeholder
@@ -214,7 +214,7 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
               mode={mode}
               label={`${title}, in 3D`}
               onError={failed}
-              className="min-h-0 flex-1 rounded-lg border border-rule"
+              className="min-h-0 flex-1 rounded-lg border border-rule bg-card"
             />
             {legend}
           </DialogContent>

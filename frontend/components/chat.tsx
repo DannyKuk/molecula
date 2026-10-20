@@ -1,24 +1,32 @@
 "use client";
 
+import { X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { Dialog, DialogClose, DialogTitle } from "@/components/ui/dialog";
+import { SheetContent } from "@/components/ui/sheet";
 import { type ChatHistory, reopenedTurns } from "@/lib/chat-history";
 import { browserHistory } from "@/lib/chat-history-indexeddb";
-import { structuresOf } from "@/lib/tool-cards";
+import { defaultTab, type Shown } from "@/lib/evidence";
 import { conversationUsage, formatUsage } from "@/lib/usage";
 import { useChatHistory } from "@/lib/use-chat-history";
 import { useConversations } from "@/lib/use-conversations";
 import { useFollowAnswer } from "@/lib/use-follow-answer";
+import { useMediaQuery } from "@/lib/use-media-query";
 
 import { ChatComposer } from "./chat-composer";
 import { ChatDrawer, type ChatListProps, ChatSidebar } from "./chat-sidebar";
 import { ConversationTurn } from "./conversation-turn";
 import { Disclaimer } from "./disclaimer";
+import { EvidencePanel } from "./evidence-panel";
 import { ExportMenu } from "./export-menu";
 import { HelpDialog, HelpGuide } from "./help-guide";
 import { ModelStatus } from "./model-status";
 import { useBookmarkUndo } from "./saved-chats";
+
+/** Wide enough for the evidence panel beside the chat; narrower screens open it as a sheet. */
+export const WIDE_SCREEN = "(min-width: 900px)";
 
 type ChatProps = {
   initialQuestion?: string;
@@ -47,10 +55,40 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
     remove,
   } = useConversations(initialQuestion, saved.save);
   const conversationRef = useRef<HTMLOListElement>(null);
-  // The 3D view sits above the answer, so following the text would push it away while it plays.
-  // Only the newest turn counts: a view in an earlier one doesn't stop following a new answer.
-  const showsStructure = structuresOf(turns.at(-1)?.steps ?? []).length > 0;
-  useFollowAnswer(conversationRef, sent, answering, showsStructure);
+  useFollowAnswer(conversationRef, sent, answering);
+
+  // Null shows the newest answer on its own default tab; a sent question shows its steps.
+  const [shown, setShown] = useState<Shown | null>(null);
+  const [shownFor, setShownFor] = useState({ id, sent });
+  if (shownFor.id !== id || shownFor.sent !== sent) {
+    setShownFor({ id, sent });
+    setShown(shownFor.sent !== sent ? { turn: null, tab: "steps" } : null);
+  }
+  const wide = useMediaQuery(WIDE_SCREEN);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const showEvidence = (next: Shown) => {
+    setShown(next);
+    if (!wide) setSheetOpen(true);
+  };
+  const newest = turns.length - 1;
+  const panelTurn = Math.min(shown?.turn ?? newest, newest);
+  const evidence = turns.length > 0 && (
+    <EvidencePanel
+      turns={turns}
+      shown={{ ...(shown ?? { tab: defaultTab(turns[newest]) }), turn: panelTurn }}
+      onShow={setShown}
+      close={
+        !wide && (
+          <DialogClose
+            aria-label="Close"
+            className="grid size-7 place-items-center rounded-md border border-rule-2 bg-card text-ink-2"
+          >
+            <X aria-hidden className="size-4" />
+          </DialogClose>
+        )
+      }
+    />
+  );
 
   const { removedBookmark, unbookmark } = useBookmarkUndo(saved);
   const usage = conversationUsage(turns);
@@ -144,7 +182,8 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
                     key={index}
                     turn={turn}
                     number={index + 1}
-                    active={index === turns.length - 1}
+                    active={index === panelTurn}
+                    onShow={(tab, refs) => showEvidence({ turn: index, tab, refs })}
                     onAsk={ask}
                     chatAnswering={pendingAnswer}
                     onRetry={index === turns.length - 1 ? retry : undefined}
@@ -166,6 +205,23 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
           <Disclaimer />
         </div>
       </main>
+      {wide && evidence && (
+        <aside
+          data-evidence
+          aria-label="Evidence"
+          className="sticky top-0 flex h-dvh w-[440px] flex-none flex-col self-start border-l border-rule bg-panel print:hidden"
+        >
+          {evidence}
+        </aside>
+      )}
+      {!wide && evidence && (
+        <Dialog open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetContent side="bottom" className="top-auto h-[78dvh] rounded-t-2xl bg-panel">
+            <DialogTitle className="sr-only">Evidence</DialogTitle>
+            {evidence}
+          </SheetContent>
+        </Dialog>
+      )}
     </div>
   );
 }

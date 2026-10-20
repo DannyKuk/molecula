@@ -60,7 +60,13 @@ describe("CopyCheckReport", () => {
 
   it("shows next to the badge once the check is in, not before", () => {
     const answering = applyEvent(startTurn("When was ibuprofen first sold?"), CHECKED[0]);
-    const props = { number: 1, active: true, onAsk: () => {}, chatAnswering: false };
+    const props = {
+      number: 1,
+      active: true,
+      onShow: () => {},
+      onAsk: () => {},
+      chatAnswering: false,
+    };
     const { rerender } = render(<ConversationTurn turn={answering} {...props} />);
 
     expect(screen.queryByRole("button", { name: "Copy details" })).toBeNull();
