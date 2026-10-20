@@ -16,6 +16,10 @@ import { StructurePanel } from "./structure/structure-panel";
 
 type ConversationTurnProps = {
   turn: Turn;
+  /** The question's place in the conversation, from 1. */
+  number: number;
+  /** The turn the reader is on: its label lights up. */
+  active: boolean;
   /** Asks a new question, from a suggested name for one the tools didn't find. */
   onAsk: (question: string) => void;
   /** Whether any turn's answer is still coming in. */
@@ -25,18 +29,30 @@ type ConversationTurnProps = {
 };
 
 /** One question, the steps taken for it and the answer as far as it has arrived. */
-export function ConversationTurn({ turn, onAsk, chatAnswering, onRetry }: ConversationTurnProps) {
+export function ConversationTurn({
+  turn,
+  number,
+  active,
+  onAsk,
+  chatAnswering,
+  onRetry,
+}: ConversationTurnProps) {
   const answering = turn.state === "answering";
   const offers = answering ? [] : didYouMeanOf(turn.question, turn.steps);
   return (
     <li
       data-turn
-      className="flex flex-col gap-3 print:break-inside-avoid print:border-t print:pt-6"
+      className={cn(
+        "relative flex flex-col gap-3 print:break-inside-avoid print:border-t print:pt-6",
+        active && "before:absolute before:inset-y-0 before:-left-4 before:w-px before:bg-signal",
+        "print:before:hidden",
+      )}
     >
-      <PrintedSpeaker className="self-end">You</PrintedSpeaker>
-      <p className="max-w-[85%] self-end rounded-2xl bg-zinc-100 px-4 py-2 break-words whitespace-pre-wrap dark:bg-zinc-900 print:border print:border-zinc-300">
+      <TurnLabel number={number} active={active} />
+      <PrintedSpeaker>You</PrintedSpeaker>
+      <h2 className="mb-1 text-[27px] leading-tight font-semibold tracking-tight break-words whitespace-pre-wrap print:text-base">
         {turn.question}
-      </p>
+      </h2>
       <div className="contents print:hidden">
         <ProgressSteps steps={turn.steps} live={answering} answer={turn.answer} />
         {/* Above the answer, so the streaming text doesn't push the 3D view off screen. */}
@@ -46,12 +62,12 @@ export function ConversationTurn({ turn, onAsk, chatAnswering, onRetry }: Conver
       </div>
       {(turn.answer || !answering) && <PrintedSpeaker>Molecula</PrintedSpeaker>}
       {answering && turn.steps.length === 0 && !turn.answer && (
-        <p role="status" className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p role="status" className="text-sm text-ink-2">
           Thinking…
         </p>
       )}
       {turn.state === "queued" && (
-        <p role="status" className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p role="status" className="text-sm text-ink-2">
           Waiting for the answer in another chat to finish…
         </p>
       )}
@@ -74,7 +90,7 @@ export function ConversationTurn({ turn, onAsk, chatAnswering, onRetry }: Conver
       )}
       {turn.sources && <AnswerSources answer={turn.answer} sources={turn.sources} />}
       {turn.usage && (
-        <p className="text-xs text-zinc-500 tabular-nums dark:text-zinc-400 print:hidden">
+        <p className="font-mono text-[11px] text-ink-3 tabular-nums print:hidden">
           {formatUsage(turn.usage)}
         </p>
       )}
@@ -84,9 +100,7 @@ export function ConversationTurn({ turn, onAsk, chatAnswering, onRetry }: Conver
           <DidYouMeanButtons offers={offers} onAsk={onAsk} disabled={chatAnswering} />
         </div>
       )}
-      {turn.state === "stopped" && (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">Stopped.</p>
-      )}
+      {turn.state === "stopped" && <p className="text-sm text-ink-2">Stopped.</p>}
       {turn.state === "failed" && (
         <div
           role="alert"
@@ -108,19 +122,30 @@ export function ConversationTurn({ turn, onAsk, chatAnswering, onRetry }: Conver
   );
 }
 
-/**
- * Who wrote the message below it, on paper only: browsers leave out backgrounds when printing, so
- * the question's grey bubble no longer sets it apart from the answer.
- */
-function PrintedSpeaker({ className, children }: { className?: string; children: string }) {
+/** "Q-01 · Query" with a status light, lit on the turn the reader is on. */
+function TurnLabel({ number, active }: { number: number; active: boolean }) {
   return (
     <p
       className={cn(
-        "hidden text-xs font-semibold text-zinc-600 print:-mb-2 print:block",
-        className,
+        "flex items-center gap-2 font-mono text-[11px] tracking-wider uppercase print:hidden",
+        active ? "text-ink" : "text-ink-3",
       )}
     >
-      {children}
+      <span
+        aria-hidden
+        className={cn("size-[5px] rounded-full", active ? "bg-signal" : "bg-rule-2")}
+      />
+      Q-{String(number).padStart(2, "0")} · Query
     </p>
+  );
+}
+
+/**
+ * Who wrote the message below it, on paper only, where the question prints at the answer's size
+ * and without its label.
+ */
+function PrintedSpeaker({ children }: { children: string }) {
+  return (
+    <p className="hidden text-xs font-semibold text-ink-2 print:-mb-2 print:block">{children}</p>
   );
 }

@@ -25,6 +25,8 @@ import type { StructureTarget } from "@/lib/tool-cards";
 import { Chat } from "./chat";
 
 // jsdom has no WebGL; the 3D view only needs to be on the page.
+vi.mock("./model-status", () => ({ ModelStatus: () => null }));
+
 vi.mock("./structure/structure-panel", () => ({
   StructurePanel: ({ target }: { target: StructureTarget }) => <p>3D view of {target.name}</p>,
 }));

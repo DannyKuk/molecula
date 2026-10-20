@@ -40,7 +40,7 @@ export function ExportMenu({ title, turns, disabled }: ExportMenuProps) {
       <DropdownMenuTrigger
         aria-label="Export chat"
         disabled={disabled}
-        className="flex size-9 items-center justify-center rounded-full border border-zinc-300 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 disabled:opacity-50 disabled:hover:bg-transparent dark:border-zinc-700 dark:hover:bg-zinc-900"
+        className="flex size-9 items-center justify-center rounded-full border border-rule-2 hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3 disabled:opacity-50 disabled:hover:bg-transparent"
       >
         <Download className="size-4" />
       </DropdownMenuTrigger>

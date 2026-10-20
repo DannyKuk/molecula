@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Molecula · Lab journal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper:#F6F2EA; --paper-2:#EEE8DB; --card:#FBF9F4; --ink:#1E1A15; --ink-2:#5E5548; --ink-3:#8C8273;
+  --rule:#DCD3C3; --accent:#9A4318; --accent-soft:#F1E1D3; --link:#1F5560; --ok:#2F6B3A; --ok-soft:#E3EDDC; --warn:#A2341F;
+  --serif:"Literata", Georgia, serif; --sans:"IBM Plex Sans", system-ui, sans-serif; --mono:"IBM Plex Mono", ui-monospace, monospace;
+  --m-carbon:#1F5560; --m-pocket:#A89878; --m-n:#2F52D0; --m-o:#C2412D; --m-s:#C9A227; --m-hbond:#9A4318; --m-trace:#8C8273; --m-label:#1E1A15; --m-labelbg:#FBF9F4;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper:#161411; --paper-2:#1E1B17; --card:#1B1915; --ink:#EDE6DA; --ink-2:#B3A898; --ink-3:#7F7668;
+  --rule:#36302A; --accent:#E39466; --accent-soft:#3A271C; --link:#86C4CC; --ok:#8CC79A; --ok-soft:#1D2B20; --warn:#F08A72;
+  --m-carbon:#86C4CC; --m-pocket:#7F7464; --m-n:#8EA6FF; --m-o:#FF7A68; --m-s:#F2D16B; --m-hbond:#E39466; --m-trace:#7F7668; --m-label:#EDE6DA; --m-labelbg:#1B1915;
+} }
+:root[data-theme="dark"] {
+  --paper:#161411; --paper-2:#1E1B17; --card:#1B1915; --ink:#EDE6DA; --ink-2:#B3A898; --ink-3:#7F7668;
+  --rule:#36302A; --accent:#E39466; --accent-soft:#3A271C; --link:#86C4CC; --ok:#8CC79A; --ok-soft:#1D2B20; --warn:#F08A72;
+  --m-carbon:#86C4CC; --m-pocket:#7F7464; --m-n:#8EA6FF; --m-o:#FF7A68; --m-s:#F2D16B; --m-hbond:#E39466; --m-trace:#7F7668; --m-label:#EDE6DA; --m-labelbg:#1B1915;
+}
+* { box-sizing:border-box; }
+html { scrollbar-gutter:stable; }
+body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.55 var(--sans); -webkit-font-smoothing:antialiased; }
+a { color:var(--link); }
+.ic { width:16px; height:16px; flex:none; } .ic-xs { width:12px; height:12px; vertical-align:-1px; }
+code { font-family:var(--mono); font-size:.88em; }
+.muted { color:var(--ink-3); }
+
+.app { display:flex; min-height:100vh; }
+aside { width:248px; flex:none; border-right:1px solid var(--rule); background:var(--paper-2); padding:18px 14px; position:sticky; top:0; height:100vh; display:flex; flex-direction:column; gap:18px; }
+.wordmark { font:500 italic 22px/1 var(--serif); letter-spacing:-.01em; display:flex; align-items:center; gap:8px; padding:0 6px; }
+.wordmark .ic { width:20px; height:20px; color:var(--accent); }
+.new { display:flex; align-items:center; gap:8px; border:1px solid var(--rule); background:var(--card); color:var(--ink); font:500 14px var(--sans); padding:8px 10px; border-radius:8px; cursor:pointer; }
+.toc h6 { font:600 11px var(--sans); letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3); margin:0 6px 6px; }
+.toc ul { list-style:none; margin:0 0 14px; padding:0; }
+.toc li a { display:block; padding:6px 8px; border-radius:6px; color:var(--ink-2); text-decoration:none; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.toc li a:hover { background:var(--paper); color:var(--ink); }
+.toc li a.active { background:var(--card); color:var(--ink); box-shadow:inset 2px 0 0 var(--accent); }
+aside .foot { margin-top:auto; display:flex; gap:14px; font-size:13px; padding:0 6px; }
+aside .foot a { color:var(--ink-2); text-decoration:none; }
+
+main { flex:1; min-width:0; display:flex; flex-direction:column; }
+.top { display:flex; justify-content:flex-end; align-items:center; gap:18px; padding:14px 28px; font-size:14px; }
+.top a { color:var(--ink-2); text-decoration:none; } .top a:hover { color:var(--ink); }
+.top .help { width:30px; height:30px; display:grid; place-items:center; border:1px solid var(--rule); border-radius:50%; }
+.mobile-bar { display:none; }
+.col { width:100%; max-width:720px; margin:0 auto; padding:0 28px; flex:1; }
+
+/* turn */
+.kicker { font:600 11px var(--sans); letter-spacing:.14em; text-transform:uppercase; color:var(--accent); }
+h1.q { font:500 34px/1.18 var(--serif); letter-spacing:-.015em; margin:6px 0 18px; }
+.method { border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); padding:10px 0; font-size:14px; color:var(--ink-2); }
+.method > button { all:unset; cursor:pointer; display:flex; align-items:center; gap:8px; width:100%; }
+.method > button b { font-weight:600; color:var(--ink); }
+.method > button .ic { transition:transform .2s; color:var(--ink-3); }
+.method.open > button .ic { transform:rotate(90deg); }
+.method ol { display:none; list-style:none; margin:10px 0 2px; padding:0; counter-reset:s; }
+.method.open ol { display:block; }
+.method > ol > li { counter-increment:s; border-top:1px dashed var(--rule); }
+.method li > button { all:unset; cursor:pointer; display:flex; gap:10px; align-items:baseline; padding:8px 0; width:100%; }
+.method li > button::before { content:counter(s, decimal-leading-zero); font:500 12px var(--mono); color:var(--accent); }
+.method li .sum { color:var(--ink-3); margin-left:auto; text-align:right; }
+.method .card { display:none; margin:0 0 12px 30px; padding:12px 14px; background:var(--card); border:1px solid var(--rule); border-radius:6px; font-size:14px; }
+.method li.open .card { display:block; }
+.targets { list-style:none; margin:0; padding:0; display:grid; gap:10px; }
+.t-name { font-weight:600; color:var(--ink); } .t-mech { color:var(--ink-2); } .t-meta { font-size:12.5px; color:var(--ink-3); }
+.kv { display:grid; grid-template-columns:auto 1fr; gap:3px 16px; margin:8px 0; } .kv dt { color:var(--ink-3); } .kv dd { margin:0; }
+.card p { margin:0 0 6px; } .src-link { font-weight:500; }
+.passages { list-style:none; margin:6px 0 0; padding:0; } .passages li { padding:3px 0; }
+.p-num { font-family:var(--mono); color:var(--ink-3); } .cited { margin-left:6px; font:600 10px var(--sans); letter-spacing:.08em; text-transform:uppercase; color:var(--accent); }
+.h4 { font-weight:600; margin:10px 0 4px; }
+table.hb { width:100%; border-collapse:collapse; font-size:13px; } table.hb th { text-align:left; font-weight:400; color:var(--ink-3); padding:3px 0; }
+table.hb td { border-top:1px solid var(--rule); padding:4px 0; } .num { text-align:right; font-variant-numeric:tabular-nums; }
+
+figure { margin:26px 0 8px; }
+.fig { position:relative; aspect-ratio:16/10; background:radial-gradient(ellipse at 50% 45%, var(--card), var(--paper-2)); border:1px solid var(--rule); border-radius:4px; overflow:hidden; }
+.fig .viewer { position:absolute; inset:0; }
+.fig .tools { position:absolute; top:10px; left:10px; right:10px; display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; pointer-events:none; }
+.fig .tools > * { pointer-events:auto; }
+.modes { display:inline-flex; background:var(--card); border:1px solid var(--rule); border-radius:999px; padding:2px; }
+.modes button { all:unset; cursor:pointer; font:500 12px var(--sans); padding:4px 10px; border-radius:999px; color:var(--ink-2); }
+.modes button[aria-pressed="true"] { background:var(--ink); color:var(--paper); }
+.iconbtn { all:unset; cursor:pointer; display:inline-flex; gap:6px; align-items:center; font:500 12px var(--sans); background:var(--card); border:1px solid var(--rule); border-radius:999px; padding:4px 10px; color:var(--ink-2); }
+figcaption { font:italic 14px/1.5 var(--serif); color:var(--ink-2); margin-top:8px; }
+figcaption b { font-style:normal; font-family:var(--sans); font-weight:600; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink); margin-right:6px; }
+
+.answer { font:400 18.5px/1.7 var(--serif); margin-top:22px; }
+.answer p { margin:0 0 14px; }
+.answer strong { font-weight:600; }
+.chip { all:unset; cursor:pointer; display:inline; font:500 11.5px/1 var(--sans); letter-spacing:.02em; color:var(--accent); background:var(--accent-soft); border-radius:3px; padding:3px 6px; vertical-align:2px; white-space:nowrap; }
+.chip:hover, .chip:focus-visible { background:var(--accent); color:var(--paper); }
+.check { display:flex; gap:10px; align-items:flex-start; padding:10px 14px; border-left:3px solid var(--ok); background:var(--ok-soft); font-size:14px; color:var(--ink); margin:6px 0 22px; }
+.check .ic { color:var(--ok); margin-top:2px; } .check b { font-weight:600; }
+.refs h6 { font:600 11px var(--sans); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); margin:0 0 8px; border-top:1px solid var(--rule); padding-top:14px; }
+.refs ol { margin:0; padding-left:22px; font-size:14px; color:var(--ink-2); } .refs li { padding:2px 0; } .refs li::marker { font-family:var(--mono); font-size:12px; color:var(--ink-3); }
+.refs .credit { font-size:12.5px; color:var(--ink-3); margin:10px 0 0; }
+.usage { font:12px var(--mono); color:var(--ink-3); margin:6px 0 40px; }
+
+.pop { position:absolute; z-index:50; background:var(--card); border:1px solid var(--rule); border-radius:6px; box-shadow:0 12px 40px rgba(40,25,10,.18); max-height:360px; overflow:auto; font-size:14px; }
+.pop-item { padding:12px 14px; border-top:1px solid var(--rule); } .pop-item:first-child { border-top:0; }
+.pop-title { font-weight:600; } .pop-meta { font-size:12px; color:var(--ink-3); margin-bottom:6px; }
+.pop-text { font:14px/1.55 var(--serif); color:var(--ink-2); border-left:2px solid var(--accent); padding-left:10px; margin:6px 0 8px; }
+.pop-link { font-weight:500; font-size:13px; }
+
+.composer { position:sticky; bottom:0; background:linear-gradient(transparent, var(--paper) 30%); padding:18px 0 14px; }
+.box { display:flex; align-items:flex-end; gap:10px; background:var(--card); border:1px solid var(--rule); border-radius:10px; padding:10px 10px 10px 16px; box-shadow:0 1px 0 var(--rule), 0 10px 30px rgba(40,25,10,.06); }
+.box textarea { flex:1; border:0; background:none; resize:none; font:17px/1.5 var(--serif); color:var(--ink); outline:none; min-height:26px; }
+.box textarea::placeholder { color:var(--ink-3); font-style:italic; }
+.ask { all:unset; cursor:pointer; display:inline-flex; gap:6px; align-items:center; background:var(--ink); color:var(--paper); font:500 14px var(--sans); padding:8px 14px; border-radius:7px; }
+.disclaimer { font-size:12.5px; color:var(--ink-3); margin:8px 2px 0; }
+
+/* start */
+.start { padding-top:6vh; }
+.start h1 { font:500 46px/1.08 var(--serif); letter-spacing:-.02em; margin:10px 0 12px; }
+.start h1 em { color:var(--accent); }
+.lede { font:19px/1.55 var(--serif); color:var(--ink-2); max-width:560px; margin:0 0 30px; }
+.topics { display:grid; grid-template-columns:1fr 1fr; border-top:1px solid var(--ink); }
+.topic { padding:18px 18px 20px 0; border-bottom:1px solid var(--rule); }
+.topic:nth-child(odd) { border-right:1px solid var(--rule); } .topic:nth-child(even) { padding-left:18px; }
+.topic .n { font:500 12px var(--mono); color:var(--accent); }
+.topic h3 { font:500 21px/1.25 var(--serif); margin:4px 0 4px; } .topic p { margin:0 0 10px; color:var(--ink-2); font-size:14px; }
+.topic button { all:unset; cursor:pointer; display:block; font:italic 16px/1.4 var(--serif); color:var(--link); padding:3px 0; }
+.topic button:hover { text-decoration:underline; text-underline-offset:3px; }
+.limits { display:grid; grid-template-columns:1.2fr 1fr; gap:24px; margin:28px 0 30px; font-size:14px; color:var(--ink-2); }
+.limits h4 { font:600 11px var(--sans); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); margin:0 0 8px; }
+.limits ul { margin:0; padding-left:18px; } .limits li { padding:2px 0; }
+.sos { border:1px solid var(--warn); color:var(--ink); border-radius:6px; padding:12px 14px; display:flex; gap:10px; }
+.sos .ic { color:var(--warn); margin-top:2px; }
+
+[data-screen="start"] .turn, [data-screen="answer"] .start { display:none; }
+
+@media (max-width: 820px) {
+  aside { display:none; }
+  .top { display:none; }
+  .mobile-bar { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--rule); }
+  .col { padding:0 16px; }
+  h1.q { font-size:27px; margin-top:16px; }
+  .start h1 { font-size:34px; }
+  .topics { grid-template-columns:1fr; } .topic:nth-child(odd) { border-right:0; } .topic:nth-child(even) { padding-left:0; }
+  .limits { grid-template-columns:1fr; }
+  .answer { font-size:17px; }
+  .method li .sum { display:none; }
+  .fig { aspect-ratio:4/3.4; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="wordmark" id="mark"></div>
+    <button class="new" id="new"></button>
+    <nav class="toc" id="toc"></nav>
+    <div class="foot"><a href="#">Supported drugs</a><a href="#">Benchmarks</a></div>
+  </aside>
+  <main>
+    <div class="mobile-bar"><div class="wordmark" id="mark2"></div><a class="help" href="#" style="color:var(--ink-2)">Chats</a></div>
+    <div class="top"><a href="#">Supported drugs</a><a href="#">Benchmarks</a><a href="#">Export</a><a class="help" href="#" aria-label="Help">?</a></div>
+    <div class="col">
+      <article class="turn">
+        <div class="kicker">You asked</div>
+        <h1 class="q">How does imatinib work?</h1>
+        <section class="method open" id="method">
+          <button data-toggle="#method" aria-expanded="true"><span id="chev"></span><b>Method</b> · looked up the drug, its targets, the Gleevec label and a 3D complex</button>
+          <ol id="steps"></ol>
+        </section>
+        <figure>
+          <div class="fig">
+            <div class="viewer" id="viewer"></div>
+            <div class="tools">
+              <div class="modes" id="modes" role="group" aria-label="What the 3D view shows">
+                <button data-mode="molecule" aria-pressed="false">Molecule</button><button data-mode="site" aria-pressed="true">Binding site</button><button data-mode="protein" aria-pressed="false">Whole protein</button>
+              </div>
+              <div style="display:flex;gap:6px"><button class="iconbtn" id="replay"></button><button class="iconbtn" id="full"></button></div>
+            </div>
+          </div>
+          <figcaption><b>Figure 1</b>Imatinib in the ATP pocket of ABL1 (BCR-ABL), human, PDB 2HYY. Dashed lines: the six hydrogen bonds that hold it.</figcaption>
+        </figure>
+        <div class="answer" id="answer"></div>
+        <div class="check" id="check"></div>
+        <section class="refs">
+          <h6>Sources</h6>
+          <ol>
+            <li>Gleevec label · Mechanism of action. FDA, July 13, 2026. <a href="#">DailyMed</a></li>
+            <li>Gleevec label · Indications and usage. FDA, July 13, 2026. <a href="#">DailyMed</a></li>
+            <li>Tyrosine-protein kinase ABL1, CHEMBL1862. <a href="#">ChEMBL</a></li>
+            <li>Structure 2HYY, ABL1 kinase with imatinib. <a href="#">RCSB PDB</a></li>
+            <li>Imatinib, CID 5291. <a href="#">PubChem</a></li>
+          </ol>
+          <p class="credit">Data provided by the U.S. Food and Drug Administration (<a href="#">openFDA</a>).</p>
+        </section>
+        <p class="usage">gpt-oss-20b · local · 6.2 s · 3,184 tokens</p>
+      </article>
+
+      <section class="start">
+        <div class="kicker">A medicines reference you can talk to</div>
+        <h1>Ask how a medicine works, <em>and see&nbsp;where it binds.</em></h1>
+        <p class="lede">Answers come from the FDA drug labels, PubChem, ChEMBL and the Protein Data Bank, and every fact links to the passage it came from.</p>
+        <div class="topics" id="topics"></div>
+        <div class="limits">
+          <div><h4>What Molecula won't answer</h4><ul id="wont"></ul></div>
+          <div class="sos" id="sos"></div>
+        </div>
+      </section>
+    </div>
+    <div class="col composer" style="flex:none">
+      <div class="box"><textarea rows="1" placeholder="Ask about a medicine, e.g. How does imatinib work?"></textarea><button class="ask" id="ask"></button></div>
+      <p class="disclaimer">Molecula is an AI assistant and can make mistakes. It is not medical advice. Check the official label on <a href="#">DailyMed</a> and ask a pharmacist or doctor before acting on anything here.</p>
+    </div>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/3dmol@2.5.5/build/3Dmol-min.js"></script>
+<script src="content.js"></script>
+<script src="complex-data.js"></script>
+<script src="viewer.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const mark = `${M.icon("atom")}Molecula`;
+$("#mark").innerHTML = mark; $("#mark2").innerHTML = mark;
+$("#new").innerHTML = `${M.icon("plus")} New question`;
+$("#toc").innerHTML = M.chats.map((g) => `<h6>${g.group}</h6><ul>${g.items.map((c) => `<li><a href="#" class="${c.active ? "active" : ""}">${c.title}</a></li>`).join("")}</ul>`).join("");
+$("#chev").innerHTML = M.icon("chev");
+$("#steps").innerHTML = M.steps.map((s, i) => `<li data-collapsible class="${i === 1 ? "open" : ""}"><button data-toggle="">${s.text}<span class="sum">${s.summary}</span></button><div class="card">${M.cardHTML(s.card)}</div></li>`).join("");
+$("#answer").innerHTML = M.answerHTML((refs, labels) => `<button class="chip" data-refs="${refs}">${labels[0].replace("Gleevec · ", "Gleevec, ")}${labels.length > 1 ? ` +${labels.length - 1}` : ""}</button>`);
+$("#check").innerHTML = `${M.icon("shield")}<span><b>Checked against the sources.</b> Every fact is backed by the source it cites.</span>`;
+$("#replay").innerHTML = `${M.icon("replay", "ic ic-xs")} Replay binding`;
+$("#full").innerHTML = `${M.icon("expand", "ic ic-xs")} Full screen`;
+$("#ask").innerHTML = `Ask ${M.icon("send")}`;
+$("#topics").innerHTML = M.topics.map((t, i) => `<div class="topic"><div class="n">0${i + 1}</div><h3>${t.title}</h3><p>${t.desc}</p>${t.examples.map((e) => `<button>${e}</button>`).join("")}</div>`).join("");
+$("#wont").innerHTML = M.wontAnswer.map((w) => `<li>${w}</li>`).join("");
+$("#sos").innerHTML = `${M.icon("phone")}<span>If someone may have taken too much of a medicine, call your local emergency number (911 in the US, 112 in the EU) or poison control now.</span>`;
+const w = wire();
+if (document.documentElement.dataset.screen === "answer") {
+  const css = getComputedStyle(document.documentElement);
+  const v = (n) => css.getPropertyValue(n).trim();
+  const handle = mountComplex($("#viewer"), { carbon: v("--m-carbon"), pocket: v("--m-pocket"), n: v("--m-n"), o: v("--m-o"), s: v("--m-s"), hbond: v("--m-hbond"), trace: v("--m-trace"), label: v("--m-label"), labelBg: v("--m-labelbg") });
+  wireModes($("#modes"), handle);
+}
+</script>
+</body>
+</html>

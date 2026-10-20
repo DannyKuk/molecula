@@ -52,8 +52,13 @@ export function CitationChip({
           openOnHover
           delay={150}
           aria-label={`${found ? "Found by the source check" : "Sources"}: ${labels.join(", ")}`}
-          className="mx-0.5 inline-flex max-w-full items-center rounded-full border border-zinc-300 bg-zinc-100 px-2 py-0.5 align-middle text-xs font-medium hover:bg-zinc-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800 print:hidden"
+          className="mx-0.5 inline-flex max-w-full items-center gap-1.5 rounded-md bg-panel py-0.5 pr-2 pl-1.5 align-middle text-xs font-medium text-ink-2 hover:bg-ink hover:text-page focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3 print:hidden"
         >
+          {sources[0].ref !== null && (
+            <span aria-hidden className="font-mono text-[10.5px] font-semibold text-signal">
+              {sources[0].ref}
+            </span>
+          )}
           <span className="truncate">{labels[0]}</span>
           {others}
         </PopoverTrigger>
@@ -92,7 +97,7 @@ function CitedPassage({ source, text }: { source: Source; text?: string }) {
           FDA label of {labelDate(source.effective_time)}
         </p>
       )}
-      {text && <p className="text-zinc-700 dark:text-zinc-300">{excerpt(text)}</p>}
+      {text && <p className="border-l-2 border-signal pl-2 text-ink-2">{excerpt(text)}</p>}
       <a
         href={source.url}
         target="_blank"

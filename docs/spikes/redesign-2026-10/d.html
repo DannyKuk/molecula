@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Molecula · Journal with evidence panel</title>
+<script>{ const q = new URLSearchParams(location.search); const p = q.get("palette"), k = q.get("skin"); if (p) document.documentElement.dataset.palette = p; if (k) document.documentElement.dataset.skin = k; if (q.has("calm")) document.documentElement.dataset.calm = ""; }</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper:#F6F2EA; --paper-2:#EFE9DD; --card:#FBF9F4; --ink:#1E1A15; --ink-2:#5E5548; --ink-3:#8C8273;
+  --rule:#DCD3C3; --rule-2:#CFC4B0; --accent:#9A4318; --accent-soft:#F1E1D3; --link:#1F5560; --ok:#2F6B3A; --ok-soft:#E3EDDC; --warn:#A2341F; --flash:#F6E7B8;
+  --serif:"Literata", Georgia, serif; --sans:"IBM Plex Sans", system-ui, sans-serif; --mono:"IBM Plex Mono", ui-monospace, monospace;
+  --m-carbon:#2E7D4F; --m-pocket:#A89878; --m-n:#2F52D0; --m-o:#C2412D; --m-s:#C9A227; --m-hbond:#D08A16; --m-trace:#B5A88F; --m-label:#1E1A15; --m-labelbg:#FBF9F4;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper:#161411; --paper-2:#1C1A16; --card:#1F1C18; --ink:#EDE6DA; --ink-2:#B3A898; --ink-3:#7F7668;
+  --rule:#34302A; --rule-2:#423C34; --accent:#E39466; --accent-soft:#3A271C; --link:#86C4CC; --ok:#8CC79A; --ok-soft:#1D2B20; --warn:#F08A72; --flash:#3D3216;
+  --m-carbon:#6CCB8A; --m-pocket:#7F7464; --m-n:#8EA6FF; --m-o:#FF7A68; --m-s:#F2D16B; --m-hbond:#F2B44C; --m-trace:#5E564B; --m-label:#EDE6DA; --m-labelbg:#1F1C18;
+} }
+:root[data-theme="dark"] {
+  --paper:#161411; --paper-2:#1C1A16; --card:#1F1C18; --ink:#EDE6DA; --ink-2:#B3A898; --ink-3:#7F7668;
+  --rule:#34302A; --rule-2:#423C34; --accent:#E39466; --accent-soft:#3A271C; --link:#86C4CC; --ok:#8CC79A; --ok-soft:#1D2B20; --warn:#F08A72; --flash:#3D3216;
+  --m-carbon:#6CCB8A; --m-pocket:#7F7464; --m-n:#8EA6FF; --m-o:#FF7A68; --m-s:#F2D16B; --m-hbond:#F2B44C; --m-trace:#5E564B; --m-label:#EDE6DA; --m-labelbg:#1F1C18;
+}
+:root[data-palette="sage"] { --paper:#F1F3EC; --paper-2:#E6EADF; --card:#FAFBF7; --ink:#17201A; --ink-2:#4C594F; --ink-3:#7F8A80; --rule:#D2D9CA; --rule-2:#C1CAB6; --accent:#A5650E; --accent-soft:#F0E3C7; --link:#2E5E73; --ok:#2F6B3A; --ok-soft:#DFEBD9; --warn:#A2341F; --flash:#F3E6B5; --m-carbon:#1E7A45; --m-pocket:#A3AC98; --m-n:#2F52D0; --m-o:#C2412D; --m-s:#C9A227; --m-hbond:#C77A12; --m-trace:#B3BBA8; --m-label:#17201A; --m-labelbg:#FAFBF7; }
+@media (prefers-color-scheme: dark) { :root[data-palette="sage"]:not([data-theme="light"]) { --paper:#121612; --paper-2:#181D18; --card:#1C221C; --ink:#E4EADF; --ink-2:#A9B4A6; --ink-3:#737E71; --rule:#2A322A; --rule-2:#374137; --accent:#E0A84A; --accent-soft:#3A2E17; --link:#8CC2D3; --ok:#8CC79A; --ok-soft:#1D2B20; --warn:#F08A72; --flash:#3D3216; --m-carbon:#7BD69A; --m-pocket:#6E7A6C; --m-n:#8EA6FF; --m-o:#FF7A68; --m-s:#F2D16B; --m-hbond:#E0A84A; --m-trace:#4E584C; --m-label:#E4EADF; --m-labelbg:#1C221C; }
+}
+:root[data-palette="sage"][data-theme="dark"] { --paper:#121612; --paper-2:#181D18; --card:#1C221C; --ink:#E4EADF; --ink-2:#A9B4A6; --ink-3:#737E71; --rule:#2A322A; --rule-2:#374137; --accent:#E0A84A; --accent-soft:#3A2E17; --link:#8CC2D3; --ok:#8CC79A; --ok-soft:#1D2B20; --warn:#F08A72; --flash:#3D3216; --m-carbon:#7BD69A; --m-pocket:#6E7A6C; --m-n:#8EA6FF; --m-o:#FF7A68; --m-s:#F2D16B; --m-hbond:#E0A84A; --m-trace:#4E584C; --m-label:#E4EADF; --m-labelbg:#1C221C; }
+:root[data-palette="slate"] { --paper:#F3F4F7; --paper-2:#E9ECF2; --card:#FBFCFE; --ink:#141A2B; --ink-2:#4B5468; --ink-3:#7F889E; --rule:#D9DEE8; --rule-2:#C8CFDC; --accent:#2F4FCB; --accent-soft:#E3E8FA; --link:#1F5FA8; --ok:#217A4B; --ok-soft:#DFF0E6; --warn:#B4321F; --flash:#FBEFC4; --m-carbon:#1F8F5A; --m-pocket:#A3ABBA; --m-n:#2F52D0; --m-o:#D4433A; --m-s:#C9A227; --m-hbond:#E08A1E; --m-trace:#B5BCCB; --m-label:#141A2B; --m-labelbg:#FBFCFE; }
+@media (prefers-color-scheme: dark) { :root[data-palette="slate"]:not([data-theme="light"]) { --paper:#0F121A; --paper-2:#141823; --card:#181D29; --ink:#E6E9F2; --ink-2:#A7AEC2; --ink-3:#6F778C; --rule:#252B39; --rule-2:#323A4B; --accent:#8EA2FF; --accent-soft:#1E2648; --link:#8EB8F0; --ok:#74D3A0; --ok-soft:#15281F; --warn:#F08A72; --flash:#3A3415; --m-carbon:#6CDB9C; --m-pocket:#5A6274; --m-n:#8EA6FF; --m-o:#FF7A68; --m-s:#F2D16B; --m-hbond:#F2B44C; --m-trace:#3D4558; --m-label:#E6E9F2; --m-labelbg:#181D29; }
+}
+:root[data-palette="slate"][data-theme="dark"] { --paper:#0F121A; --paper-2:#141823; --card:#181D29; --ink:#E6E9F2; --ink-2:#A7AEC2; --ink-3:#6F778C; --rule:#252B39; --rule-2:#323A4B; --accent:#8EA2FF; --accent-soft:#1E2648; --link:#8EB8F0; --ok:#74D3A0; --ok-soft:#15281F; --warn:#F08A72; --flash:#3A3415; --m-carbon:#6CDB9C; --m-pocket:#5A6274; --m-n:#8EA6FF; --m-o:#FF7A68; --m-s:#F2D16B; --m-hbond:#F2B44C; --m-trace:#3D4558; --m-label:#E6E9F2; --m-labelbg:#181D29; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--paper); color:var(--ink); font:14.5px/1.55 var(--sans); -webkit-font-smoothing:antialiased; }
+a { color:var(--link); }
+.ic { width:16px; height:16px; flex:none; } .ic-xs { width:12px; height:12px; vertical-align:-1px; }
+code { font-family:var(--mono); font-size:.86em; }
+.muted { color:var(--ink-3); }
+button { font:inherit; color:inherit; }
+
+.app { display:flex; height:100vh; }
+.rail { width:56px; flex:none; border-right:1px solid var(--rule); background:var(--paper-2); display:flex; flex-direction:column; align-items:center; gap:4px; padding:14px 0; }
+.rail .mark { color:var(--accent); margin-bottom:10px; } .rail .mark .ic { width:24px; height:24px; }
+.rbtn { all:unset; cursor:pointer; width:36px; height:36px; border-radius:8px; display:grid; place-items:center; color:var(--ink-2); }
+.rbtn:hover { background:var(--paper); color:var(--ink); } .rbtn .ic { width:18px; height:18px; }
+.rail .bottom { margin-top:auto; }
+
+.chat { flex:1; min-width:0; display:flex; flex-direction:column; position:relative; }
+.topbar { height:54px; flex:none; display:flex; align-items:center; gap:14px; padding:0 22px; border-bottom:1px solid var(--rule); }
+.topbar .title { font:500 italic 19px var(--serif); } .topbar .crumb { color:var(--ink-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.topbar .sp { flex:1; } .topbar a { color:var(--ink-2); text-decoration:none; font-size:13.5px; white-space:nowrap; }
+.scroll { flex:1; overflow:auto; position:relative; }
+.thread { max-width:680px; margin:0 auto; padding:26px 28px 60vh; }
+
+.turn { position:relative; padding:4px 0 26px 0; }
+.turn + .turn { border-top:1px solid var(--rule); padding-top:26px; }
+.turn::before { content:""; position:absolute; left:-18px; top:30px; bottom:30px; width:2px; border-radius:2px; background:transparent; transition:background .3s; }
+.turn.active::before { background:var(--accent); }
+.kicker { font:600 10.5px var(--sans); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); display:flex; gap:8px; }
+.turn.active .kicker { color:var(--accent); }
+h2.q { font:500 25px/1.25 var(--serif); letter-spacing:-.01em; margin:4px 0 12px; }
+.status { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 14px; }
+.sbtn { all:unset; cursor:pointer; display:inline-flex; align-items:center; gap:6px; height:27px; padding:0 10px; border-radius:999px; font-size:12.5px; color:var(--ink-2); border:1px solid var(--rule-2); background:var(--card); }
+.sbtn:hover { border-color:var(--accent); color:var(--accent); }
+.sbtn .ok { width:14px; height:14px; border-radius:50%; background:var(--ok); color:var(--card); display:grid; place-items:center; } .sbtn .ok svg { width:10px; height:10px; stroke-width:3; }
+.sbtn.none { opacity:.55; cursor:default; } .sbtn.none:hover { border-color:var(--rule-2); color:var(--ink-2); }
+.live { display:inline-flex; align-items:center; gap:8px; height:27px; font-size:13px; color:var(--ink-2); }
+.pulse { width:8px; height:8px; border-radius:50%; background:var(--accent); animation:pulse 1.1s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity:.25; transform:scale(.75); } }
+.answer { font:400 17px/1.7 var(--serif); }
+.answer p { margin:0 0 12px; } .answer strong { font-weight:600; }
+.answer .raw { font:12px var(--mono); color:var(--ink-3); }
+.cite { all:unset; cursor:pointer; display:inline-flex; align-items:center; gap:5px; vertical-align:2px; font:500 11.5px/1 var(--sans); color:var(--accent); background:var(--accent-soft); border-radius:4px; padding:3px 6px 3px 3px; white-space:nowrap; }
+.cite .n { font:500 10.5px var(--mono); background:var(--card); border-radius:3px; padding:1px 4px; }
+.cite:hover, .cite.on { background:var(--accent); color:var(--paper); } .cite:hover .n, .cite.on .n { color:var(--accent); }
+.checked { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ok); margin:2px 0 4px; }
+.checked span { color:var(--ink-2); } .checked.checking { color:var(--ink-2); }
+.spin { width:14px; height:14px; border:2px solid var(--rule-2); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; } @keyframes spin { to { transform:rotate(360deg); } }
+.usage { font:11.5px var(--mono); color:var(--ink-3); margin-top:6px; }
+
+.composer { position:absolute; left:0; right:12px; bottom:0; z-index:4; padding:26px 16px 14px; background:linear-gradient(transparent, var(--paper) 26px); }
+.composer .inner { max-width:680px; margin:0 auto; }
+.box { display:flex; align-items:flex-end; gap:10px; background:var(--card); border:1px solid var(--rule-2); border-radius:10px; padding:9px 9px 9px 16px; }
+.box textarea { flex:1; border:0; background:none; resize:none; font:16px/1.5 var(--serif); color:var(--ink); outline:none; padding:4px 0; }
+.box textarea::placeholder { color:var(--ink-3); font-style:italic; }
+.ask { all:unset; cursor:pointer; display:inline-flex; gap:6px; align-items:center; background:var(--ink); color:var(--paper); font:500 13.5px var(--sans); padding:7px 13px; border-radius:7px; }
+.disclaimer { font-size:12px; color:var(--ink-3); margin:7px 2px 0; }
+.demo { position:absolute; left:50%; transform:translateX(-50%); bottom:108px; display:flex; gap:6px; z-index:5; }
+.demo button { all:unset; cursor:pointer; display:inline-flex; align-items:center; gap:6px; font:500 12.5px var(--sans); padding:7px 13px; border-radius:999px; background:var(--accent); color:var(--paper); box-shadow:0 8px 24px rgba(60,30,10,.25); }
+.demo button.ghost { background:var(--card); color:var(--ink-2); border:1px solid var(--rule-2); box-shadow:none; }
+
+/* evidence panel */
+.panel { width:440px; flex:none; border-left:1px solid var(--rule); background:var(--paper-2); display:flex; flex-direction:column; min-height:0; }
+.phead { flex:none; padding:12px 16px 0; border-bottom:1px solid var(--rule); }
+.pwhich { display:flex; align-items:center; gap:8px; min-height:30px; }
+.pwhich .lbl { font:600 10.5px var(--sans); letter-spacing:.14em; text-transform:uppercase; color:var(--accent); white-space:nowrap; }
+.pwhich .qq { font:italic 14.5px var(--serif); color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; }
+.nav { all:unset; cursor:pointer; width:26px; height:26px; border-radius:6px; display:grid; place-items:center; color:var(--ink-2); border:1px solid var(--rule-2); background:var(--card); }
+.nav[disabled] { opacity:.35; cursor:default; } .nav.prev .ic { transform:rotate(180deg); }
+.golive { all:unset; cursor:pointer; display:none; align-items:center; gap:6px; font:500 12px var(--sans); color:var(--accent); padding:3px 9px; border:1px solid var(--accent); border-radius:999px; white-space:nowrap; }
+.golive.on { display:inline-flex; }
+.tabs { display:flex; gap:2px; margin-top:8px; }
+.tab { all:unset; cursor:pointer; padding:8px 11px 9px; font-size:13px; color:var(--ink-2); border-bottom:2px solid transparent; display:inline-flex; gap:6px; align-items:center; }
+.tab .c { font:500 11px var(--mono); color:var(--ink-3); }
+.tab[aria-selected="true"] { color:var(--ink); border-bottom-color:var(--accent); }
+.tab[data-empty="true"] { color:var(--ink-3); }
+.tab .new { width:6px; height:6px; border-radius:50%; background:var(--accent); display:none; } .tab.fresh .new { display:block; }
+.pbody { flex:1; overflow:auto; padding:16px; }
+.pane { display:none; } .pane.on { display:block; }
+.view { position:relative; aspect-ratio:1/1; border:1px solid var(--rule); border-radius:8px; background:radial-gradient(ellipse at 50% 45%, var(--card), var(--paper-2)); overflow:hidden; }
+.view .viewer { position:absolute; inset:0; }
+.view .vtitle { position:absolute; left:12px; top:10px; right:80px; pointer-events:none; }
+.view .vtitle b { display:block; font:500 16px var(--serif); } .view .vtitle span { font-size:12px; color:var(--ink-3); }
+.view .vtools { position:absolute; right:10px; top:10px; display:flex; gap:6px; }
+.view .vmodes { position:absolute; left:10px; bottom:10px; }
+.vbtn { all:unset; cursor:pointer; width:28px; height:28px; display:grid; place-items:center; border-radius:7px; background:var(--card); border:1px solid var(--rule-2); color:var(--ink-2); }
+.seg { display:inline-flex; background:var(--card); border:1px solid var(--rule-2); border-radius:999px; padding:2px; }
+.seg button { all:unset; cursor:pointer; font:500 12px var(--sans); padding:4px 10px; border-radius:999px; color:var(--ink-2); }
+.seg button[aria-pressed="true"] { background:var(--ink); color:var(--paper); }
+.legend { display:flex; flex-wrap:wrap; gap:4px 14px; font-size:12px; color:var(--ink-2); margin:9px 2px 0; }
+.legend span { display:inline-flex; align-items:center; gap:6px; }
+.legend .dot { width:10px; height:10px; border-radius:50%; background:var(--m-carbon); }
+.legend .dash { width:16px; border-top:2px dashed var(--m-hbond); }
+.legend .line { width:16px; border-top:2px solid var(--m-pocket); }
+.legend .hint { color:var(--ink-3); }
+.empty3d { border:1px dashed var(--rule-2); border-radius:8px; padding:22px 18px; text-align:center; color:var(--ink-2); font-size:13.5px; }
+.empty3d .ic { width:26px; height:26px; color:var(--ink-3); margin-bottom:6px; }
+.shelf { margin-top:16px; }
+.shelf h4, .pane h4 { font:600 10.5px var(--sans); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); margin:16px 0 8px; }
+.shelf .items { display:flex; flex-wrap:wrap; gap:6px; }
+.shelf button { all:unset; cursor:pointer; display:inline-flex; align-items:center; gap:7px; padding:5px 10px 5px 6px; border-radius:7px; border:1px solid var(--rule-2); background:var(--card); font-size:12.5px; }
+.shelf button .ic { color:var(--m-carbon); }
+.shelf button.on { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+.shelf button small { color:var(--ink-3); font-family:var(--mono); font-size:11px; }
+.kv { display:grid; grid-template-columns:auto 1fr; gap:3px 16px; margin:0; font-size:13.5px; } .kv dt { color:var(--ink-3); } .kv dd { margin:0; }
+table.hb { width:100%; border-collapse:collapse; font-size:13px; } table.hb th { text-align:left; font-weight:400; color:var(--ink-3); padding:4px 0; font-size:12px; }
+table.hb td { border-top:1px solid var(--rule); padding:5px 0; } .num { text-align:right; font-variant-numeric:tabular-nums; }
+.h4 { display:none; }
+.srcs { display:flex; flex-direction:column; gap:8px; }
+.src { border:1px solid var(--rule); background:var(--card); border-radius:7px; padding:12px; transition:background .6s, border-color .3s; }
+.src.flash { background:var(--flash); border-color:var(--accent); }
+.src .hd { display:flex; gap:8px; align-items:baseline; } .src .n { font:500 11px var(--mono); color:var(--accent); }
+.src .t { font-weight:600; font-size:13.5px; } .src .d { font-size:12px; color:var(--ink-3); margin:1px 0 0 22px; }
+.src blockquote { margin:8px 0 6px 22px; font:13.5px/1.55 var(--serif); color:var(--ink-2); border-left:2px solid var(--accent); padding-left:10px; }
+.src a { font-size:12.5px; font-weight:500; margin-left:22px; }
+.steps { list-style:none; margin:0; padding:0; position:relative; }
+.steps > li { position:relative; padding-left:30px; margin-bottom:4px; }
+.steps > li::after { content:""; position:absolute; left:8px; top:22px; bottom:-8px; width:1px; background:var(--rule-2); }
+.steps > li:last-child::after { display:none; }
+.steps .mk { position:absolute; left:0; top:5px; width:17px; height:17px; border-radius:50%; display:grid; place-items:center; background:var(--ok); color:var(--card); }
+.steps .mk svg { width:11px; height:11px; stroke-width:3; }
+.steps li.current .mk { background:var(--card); border:2px solid var(--accent); } .steps li.current .mk::after { content:""; width:7px; height:7px; border-radius:50%; background:var(--accent); animation:pulse 1.1s infinite; }
+.steps li.current .mk svg { display:none; }
+.steps > li > button { all:unset; cursor:pointer; display:block; width:100%; padding:3px 0; }
+.steps .st { font-size:13.5px; font-weight:500; } .steps .ss { font-size:12px; color:var(--ink-3); font-family:var(--mono); }
+.steps .card { display:none; border:1px solid var(--rule); background:var(--card); border-radius:7px; padding:12px; margin:6px 0 10px; font-size:13px; }
+.steps li.open .card { display:block; }
+.targets { list-style:none; margin:0; padding:0; display:grid; gap:10px; } .t-name { font-weight:600; } .t-mech { color:var(--ink-2); } .t-meta { font-size:12px; color:var(--ink-3); }
+.card p { margin:6px 0 0; } .passages { list-style:none; padding:0; margin:6px 0 0; } .p-num { font-family:var(--mono); color:var(--ink-3); }
+.cited { margin-left:6px; font:600 10px var(--sans); letter-spacing:.08em; text-transform:uppercase; color:var(--accent); }
+.credit { font-size:12px; color:var(--ink-3); margin-top:12px; }
+.sheet-close { display:none; }
+
+/* scrollbars: thin, and the chat's only shows while you hover it */
+.scroll, .pbody { scrollbar-width:thin; scrollbar-color:transparent transparent; transition:scrollbar-color .2s; }
+.scroll:hover, .pbody:hover { scrollbar-color:var(--rule-2) transparent; }
+.scroll::-webkit-scrollbar, .pbody::-webkit-scrollbar { width:8px; }
+.scroll::-webkit-scrollbar-thumb, .pbody::-webkit-scrollbar-thumb { background:transparent; border-radius:8px; border:2px solid transparent; background-clip:padding-box; }
+.scroll:hover::-webkit-scrollbar-thumb, .pbody:hover::-webkit-scrollbar-thumb { background-color:var(--rule-2); }
+
+/* question navigator: one dash per question, the one you're reading is long and coloured */
+.ticks { position:absolute; right:14px; top:50%; transform:translateY(-50%); z-index:6; display:flex; flex-direction:column; align-items:flex-end; gap:2px; padding:8px 0 8px 18px; }
+.tick { all:unset; cursor:pointer; display:flex; align-items:center; justify-content:flex-end; height:12px; width:30px; }
+.tick i { display:block; height:2px; width:12px; border-radius:2px; background:var(--rule-2); transition:width .2s, background .2s; }
+.tick:hover i { background:var(--ink-3); width:18px; }
+.tick.on i { width:24px; background:var(--accent); }
+.tick.live i { animation:pulse 1.1s ease-in-out infinite; background:var(--accent); }
+.tlist { position:absolute; right:40px; top:50%; transform:translateY(-50%) translateX(6px); min-width:240px; max-width:300px; background:var(--card); border:1px solid var(--rule-2); border-radius:10px; padding:6px; box-shadow:0 14px 40px rgba(30,20,10,.16); opacity:0; pointer-events:none; transition:opacity .15s, transform .15s; }
+.ticks:hover .tlist, .ticks.force .tlist { opacity:1; pointer-events:auto; transform:translateY(-50%); }
+.tlist button { all:unset; cursor:pointer; display:flex; gap:10px; align-items:baseline; width:100%; box-sizing:border-box; padding:7px 9px; border-radius:7px; font-size:13px; color:var(--ink-2); }
+.tlist button:hover { background:var(--paper-2); color:var(--ink); }
+.tlist button.on { color:var(--ink); } .tlist button.on .tn { color:var(--accent); }
+.tlist .tn { font:500 11px var(--mono); color:var(--ink-3); flex:none; }
+.tlist .tq { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+@media (max-width: 900px) {
+  .rail { display:none; } .topbar .hide-sm { display:none; }
+  .thread { padding:18px 16px 30px; } .turn::before { left:-10px; }
+  .composer { padding:22px 16px 12px; } h2.q { font-size:22px; }
+  .panel { position:fixed; left:0; right:0; bottom:0; height:78vh; width:auto; z-index:20; border:1px solid var(--rule-2); border-radius:16px 16px 0 0; box-shadow:0 -20px 50px rgba(40,25,10,.25); transform:translateY(105%); transition:transform .3s ease; }
+  .panel.open { transform:none; }
+  .sheet-close { display:grid; }
+  .demo { bottom:118px; }
+  .ticks { right:4px; } .tlist { display:none; }
+}
+</style>
+<link rel="stylesheet" href="skins.css">
+</head>
+<body>
+<div class="app">
+  <nav class="rail" id="rail"></nav>
+  <section class="chat">
+    <header class="topbar"><span class="title">Molecula</span><span class="crumb">Imatinib and dasatinib</span><span class="sp"></span><span class="sys hide-sm"><i></i>gpt-oss-20b · local</span><a class="hide-sm" href="#">Supported drugs</a><a class="hide-sm" href="#">Export</a><a href="#">Help</a></header>
+    <div class="scroll" id="scroll"><div class="thread" id="thread"></div></div>
+    <div class="demo" id="demo"></div>
+    <nav class="ticks" id="ticks" aria-label="Questions in this chat"></nav>
+    <div class="composer"><div class="inner">
+      <div class="box"><textarea rows="1" id="draft" placeholder="Ask a follow-up…"></textarea><button class="ask" id="ask"></button></div>
+      <p class="disclaimer">Molecula is an AI assistant and can make mistakes. It is not medical advice. Check the official label on <a href="#">DailyMed</a> and ask a pharmacist or doctor before acting on anything here.</p>
+    </div></div>
+  </section>
+  <aside class="panel" id="panel">
+    <div class="phead">
+      <div class="pwhich"><span class="lbl" id="plbl"></span><span class="qq" id="pq"></span><button class="golive" id="golive"></button><button class="nav prev" id="prev" aria-label="Previous answer"></button><button class="nav" id="next" aria-label="Next answer"></button><button class="nav sheet-close" id="close" aria-label="Close">×</button></div>
+      <div class="tabs" role="tablist" id="tabs"></div>
+    </div>
+    <div class="pbody" id="pbody"></div>
+  </aside>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/3dmol@2.5.5/build/3Dmol-min.js"></script>
+<script src="content.js"></script>
+<script src="complex-imatinib.js"></script>
+<script src="complex-dasatinib.js"></script>
+<script src="viewer.js"></script>
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const check = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>';
+const GLEEVEC = "FDA label · Gleevec · July 13, 2026";
+const PHYRAGO = "FDA label · Phyrago (dasatinib) · August 23, 2025";
+
+const TURNS = [
+  {
+    q: "How does imatinib work?",
+    steps: M.steps.map((s) => ({ text: s.text, summary: s.summary, card: M.cardHTML(s.card) })),
+    complex: { key: "imatinib", drug: "imatinib", pdb: "2HYY", target: "ABL1 (BCR-ABL)", bonds: 6, facts: M.cardHTML("complex") },
+    sources: [
+      { n: 1, short: "Mechanism of action", t: "Gleevec · Mechanism of action", d: GLEEVEC, quote: M.sources[1].text + " " + M.sources[3].text, link: "Open the label on DailyMed" },
+      { n: 2, short: "Indications and usage", t: "Gleevec · Indications and usage", d: GLEEVEC, quote: M.sources[2].text, link: "Open the label on DailyMed" },
+      { n: 3, short: "ChEMBL · ABL1", t: "Tyrosine-protein kinase ABL1", d: "ChEMBL · CHEMBL1862", link: "Open on ChEMBL" },
+      { n: 4, short: "RCSB PDB · 2HYY", t: "2HYY · ABL1 kinase with imatinib", d: "RCSB Protein Data Bank", link: "Open on RCSB PDB" },
+    ],
+    answer: [
+      ["Imatinib (Gleevec) is a **kinase inhibitor**. It blocks **BCR-ABL**, the abnormal tyrosine kinase that the Philadelphia chromosome creates in chronic myeloid leukemia (CML). Blocking it stops the leukemic cells from multiplying and makes them die off.", [1]],
+      ["It also blocks two receptor kinases: the ones for platelet-derived growth factor (PDGF) and for stem cell factor (c-Kit).", [1, 3]],
+      ["That is why it is used for Philadelphia-chromosome-positive CML and acute lymphoblastic leukemia (ALL), among other cancers.", [2]],
+      ["**In 3D:** in PDB 2HYY, imatinib sits deep in the ATP pocket of ABL1, held by six hydrogen bonds, among them Met318 and Thr315.", [4]],
+    ],
+    usage: "gpt-oss-20b · 6.2 s · 3,184 tokens",
+  },
+  {
+    q: "What are its common side effects?",
+    steps: [{ text: "Searching the imatinib label", summary: "6 passages", card: '<p class="muted">Searched for “common side effects” in the Gleevec label, adverse reactions sections.</p>' }],
+    complex: null,
+    sources: [
+      { n: 1, short: "Adverse reactions", t: "Gleevec · Adverse reactions", d: GLEEVEC, quote: "The most frequently reported adverse reactions (greater than or equal to 30%) are edema, nausea, vomiting, muscle cramps, musculoskeletal pain, diarrhea, rash, fatigue, and abdominal pain.", link: "Open the label on DailyMed" },
+      { n: 2, short: "Warnings and precautions", t: "Gleevec · Warnings and precautions", d: GLEEVEC, quote: "Edema and severe fluid retention have occurred… Cytopenias, particularly anemia, neutropenia, and thrombocytopenia, have occurred… Severe congestive heart failure and left ventricular dysfunction have been reported… Severe hepatotoxicity, including fatalities may occur.", link: "Open the label on DailyMed" },
+    ],
+    answer: [
+      ["The Gleevec label lists these as the most frequently reported, in 30% or more of patients: **swelling (edema)**, nausea, vomiting, muscle cramps, muscle and bone pain, diarrhea, rash, tiredness and belly pain.", [1]],
+      ["Among the serious ones it warns about are severe fluid retention, low blood counts, heart failure and liver damage.", [2]],
+    ],
+    usage: "gpt-oss-20b · 3.9 s · 2,410 tokens",
+  },
+];
+
+const NEXT = {
+  q: "How does dasatinib compare?",
+  steps: [
+    { text: "Looking up dasatinib", summary: "“dasatinib” → dasatinib", card: '<p>“dasatinib” is the generic name of <strong>dasatinib</strong> (PubChem CID 3062316).</p>' },
+    { text: "Finding the targets of dasatinib", summary: "6 targets", card: '<ul class="targets"><li><div class="t-name">Tyrosine-protein kinase ABL1</div><div class="t-mech">Tyrosine-protein kinase ABL inhibitor</div></li><li><div class="t-name">SRC</div><div class="t-mech">SRC inhibitor</div><div class="t-meta">genes <code>SRC</code> <code>LCK</code> <code>YES1</code> <code>FYN</code> +6</div></li><li><div class="t-name">Mast/stem cell growth factor receptor Kit</div></li><li><div class="t-name">Ephrin type-A receptor 2</div></li><li><div class="t-name">PDGFR beta</div></li><li><div class="t-name">Bcr/Abl fusion protein</div></li></ul>' },
+    { text: "Searching the dasatinib label", summary: "5 passages", card: '<p class="muted">Searched for “how does dasatinib work” in the Phyrago label.</p>' },
+    { text: "Looking up the 3D complex of dasatinib", summary: "2GQG · ABL1 (BCR-ABL)", card: '<p>PDB 2GQG · ABL1 (BCR-ABL) · Homo sapiens · 4 hydrogen bonds</p>' },
+  ],
+  complex: { key: "dasatinib", drug: "dasatinib", pdb: "2GQG", target: "ABL1 (BCR-ABL)", bonds: 4, facts: '<dl class="kv"><dt>Target</dt><dd>ABL1 (BCR-ABL)</dd><dt>Organism</dt><dd>Homo sapiens</dd><dt>Structure</dt><dd><a href="#">PDB 2GQG</a></dd><dt>Drug\'s code</dt><dd><code>1N1</code></dd></dl><h4>Hydrogen bonds</h4><table class="hb"><thead><tr><th>Residue</th><th>Chain</th><th class="num">Distance</th></tr></thead><tbody><tr><td>Tyr320</td><td>A</td><td class="num">2.88 Å</td></tr><tr><td>Met318</td><td>A</td><td class="num">2.90 Å</td></tr><tr><td>Met318</td><td>A</td><td class="num">2.92 Å</td></tr><tr><td>Thr315</td><td>A</td><td class="num">2.97 Å</td></tr></tbody></table>' },
+  sources: [
+    { n: 1, short: "Mechanism of action", t: "Phyrago · Mechanism of action", d: PHYRAGO, quote: "Dasatinib, at nanomolar concentrations, inhibits the following kinases: BCR-ABL, SRC family (SRC, LCK, YES, FYN), c-KIT, EPHA2, and PDGFRβ… In vitro, dasatinib was active in leukemic cell lines representing variants of imatinib mesylate-sensitive and resistant disease.", link: "Open the label on DailyMed" },
+    { n: 2, short: "Indications and usage", t: "Phyrago · Indications and usage", d: PHYRAGO, quote: "…chronic, accelerated, or myeloid or lymphoid blast phase Ph+ CML with resistance or intolerance to prior therapy including imatinib.", link: "Open the label on DailyMed" },
+    { n: 3, short: "RCSB PDB · 2GQG", t: "2GQG · ABL1 kinase with dasatinib", d: "RCSB Protein Data Bank", link: "Open on RCSB PDB" },
+  ],
+  answer: [
+    ["Dasatinib blocks the same main target, **BCR-ABL**, but it blocks more kinases than imatinib: also the SRC family (SRC, LCK, YES, FYN), c-KIT, EPHA2 and PDGFRβ.", [1]],
+    ["In lab tests it was active in leukemia cells that no longer respond to imatinib, and it is approved for Ph+ CML that resisted earlier treatment, including imatinib.", [1, 2]],
+    ["**In 3D:** in PDB 2GQG, dasatinib sits in the same ABL1 pocket, held by four hydrogen bonds, two of them to Met318.", [3]],
+  ],
+  usage: "gpt-oss-20b · 7.1 s · 3,502 tokens",
+};
+
+let turns = TURNS.map((t) => ({ ...t, state: "done" }));
+let active = 0, tab = "structure", liveIndex = null, followLive = true, viewerHandle = null, mountedKey = null;
+const bold = (s) => s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+
+function answerHTML(turn, i, raw) {
+  return turn.answer.map(([text, refs]) => {
+    const cite = raw ? `<span class="raw">[${refs.join("][")}]</span>` : `<button class="cite" data-turn="${i}" data-nums="${refs}"><span class="n">${refs.join(",")}</span>${turn.sources.find((s) => s.n === refs[0]).short}</button>`;
+    return `<p>${bold(text)} ${cite}</p>`;
+  }).join("");
+}
+
+function statusHTML(turn, i) {
+  if (turn.state === "live") {
+    const cur = turn.steps.at(-1);
+    return `<span class="live"><span class="pulse"></span>${cur ? cur.text + "…" : "Thinking…"}</span>`;
+  }
+  const n = turn.steps.length;
+  return `<button class="sbtn" data-turn="${i}" data-go="steps"><span class="ok">${check}</span>${n} ${n === 1 ? "step" : "steps"}</button><button class="sbtn" data-turn="${i}" data-go="sources">${M.icon("label")} ${turn.sources.length} sources</button>` +
+    (turn.complex ? `<button class="sbtn" data-turn="${i}" data-go="structure">${M.icon("cube")} 3D · ${turn.complex.pdb}</button>` : `<span class="sbtn none">${M.icon("cube")} no 3D</span>`);
+}
+
+function turnHTML(turn, i) {
+  const check = turn.state === "done" ? `<div class="checked">${M.icon("shield")}Checked against the sources <span>· Every fact is backed by the source it cites.</span></div><div class="usage">${turn.usage}</div>`
+    : turn.state === "checking" ? `<div class="checked checking"><span class="spin"></span>Checking the answer against the sources…</div>` : "";
+  return `<article class="turn ${i === active ? "active" : ""}" data-i="${i}"><div class="kicker">Question ${i + 1}</div><h2 class="q">${turn.q}</h2><div class="status">${statusHTML(turn, i)}</div><div class="answer">${turn.shown ? answerHTML({ ...turn, answer: turn.shown }, i, turn.state === "live") : turn.state === "done" || turn.state === "checking" ? answerHTML(turn, i, false) : ""}</div>${check}</article>`;
+}
+
+function renderThread() {
+  $("#thread").innerHTML = turns.map(turnHTML).join("");
+  $$(".sbtn[data-go]").forEach((b) => b.addEventListener("click", () => select(+b.dataset.turn, b.dataset.go, true)));
+  $$(".cite").forEach((c) => c.addEventListener("click", () => {
+    select(+c.dataset.turn, "sources", true);
+    $$(".cite").forEach((o) => o.classList.toggle("on", o === c));
+    const nums = c.dataset.nums.split(",");
+    $$(".src").forEach((s) => s.classList.toggle("flash", nums.includes(s.dataset.n)));
+    $(`.src[data-n="${nums[0]}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }));
+}
+
+function palette() {
+  const css = getComputedStyle(document.documentElement);
+  const v = (n) => css.getPropertyValue(n).trim();
+  return { carbon: v("--m-carbon"), pocket: v("--m-pocket"), n: v("--m-n"), o: v("--m-o"), s: v("--m-s"), hbond: v("--m-hbond"), trace: v("--m-trace"), label: v("--m-label"), labelBg: v("--m-labelbg") };
+}
+
+function structuresInChat() {
+  return turns.map((t, i) => ({ t, i })).filter(({ t }) => t.complex && (t.state !== "live" || t.steps.length === 4));
+}
+
+function renderPanel() {
+  const turn = turns[active];
+  $("#plbl").textContent = `Answer ${active + 1} of ${turns.length}`;
+  $("#pq").textContent = turn.q;
+  $("#prev").disabled = active === 0; $("#next").disabled = active === turns.length - 1;
+  const showGoLive = liveIndex !== null && active !== liveIndex;
+  $("#golive").classList.toggle("on", showGoLive);
+  const hasComplex = turn.complex && (turn.state !== "live" || turn.steps.length === 4);
+  const sourcesKnown = turn.state !== "live";
+  $("#tabs").innerHTML = [
+    ["structure", "3D", hasComplex ? "" : "", !hasComplex],
+    ["sources", "Sources", sourcesKnown ? turn.sources.length : "…", !sourcesKnown],
+    ["steps", "Steps", turn.steps.length, false],
+  ].map(([k, l, c, empty]) => `<button class="tab ${k === "structure" && turn.freshStructure ? "fresh" : ""}" role="tab" data-tab="${k}" aria-selected="${tab === k}" data-empty="${empty}">${l}<span class="c">${c}</span><span class="new"></span></button>`).join("");
+  $$(".tab").forEach((t) => t.addEventListener("click", () => { tab = t.dataset.tab; turn.freshStructure = false; renderPanel(); }));
+
+  const shelf = structuresInChat();
+  const shelfHTML = shelf.length > 0 ? `<div class="shelf"><h4>Structures in this chat</h4><div class="items">${shelf.map(({ t, i }) => `<button data-turn="${i}" class="${i === active ? "on" : ""}">${M.icon("cube")}${t.complex.drug} <small>${t.complex.pdb} · answer ${i + 1}</small></button>`).join("")}</div></div>` : "";
+  let body = "";
+  if (tab === "structure") {
+    body = hasComplex
+      ? `<div class="view"><div class="viewer" id="viewer"></div><div class="vtitle"><b>${cap(turn.complex.drug)} in ${turn.complex.target}</b><span>PDB ${turn.complex.pdb} · human · ${turn.complex.bonds} hydrogen bonds</span></div><div class="readout">${readout(turn.complex)}</div><div class="vtools"><button class="vbtn" title="Replay binding">${M.icon("replay")}</button><button class="vbtn" title="Full screen">${M.icon("expand")}</button></div><div class="vmodes"><div class="seg" id="modes" role="group"><button data-mode="molecule" aria-pressed="false">Molecule</button><button data-mode="site" aria-pressed="true">Binding site</button><button data-mode="protein" aria-pressed="false">Whole protein</button></div></div></div>
+        <div class="legend"><span><i class="dot"></i>${turn.complex.drug}</span><span><i class="dash"></i>hydrogen bond</span><span><i class="line"></i>residues within 4 Å</span><span class="hint">Drag to turn · scroll to zoom</span></div>
+        ${shelfHTML}<h4>The complex</h4>${turn.complex.facts}`
+      : `<div class="empty3d">${M.icon("cube")}<div>${turn.state === "live" ? "Looking things up… a structure shows here if this answer finds one." : "This answer didn't look up a structure."}</div></div>${shelfHTML}`;
+  } else if (tab === "sources") {
+    body = sourcesKnown
+      ? `<div class="srcs">${turn.sources.map((s) => `<div class="src" data-n="${s.n}"><div class="hd"><span class="n">[${s.n}]</span><span class="t">${s.t}</span></div><div class="d">${s.d}</div>${s.quote ? `<blockquote>${s.quote}</blockquote>` : ""}<a href="#">${s.link} ${M.icon("ext", "ic ic-xs")}</a></div>`).join("")}</div><p class="credit">Data provided by the U.S. Food and Drug Administration (<a href="#">openFDA</a>).</p>`
+      : `<div class="empty3d">${M.icon("label")}<div>The sources show here once the answer is written.</div></div>`;
+  } else {
+    const live = turn.state === "live";
+    body = `<ol class="steps">${turn.steps.map((s, k) => `<li data-collapsible class="${live && k === turn.steps.length - 1 && !turn.writing ? "current" : ""}"><span class="mk">${check}</span><button data-toggle=""><div class="st">${s.text}</div><div class="ss">${live && k === turn.steps.length - 1 && !turn.writing ? "working…" : s.summary}</div></button><div class="card">${s.card}</div></li>`).join("")}</ol>`;
+  }
+  const keep = tab === "structure" && hasComplex && mountedKey === `${active}:${turn.complex.key}` && $("#viewer");
+  if (!keep) {
+    viewerHandle?.viewer.spin(false); viewerHandle = null; mountedKey = null;
+    $("#pbody").innerHTML = body;
+    if (tab === "structure" && hasComplex) {
+      viewerHandle = mountComplex($("#viewer"), palette(), "site", COMPLEXES[turn.complex.key]);
+      wireModes($("#modes"), viewerHandle);
+      mountedKey = `${active}:${turn.complex.key}`;
+    }
+    $$("#pbody .shelf button").forEach((b) => b.addEventListener("click", () => select(+b.dataset.turn, "structure", true)));
+    wire($("#pbody"));
+  }
+  $$(".turn").forEach((t) => t.classList.toggle("active", +t.dataset.i === active));
+  renderTicks();
+}
+function renderTicks() {
+  const cls = (i) => [i === active ? "on" : "", i === liveIndex ? "live" : ""].join(" ");
+  $("#ticks").innerHTML = `<div class="tlist">${turns.map((t, i) => `<button data-i="${i}" class="${cls(i)}"><span class="tn">${i + 1}</span><span class="tq">${t.q}</span></button>`).join("")}</div>` +
+    turns.map((t, i) => `<button class="tick ${cls(i)}" data-i="${i}" data-n="${String(i + 1).padStart(2, "0")}" aria-label="Question ${i + 1}: ${t.q}"><i></i></button>`).join("");
+  $$("#ticks [data-i]").forEach((b) => b.addEventListener("click", () => { select(+b.dataset.i, null, true); scrollToTurn(+b.dataset.i); }));
+}
+const cap = (s) => s[0].toUpperCase() + s.slice(1);
+function readout(complex) {
+  const lines = COMPLEXES[complex.key].pdb.split("\n");
+  const atoms = lines.filter((l) => l.startsWith("HETATM")).length;
+  const residues = new Set(lines.filter((l) => l.startsWith("ATOM")).map((l) => l.slice(21, 26))).size;
+  return `<span>${atoms} atoms</span><span>${residues} residues</span><span>${complex.bonds} H-bonds</span>`;
+}
+
+function select(i, toTab, byUser) {
+  if (byUser && liveIndex !== null && i !== liveIndex) followLive = false;
+  if (i === liveIndex) followLive = true;
+  if (i !== active) { active = i; if (!toTab) tab = defaultTab(turns[i]); }
+  if (toTab) tab = toTab;
+  if (byUser) $("#panel").classList.add("open");
+  renderPanel();
+}
+const defaultTab = (t) => (t.complex && t.state !== "live" ? "structure" : t.state === "live" ? "steps" : "sources");
+
+$("#prev").addEventListener("click", () => select(active - 1, null, true));
+$("#next").addEventListener("click", () => select(active + 1, null, true));
+$("#golive").addEventListener("click", () => { select(liveIndex, null, true); $(`.turn[data-i="${liveIndex}"]`).scrollIntoView({ block: "start" }); });
+$("#close").addEventListener("click", () => $("#panel").classList.remove("open"));
+
+// The panel follows the question you're reading: the turn whose top is nearest above 40% of the view.
+// Only scrolling by the reader counts, so following a live answer doesn't move the panel.
+let userScroll = 0;
+["wheel", "touchmove", "keydown", "pointerdown"].forEach((e) => $("#scroll").addEventListener(e, () => (userScroll = Date.now()), { passive: true }));
+$("#scroll").addEventListener("scroll", () => {
+  if (Date.now() - userScroll > 900) return;
+  const mid = $("#scroll").getBoundingClientRect().top + $("#scroll").clientHeight * 0.4;
+  let best = 0;
+  $$(".turn").forEach((t) => { if (t.getBoundingClientRect().top < mid) best = +t.dataset.i; });
+  if (best !== active) { if (liveIndex !== null) followLive = best === liveIndex; active = best; tab = defaultTab(turns[best]); renderPanel(); }
+});
+function scrollToTurn(i) {
+  const el = $(`.turn[data-i="${i}"]`);
+  if (el) $("#scroll").scrollTo({ top: el.offsetTop - 12, behavior: "smooth" });
+}
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+async function play() {
+  if (liveIndex !== null || turns.length > 2) return;
+  renderDemo(true);
+  $("#ask").innerHTML = `${M.icon("stop")} Stop`;
+  const t = { ...NEXT, steps: [], state: "live", shown: null };
+  turns.push(t); liveIndex = 2; followLive = true; active = 2; tab = "steps";
+  renderThread(); renderPanel(); scrollToTurn(2);
+  const refresh = () => { const el = $(`.turn[data-i="2"]`); el.outerHTML = turnHTML(t, 2); renderThreadHandlers(); if (followLive) { active = 2; } renderPanel(); };
+  await wait(700);
+  for (let k = 0; k < NEXT.steps.length; k++) {
+    t.steps.push(NEXT.steps[k]); refresh(); await wait(1100);
+    if (k === 3) { t.freshStructure = true; if (followLive) tab = "structure"; refresh(); await wait(500); }
+  }
+  t.writing = true;
+  const words = NEXT.answer.map(([text, refs]) => [text.split(" "), refs]);
+  t.shown = [];
+  for (const [ws, refs] of words) {
+    t.shown.push(["", refs]);
+    for (const w of ws) { t.shown.at(-1)[0] += (t.shown.at(-1)[0] ? " " : "") + w; $(`.turn[data-i="2"] .answer`).innerHTML = answerHTML({ ...t, answer: t.shown }, 2, true); await wait(28); }
+  }
+  t.shown = null; t.state = "checking"; t.writing = false; refresh();
+  await wait(1400);
+  t.state = "done"; liveIndex = null; refresh();
+  $("#ask").innerHTML = `Ask ${M.icon("send")}`;
+  renderDemo(false);
+}
+function renderThreadHandlers() {
+  $$(".sbtn[data-go]").forEach((b) => (b.onclick = () => select(+b.dataset.turn, b.dataset.go, true)));
+  $$(".cite").forEach((c) => (c.onclick = () => {
+    select(+c.dataset.turn, "sources", true);
+    $$(".cite").forEach((o) => o.classList.toggle("on", o === c));
+    const nums = c.dataset.nums.split(",");
+    $$(".src").forEach((s) => s.classList.toggle("flash", nums.includes(s.dataset.n)));
+  }));
+}
+function reset() { turns = TURNS.map((t) => ({ ...t, state: "done" })); liveIndex = null; active = 0; tab = "structure"; mountedKey = null; renderThread(); renderPanel(); scrollToTurn(0); renderDemo(false); }
+function renderDemo(running) {
+  $("#demo").innerHTML = running ? "" : turns.length > 2 ? `<button class="ghost" id="reset">${M.icon("replay", "ic ic-xs")} Reset the demo</button>` : `<button id="play">▶ Ask the next question: “How does dasatinib compare?”</button>`;
+  $("#play")?.addEventListener("click", play); $("#reset")?.addEventListener("click", reset);
+}
+
+$("#rail").innerHTML = `<div class="mark">${M.icon("atom")}</div><button class="rbtn" title="Show chats">${M.icon("panel")}</button><button class="rbtn" title="New chat">${M.icon("plus")}</button><button class="rbtn" title="Supported drugs">${M.icon("pill")}</button><button class="rbtn" title="Benchmarks">${M.icon("chart")}</button><div class="bottom"><button class="rbtn" title="Help">${M.icon("help")}</button></div>`;
+$("#ask").innerHTML = `Ask ${M.icon("send")}`;
+$("#prev").innerHTML = M.icon("chev"); $("#next").innerHTML = M.icon("chev");
+$("#golive").innerHTML = `<span class="pulse"></span>Live answer`;
+renderThread(); renderPanel(); renderDemo(false);
+if (new URLSearchParams(location.search).has("autoplay")) setTimeout(play, 300);
+if (new URLSearchParams(location.search).has("showticks")) $("#ticks").classList.add("force");
+</script>
+</body>
+</html>

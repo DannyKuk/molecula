@@ -42,7 +42,7 @@ export function ProgressSteps({ steps, live, answer }: ProgressStepsProps) {
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen(!open)}
-        className="self-start text-zinc-600 underline-offset-4 hover:underline dark:text-zinc-400"
+        className="self-start text-ink-2 underline-offset-4 hover:underline"
       >
         {stepCount(shown.length)}
       </button>
@@ -66,7 +66,7 @@ function StepRow({ step, current, answer }: { step: CardStep; current: boolean; 
     );
   }
   return (
-    <li className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+    <li className="flex items-center gap-2 text-ink-2">
       <StepDot current={current} />
       {step.text}
     </li>

@@ -24,7 +24,7 @@ export function SupportedDrugsLoader({ onAsk }: { onAsk: (question: string) => v
 
   if (state.kind === "loading") {
     return (
-      <p role="status" className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p role="status" className="text-sm text-ink-2">
         Loading the supported drugs…
       </p>
     );

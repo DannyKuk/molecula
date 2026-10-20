@@ -64,13 +64,13 @@ export function ModelView({
       </div>
       <div>
         <p className="text-lg font-semibold tracking-tight">{model.name}</p>
-        <p className="text-xs text-zinc-600 dark:text-zinc-400">{model.model}</p>
+        <p className="text-xs text-ink-2">{model.model}</p>
       </div>
       <ModelRecall benchmark={benchmark} model={model} height={180} detailed />
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[0.8125rem]">
         {facts.map(([term, value]) => (
           <div key={term} className="contents">
-            <dt className="text-zinc-600 dark:text-zinc-400">{term}</dt>
+            <dt className="text-ink-2">{term}</dt>
             <dd className="tabular-nums">{value}</dd>
           </div>
         ))}
@@ -85,7 +85,7 @@ export function ModelView({
               className="flex w-full justify-between gap-2 px-2.5 py-1.5 text-left text-[0.8125rem] hover:bg-muted"
             >
               <span>{q.question}</span>
-              <span className="whitespace-nowrap text-zinc-500 tabular-nums">
+              <span className="whitespace-nowrap text-ink-3 tabular-nums">
                 {missedRank(ranks[q.index])}
               </span>
             </button>

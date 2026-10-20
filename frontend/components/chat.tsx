@@ -17,6 +17,7 @@ import { ConversationTurn } from "./conversation-turn";
 import { Disclaimer } from "./disclaimer";
 import { ExportMenu } from "./export-menu";
 import { HelpDialog, HelpGuide } from "./help-guide";
+import { ModelStatus } from "./model-status";
 import { useBookmarkUndo } from "./saved-chats";
 
 type ChatProps = {
@@ -98,17 +99,18 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
       <ChatSidebar {...chatList} />
       <main className="mx-auto flex w-full max-w-3xl min-w-0 flex-1 flex-col px-4 sm:px-6">
         <header className="flex items-center justify-between gap-4 py-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <ChatDrawer {...chatList} />
-            <h1 className="text-xl font-semibold tracking-tight">Molecula</h1>
+            <h1 className="text-[17px] font-semibold tracking-tight">Molecula</h1>
+            <ModelStatus />
             {usage && (
               // Each answer shows its own line, so a phone leaves the total out of the header.
-              <p className="hidden text-xs text-zinc-500 tabular-nums sm:block dark:text-zinc-400 print:hidden">
+              <p className="hidden font-mono text-[11px] text-ink-3 tabular-nums sm:block print:hidden">
                 This chat: {formatUsage(usage)}
               </p>
             )}
           </div>
-          <nav className="flex items-center gap-3 text-sm print:hidden">
+          <nav className="flex items-center gap-4 text-[13.5px] text-ink-2 print:hidden">
             <Link href="/drugs" className="font-medium underline-offset-4 hover:underline">
               Supported drugs
             </Link>
@@ -141,6 +143,8 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
                   <ConversationTurn
                     key={index}
                     turn={turn}
+                    number={index + 1}
+                    active={index === turns.length - 1}
                     onAsk={ask}
                     chatAnswering={pendingAnswer}
                     onRetry={index === turns.length - 1 ? retry : undefined}
@@ -150,12 +154,12 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
             </>
           )}
         </div>
-        <div className="sticky bottom-0 flex flex-col gap-2 border-t border-zinc-200 bg-background py-3 dark:border-zinc-800 print:static print:border-0">
+        <div className="sticky bottom-0 flex flex-col gap-2 border-t border-rule bg-background py-3 print:static print:border-0">
           <div className="contents print:hidden">
             <ChatComposer answering={pendingAnswer} onSend={ask} onStop={stop} />
           </div>
           {saved.available === false && (
-            <p className="text-sm text-sky-800 dark:text-sky-300 print:hidden">
+            <p className="text-sm text-ink print:hidden">
               History is off in this browser, so this chat isn&apos;t saved.
             </p>
           )}
@@ -176,7 +180,7 @@ function PrintedTitle({ title }: { title: string }) {
   return (
     <section aria-label="Printed conversation" className="hidden print:block">
       <h2 className="text-lg font-semibold">{title}</h2>
-      <p className="text-sm text-zinc-600">Printed on {printedOn}</p>
+      <p className="text-sm text-ink-2">Printed on {printedOn}</p>
     </section>
   );
 }
@@ -184,7 +188,7 @@ function PrintedTitle({ title }: { title: string }) {
 function EmptyState({ onAsk }: { onAsk: (question: string) => void }) {
   return (
     <section className="flex flex-col gap-4">
-      <p className="text-zinc-600 dark:text-zinc-400">
+      <p className="text-ink-2">
         Ask about medicines: what they are for, how they work and what they bind to.
       </p>
       <HelpGuide onAsk={onAsk} />

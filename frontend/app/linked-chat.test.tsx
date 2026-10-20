@@ -11,6 +11,7 @@ import { chatFrame, IN_CONVERSATION, stubChatStream, stubPage } from "@/lib/test
 import { LinkedChat } from "./linked-chat";
 
 vi.mock("next/navigation", () => ({ useSearchParams: vi.fn() }));
+vi.mock("@/components/model-status", () => ({ ModelStatus: () => null }));
 
 type ActEnvironment = { IS_REACT_ACT_ENVIRONMENT?: boolean };
 

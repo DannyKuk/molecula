@@ -67,7 +67,7 @@ export function stubChatStream(opening = "") {
 }
 
 /** Matches a question in the conversation, not the printed title that repeats the first one. */
-export const IN_CONVERSATION = { selector: "[data-turn] > p" };
+export const IN_CONVERSATION = { selector: "[data-turn] > h2" };
 
 const WINDOW_HEIGHT = 800;
 

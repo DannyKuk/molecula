@@ -22,11 +22,13 @@ async function openChip(name: string | RegExp) {
 }
 
 describe("CitationChip", () => {
-  it("shows a cited passage as a chip naming the label and its section", () => {
+  it("shows a cited passage as a chip with its number, the label and its section", () => {
     const { container } = renderAnswer("Imatinib blocks BCR-ABL [1].");
 
-    expect(chips()).toEqual(["Gleevec · Mechanism of action"]);
-    expect(container.textContent).toBe("Imatinib blocks BCR-ABL Gleevec · Mechanism of action[1].");
+    expect(chips()).toEqual(["1Gleevec · Mechanism of action"]);
+    expect(container.textContent).toBe(
+      "Imatinib blocks BCR-ABL 1Gleevec · Mechanism of action[1].",
+    );
   });
 
   it("prints a run of citations as the numbers of the printed source list", () => {
@@ -56,7 +58,7 @@ describe("CitationChip", () => {
       "It is cleared by the liver [2][3]. It blocks BCR-ABL and is absorbed well [1, 2].",
     );
 
-    expect(chips()).toEqual(["Gleevec · Pharmacokinetics", "Gleevec · Mechanism of action +1"]);
+    expect(chips()).toEqual(["2Gleevec · Pharmacokinetics", "1Gleevec · Mechanism of action +1"]);
 
     const popover = await openChip("Sources: Gleevec · Pharmacokinetics");
     expect(popover.getAllByRole("listitem")).toHaveLength(2);
@@ -67,7 +69,7 @@ describe("CitationChip", () => {
   it("shows a cited PubChem page as a chip naming the site and the compound", async () => {
     renderAnswer("Imatinib weighs 493.6 g/mol [4].");
 
-    expect(chips()).toEqual(["PubChem · imatinib"]);
+    expect(chips()).toEqual(["4PubChem · imatinib"]);
     const popover = await openChip("Sources: PubChem · imatinib");
     expect(popover.getAllByRole("listitem")[0].textContent).toBe(
       "PubChem · imatinibOpen on PubChem",
@@ -80,7 +82,7 @@ describe("CitationChip", () => {
   it("joins a label passage and a page cited together into one chip", async () => {
     renderAnswer("Imatinib blocks BCR-ABL and weighs 493.6 g/mol [1][4].");
 
-    expect(chips()).toEqual(["Gleevec · Mechanism of action +1"]);
+    expect(chips()).toEqual(["1Gleevec · Mechanism of action +1"]);
     const popover = await openChip(/Sources/);
     expect(popover.getByRole("link", { name: "Open the label on DailyMed" })).toBeDefined();
     expect(popover.getByRole("link", { name: "Open on PubChem" })).toBeDefined();
@@ -89,7 +91,7 @@ describe("CitationChip", () => {
   it("reads gpt-oss's own brackets like the others", () => {
     renderAnswer("Imatinib blocks BCR-ABL【1】.");
 
-    expect(chips()).toEqual(["Gleevec · Mechanism of action"]);
+    expect(chips()).toEqual(["1Gleevec · Mechanism of action"]);
   });
 
   it("leaves out a citation that points at no passage, and keeps the ones beside it", () => {
@@ -97,9 +99,9 @@ describe("CitationChip", () => {
       "Sildenafil binds PDE5A【9】. Imatinib blocks BCR-ABL [9][1].",
     );
 
-    expect(chips()).toEqual(["Gleevec · Mechanism of action"]);
+    expect(chips()).toEqual(["1Gleevec · Mechanism of action"]);
     expect(container.textContent).toBe(
-      "Sildenafil binds PDE5A. Imatinib blocks BCR-ABL Gleevec · Mechanism of action[1].",
+      "Sildenafil binds PDE5A. Imatinib blocks BCR-ABL 1Gleevec · Mechanism of action[1].",
     );
   });
 
@@ -124,7 +126,7 @@ describe("CitationChip", () => {
     const { container } = renderAnswer("The pattern `[1]` stands for a citation [1].");
 
     expect(container.querySelector("code")?.textContent).toBe("[1]");
-    expect(chips()).toEqual(["Gleevec · Mechanism of action"]);
+    expect(chips()).toEqual(["1Gleevec · Mechanism of action"]);
   });
 
   it("shows a chip without an excerpt when the passage text is missing", async () => {

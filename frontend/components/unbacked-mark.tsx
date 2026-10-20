@@ -20,7 +20,7 @@ export function UnbackedMark({ claim, children }: { claim: number; children: Rea
         delay={150}
         nativeButton={false}
         render={<mark />}
-        className="cursor-help bg-transparent text-current underline decoration-amber-500 decoration-dotted decoration-2 underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500"
+        className="cursor-help bg-transparent text-current underline decoration-amber-500 decoration-dotted decoration-2 underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3"
       >
         {children}
       </PopoverTrigger>
@@ -28,7 +28,7 @@ export function UnbackedMark({ claim, children }: { claim: number; children: Rea
         <p className="font-medium text-amber-700 dark:text-amber-400">
           Not in Molecula&apos;s sources
         </p>
-        <p className="text-zinc-700 dark:text-zinc-300">{unbackedReason(checked)}</p>
+        <p className="text-ink-2">{unbackedReason(checked)}</p>
       </PopoverContent>
     </Popover>
   );

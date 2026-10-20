@@ -64,7 +64,7 @@ export function HelpGuide({ onAsk }: { onAsk: (question: string) => void }) {
       </section>
       <section className="flex flex-col gap-2">
         <h3 className="text-base font-semibold">What Molecula won&apos;t answer</h3>
-        <ul className="list-disc space-y-1 pl-5 text-zinc-700 dark:text-zinc-300">
+        <ul className="list-disc space-y-1 pl-5 text-ink-2">
           {WONT_ANSWER.map((item) => (
             <li key={item}>{item}</li>
           ))}
@@ -74,7 +74,7 @@ export function HelpGuide({ onAsk }: { onAsk: (question: string) => void }) {
           the US, 112 in the EU) or poison control now.
         </p>
       </section>
-      <section className="flex flex-col gap-2 text-zinc-700 dark:text-zinc-300">
+      <section className="flex flex-col gap-2 text-ink-2">
         <h3 className="text-base font-semibold text-foreground">Where the answers come from</h3>
         <p>
           Label facts come from the FDA drug labels (the same text as on DailyMed), chemical data
@@ -101,16 +101,16 @@ export function HelpGuide({ onAsk }: { onAsk: (question: string) => void }) {
 
 function TopicCard({ topic, onAsk }: { topic: Topic; onAsk: (question: string) => void }) {
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+    <div className="flex flex-col gap-2 rounded-lg border border-rule p-3">
       <h4 className="font-medium">{topic.title}</h4>
-      <p className="text-zinc-600 dark:text-zinc-400">{topic.description}</p>
+      <p className="text-ink-2">{topic.description}</p>
       <ul className="flex flex-col gap-1.5">
         {topic.examples.map((question) => (
           <li key={question}>
             <button
               type="button"
               onClick={() => onAsk(question)}
-              className="w-full rounded-md bg-zinc-100 px-3 py-2 text-left hover:bg-zinc-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              className="w-full rounded-md bg-panel px-3 py-2 text-left hover:bg-rule focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3"
             >
               {question}
             </button>
@@ -131,7 +131,7 @@ export function HelpDialog({ onAsk }: { onAsk: (question: string) => void }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         aria-label="Help"
-        className="flex size-9 items-center justify-center rounded-full border border-zinc-300 font-semibold hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-700 dark:hover:bg-zinc-900"
+        className="flex size-9 items-center justify-center rounded-full border border-rule-2 font-semibold hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3"
       >
         ?
       </DialogTrigger>

@@ -44,14 +44,18 @@ export function ChatComposer({ answering, onSend, onStop }: ChatComposerProps) {
           placeholder="Ask about a medicine, e.g. How does imatinib work?"
           aria-invalid={problem !== null}
           aria-describedby={problem ? problemId : undefined}
-          className="max-h-48 min-h-11 flex-1 resize-y rounded-lg border border-zinc-300 bg-transparent px-3 py-2 text-base outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-300 dark:border-zinc-700 dark:focus:border-zinc-400 dark:focus:ring-zinc-700"
+          className="max-h-48 min-h-11 flex-1 resize-y rounded-[10px] border border-rule-2 bg-card px-3 py-2 text-base outline-none focus:border-ink-3 focus:ring-2 focus:ring-rule-2"
         />
         {answering ? (
-          <button type="button" onClick={onStop} className={BUTTON_CLASSES}>
+          <button type="button" onClick={onStop} className={`${BUTTON_CLASSES} bg-ink text-page`}>
             Stop
           </button>
         ) : (
-          <button type="submit" disabled={!canSend} className={BUTTON_CLASSES}>
+          <button
+            type="submit"
+            disabled={!canSend}
+            className={`${BUTTON_CLASSES} bg-signal text-white`}
+          >
             Send
           </button>
         )}
@@ -66,4 +70,4 @@ export function ChatComposer({ answering, onSend, onStop }: ChatComposerProps) {
 }
 
 const BUTTON_CLASSES =
-  "min-h-11 rounded-lg bg-zinc-900 px-4 font-medium text-white hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300";
+  "min-h-11 rounded-lg px-4 font-semibold hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3 disabled:cursor-not-allowed disabled:opacity-40";

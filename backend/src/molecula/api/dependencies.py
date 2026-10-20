@@ -4,6 +4,7 @@ from fastapi import Depends, HTTPException, Request
 
 from molecula.guard.chat import GuardedChat
 from molecula.guard.limits import ChatLimits
+from molecula.schemas.chat import ChatModel
 from molecula.services.complexes import ComplexService
 from molecula.services.compounds import CompoundService
 from molecula.services.labels import LabelService
@@ -56,6 +57,17 @@ def chat(request: Request) -> GuardedChat:
 
 
 ChatDep = Annotated[GuardedChat, Depends(chat)]
+
+
+def chat_model(request: Request) -> ChatModel:
+    """The model that writes the answers; 503 when the chat is off, as for the chat itself."""
+    model: ChatModel | None = request.app.state.chat_model
+    if model is None:
+        raise HTTPException(status_code=503, detail="Chat is off.")
+    return model
+
+
+ChatModelDep = Annotated[ChatModel, Depends(chat_model)]
 
 
 def chat_limits(request: Request) -> ChatLimits:

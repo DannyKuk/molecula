@@ -37,10 +37,10 @@ export function SupportedDrugs({ drugs, onAsk }: SupportedDrugsProps) {
           autoComplete="off"
           spellCheck={false}
           aria-controls={listId}
-          className="w-full rounded-lg border border-zinc-300 bg-transparent px-3 py-2 text-base outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-300 dark:border-zinc-700 dark:focus:border-zinc-400 dark:focus:ring-zinc-700"
+          className="w-full rounded-lg border border-rule-2 bg-transparent px-3 py-2 text-base outline-none focus:border-ink-3 focus:ring-2 focus:ring-rule-2"
         />
       </div>
-      <p role="status" className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p role="status" className="text-sm text-ink-2">
         {resultSummary(query, matches.length, drugs.length, resolution?.status === "found")}
       </p>
       {offered.length > 0 && (
@@ -87,7 +87,7 @@ function SuggestionLine({
   onPick: (suggestion: Suggestion) => void;
 }) {
   return (
-    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+    <p className="text-sm text-ink-2">
       Did you mean{" "}
       {suggestions.map((suggestion, index) => (
         <span key={suggestion.alias}>
@@ -95,7 +95,7 @@ function SuggestionLine({
           <button
             type="button"
             onClick={() => onPick(suggestion)}
-            className="font-medium text-zinc-900 underline underline-offset-4 hover:text-zinc-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:text-zinc-100 dark:hover:text-zinc-300"
+            className="font-medium text-ink underline underline-offset-4 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3"
           >
             {suggestionLabel(suggestion)}
           </button>
@@ -124,7 +124,7 @@ function DrugButton({ drug, onAsk }: { drug: Drug; onAsk: (question: string) => 
       onClick={() => onAsk(questionAbout(drug))}
       aria-labelledby={nameId}
       aria-describedby={describedBy || undefined}
-      className="flex h-full w-full flex-col items-start gap-1 rounded-lg border border-zinc-200 px-4 py-3 text-left hover:border-zinc-400 hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-800 dark:hover:border-zinc-600 dark:hover:bg-zinc-900"
+      className="flex h-full w-full flex-col items-start gap-1 rounded-lg border border-rule px-4 py-3 text-left hover:border-ink-3 hover:bg-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3"
     >
       <span className="flex w-full flex-wrap items-center justify-between gap-2">
         <span id={nameId} className="font-medium">
@@ -133,14 +133,14 @@ function DrugButton({ drug, onAsk }: { drug: Drug; onAsk: (question: string) => 
         {drug.has_3d && (
           <span
             id={badgeId}
-            className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-800 dark:bg-sky-950 dark:text-sky-300"
+            className="rounded-full bg-panel px-2 py-0.5 text-xs font-medium text-ink"
           >
             3D structure
           </span>
         )}
       </span>
       {hasAliases && (
-        <span id={aliasesId} className="text-sm break-words text-zinc-600 dark:text-zinc-400">
+        <span id={aliasesId} className="text-sm break-words text-ink-2">
           {drug.aliases.join(", ")}
         </span>
       )}

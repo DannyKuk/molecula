@@ -21,7 +21,7 @@ export function Benchmarks({ history }: { history?: ChatHistory }) {
       <main className="mx-auto flex w-full max-w-6xl min-w-0 flex-1 flex-col gap-6 px-4 py-8 sm:px-6 sm:py-12">
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <ChatDrawer {...chats} />
-          <label className="ml-auto inline-flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+          <label className="ml-auto inline-flex items-center gap-2 text-sm text-ink-2">
             <span className="max-sm:sr-only">Benchmark</span>
             <select
               value={id}
@@ -37,7 +37,7 @@ export function Benchmarks({ history }: { history?: ChatHistory }) {
           </label>
         </div>
         {benchmark.render()}
-        <footer className="mt-auto border-t border-zinc-200 pt-6 dark:border-zinc-800">
+        <footer className="mt-auto border-t border-rule pt-6">
           <Disclaimer />
         </footer>
       </main>

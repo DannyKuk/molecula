@@ -98,7 +98,7 @@ function SourceLink({ href, children }: { href: string; children: ReactNode }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="rounded-full border border-zinc-300 px-2 py-0.5 text-xs hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-700 dark:hover:bg-zinc-900"
+      className="rounded-full border border-rule-2 px-2 py-0.5 text-xs hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3"
     >
       {children}
     </a>

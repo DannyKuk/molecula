@@ -55,18 +55,14 @@ function Passage({ passage, cited }: { passage: LabelPassage; cited: boolean }) 
   return (
     <details>
       <summary className="cursor-pointer">
-        <span className="text-muted-foreground tabular-nums">[{passage.ref}]</span>{" "}
+        <span className="font-mono text-xs font-semibold text-signal">[{passage.ref}]</span>{" "}
         {passage.brand ?? passage.substance.toLowerCase()} · {sectionName(passage.section)}
         {passage.effective_time && (
           <span className="text-muted-foreground"> · {labelDate(passage.effective_time)}</span>
         )}
-        {cited && (
-          <span className="ml-1 rounded-full bg-zinc-100 px-2 py-0.5 text-xs dark:bg-zinc-800">
-            cited
-          </span>
-        )}
+        {cited && <span className="ml-1 rounded-full bg-panel px-2 py-0.5 text-xs">cited</span>}
       </summary>
-      <p className="mt-1 rounded-md bg-zinc-50 p-2 text-xs leading-relaxed dark:bg-zinc-900">
+      <p className="mt-1 rounded-r-md border-l-2 border-signal bg-card p-2 text-xs leading-relaxed">
         {passage.text}
       </p>
       <p className="mt-1 text-xs">

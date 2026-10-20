@@ -33,16 +33,16 @@ export function ToolCard({
 }) {
   return (
     <Collapsible>
-      <CollapsibleTrigger className="group flex flex-wrap items-center gap-x-2 gap-y-1 rounded text-left text-zinc-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:text-zinc-400">
+      <CollapsibleTrigger className="group flex flex-wrap items-center gap-x-2 gap-y-1 rounded text-left text-ink-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3">
         <StepDot current={current} />
         <span className="underline-offset-4 group-hover:underline">{text}</span>
-        <span className="text-zinc-500">· {summary(card)}</span>
+        <span className="font-mono text-xs text-ink-3">· {summary(card)}</span>
         <ChevronRight
           aria-hidden
           className="size-3.5 shrink-0 transition-transform group-data-[panel-open]:rotate-90"
         />
       </CollapsibleTrigger>
-      <CollapsibleContent className="mt-1.5 mb-2 ml-[2px] border-l border-zinc-200 pl-4 dark:border-zinc-800">
+      <CollapsibleContent className="mt-1.5 mb-2 ml-[2px] border-l border-rule pl-4">
         {body(card, answer)}
       </CollapsibleContent>
     </Collapsible>

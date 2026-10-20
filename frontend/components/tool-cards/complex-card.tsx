@@ -13,7 +13,7 @@ export function ComplexCard({ result }: { result: DrugComplex }) {
       {result.caption && (
         // The caption says the structure is a stand-in (a related protein or species, the
         // active form), so it comes before the facts it qualifies.
-        <p className="mb-3 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sky-900 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-200">
+        <p className="mb-3 rounded-md border border-rule-2 bg-panel px-3 py-2 text-ink">
           {result.caption}
         </p>
       )}
@@ -47,7 +47,7 @@ export function ComplexCard({ result }: { result: DrugComplex }) {
               {result.hydrogen_bonds.map((bond) => (
                 <tr
                   key={`${bond.chain}:${bond.residue}:${bond.residue_atom}:${bond.ligand_atom}`}
-                  className="border-t border-zinc-200 dark:border-zinc-800"
+                  className="border-t border-rule"
                 >
                   <td className="py-1">{bond.residue}</td>
                   <td>{bond.chain}</td>
@@ -71,7 +71,7 @@ export function ComplexCard({ result }: { result: DrugComplex }) {
           render={(contact) => (
             <span
               key={`${contact.chain}:${contact.residue}`}
-              className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs dark:border-zinc-800 dark:bg-zinc-900"
+              className="rounded-full border border-rule bg-card px-2 py-0.5 text-xs"
             >
               {contact.residue}{" "}
               <span className="text-muted-foreground tabular-nums">

@@ -49,13 +49,13 @@ export type ChatListProps = {
 };
 
 const RAIL_BOOKMARKS = 5;
-const OUTLINED = "border-zinc-500 text-foreground dark:border-zinc-400";
+const OUTLINED = "border-ink-3 text-foreground";
 
 const ICON =
-  "text-zinc-600 hover:text-foreground dark:text-zinc-400 [&_svg:not([class*='size-'])]:size-4.5";
+  "text-ink-2 hover:bg-rule hover:text-foreground [&_svg:not([class*='size-'])]:size-4.5";
 
 const SIDEBAR_CLASSES =
-  "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-zinc-200 bg-zinc-50 md:flex dark:border-zinc-800 dark:bg-[oklch(0.17_0.004_286)] print:hidden";
+  "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-rule bg-panel md:flex print:hidden";
 
 /** The chats on a wide screen: a rail of icons, or once expanded, the whole list. */
 export function ChatSidebar(props: ChatListProps) {
@@ -122,7 +122,7 @@ function RailBookmarks({ conversations, bookmarks, activeId, answeringId, onOpen
     <div
       role="group"
       aria-label="Bookmarks"
-      className="mt-2 flex flex-col items-center gap-1 border-t border-zinc-200 pt-3 dark:border-zinc-800"
+      className="mt-2 flex flex-col items-center gap-1 border-t border-rule pt-3"
     >
       {numbered.map(({ id, title }, index) => (
         <IconButton
@@ -155,7 +155,7 @@ function RailBookmarks({ conversations, bookmarks, activeId, answeringId, onOpen
                 onClick={() => onOpen(id)}
                 className={cn(id === activeId && "font-medium")}
               >
-                <span aria-hidden className="w-4 shrink-0 text-xs text-zinc-500 tabular-nums">
+                <span aria-hidden className="w-4 shrink-0 text-xs text-ink-3 tabular-nums">
                   {index + 1}
                 </span>
                 <span className="truncate">{title}</span>
@@ -185,7 +185,7 @@ export function ChatDrawer(props: ChatListProps) {
       >
         <Menu />
       </DialogTrigger>
-      <SheetContent className="bg-zinc-50 dark:bg-[oklch(0.17_0.004_286)]">
+      <SheetContent className="bg-panel">
         <div className="flex min-h-9 items-center justify-between px-3 pt-3">
           <DialogTitle className="pl-1 text-[15px] font-semibold">Chats</DialogTitle>
           <DialogClose render={<IconButton label="Close chats" />}>
@@ -212,7 +212,7 @@ function ChatList({ onNew, removedBookmark, ...props }: ChatListProps) {
         </Button>
         <Link
           href="/benchmarks"
-          className="mt-1 flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-zinc-600 hover:bg-zinc-200/60 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-800 [&_svg]:size-4"
+          className="mt-1 flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-ink-2 hover:bg-rule hover:text-foreground [&_svg]:size-4"
         >
           <ChartColumn />
           Benchmarks
@@ -223,7 +223,7 @@ function ChatList({ onNew, removedBookmark, ...props }: ChatListProps) {
       </div>
       {removedBookmark && <UndoBar {...removedBookmark} />}
       {props.available !== false && (
-        <p className="border-t border-zinc-200 px-4 py-3 text-xs text-zinc-500 dark:border-zinc-800">
+        <p className="border-t border-rule px-4 py-3 text-xs text-ink-3">
           Saved in this browser only.
         </p>
       )}
@@ -244,7 +244,7 @@ function ChatGroups({
   if (available === null) return null;
   if (conversations.length === 0) {
     return (
-      <div className="flex flex-col gap-2 px-3 py-4 text-sm text-zinc-600 dark:text-zinc-400">
+      <div className="flex flex-col gap-2 px-3 py-4 text-sm text-ink-2">
         <span className="font-medium text-foreground">No chats yet</span>
         Your questions show up here, titled by the first question. They&apos;re saved in this
         browser only, not on a server.
@@ -253,7 +253,7 @@ function ChatGroups({
   }
   return groupChats(conversations, bookmarks, new Date()).map((group) => (
     <section key={group.label} aria-label={group.label}>
-      <h2 className="px-2 pt-3 pb-1 text-xs font-medium text-zinc-500">{group.label}</h2>
+      <h2 className="px-2 pt-3 pb-1 text-xs font-medium text-ink-3">{group.label}</h2>
       <ul className="flex flex-col">
         {group.conversations.map((conversation) => (
           <HistoryRow
@@ -279,7 +279,7 @@ function AnsweringBadge() {
   return (
     <LoaderCircle
       aria-hidden
-      className="absolute top-0.5 right-0.5 size-3 animate-spin text-zinc-500 motion-reduce:animate-none"
+      className="absolute top-0.5 right-0.5 size-3 animate-spin text-ink-3 motion-reduce:animate-none"
     />
   );
 }
@@ -288,7 +288,7 @@ function UndoBar({ title, onUndo }: { title: string; onUndo: () => void }) {
   return (
     <div
       role="status"
-      className="mx-2 mb-2 flex items-center gap-1 rounded-md bg-zinc-900 py-1.5 pr-1.5 pl-3 text-[13px] text-zinc-50 dark:bg-zinc-100 dark:text-zinc-900"
+      className="mx-2 mb-2 flex items-center gap-1 rounded-md bg-ink py-1.5 pr-1.5 pl-3 text-[13px] text-page"
     >
       <p className="min-w-0 flex-1 truncate">
         Removed &apos;
@@ -300,7 +300,7 @@ function UndoBar({ title, onUndo }: { title: string; onUndo: () => void }) {
         variant="ghost"
         size="sm"
         onClick={onUndo}
-        className="font-semibold text-inherit hover:bg-white/15 hover:text-inherit dark:hover:bg-black/10"
+        className="font-semibold text-inherit hover:bg-page/15 hover:text-inherit"
       >
         Undo
       </Button>
@@ -310,7 +310,7 @@ function UndoBar({ title, onUndo }: { title: string; onUndo: () => void }) {
 
 function HistoryOff() {
   return (
-    <div className="mx-1 my-2 flex flex-col gap-1 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2.5 text-[13px] leading-4.5 text-sky-900 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-200">
+    <div className="mx-1 my-2 flex flex-col gap-1 rounded-lg border border-rule-2 bg-card px-3 py-2.5 text-[13px] leading-4.5 text-ink">
       <b className="font-semibold">History is off in this browser</b>
       It doesn&apos;t let Molecula save chats (a private window, or storage is full). The chat still
       works; this conversation is gone when you close the tab.

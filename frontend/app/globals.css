@@ -21,8 +21,9 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-sans: var(--font-geist-sans);
-  --font-heading: var(--font-geist-sans);
+  --font-sans: var(--font-inter-tight);
+  --font-heading: var(--font-inter-tight);
+  --font-mono: var(--font-jetbrains-mono);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -37,32 +38,53 @@
   --color-app-model-foreground: var(--app-model-foreground);
   --color-evidence: var(--evidence);
   --color-evidence-foreground: var(--evidence-foreground);
+  --color-page: var(--page);
+  --color-panel: var(--panel);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-rule: var(--rule);
+  --color-rule-2: var(--rule-2);
+  --color-signal: var(--signal);
+  --color-signal-soft: var(--signal-soft);
+  --color-ok: var(--ok);
 }
 
 /* Dark mode is for the screen only, so a page printed from a dark browser comes out dark on white. */
 @custom-variant dark (@media screen and (prefers-color-scheme: dark));
 
-/* The tokens follow the Tailwind zinc scale the hand-written components use, and dark mode follows
-   the system setting as before, not shadcn's `.dark` class. */
+/* The "instrument" look (#294): warm light-grey surfaces like lab hardware, soft contrast with no
+   pure black or white, and one signal orange kept for what is live or being read, the Ask button,
+   the steps and the sources. Dark mode follows the system setting, not shadcn's `.dark` class. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --card: #ffffff;
-  --card-foreground: #171717;
-  --popover: #ffffff;
-  --popover-foreground: #171717;
-  --primary: oklch(0.21 0.006 285.885);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.442 0.017 285.786);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.871 0.006 286.286);
-  --ring: oklch(0.552 0.016 285.938);
+  --page: #e7e7e2;
+  --panel: #dfdfd9;
+  --card: #f2f2ee;
+  --ink: #1f2226;
+  --ink-2: #50555c;
+  --ink-3: #8b9097;
+  --rule: #d3d3cc;
+  --rule-2: #b9bab3;
+  --signal: #f2550f;
+  --signal-soft: #ffe4d6;
+  --ok: #3c8c4e;
+  --background: var(--page);
+  --foreground: var(--ink);
+  --card-foreground: var(--ink);
+  --popover: var(--card);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--card);
+  --secondary: var(--panel);
+  --secondary-foreground: var(--ink);
+  --muted: var(--panel);
+  --muted-foreground: var(--ink-2);
+  --accent: var(--panel);
+  --accent-foreground: var(--ink);
+  --destructive: #c4321a;
+  --border: var(--rule);
+  --input: var(--rule-2);
+  --ring: var(--ink-3);
   --radius: 0.625rem;
   /* Benchmark charts: two series checked for colour blindness, light and dark (#274), a blue
      ramp for the rank of the answer, and the mark for the app's own model. */
@@ -79,24 +101,18 @@
 
 @media screen and (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --card: #0a0a0a;
-    --card-foreground: #ededed;
-    --popover: #0a0a0a;
-    --popover-foreground: #ededed;
-    --primary: oklch(0.967 0.001 286.375);
-    --primary-foreground: oklch(0.21 0.006 285.885);
-    --secondary: oklch(0.21 0.006 285.885);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.21 0.006 285.885);
-    --muted-foreground: oklch(0.705 0.015 286.067);
-    --accent: oklch(0.21 0.006 285.885);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(0.274 0.006 286.033);
-    --input: oklch(0.37 0.013 285.805);
-    --ring: oklch(0.552 0.016 285.938);
+    --page: #18191b;
+    --panel: #1e2022;
+    --card: #232528;
+    --ink: #e9e9e4;
+    --ink-2: #a9adb2;
+    --ink-3: #71767c;
+    --rule: #2c2f33;
+    --rule-2: #41454a;
+    --signal: #ff6a26;
+    --signal-soft: #3a2014;
+    --ok: #7fd18f;
+    --destructive: #ff6b4a;
     --series-drug: #3987e5;
     --series-index: #d95926;
     --rank-first: #9ec5f4;
@@ -109,12 +125,29 @@
   }
 }
 
+/* Paper stays white with dark text, whatever the screen shows. */
+@media print {
+  :root {
+    --page: #ffffff;
+    --panel: #ffffff;
+    --card: #ffffff;
+    --ink: #171717;
+    --ink-2: #404040;
+    --ink-3: #525252;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* Links stay ink; their underline is a fine line in a lighter shade of the text. */
+  a {
+    text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+    text-decoration-thickness: 1px;
   }
   /* Reserves the scrollbar's space before the page overflows, so the page doesn't shift left when a
      classic (non-overlay) scrollbar appears, as on Windows. */
