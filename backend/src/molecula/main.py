@@ -41,6 +41,7 @@ from molecula.services.targets import TargetService
 from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
 from molecula.store.index import LabelIndex
+from molecula.store.keywords import KeywordIndex
 from molecula.store.labels import LabelStore
 from molecula.store.structures import ComplexFiles, ConformerFiles
 from molecula.store.targets import TargetStore
@@ -113,12 +114,26 @@ def open_label_index(settings: Settings) -> LabelIndex | None:
 
 
 def open_label_retriever(settings: Settings, index: LabelIndex) -> LabelRetriever:
+    """The label search in RETRIEVAL_MODE. Without the keyword index, which a store fetched
+    before #44 lacks, it searches by embeddings alone until `ingest fetch` builds it."""
+    keywords = KeywordIndex(settings.keyword_index_path)
+    mode = settings.retrieval_mode
+    if mode != "dense" and not keywords.exists():
+        logger.warning(
+            "No keyword index at %s; RETRIEVAL_MODE=%s searches by embeddings only. "
+            "`python -m molecula.ingest fetch` builds it from the label index",
+            settings.keyword_index_path,
+            mode,
+        )
+        mode = "dense"
     return LabelRetriever(
         index,
         get_embeddings(settings),
         top_k=settings.retrieval_top_k,
         min_score=settings.retrieval_min_score,
         section_group_boost=settings.retrieval_section_group_boost,
+        mode=mode,
+        keywords=keywords,
     )
 
 

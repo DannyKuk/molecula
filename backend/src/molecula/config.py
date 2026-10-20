@@ -65,6 +65,8 @@ class Settings(BaseSettings):
     # Added to the cosine similarity of a chunk in the extracted section groups. Chosen with
     # bge-m3 on the retrieval questions; re-measure when the embeddings or ranking change (#112).
     retrieval_section_group_boost: Annotated[float, Field(ge=0.0, le=2.0)] = 0.15
+    # "hybrid" adds BM25 keyword search to the embeddings, merged by reciprocal rank fusion (#44).
+    retrieval_mode: Literal["dense", "bm25", "hybrid"] = "dense"
     # Model calls per answer; the last one gets no tools, so the agent answers (#124).
     chat_max_steps: Annotated[int, Field(ge=1, le=20)] = 8
     chat_timeout_seconds: Annotated[float, Field(gt=0)] = 180.0
@@ -114,6 +116,10 @@ class Settings(BaseSettings):
     @property
     def index_dir(self) -> Path:
         return self.build_dir / "index" / "chroma"
+
+    @property
+    def keyword_index_path(self) -> Path:
+        return self.build_dir / "index" / "bm25.db"
 
     @property
     def models_dir(self) -> Path:

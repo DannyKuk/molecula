@@ -35,7 +35,7 @@ cp .env.example .env              # fill in what you need; every key is optional
 docker compose up --build         # frontend on http://localhost:3000, backend on http://localhost:8000/health
 ```
 
-The first start downloads the data into `data/build/`: the built store from this repo's GitHub release (`STORE_RELEASE`, about 80 MB) and the embedding model bge-m3 from Hugging Face (about 2.3 GB). Both are checked by SHA-256. Later starts find them and download nothing. This needs the internet once, also with `OFFLINE=1`; `OFFLINE` only decides whether the app calls cloud models. `python -m molecula.ingest fetch --force` replaces the store with the release ([data plan](docs/data-plan.md#4-architecture-answers-come-from-the-local-store)).
+The first start downloads the data into `data/build/`: the built store from this repo's GitHub release (`STORE_RELEASE`, about 80 MB) and the embedding model bge-m3 from Hugging Face (about 2.3 GB). Both are checked by SHA-256. Later starts find them and download nothing; a store without the BM25 index gets it built from the vector index. This needs the internet once, also with `OFFLINE=1`; `OFFLINE` only decides whether the app calls cloud models. `python -m molecula.ingest fetch --force` replaces the store with the release ([data plan](docs/data-plan.md#4-architecture-answers-come-from-the-local-store)).
 
 ### Without Docker
 

@@ -45,6 +45,7 @@ from molecula.services.labels import LabelService
 from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
 from molecula.store.index import LabelIndex
+from molecula.store.keywords import KeywordIndex
 from molecula.store.labels import LabelStore
 from molecula.store.structures import ConformerFiles
 
@@ -124,6 +125,8 @@ def search(settings: Settings) -> tuple[LabelIndex, LabelRetriever]:
         top_k=TOP_K,
         min_score=-1.0,
         section_group_boost=settings.retrieval_section_group_boost,
+        mode=settings.retrieval_mode,
+        keywords=KeywordIndex(settings.keyword_index_path),
     )
     return index, retriever
 

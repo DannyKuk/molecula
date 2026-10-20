@@ -11,6 +11,7 @@ from molecula.ingest.index import build_index, run
 from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
 from molecula.store.index import LabelIndex
+from molecula.store.keywords import KeywordIndex
 from molecula.store.labels import LabelSection, LabelStore
 from store_records import GLEEVEC, IMATINIB
 
@@ -47,14 +48,22 @@ def store_labels(settings: Settings) -> None:
 
 def test_build_indexes_every_chunk_with_the_model_name(tmp_path: Path) -> None:
     index = LabelIndex(tmp_path / "chroma")
+    keywords = KeywordIndex(tmp_path / "bm25.db")
 
     chunks = build_index(
-        [(5291, GLEEVEC_WITH_LONG_DOSING)], words, DeterministicFakeEmbedding(size=8), index, "fake"
+        [(5291, GLEEVEC_WITH_LONG_DOSING)],
+        words,
+        DeterministicFakeEmbedding(size=8),
+        index,
+        keywords,
+        "fake",
     )
 
     assert len(chunks) > 2
     assert index.chunks() == sorted(chunks, key=lambda chunk: chunk.id)
     assert index.model() == "fake"
+    found = keywords.search("CML dose", len(chunks) + 1)
+    assert sorted(chunk.id for chunk, _ in found) == sorted(chunk.id for chunk in chunks)
 
 
 def test_overdosage_is_indexed_and_flagged_sensitive(tmp_path: Path) -> None:
@@ -64,7 +73,14 @@ def test_overdosage_is_indexed_and_flagged_sensitive(tmp_path: Path) -> None:
     gleevec = replace(GLEEVEC, sections=(*GLEEVEC.sections, overdosage))
     index = LabelIndex(tmp_path / "chroma")
 
-    build_index([(5291, gleevec)], words, DeterministicFakeEmbedding(size=8), index, "fake")
+    build_index(
+        [(5291, gleevec)],
+        words,
+        DeterministicFakeEmbedding(size=8),
+        index,
+        KeywordIndex(tmp_path / "bm25.db"),
+        "fake",
+    )
 
     indexed = [chunk for chunk in index.chunks() if chunk.section == "overdosage"]
     assert [(chunk.section_group, chunk.sensitive) for chunk in indexed] == [("overdosage", True)]
@@ -74,11 +90,15 @@ def test_rebuilding_gives_the_same_chunks(tmp_path: Path) -> None:
     index = LabelIndex(tmp_path / "chroma")
     embeddings = DeterministicFakeEmbedding(size=8)
 
-    build_index([(5291, GLEEVEC_WITH_LONG_DOSING)], words, embeddings, index, "fake")
+    keywords = KeywordIndex(tmp_path / "bm25.db")
+
+    build_index([(5291, GLEEVEC_WITH_LONG_DOSING)], words, embeddings, index, keywords, "fake")
     first = index.chunks()
-    build_index([(5291, GLEEVEC_WITH_LONG_DOSING)], words, embeddings, index, "fake")
+    first_found = keywords.search("dose sentence of the label", 100)
+    build_index([(5291, GLEEVEC_WITH_LONG_DOSING)], words, embeddings, index, keywords, "fake")
 
     assert index.chunks() == first
+    assert keywords.search("dose sentence of the label", 100) == first_found
 
 
 def test_step_builds_the_index_from_the_store(
@@ -100,6 +120,7 @@ def test_step_builds_the_index_from_the_store(
         "dosage_and_administration",
     }
     assert index.model() == "BAAI/bge-m3"
+    assert KeywordIndex(settings.keyword_index_path).search("CML", 5)
 
 
 def test_step_without_labels_fails_with_a_hint(

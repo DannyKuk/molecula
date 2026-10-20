@@ -10,8 +10,9 @@ from langchain_core.embeddings import Embeddings
 from molecula.rag.retriever import LabelRetriever
 from molecula.schemas.compounds import Resolution
 from molecula.schemas.labels import SectionGroup
-from molecula.schemas.retrieval import DrugFilter, LabelFilter, LabelQuery
+from molecula.schemas.retrieval import DrugFilter, LabelFilter, LabelQuery, RetrievalMode
 from molecula.store.index import Chunk, LabelIndex
+from molecula.store.keywords import KeywordIndex
 
 MODEL = "keyword-fake"
 VOCABULARY = ["nausea", "kinase", "bleeding", "fever", "pain"]
@@ -328,3 +329,114 @@ def test_a_product_type_without_the_section_widens_to_every_product_type(
 
     assert retrieval.chunks[0].id == IMATINIB_MECHANISM.id
     assert retrieval.widened == ["labels"]
+
+
+IMATINIB_INTERACTIONS = replace(
+    IMATINIB_SIDE_EFFECTS,
+    id="gleevec:drug_interactions:0",
+    text="strong CYP3A4 inhibitors raise imatinib levels so watch for bleeding and nausea",
+    section="drug_interactions",
+    section_group="interactions",
+)
+WITH_INTERACTIONS = [*CHUNKS, IMATINIB_INTERACTIONS]
+
+
+@pytest.fixture
+def keywords(tmp_path: Path) -> KeywordIndex:
+    keywords = KeywordIndex(tmp_path / "bm25.db")
+    keywords.rebuild(WITH_INTERACTIONS)
+    return keywords
+
+
+@pytest.fixture
+def both_index(tmp_path: Path) -> LabelIndex:
+    index = LabelIndex(tmp_path / "chroma")
+    texts = [chunk.text for chunk in WITH_INTERACTIONS]
+    index.rebuild(WITH_INTERACTIONS, KeywordEmbeddings().embed_documents(texts), MODEL)
+    return index
+
+
+def in_mode(
+    mode: RetrievalMode, index: LabelIndex, keywords: KeywordIndex, top_k: int = 10
+) -> LabelRetriever:
+    return LabelRetriever(
+        index,
+        KeywordEmbeddings(),
+        top_k=top_k,
+        min_score=-1.0,
+        section_group_boost=BOOST,
+        mode=mode,
+        keywords=keywords,
+    )
+
+
+def test_an_exact_term_the_embeddings_miss_is_found_by_hybrid_search(
+    both_index: LabelIndex, keywords: KeywordIndex
+) -> None:
+    imatinib = label_filter([IMATINIB])
+
+    dense = in_mode("dense", both_index, keywords, top_k=2).retrieve("CYP3A4", imatinib)
+    hybrid = in_mode("hybrid", both_index, keywords, top_k=2).retrieve("CYP3A4", imatinib)
+
+    assert IMATINIB_INTERACTIONS.id not in [chunk.id for chunk in dense.chunks]
+    assert hybrid.chunks[0].id == IMATINIB_INTERACTIONS.id
+    assert hybrid.chunks[0].bm25_rank == 1
+
+
+@pytest.mark.parametrize("mode", ["bm25", "hybrid"])
+def test_the_filter_narrows_the_keyword_search_too(
+    both_index: LabelIndex, keywords: KeywordIndex, mode: RetrievalMode
+) -> None:
+    retrieval = in_mode(mode, both_index, keywords).retrieve(
+        "CYP3A4 bleeding", label_filter([IBUPROFEN], section_groups=["adverse_reactions"])
+    )
+
+    assert {chunk.cid for chunk in retrieval.chunks} == {IBUPROFEN.cid}
+    assert IBUPROFEN_SIDE_EFFECTS.id in [chunk.id for chunk in retrieval.chunks]
+
+
+def test_hybrid_ranks_by_reciprocal_rank_fusion(
+    both_index: LabelIndex, keywords: KeywordIndex
+) -> None:
+    retrieval = in_mode("hybrid", both_index, keywords).retrieve(
+        "nausea CYP3A4 kinase", label_filter([IMATINIB])
+    )
+
+    for chunk in retrieval.chunks:
+        ranks = [rank for rank in (chunk.dense_rank, chunk.bm25_rank) if rank is not None]
+        assert chunk.fused_score == pytest.approx(sum(1 / (60 + rank) for rank in ranks))
+    fused = [chunk.fused_score or 0.0 for chunk in retrieval.chunks]
+    assert fused == sorted(fused, reverse=True)
+    assert retrieval.chunks[0].dense_rank and retrieval.chunks[0].bm25_rank
+
+
+def test_keyword_search_alone_keeps_the_cosine_similarity_as_the_score(
+    both_index: LabelIndex, keywords: KeywordIndex
+) -> None:
+    dense = in_mode("dense", both_index, keywords).retrieve("nausea CYP3A4")
+    bm25 = in_mode("bm25", both_index, keywords).retrieve("nausea CYP3A4")
+
+    similarity = {chunk.id: chunk.score for chunk in dense.chunks}
+    assert bm25.chunks[0].id == IMATINIB_INTERACTIONS.id
+    assert all(chunk.dense_rank is None and chunk.bm25_rank for chunk in bm25.chunks)
+    for chunk in bm25.chunks:
+        assert chunk.score == pytest.approx(similarity[chunk.id])
+
+
+def test_dense_search_leaves_the_keyword_ranks_empty(
+    both_index: LabelIndex, keywords: KeywordIndex
+) -> None:
+    retrieval = in_mode("dense", both_index, keywords).retrieve("nausea CYP3A4")
+
+    assert [chunk.dense_rank for chunk in retrieval.chunks] == list(
+        range(1, len(retrieval.chunks) + 1)
+    )
+    assert all(c.bm25_rank is None and c.fused_score is None for c in retrieval.chunks)
+
+
+@pytest.mark.parametrize("mode", ["bm25", "hybrid"])
+def test_keyword_modes_need_the_keyword_index(index: LabelIndex, mode: RetrievalMode) -> None:
+    with pytest.raises(ValueError, match="keyword index"):
+        LabelRetriever(
+            index, KeywordEmbeddings(), top_k=5, min_score=0.0, section_group_boost=BOOST, mode=mode
+        )

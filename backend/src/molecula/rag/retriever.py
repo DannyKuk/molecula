@@ -1,21 +1,43 @@
 from collections.abc import Sequence
+from dataclasses import dataclass
+from math import sqrt
 from typing import Any
 
 from langchain_core.embeddings import Embeddings
 
-from molecula.schemas.retrieval import LabelFilter, Retrieval, RetrievedChunk, Widening
+from molecula.rag.fusion import reciprocal_rank_fusion
+from molecula.schemas.retrieval import (
+    LabelFilter,
+    Retrieval,
+    RetrievalMode,
+    RetrievedChunk,
+    Widening,
+)
 from molecula.store.index import Chunk, LabelIndex
+from molecula.store.keywords import KeywordIndex
 from molecula.store.labels import label_date
+
+# Chunks each search keeps before fusion, so one the other search ranks high can still make top_k.
+FUSION_DEPTH = 20
+
+
+@dataclass(frozen=True)
+class Query:
+    text: str
+    vector: list[float]
 
 
 class LabelRetriever:
-    """Similarity search over the label chunks, narrowed by a checked `LabelFilter`.
+    """Search over the label chunks, narrowed by a checked `LabelFilter`.
 
     The drugs, their labels and the product type narrow the search; the section groups only
     rank it. A chunk in one of the filter's groups counts `section_group_boost` higher, so a
     wrong group the chat model picks still leaves the drug's other sections in reach. The
     `top_k` best chunks are candidates; those whose own score is below `min_score` are dropped
     but still returned, so the retrieval trace can show them.
+
+    `mode` picks the ranking: "dense" by embedding similarity, "bm25" by the keyword index, and
+    "hybrid" both, each searched `FUSION_DEPTH` deep and merged by reciprocal rank fusion (#44).
 
     A filter with several drugs searches each drug on its own and keeps its `top_k` best
     chunks, so a drug whose label matches the question better can't crowd out the others (#255).
@@ -29,12 +51,18 @@ class LabelRetriever:
         top_k: int,
         min_score: float,
         section_group_boost: float,
+        mode: RetrievalMode = "dense",
+        keywords: KeywordIndex | None = None,
     ) -> None:
+        if mode != "dense" and keywords is None:
+            raise ValueError(f"Retrieval mode {mode} needs the keyword index")
         self._index = index
         self._embeddings = embeddings
         self._top_k = top_k
         self._min_score = min_score
         self._section_group_boost = section_group_boost
+        self._mode = mode
+        self._keywords = keywords
 
     def retrieve(self, question: str, label_filter: LabelFilter | None = None) -> Retrieval:
         """The label chunks for `question`. A filter that names only drugs without searchable
@@ -47,8 +75,8 @@ class LabelRetriever:
         """
         if label_filter is not None and label_filter.names_drugs and not label_filter.set_ids:
             return Retrieval(question=question, filter=label_filter, chunks=[], dropped=[])
-        vector = self._embeddings.embed_query(question)
-        candidates, widened = self._candidates(vector, label_filter)
+        query = Query(question, self._embeddings.embed_query(question))
+        candidates, widened = self._candidates(query, label_filter)
         return Retrieval(
             question=question,
             filter=label_filter,
@@ -58,68 +86,110 @@ class LabelRetriever:
         )
 
     def _candidates(
-        self, vector: list[float], label_filter: LabelFilter | None
+        self, query: Query, label_filter: LabelFilter | None
     ) -> tuple[list[RetrievedChunk], list[Widening]]:
         """The best chunks under the filter, or the best chunks of each drug it names."""
         searched = [drug for drug in label_filter.drugs if drug.set_ids] if label_filter else []
         if label_filter is None or len(searched) < 2:
-            found, widened = self._search_widening(vector, label_filter)
-            return self._ranked(found, label_filter, self._top_k), widened
+            found, widened = self._search_widening(query, label_filter)
+            return found[: self._top_k], widened
         candidates: list[RetrievedChunk] = []
         widenings: set[Widening] = set()
         for drug in searched:
             one_drug = label_filter.model_copy(update={"drugs": [drug]})
-            found, widened = self._search_widening(vector, one_drug)
-            candidates += self._ranked(found, one_drug, self._top_k)
+            found, widened = self._search_widening(query, one_drug)
+            candidates += found[: self._top_k]
             widenings.update(widened)
         candidates.sort(key=self._ranking_score, reverse=True)
         return candidates, sorted(widenings)
 
     def _search_widening(
-        self, vector: list[float], label_filter: LabelFilter | None
-    ) -> tuple[list[tuple[Chunk, float]], list[Widening]]:
+        self, query: Query, label_filter: LabelFilter | None
+    ) -> tuple[list[RetrievedChunk], list[Widening]]:
         """The search under the filter, or under every label of its drugs when that finds the
         section groups and the narrower labels don't. A brand's label with text in other
         sections is kept when no label of the drug has the groups either."""
-        found = self._search(vector, label_filter, [])
+        found = self._search(query, label_filter, [])
         if label_filter is None or in_groups(found, label_filter):
             return found, []
         if where_clause(label_filter, ["labels"]) == where_clause(label_filter):
             return found, []
-        wider = self._search(vector, label_filter, ["labels"])
+        wider = self._search(query, label_filter, ["labels"])
         if in_groups(wider, label_filter) or not found:
             return wider, ["labels"]
         return found, []
 
     def _search(
-        self, vector: list[float], label_filter: LabelFilter | None, widened: list[Widening]
-    ) -> list[tuple[Chunk, float]]:
-        """The closest chunks in the filter's section groups and in every section, together."""
-        found = self._index.search(vector, self._top_k, where_clause(label_filter, widened))
-        if label_filter is None or not label_filter.section_groups:
-            return found
-        grouped = self._index.search(
-            vector, self._top_k, where_clause(label_filter, widened, section_groups=True)
-        )
-        return list({chunk.id: (chunk, score) for chunk, score in [*grouped, *found]}.values())
-
-    def _ranked(
-        self, found: list[tuple[Chunk, float]], label_filter: LabelFilter | None, limit: int
+        self, query: Query, label_filter: LabelFilter | None, widened: list[Widening]
     ) -> list[RetrievedChunk]:
+        """The chunks in the filter's section groups and in every section together, ranked."""
+        wheres = [where_clause(label_filter, widened)]
+        if label_filter is not None and label_filter.section_groups:
+            wheres.insert(0, where_clause(label_filter, widened, section_groups=True))
         groups = label_filter.section_groups if label_filter else []
-        chunks = [retrieved(chunk, score, chunk.section_group in groups) for chunk, score in found]
-        chunks.sort(key=self._ranking_score, reverse=True)
-        return chunks[:limit]
+        dense = self._dense(query.vector, wheres, groups) if self._mode != "bm25" else []
+        if self._mode == "dense":
+            return dense
+        return self._fused(query, dense, self._keyword(query.text, wheres), groups)
+
+    def _dense(
+        self, vector: list[float], wheres: list[dict[str, Any] | None], groups: Sequence[str]
+    ) -> list[RetrievedChunk]:
+        found = [hit for where in wheres for hit in self._index.search(vector, self._depth, where)]
+        unique = {chunk.id: (chunk, score) for chunk, score in found}
+        chunks = [
+            retrieved(chunk, score, chunk.section_group in groups)
+            for chunk, score in unique.values()
+        ]
+        chunks.sort(key=self._boosted_score, reverse=True)
+        return [
+            chunk.model_copy(update={"dense_rank": rank}) for rank, chunk in enumerate(chunks, 1)
+        ]
+
+    def _keyword(self, text: str, wheres: list[dict[str, Any] | None]) -> list[Chunk]:
+        assert self._keywords is not None
+        found = [hit for where in wheres for hit in self._keywords.search(text, self._depth, where)]
+        unique = {chunk.id: (chunk, score) for chunk, score in found}
+        return [chunk for chunk, _ in sorted(unique.values(), key=lambda hit: hit[1], reverse=True)]
+
+    def _fused(
+        self, query: Query, dense: list[RetrievedChunk], keyword: list[Chunk], groups: Sequence[str]
+    ) -> list[RetrievedChunk]:
+        """The dense and keyword rankings merged by reciprocal rank fusion. Chunks only the
+        keyword search found get their cosine similarity too, which `min_score` applies to."""
+        chunks = {chunk.id: chunk for chunk in dense}
+        keyword_only = [chunk for chunk in keyword if chunk.id not in chunks]
+        vectors = self._index.vectors([chunk.id for chunk in keyword_only])
+        for chunk in keyword_only:
+            similarity = cosine(query.vector, vectors[chunk.id])
+            chunks[chunk.id] = retrieved(chunk, similarity, chunk.section_group in groups)
+        bm25_ranks = {chunk.id: rank for rank, chunk in enumerate(keyword, 1)}
+        fused = reciprocal_rank_fusion([[chunk.id for chunk in dense], list(bm25_ranks)])
+        ranked = [
+            chunks[id_].model_copy(update={"bm25_rank": bm25_ranks.get(id_), "fused_score": score})
+            for id_, score in fused.items()
+        ]
+        ranked.sort(key=lambda chunk: (self._ranking_score(chunk), chunk.score), reverse=True)
+        return ranked
+
+    @property
+    def _depth(self) -> int:
+        return self._top_k if self._mode == "dense" else max(self._top_k, FUSION_DEPTH)
 
     def _ranking_score(self, chunk: RetrievedChunk) -> float:
+        if chunk.fused_score is not None:
+            return chunk.fused_score
+        return self._boosted_score(chunk)
+
+    def _boosted_score(self, chunk: RetrievedChunk) -> float:
         return chunk.score + (self._section_group_boost if chunk.in_section_groups else 0.0)
 
 
-def in_groups(found: list[tuple[Chunk, float]], label_filter: LabelFilter) -> bool:
+def in_groups(found: Sequence[RetrievedChunk], label_filter: LabelFilter) -> bool:
     """Whether the search found a chunk in the filter's section groups; without groups, any."""
     if not label_filter.section_groups:
         return bool(found)
-    return any(chunk.section_group in label_filter.section_groups for chunk, _ in found)
+    return any(chunk.section_group in label_filter.section_groups for chunk in found)
 
 
 def where_clause(
@@ -165,3 +235,8 @@ def retrieved(chunk: Chunk, score: float, in_section_groups: bool = False) -> Re
         url=chunk.url,
         in_section_groups=in_section_groups,
     )
+
+
+def cosine(a: Sequence[float], b: Sequence[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b, strict=True))
+    return dot / (sqrt(sum(x * x for x in a)) * sqrt(sum(y * y for y in b)))

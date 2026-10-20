@@ -16,6 +16,7 @@ from molecula.store.compounds import CompoundRecord, CompoundStore
 from molecula.store.db import connect
 from molecula.store.http_cache import CachedResponse, HttpCache
 from molecula.store.index import Chunk, LabelIndex
+from molecula.store.keywords import KeywordIndex
 from molecula.store.labels import LabelRecord, LabelSection, LabelStore
 from molecula.store.schema import SCHEMA_VERSION
 from molecula.store.structures import ConformerFiles
@@ -86,6 +87,7 @@ def build_store(settings: Settings, *, with_index: bool = True) -> None:
     ConformerFiles(settings.conformers_dir).write(5291, "imatinib\n$$$$\n")
     if with_index:
         LabelIndex(settings.index_dir).rebuild([CHUNK], [[1.0, 0.0]], MODEL)
+        KeywordIndex(settings.keyword_index_path).rebuild([CHUNK])
     for local_only in (
         settings.models_dir / "models--BAAI--bge-m3" / "weights.bin",
         settings.build_dir / "eval" / "run.json",
@@ -118,6 +120,7 @@ def test_archive_holds_only_the_database_the_conformers_and_the_index(
     assert "molecula.db" in names
     assert "structures/compounds/5291.sdf" in names
     assert "index/chroma/chroma.sqlite3" in names
+    assert "index/bm25.db" in names
     assert {name.split("/")[0] for name in names} == {"molecula.db", "structures", "index"}
     assert not any("\\" in name for name in names)
 

@@ -9,6 +9,7 @@ these numbers. Also reports the scores of the answering chunks and of the best c
 answer, which the score threshold (`retrieval_min_score`) is chosen from. No chat model runs.
 """
 
+import dataclasses
 import statistics
 from collections import defaultdict
 
@@ -19,6 +20,7 @@ from molecula.rag.embeddings import embedding_model_id, get_embeddings
 from molecula.rag.retriever import LabelRetriever
 from molecula.schemas.retrieval import DrugFilter, LabelFilter, LabelQuery, RetrievedChunk
 from molecula.store.index import Chunk, LabelIndex
+from molecula.store.keywords import KeywordIndex
 
 TOP_K = 10
 SETUPS = ["whole index", "drug", "drug + section group"]
@@ -34,6 +36,8 @@ def main() -> int:
         top_k=TOP_K,
         min_score=-1.0,
         section_group_boost=settings.retrieval_section_group_boost,
+        mode=settings.retrieval_mode,
+        keywords=KeywordIndex(settings.keyword_index_path),
     )
     set_ids = labels_by_drug(index.chunks())
     questions = load_questions()
@@ -85,10 +89,8 @@ def gold_filter(
 
 
 def as_chunk(found: RetrievedChunk) -> Chunk:
-    return Chunk(
-        **found.model_dump(exclude={"score", "effective_time", "in_section_groups"}),
-        effective_time=found.effective_time.strftime("%Y%m%d"),
-    )
+    fields = found.model_dump(include={field.name for field in dataclasses.fields(Chunk)})
+    return Chunk(**{**fields, "effective_time": found.effective_time.strftime("%Y%m%d")})
 
 
 def first_hit_rank(question: Question, found: list[RetrievedChunk]) -> int | None:

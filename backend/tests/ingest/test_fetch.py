@@ -20,6 +20,7 @@ from molecula.schemas.store import StoreManifest
 from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
 from molecula.store.index import Chunk, LabelIndex
+from molecula.store.keywords import KeywordIndex
 from molecula.store.schema import SCHEMA_VERSION
 from molecula.store.structures import ConformerFiles
 from store_records import IMATINIB
@@ -75,12 +76,25 @@ class FakeGitHub:
 
 @pytest.fixture(scope="module")
 def release(tmp_path_factory: pytest.TempPathFactory) -> Release:
-    """A store with one compound, its conformer and an index, exported as a release would be."""
+    """A store with one compound, its conformer and both indexes, exported as a release would
+    be."""
+    return built_release(tmp_path_factory, with_keywords=True)
+
+
+@pytest.fixture(scope="module")
+def release_before_44(tmp_path_factory: pytest.TempPathFactory) -> Release:
+    """A release made before the keyword index (#44), as store-2026-10-16 is."""
+    return built_release(tmp_path_factory, with_keywords=False)
+
+
+def built_release(tmp_path_factory: pytest.TempPathFactory, *, with_keywords: bool) -> Release:
     built = Settings(_env_file=None, data_dir=tmp_path_factory.mktemp("built"), offline=True)
     with closing(connect(built.db_path)) as conn:
         CompoundStore(conn).save(IMATINIB, [], datetime(2026, 10, 12, tzinfo=UTC))
     ConformerFiles(built.conformers_dir).write(5291, "imatinib\n$$$$\n")
     LabelIndex(built.index_dir).rebuild([CHUNK], [[1.0, 0.0]], MODEL)
+    if with_keywords:
+        KeywordIndex(built.keyword_index_path).rebuild([CHUNK])
     manifest = export_store(built, built.export_dir, datetime(2026, 10, 13, tzinfo=UTC))
     return Release(manifest, (built.export_dir / ARCHIVE).read_bytes())
 
@@ -139,6 +153,22 @@ def test_fresh_clone_gets_the_store_and_the_model(
     assert has_local_model(settings)
     assert [call["revision"] for call in hub.calls] == [settings.local_embedding_model_revision]
     assert sorted(leftovers(settings)) == ["index", "molecula.db", "structures"]
+
+
+def test_release_keyword_index_is_unpacked(release: Release, settings: Settings) -> None:
+    assert fetch(settings, serve(release, settings)) == 0
+
+    found = KeywordIndex(settings.keyword_index_path).search("BCR-ABL", 5)
+    assert [chunk.id for chunk, _ in found] == [CHUNK.id]
+
+
+def test_keyword_index_missing_from_an_older_release_is_built_from_the_label_index(
+    release_before_44: Release, settings: Settings
+) -> None:
+    assert fetch(settings, serve(release_before_44, settings)) == 0
+
+    found = KeywordIndex(settings.keyword_index_path).search("BCR-ABL", 5)
+    assert [chunk for chunk, _ in found] == [CHUNK]
 
 
 def test_offline_setting_does_not_stop_the_download(
