@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import pytest
@@ -5,29 +6,23 @@ from pydantic import ValidationError
 
 from molecula.config import Settings
 
-ENV_KEYS = [
-    "OPENROUTER_API_KEY",
-    "LLM_MODEL",
-    "LOCAL_LLM_BASE_URL",
-    "LOCAL_LLM_MODEL",
-    "LLM_TEMPERATURE",
-    "LLM_TIMEOUT_SECONDS",
-    "LLM_MAX_RETRIES",
-    "EMBEDDING_MODEL",
-    "LOCAL_EMBEDDING_MODEL",
-    "RETRIEVAL_SECTION_GROUP_BOOST",
-    "OPENFDA_API_KEY",
-    "OFFLINE",
-    "DATA_DIR",
-    "CORS_ORIGINS",
-    "NAME_SUGGESTION_CUTOFF",
-]
+ENV_EXAMPLE = Path(__file__).resolve().parents[2] / ".env.example"
+ENV_KEYS = [name.upper() for name in Settings.model_fields]
+# A setting as `KEY=value`, or as `# KEY=value` for one left at its default.
+SETTING_LINE = re.compile(r"^(# )?([A-Z_]+)=(\S*)$")
 
 
 @pytest.fixture(autouse=True)
 def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
     for key in ENV_KEYS:
         monkeypatch.delenv(key, raising=False)
+
+
+def example_settings() -> list[tuple[str, str, bool]]:
+    """Each setting in .env.example as (key, value, commented out)."""
+    lines = ENV_EXAMPLE.read_text(encoding="utf-8").splitlines()
+    matches = [SETTING_LINE.match(line) for line in lines]
+    return [(m[2], m[3], m[1] is not None) for m in matches if m]
 
 
 def write_env(tmp_path: Path, content: str) -> Path:
@@ -74,22 +69,36 @@ def test_cors_origins_default_to_the_local_frontend_and_parse_from_json(
     ]
 
 
-def test_copied_env_example_loads_with_empty_keys(tmp_path: Path) -> None:
-    example = Path(__file__).resolve().parents[2] / ".env.example"
-    env_file = write_env(tmp_path, example.read_text(encoding="utf-8"))
+def test_copied_env_example_runs_the_local_model_from_docker(tmp_path: Path) -> None:
+    env_file = write_env(tmp_path, ENV_EXAMPLE.read_text(encoding="utf-8"))
 
     settings = Settings(_env_file=env_file)
 
     assert settings.openrouter_api_key is None
-    assert settings.local_llm_base_url is None
-    assert (settings.llm_temperature, settings.llm_timeout_seconds, settings.llm_max_retries) == (
-        0.2,
-        60.0,
-        2,
-    )
-    assert settings.embedding_model == "local"
     assert settings.offline is False
-    assert settings.name_suggestion_cutoff == 0.8
+    assert settings.local_llm_base_url == "http://host.docker.internal:1234/v1"
+    assert settings.local_llm_model == "openai/gpt-oss-20b"
+    assert settings.model_dump(exclude={"local_llm_base_url", "local_llm_model"}) == Settings(
+        _env_file=None
+    ).model_dump(exclude={"local_llm_base_url", "local_llm_model"})
+
+
+def test_env_example_names_every_setting_once() -> None:
+    keys = [key for key, _, _ in example_settings()]
+
+    assert sorted(keys) == sorted(ENV_KEYS)
+
+
+@pytest.mark.parametrize(
+    ("key", "value"), [(key, value) for key, value, commented in example_settings() if commented]
+)
+def test_env_example_shows_the_default_of_a_commented_setting(
+    tmp_path: Path, key: str, value: str
+) -> None:
+    env_file = write_env(tmp_path, f"{key}={value}\n")
+    field = key.lower()
+
+    assert getattr(Settings(_env_file=env_file), field) == getattr(Settings(_env_file=None), field)
 
 
 @pytest.mark.parametrize("raw", ["-0.1", "1.5"])

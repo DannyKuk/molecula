@@ -192,10 +192,14 @@ def open_chat_model(settings: Settings) -> BaseChatModel | None:
     """The chat model, or None while none is configured: the chat and the label search are then
     off, and the data routes still work."""
     try:
-        return get_chat_model(settings)
+        chat_model = get_chat_model(settings)
     except LLMConfigError as error:
         logger.warning("Label search and chat are off: %s", error)
         return None
+    # Says at the start which server the answers need, e.g. LM Studio from a copied .env.example.
+    where = settings.local_llm_base_url if chat_model_is_local(settings) else "OpenRouter"
+    logger.info("The answers come from %s at %s", chat_model_name(settings), where)
+    return chat_model
 
 
 def open_input_check(settings: Settings, chat_model: BaseChatModel) -> InputCheck:

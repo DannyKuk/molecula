@@ -31,7 +31,7 @@ Early development. [`docs/data-plan.md`](docs/data-plan.md) describes the verifi
 ## Running it
 
 ```
-cp .env.example .env              # fill in what you need; every key is optional for now
+cp .env.example .env              # add OPENROUTER_API_KEY for the cloud model, or run LM Studio
 docker compose up --build         # frontend on http://localhost:3000, backend on http://localhost:8000/health
 ```
 
@@ -39,7 +39,7 @@ The first start downloads the data into `data/build/`: the built store from this
 
 ### Without Docker
 
-The backend needs [uv](https://docs.astral.sh/uv/) and runs on the CPU; it reads `.env` from the repo root and the store from `data/`.
+The backend needs [uv](https://docs.astral.sh/uv/) and runs on the CPU; it reads `.env` from the repo root and the store from `data/`. Set `LOCAL_LLM_BASE_URL=http://localhost:1234/v1` in `.env`: the address in `.env.example` is the host as seen from Docker.
 
 ```
 cd backend
@@ -58,7 +58,7 @@ A running backend does the same by itself every night ([#342](https://github.com
 - `LABEL_UPDATE_SCHEDULE=0` turns the nightly run off, e.g. on a machine whose store is the eval baseline.
 - `LABEL_UPDATE_BUTTON=1` shows an Update now button on the dashboard and opens `POST /labels/update` for it. Off by default: then the route answers 404, so nobody starts a run with a plain request.
 
-`OFFLINE` switches between the two setups, so both can stay in `.env`: with `OFFLINE=0` and `OPENROUTER_API_KEY` set, `openai/gpt-6-luna` answers on OpenRouter, the measured cloud default ([chat model](docs/decisions/chat-model.md)); with `OFFLINE=1` the local chat model answers and nothing goes out. For the local chat model, set `LOCAL_LLM_BASE_URL` and `LOCAL_LLM_MODEL` in `.env`, e.g. `http://localhost:1234/v1` and `openai/gpt-oss-20b` for LM Studio, or `http://localhost:11434/v1` for Ollama. Leave `LLM_REASONING_EFFORT` empty for gpt-oss-20b: medium answered no better and took about 4 s longer per answer ([eval](docs/evals/from-memory-2026-10-14.md)). A backend in Docker can't reach the host as `localhost` and needs `http://host.docker.internal:1234/v1` instead. Running the embedding model on an NVIDIA or AMD GPU is [#90](https://github.com/DannyKuk/molecula/issues/90).
+`OFFLINE` switches between the two setups, so both can stay in `.env`: with `OFFLINE=0` and `OPENROUTER_API_KEY` set, `openai/gpt-6-luna` answers on OpenRouter, the measured cloud default ([chat model](docs/decisions/chat-model.md)); with `OFFLINE=1` the local chat model answers and nothing goes out. The local chat model in `.env.example` is `openai/gpt-oss-20b` in LM Studio as a backend in Docker reaches it, `http://host.docker.internal:1234/v1`; without Docker set `LOCAL_LLM_BASE_URL=http://localhost:1234/v1`, or `http://localhost:11434/v1` for Ollama. The backend's log says at the start which model writes the answers and at which server. Leave `LLM_REASONING_EFFORT` empty for gpt-oss-20b: medium answered no better and took about 4 s longer per answer ([eval](docs/evals/from-memory-2026-10-14.md)). Running the embedding model on an NVIDIA or AMD GPU is [#90](https://github.com/DannyKuk/molecula/issues/90).
 
 The Settings button at the bottom of the chat sidebar lets a user pick another model to write the answers ([#37](https://github.com/DannyKuk/molecula/issues/37)): every chat model the server at `LOCAL_LLM_BASE_URL` lists (LM Studio lists everything it has downloaded) and, online, the OpenRouter models in `LLM_MODELS` next to `LLM_MODEL`. Above the list, **Model that checks the message** picks who sorts each question and checks the answer ([#363](https://github.com/DannyKuk/molecula/issues/363)): Jev (online, the default), gpt-oss-20b (the default offline) or the model that writes the answer. A local model checked by gpt-oss-20b or by itself asks no cloud chat model. Every eval ran on gpt-oss-20b and gpt-6-luna, so another model may answer worse. Load a local model with at least 32k tokens of context, as for gpt-oss-20b: one answer with a label search already needs about 9k.
 
