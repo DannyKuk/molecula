@@ -19,10 +19,12 @@ from molecula.rag.embeddings import (
     ModelDownloadError,
     download_local_model,
     embedding_model_id,
+    embedding_setup,
     get_embeddings,
     has_local_model,
     snapshot_dir,
 )
+from molecula.schemas.retrieval import EmbeddingSetup
 
 
 class FakeSentenceTransformer:
@@ -283,3 +285,27 @@ def test_index_records_the_model_in_use(
     make_settings: Callable[..., Settings], values: dict[str, str], model: str
 ) -> None:
     assert embedding_model_id(make_settings(**values, offline=False)) == model
+
+
+@pytest.mark.parametrize(
+    ("values", "setup"),
+    [
+        ({}, EmbeddingSetup(embedding_model="BAAI/bge-m3", local=True, section_group_boost=0.15)),
+        (
+            {"embedding_model": "google/gemini-embedding-2"},
+            EmbeddingSetup(
+                embedding_model="google/gemini-embedding-2", local=False, section_group_boost=0.0
+            ),
+        ),
+        (
+            {"embedding_model": "google/gemini-embedding-2", "retrieval_section_group_boost": 0.08},
+            EmbeddingSetup(
+                embedding_model="google/gemini-embedding-2", local=False, section_group_boost=0.08
+            ),
+        ),
+    ],
+)
+def test_setup_names_the_model_and_its_boost(
+    make_settings: Callable[..., Settings], values: dict[str, object], setup: EmbeddingSetup
+) -> None:
+    assert embedding_setup(make_settings(**values)) == setup

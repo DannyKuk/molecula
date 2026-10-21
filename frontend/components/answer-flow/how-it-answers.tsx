@@ -23,6 +23,9 @@ import { BoostBars } from "./boost-bars";
 import { FlowLineStep as Step } from "./flow-line";
 import { WhoTag } from "./who-tag";
 
+const EMBEDDINGS_DECISION_URL =
+  "https://github.com/DannyKuk/molecula/blob/main/docs/decisions/embeddings.md";
+
 /** The guide page: one fixed question followed through every step, each marked by who does it. */
 export function HowItAnswers({ history }: { history?: ChatHistory }) {
   const chats = useSavedChats(history);
@@ -121,10 +124,25 @@ export function HowItAnswers({ history }: { history?: ChatHistory }) {
             guess is right; above 0.08 the real result stays at 90–91%.
           </p>
           <p className="text-[13px] text-ink-3">
-            Measured for bge-m3 in <Code>docs/evals/chat-model-filters-2026-10-12.md</Code>. Another
-            embedder or a re-ranker would need it measured again. In hybrid search mode, which is
-            off by default, the keyword and embedding rankings are merged by place, and the bonus
-            only changes the order of the embedding ranking.
+            Measured for bge-m3 in <Code>docs/evals/chat-model-filters-2026-10-12.md</Code>. In
+            hybrid search mode, which is off by default, the keyword and embedding rankings are
+            merged by place, and the bonus only changes the order of the embedding ranking.
+          </p>
+          <p className="text-[13px] text-ink-3">
+            The cloud setup, for a server too small for bge-m3, embeds with gemini-embedding-2 and
+            gives no bonus. Measured the same way, Gemini put the answering passage in the top 5 for
+            98% of the questions with no bonus and for 91% with +0.15: it finds the right section
+            without help, so the bonus only let a wrong guess push the answer out. On such an
+            instance the Flow tab calls this step Keep the top 5. The numbers are in{" "}
+            <a
+              href={EMBEDDINGS_DECISION_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-4"
+            >
+              docs/decisions/embeddings.md
+            </a>
+            .
           </p>
         </Section>
 

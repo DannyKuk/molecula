@@ -2,12 +2,17 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { useRouter } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { getEmbeddingSetup } from "@/lib/api";
 import { startTurn } from "@/lib/chat-turn";
 import { memoryHistory } from "@/lib/test-fixtures";
 
 import { Benchmarks } from "./benchmarks";
 
 vi.mock("next/navigation", () => ({ useRouter: vi.fn() }));
+vi.mock("@/lib/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/api")>()),
+  getEmbeddingSetup: vi.fn(),
+}));
 
 const push = vi.fn();
 
@@ -20,6 +25,11 @@ beforeEach(() => {
     removeEventListener: () => {},
   }));
   push.mockReset();
+  vi.mocked(getEmbeddingSetup).mockResolvedValue({
+    embedding_model: "BAAI/bge-m3",
+    local: true,
+    section_group_boost: 0.15,
+  });
   localStorage.clear();
   vi.mocked(useRouter).mockReturnValue({ push } as unknown as ReturnType<typeof useRouter>);
 });

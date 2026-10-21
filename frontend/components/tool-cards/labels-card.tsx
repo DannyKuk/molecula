@@ -141,7 +141,8 @@ function SearchTrace({
           ? t.cards.droppedBelow(trace.candidates.length - kept.length, minimum)
           : t.cards.noneBelow(minimum)}
         {trace.mode === "dense"
-          ? kept.some((candidate) => candidate.in_section_groups) &&
+          ? trace.section_group_boost > 0 &&
+            kept.some((candidate) => candidate.in_section_groups) &&
             t.cards.boostNote(trace.section_group_boost.toFixed(2))
           : t.cards.rankFusionNote}
       </p>

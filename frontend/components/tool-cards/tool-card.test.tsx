@@ -276,6 +276,17 @@ describe("search_labels", () => {
       expect(card.textContent).toContain("counts 0.15 higher in the ranking");
     });
 
+    it("leaves out the bonus when the setup gives none", () => {
+      const card = openTraced({ ...IMATINIB_TRACE, section_group_boost: 0 });
+
+      expect(ranked(card).map((row) => row.querySelector("summary")?.textContent)).toEqual([
+        "1Mechanism of action · Gleevec0.71[1] cited",
+        "2Pharmacokinetics · Gleevec0.52[2]",
+        "–How supplied · Gleevecdropped, below 0.300.21",
+      ]);
+      expect(card.textContent).not.toContain("higher in the ranking");
+    });
+
     it("shows a filter the label filter read from the question, with a name outside the store", () => {
       const card = openTraced({
         ...IMATINIB_TRACE,

@@ -22,6 +22,17 @@ type Widening = Literal["labels"]
 type RetrievalMode = Literal["dense", "bm25", "hybrid"]
 
 
+class EmbeddingSetup(BaseModel):
+    """The model this instance embeds the labels and questions with, by its id, whether it runs
+    in-process, and the bonus a passage from the guessed section group gets (#350)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    embedding_model: str
+    local: bool
+    section_group_boost: float
+
+
 class DrugFilter(BaseModel):
     """A drug the question names, as it names it, and the labels of that drug to search.
     `narrowed` means a brand or the product type left out some of the drug's labels."""

@@ -354,10 +354,11 @@ function searchedSteps(tool: ToolRun, trace: RetrievalTrace | null, key: string,
     ];
   }
   const ranked = boostStep(boost, trace, f);
+  const severalLine = trace.section_group_boost === 0 ? f.noBoostSeveralLine : f.boostSeveralLine;
   return [
     narrowed,
     scoreStep(score, trace, f),
-    several && trace.mode === "dense" ? { ...ranked, line: f.boostSeveralLine } : ranked,
+    several && trace.mode === "dense" ? { ...ranked, line: severalLine } : ranked,
   ];
 }
 
@@ -452,7 +453,7 @@ function boostStep(boost: Draft, trace: RetrievalTrace, f: Flow): Draft {
       title: f.mergeTitle(kept.length),
       line: f.mergeLine,
       state: "done",
-      outcome: `${trace.mode === "hybrid" ? f.hybridOrder : ""}${f.kept(kept.length)}${droppedText}`,
+      outcome: `${trace.mode === "hybrid" && trace.section_group_boost > 0 ? f.hybridOrder : ""}${f.kept(kept.length)}${droppedText}`,
     };
   }
   const passages = boostedRanking(
@@ -463,6 +464,17 @@ function boostStep(boost: Draft, trace: RetrievalTrace, f: Flow): Draft {
     })),
     trace.section_group_boost,
   );
+  // The cloud setup's embedder gives no bonus (#96), so the ranking is the similarity's own.
+  if (trace.section_group_boost === 0) {
+    return {
+      ...boost,
+      title: f.keepTitle(kept.length),
+      line: f.noBoostLine,
+      state: "done",
+      outcome: `${f.kept(kept.length)}${droppedText}`,
+      ranking: { passages, boost: 0 },
+    };
+  }
   const bonus = trace.section_group_boost.toFixed(2);
   const boosted = passages.filter((passage) => passage.inSection).length;
   const moved = passages.filter((passage) => passage.before !== passage.after).length;

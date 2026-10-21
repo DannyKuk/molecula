@@ -21,6 +21,7 @@ export function BoostBars({
   const bars = t.flow.bars;
   const ordinal = bars.ordinal;
   if (passages.length === 0) return null;
+  const bonused = (passage: RankedPassage) => boost > 0 && passage.inSection;
   const top = Math.max(...passages.map((passage) => passage.score));
   const scale = Math.ceil(top * 10) / 10;
   const width = (value: number) => `${(value / scale) * 100}%`;
@@ -37,10 +38,10 @@ export function BoostBars({
               <span
                 className={cn(
                   "block font-mono text-[10.5px]",
-                  passage.inSection ? "text-signal" : "text-ink-3",
+                  bonused(passage) ? "text-signal" : "text-ink-3",
                 )}
               >
-                {passage.inSection ? bars.sectionAskedFor(boost.toFixed(2)) : bars.noBonus}
+                {bonused(passage) ? bars.sectionAskedFor(boost.toFixed(2)) : bars.noBonus}
               </span>
             </span>
             <span
@@ -51,7 +52,7 @@ export function BoostBars({
                 className="absolute inset-y-0 left-0 rounded-l-sm bg-ink-3"
                 style={{ width: width(passage.similarity) }}
               />
-              {passage.inSection && (
+              {bonused(passage) && (
                 <span
                   className="absolute inset-y-0 rounded-r-sm bg-signal"
                   style={{ left: width(passage.similarity), width: width(boost) }}
@@ -74,10 +75,12 @@ export function BoostBars({
           <span aria-hidden className="h-2 w-3 rounded-sm bg-ink-3" />
           {bars.similarity}
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden className="h-2 w-3 rounded-sm bg-signal" />
-          {bars.bonus}
-        </span>
+        {boost > 0 && (
+          <span className="inline-flex items-center gap-1.5">
+            <span aria-hidden className="h-2 w-3 rounded-sm bg-signal" />
+            {bars.bonus}
+          </span>
+        )}
         <span>{bars.scale(scale.toFixed(1))}</span>
       </p>
     </div>
