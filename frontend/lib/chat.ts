@@ -1,4 +1,4 @@
-import { API_URL } from "./api";
+import { API_URL, type InputCategory } from "./api";
 import { MAX_ANSWER_LENGTH, MAX_MESSAGE_LENGTH, MAX_MESSAGES } from "./chat-limits";
 import { readServerSentEvents } from "./sse";
 import type { RetrievalTrace } from "./tool-cards";
@@ -44,7 +44,8 @@ export type ChatEvent =
   | { type: "tool_result"; id: string; name: string; status: string | null; result: unknown }
   | { type: "sources"; sources: Source[]; unknown_refs: number[] }
   | ({ type: "source_check" } & SourceCheck)
-  | { type: "done"; usage: Usage; step_limit_reached: boolean }
+  // `category` is how the input check sorted the question; null from an agent without a guard.
+  | { type: "done"; usage: Usage; step_limit_reached: boolean; category?: InputCategory | null }
   | { type: "error"; message: string }
   | ({ type: "retrieval_trace" } & RetrievalTrace);
 

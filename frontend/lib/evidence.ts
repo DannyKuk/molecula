@@ -4,7 +4,7 @@ import { isLabel } from "./citations";
 import { cardSteps, structuresOf, type StructureTarget } from "./tool-cards";
 
 /** The evidence panel's tabs. */
-export type EvidenceTab = "3d" | "sources" | "steps";
+export type EvidenceTab = "3d" | "sources" | "steps" | "flow";
 
 /**
  * What the evidence panel shows: a turn's tab, by the turn's index, or the newest turn's when

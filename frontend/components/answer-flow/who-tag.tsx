@@ -11,8 +11,9 @@ export const WHO_COLOURS: Record<Who, { tag: string; mark: string }> = {
   code: { tag: "border-rule-2 bg-panel text-ink-2", mark: "bg-ink-3" },
 };
 
-/** Who does a step, as a small coloured tag; the word carries the meaning, the colour repeats it. */
-export function WhoTag({ who }: { who: Who }) {
+/** Who does a step, as a small coloured tag; the word carries the meaning, the colour repeats it.
+ * `label` replaces the word when the step can be done by either of two models. */
+export function WhoTag({ who, label }: { who: Who; label?: string }) {
   return (
     <span
       className={cn(
@@ -21,7 +22,7 @@ export function WhoTag({ who }: { who: Who }) {
       )}
     >
       <span aria-hidden className="size-1.5 rounded-full bg-current" />
-      {WHO[who].label}
+      {label ?? WHO[who].label}
     </span>
   );
 }

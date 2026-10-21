@@ -174,4 +174,20 @@ describe("EvidencePanel", () => {
 
     expect(onShow).toHaveBeenCalledExactlyOnceWith({ turn: 0, tab: "3d", cid: 5291 });
   });
+
+  it("shows the answer's flow in the Flow tab after Steps", () => {
+    const onShow = renderPanel([IMATINIB_TURN], { turn: 0, tab: "flow" });
+
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
+      "3D",
+      "Sources4",
+      "Steps1",
+      "Flow",
+    ]);
+    expect(screen.getByRole("list", { name: "Getting the complex of imatinib" })).toBeDefined();
+
+    fireEvent.click(screen.getByRole("tab", { name: /Steps/ }));
+
+    expect(onShow).toHaveBeenCalledExactlyOnceWith({ turn: 0, tab: "steps" });
+  });
 });
