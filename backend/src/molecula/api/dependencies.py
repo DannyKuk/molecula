@@ -8,6 +8,7 @@ from molecula.schemas.chat import ChatModel
 from molecula.services.complexes import ComplexService
 from molecula.services.compounds import CompoundService
 from molecula.services.knowledge_base import KnowledgeBase
+from molecula.services.label_updates import LabelUpdater
 from molecula.services.labels import LabelService
 from molecula.services.targets import TargetService
 from molecula.services.usage import UsageLog
@@ -59,6 +60,25 @@ def knowledge_base(request: Request) -> KnowledgeBase:
 
 
 KnowledgeBaseDep = Annotated[KnowledgeBase, Depends(knowledge_base)]
+
+
+def label_updater(request: Request) -> LabelUpdater:
+    """The app's label update, built at startup. Tests replace it with an override."""
+    return request.app.state.label_updater
+
+
+LabelUpdaterDep = Annotated[LabelUpdater, Depends(label_updater)]
+
+
+def label_update_button(updater: LabelUpdaterDep) -> LabelUpdater:
+    """The label update for the dashboard's button; 404 while LABEL_UPDATE_BUTTON is off, so
+    nobody starts a run with a plain request either."""
+    if not updater.button:
+        raise HTTPException(status_code=404, detail="Not Found")
+    return updater
+
+
+LabelUpdateButtonDep = Annotated[LabelUpdater, Depends(label_update_button)]
 
 
 def chat(request: Request) -> GuardedChat:

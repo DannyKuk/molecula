@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { useRouter } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ApiError, getChatModel, getStats } from "@/lib/api";
+import { ApiError, type Stats, getChatModel, getStats, startLabelUpdate } from "@/lib/api";
 import { memoryHistory } from "@/lib/test-fixtures";
 import { CLOUD_STATS, EMPTY_STATS, STATS } from "@/lib/test-stats";
 
@@ -13,9 +13,13 @@ vi.mock("@/lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/api")>()),
   getStats: vi.fn(),
   getChatModel: vi.fn(),
+  startLabelUpdate: vi.fn(),
 }));
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.useRealTimers();
+});
 
 beforeEach(() => {
   vi.stubGlobal("matchMedia", () => ({
@@ -34,6 +38,21 @@ beforeEach(() => {
 async function openPage() {
   render(<Dashboard history={memoryHistory().history} />);
   await act(async () => {});
+}
+
+function withLabelUpdate(
+  labelUpdate: Partial<Stats["label_update"]>,
+  labelsFetched = STATS.knowledge_base.labels_fetched_to,
+): Stats {
+  return {
+    ...STATS,
+    knowledge_base: { ...STATS.knowledge_base, labels_fetched_to: labelsFetched },
+    label_update: { ...STATS.label_update, ...labelUpdate },
+  };
+}
+
+function knowledgeBase() {
+  return screen.getByRole("region", { name: "Knowledge base" });
 }
 
 function usageNumber(label: string) {
@@ -146,6 +165,83 @@ describe("Dashboard page", () => {
     await openPage();
 
     expect(screen.getByRole("alert").textContent).toContain("Could not load the numbers.");
+  });
+
+  it("shows no Update now button unless the backend allows one", async () => {
+    await openPage();
+
+    expect(within(knowledgeBase()).queryByRole("button")).toBeNull();
+  });
+
+  it("shows when the labels were last updated and what changed", async () => {
+    vi.mocked(getStats).mockResolvedValue(
+      withLabelUpdate({
+        last_run: { finished_at: "2026-10-21T03:04:00Z", outcome: "complete", drugs_changed: 2 },
+      }),
+    );
+
+    await openPage();
+
+    expect(knowledgeBase().textContent).toContain("Last label update 21 Oct 2026: 2 drugs changed");
+  });
+
+  it("says when the last label update failed", async () => {
+    vi.mocked(getStats).mockResolvedValue(
+      withLabelUpdate({
+        last_run: { finished_at: "2026-10-21T03:00:05Z", outcome: "failed", drugs_changed: 0 },
+      }),
+    );
+
+    await openPage();
+
+    expect(knowledgeBase().textContent).toContain(
+      "Last label update 21 Oct 2026: failed (see the backend log)",
+    );
+  });
+
+  it("starts an update from the button and shows it running until it ends", async () => {
+    vi.useFakeTimers();
+    vi.mocked(getStats).mockResolvedValue(withLabelUpdate({ can_start: true }));
+    vi.mocked(startLabelUpdate).mockResolvedValue({
+      last_run: null,
+      running: true,
+      can_start: true,
+    });
+    await openPage();
+
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Update now" })));
+
+    const button = within(knowledgeBase()).getByRole("button");
+    expect(button.textContent).toBe("Updating…");
+    expect(button.hasAttribute("disabled")).toBe(true);
+    expect(within(knowledgeBase()).getByRole("status").textContent).toBe("Updating the labels…");
+
+    vi.mocked(getStats).mockResolvedValue(
+      withLabelUpdate(
+        {
+          can_start: true,
+          last_run: { finished_at: "2026-10-22T09:15:00Z", outcome: "complete", drugs_changed: 1 },
+        },
+        "2026-10-22T09:14:00Z",
+      ),
+    );
+    await act(async () => vi.advanceTimersByTime(5000));
+
+    expect(knowledgeBase().textContent).toContain("Labels fetched 22 Oct 2026");
+    expect(knowledgeBase().textContent).toContain("Last label update 22 Oct 2026: 1 drug changed");
+    expect(screen.getByRole("button", { name: "Update now" })).toBeDefined();
+  });
+
+  it("says when the update could not be started", async () => {
+    vi.mocked(getStats).mockResolvedValue(withLabelUpdate({ can_start: true }));
+    vi.mocked(startLabelUpdate).mockRejectedValue(new ApiError("/labels/update", 503));
+    await openPage();
+
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Update now" })));
+
+    expect(within(knowledgeBase()).getByRole("alert").textContent).toContain(
+      "Could not start the update.",
+    );
   });
 
   it("is linked from the sidebar rail", async () => {

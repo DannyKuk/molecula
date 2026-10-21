@@ -33,6 +33,27 @@ def test_a_run_and_its_changes_are_stored(updates: LabelUpdateStore) -> None:
     assert updates.changes() == list(RUN.changes)
 
 
+def test_the_latest_run_is_the_newest_of_any_outcome_with_its_changes(
+    updates: LabelUpdateStore,
+) -> None:
+    failed = replace(
+        RUN, started_at=datetime(2026, 10, 31, tzinfo=UTC), outcome="failed", changes=()
+    )
+    updates.add(failed)
+    updates.add(RUN)
+    later = replace(RUN, started_at=datetime(2026, 11, 2, tzinfo=UTC), outcome="failed")
+
+    assert updates.latest() == RUN
+
+    updates.add(replace(later, changes=(), error="openFDA stopped answering"))
+
+    assert updates.latest() == replace(later, changes=(), error="openFDA stopped answering")
+
+
+def test_before_any_run_there_is_no_latest(updates: LabelUpdateStore) -> None:
+    assert updates.latest() is None
+
+
 @pytest.mark.parametrize("outcome", ["incomplete", "failed"])
 def test_a_run_that_did_not_check_every_drug_is_not_the_last_finished(
     updates: LabelUpdateStore, outcome: str

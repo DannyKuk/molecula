@@ -81,6 +81,12 @@ class Settings(BaseSettings):
     # Read the client's IP from X-Forwarded-For, which only a proxy in front may set.
     trust_proxy: bool = False
     openfda_api_key: SecretStr | None = None
+    # The backend updates the labels every day at this UTC hour, unless LABEL_UPDATE_SCHEDULE=0
+    # (e.g. a store kept as the eval baseline) or OFFLINE=1 (#342).
+    label_update_schedule: bool = True
+    label_update_hour: Annotated[int, Field(ge=0, le=23)] = 3
+    # The dashboard's Update now button and its route, POST /labels/update; off answers 404.
+    label_update_button: bool = False
     offline: bool = False
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     # The GitHub release `ingest fetch` downloads the store from (#35); a new snapshot bumps it.

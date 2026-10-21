@@ -46,11 +46,17 @@ cd backend
 uv sync
 uv run python -m molecula.ingest fetch      # once: the store and the embedding model, as above
 uv run uvicorn molecula.main:app --reload   # http://localhost:8000, restarts when the code changes
-uv run python -m molecula.ingest update     # the newest FDA labels; stop the backend first
+uv run python -m molecula.ingest update     # the newest FDA labels now; stop the backend first
 uv run ruff check . && uv run ruff format --check . && uv run pytest
 ```
 
 `ingest update` asks openFDA which of the stored labels were withdrawn or have a new version, and fetches and re-indexes only those drugs: about 10 requests and a few seconds when nothing changed ([label update](docs/decisions/label-update.md)). It needs `OFFLINE=0` and the backend stopped, since the backend keeps the label index open.
+
+A running backend does the same by itself every night ([#342](https://github.com/DannyKuk/molecula/issues/342)), with `OFFLINE=0` and a built store. Three settings in `.env` control it:
+
+- `LABEL_UPDATE_HOUR`: the UTC hour of the nightly run, 0–23, default 3.
+- `LABEL_UPDATE_SCHEDULE=0` turns the nightly run off, e.g. on a machine whose store is the eval baseline.
+- `LABEL_UPDATE_BUTTON=1` shows an Update now button on the dashboard and opens `POST /labels/update` for it. Off by default: then the route answers 404, so nobody starts a run with a plain request.
 
 `OFFLINE` switches between the two setups, so both can stay in `.env`: with `OFFLINE=0` and `OPENROUTER_API_KEY` set, `openai/gpt-6-luna` answers on OpenRouter, the measured cloud default ([chat model](docs/decisions/chat-model.md)); with `OFFLINE=1` the local chat model answers and nothing goes out. For the local chat model, set `LOCAL_LLM_BASE_URL` and `LOCAL_LLM_MODEL` in `.env`, e.g. `http://localhost:1234/v1` and `openai/gpt-oss-20b` for LM Studio, or `http://localhost:11434/v1` for Ollama. Leave `LLM_REASONING_EFFORT` empty for gpt-oss-20b: medium answered no better and took about 4 s longer per answer ([eval](docs/evals/from-memory-2026-10-14.md)). A backend in Docker can't reach the host as `localhost` and needs `http://host.docker.internal:1234/v1` instead. Running the embedding model on an NVIDIA or AMD GPU is [#90](https://github.com/DannyKuk/molecula/issues/90).
 

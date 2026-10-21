@@ -66,10 +66,19 @@ def reindex_drug(
 
 class DrugIndexer:
     """Re-indexes one drug at a time with the settings' embedding model, which is loaded on the
-    first call: most label updates change nothing and never need it."""
+    first call: most label updates change nothing and never need it. The backend passes the
+    model and index it already holds, so a nightly run loads neither again."""
 
-    def __init__(self, settings: Settings) -> None:
+    def __init__(
+        self,
+        settings: Settings,
+        *,
+        embeddings: Embeddings | None = None,
+        index: LabelIndex | None = None,
+    ) -> None:
         self._settings = settings
+        self._embeddings = embeddings
+        self._index = index
 
     def __call__(self, cid: int, labels: Sequence[LabelRecord]) -> None:
         tokenizer, embeddings, index = self._loaded
@@ -90,11 +99,13 @@ class DrugIndexer:
             load_chunk_tokenizer,
         )
 
-        index = LabelIndex(self._settings.index_dir)
-        index.check_model(embedding_model_id(self._settings))
+        index = self._index
+        if index is None:
+            index = LabelIndex(self._settings.index_dir)
+            index.check_model(embedding_model_id(self._settings))
         return (
             load_chunk_tokenizer(self._settings),
-            get_embeddings(self._settings),
+            self._embeddings or get_embeddings(self._settings),
             index,
         )
 

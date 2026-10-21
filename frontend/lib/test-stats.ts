@@ -27,9 +27,12 @@ const KNOWLEDGE_BASE: Stats["knowledge_base"] = {
   labels_fetched_to: "2026-10-12T08:45:29Z",
 };
 
+const NO_LABEL_UPDATE: Stats["label_update"] = { last_run: null, running: false, can_start: false };
+
 /** Three days of a local model: 5 requests, 3 answered, one stopped, one timed out. */
 export const STATS: Stats = {
   knowledge_base: KNOWLEDGE_BASE,
+  label_update: NO_LABEL_UPDATE,
   usage: {
     days: [
       day("2026-10-19", {
@@ -58,6 +61,7 @@ export const STATS: Stats = {
 
 export const EMPTY_STATS: Stats = {
   knowledge_base: KNOWLEDGE_BASE,
+  label_update: NO_LABEL_UPDATE,
   usage: {
     days: [day("2026-10-20"), day("2026-10-21")],
     tool_calls: {},

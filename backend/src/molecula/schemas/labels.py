@@ -4,6 +4,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict
 
 type ProductType = Literal["rx", "otc"]
+type UpdateOutcome = Literal["complete", "nothing_new", "incomplete", "failed"]
 type SectionGroup = Literal[
     "pharmacology",
     "indications",

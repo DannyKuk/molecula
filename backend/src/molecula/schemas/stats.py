@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 from molecula.schemas.chat import ErrorKind
 from molecula.schemas.guard import InputCategory
+from molecula.schemas.labels import UpdateOutcome
 
 type Outcome = Literal["answered", "error", "stopped", "limited"]
 
@@ -77,6 +78,24 @@ class KnowledgeBaseStats(BaseModel):
     labels_fetched_to: datetime | None
 
 
+class LastLabelUpdate(BaseModel):
+    """The latest label update, whatever its outcome, and how many drugs' labels it changed."""
+
+    finished_at: datetime
+    outcome: UpdateOutcome
+    drugs_changed: int
+
+
+class LabelUpdateStatus(BaseModel):
+    """The label update: the last run, whether one runs now, and whether the dashboard may start
+    one (LABEL_UPDATE_BUTTON on, and a store to update with openFDA in reach)."""
+
+    last_run: LastLabelUpdate | None
+    running: bool
+    can_start: bool
+
+
 class Stats(BaseModel):
     knowledge_base: KnowledgeBaseStats
+    label_update: LabelUpdateStatus
     usage: UsageStats

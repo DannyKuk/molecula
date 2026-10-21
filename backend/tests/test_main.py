@@ -1,5 +1,7 @@
+import asyncio
 import logging
 import sqlite3
+import time
 from collections.abc import Callable
 from dataclasses import replace
 from datetime import UTC, datetime
@@ -20,7 +22,9 @@ from molecula.agent.llm import LLMConfigError
 from molecula.config import Settings
 from molecula.guard.chat import GuardedChat
 from molecula.guard.safety import ChatModelInputCheck, DecisionModelInputCheck
+from molecula.ingest.index import DrugIndexer
 from molecula.main import app
+from molecula.rag import embeddings as rag_embeddings
 from molecula.rag.embeddings import embedding_model_id
 from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
@@ -295,6 +299,11 @@ class UnitEmbeddings(Embeddings):
         return [1.0, 0.0, 0.0]
 
 
+class WordTokenizer:
+    def tokenize(self, text: str) -> list[str]:
+        return text.split()
+
+
 def store_the_mechanism_label(settings: Settings) -> None:
     conn = connect(settings.db_path)
     fetched = datetime(2026, 10, 11, tzinfo=UTC)
@@ -537,9 +546,10 @@ def test_hybrid_mode_fuses_the_keyword_search_when_its_index_is_built(
     settings = make_settings(retrieval_mode="hybrid")
     build_index(settings, embedding_model_id(settings))
     KeywordIndex(settings.keyword_index_path).rebuild([CHUNK])
-    monkeypatch.setattr(main, "get_embeddings", lambda settings: UnitEmbeddings())
 
-    retriever = main.open_label_retriever(settings, LabelIndex(settings.index_dir))
+    retriever = main.open_label_retriever(
+        settings, LabelIndex(settings.index_dir), UnitEmbeddings()
+    )
 
     [found] = retriever.retrieve(CHUNK.text).chunks
     assert found.bm25_rank == 1 and found.fused_score is not None
@@ -552,11 +562,89 @@ def test_hybrid_mode_without_the_keyword_index_searches_by_embeddings_and_says_h
 ) -> None:
     settings = make_settings(retrieval_mode="hybrid")
     build_index(settings, embedding_model_id(settings))
-    monkeypatch.setattr(main, "get_embeddings", lambda settings: UnitEmbeddings())
 
-    retriever = main.open_label_retriever(settings, LabelIndex(settings.index_dir))
+    retriever = main.open_label_retriever(
+        settings, LabelIndex(settings.index_dir), UnitEmbeddings()
+    )
 
     [found] = retriever.retrieve(CHUNK.text).chunks
     assert found.dense_rank == 1 and found.fused_score is None
     assert "python -m molecula.ingest fetch" in caplog.text
     assert not settings.keyword_index_path.exists()
+
+
+def test_the_label_update_reindexes_with_the_apps_own_model_and_index(
+    settings: Settings, loaded_models: list[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    build_index(settings, embedding_model_id(settings))
+    connect(settings.db_path).close()
+    reindexes: list[DrugIndexer] = []
+
+    def fake_update_store(settings: Settings, reindex: DrugIndexer) -> None:
+        reindexes.append(reindex)
+
+    def no_second_model(settings: Settings) -> None:
+        raise AssertionError("loaded the embedding model again")
+
+    monkeypatch.setattr(main, "update_store", fake_update_store)
+    monkeypatch.setattr(rag_embeddings, "get_embeddings", no_second_model)
+    monkeypatch.setattr(rag_embeddings, "load_chunk_tokenizer", lambda settings: WordTokenizer())
+
+    with TestClient(app):
+        updater = app.state.label_updater
+        assert updater.start()
+        while updater.running:
+            time.sleep(0.01)
+        [reindex] = reindexes
+        reindex(5291, [GLEEVEC])
+
+    assert GLEEVEC.set_id in {chunk.set_id for chunk in LabelIndex(settings.index_dir).chunks()}
+    assert loaded_models.count("embeddings") == 1
+
+
+@pytest.mark.parametrize(
+    ("overrides", "store_built"),
+    [({"offline": True}, True), ({"label_update_schedule": False}, True), ({}, False)],
+)
+def test_no_nightly_run_offline_with_the_schedule_off_or_without_a_store(
+    make_settings: Callable[..., Settings], overrides: dict[str, object], store_built: bool
+) -> None:
+    settings = make_settings(**({"offline": False} | overrides))
+    LabelIndex(settings.index_dir).rebuild([], [], "fake")
+    conn = connect(settings.db_path if store_built else Path(":memory:"))
+
+    async def scheduled() -> asyncio.Task[None] | None:
+        updater = main.open_label_updater(settings, conn, LabelIndex(settings.index_dir), None)
+        return main.schedule_label_updates(settings, updater)
+
+    assert asyncio.run(scheduled()) is None
+    conn.close()
+
+
+def test_the_nightly_run_is_scheduled_over_a_built_store(
+    make_settings: Callable[..., Settings],
+) -> None:
+    settings = make_settings(offline=False)
+    LabelIndex(settings.index_dir).rebuild([], [], "fake")
+    conn = connect(settings.db_path)
+
+    async def scheduled() -> bool:
+        updater = main.open_label_updater(settings, conn, LabelIndex(settings.index_dir), None)
+        task = main.schedule_label_updates(settings, updater)
+        assert task is not None
+        task.cancel()
+        return updater.can_run
+
+    assert asyncio.run(scheduled())
+    conn.close()
+
+
+def test_by_default_the_update_route_is_off_and_stats_show_the_label_update(
+    settings: Settings,
+) -> None:
+    with TestClient(app) as client:
+        response = client.post("/labels/update")
+        label_update = client.get("/stats").json()["label_update"]
+
+    assert response.status_code == 404
+    assert label_update == {"last_run": None, "running": False, "can_start": False}

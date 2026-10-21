@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 
-import { type ChatModel, type Stats, getChatModel, getStats } from "@/lib/api";
+import {
+  ApiError,
+  type ChatModel,
+  type Stats,
+  getChatModel,
+  getStats,
+  startLabelUpdate,
+} from "@/lib/api";
 import type { ChatHistory } from "@/lib/chat-history";
 import { OUTCOMES, RANGES, compact, seconds, typicalWaitMs, usageTotals, usd } from "@/lib/stats";
 import { cn } from "cn";
@@ -15,6 +22,9 @@ import { Errors, GuardSorting, KnowledgeBase, ToolCalls } from "./usage-cards";
 
 type LoadState =
   { kind: "loading" } | { kind: "failed" } | { kind: "loaded"; stats: Stats; days: number };
+
+// How often the page asks whether a label update has ended; re-embedding on a CPU takes minutes.
+const UPDATE_POLL_MS = 5000;
 
 const OUTCOME_SERIES: DaySeries[] = OUTCOMES.map(({ key, label }) => ({
   label,
@@ -60,6 +70,7 @@ export function Dashboard({ history }: { history?: ChatHistory }) {
   const [days, setDays] = useState<number>(30);
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [model, setModel] = useState<ChatModel | null>(null);
+  const [reloads, setReloads] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -69,7 +80,27 @@ export function Dashboard({ history }: { history?: ChatHistory }) {
         if (!controller.signal.aborted) setState({ kind: "failed" });
       });
     return () => controller.abort();
-  }, [days]);
+  }, [days, reloads]);
+
+  const updating = state.kind === "loaded" && state.stats.label_update.running;
+  useEffect(() => {
+    if (!updating) return;
+    const timer = setTimeout(() => setReloads((n) => n + 1), UPDATE_POLL_MS);
+    return () => clearTimeout(timer);
+  }, [updating, state]);
+
+  async function updateLabels() {
+    try {
+      const labelUpdate = await startLabelUpdate();
+      setState((s) =>
+        s.kind === "loaded" ? { ...s, stats: { ...s.stats, label_update: labelUpdate } } : s,
+      );
+    } catch (error) {
+      // 409: a run started elsewhere, the nightly one perhaps; the reload shows it running.
+      if (error instanceof ApiError && error.status === 409) setReloads((n) => n + 1);
+      else throw error;
+    }
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -112,7 +143,11 @@ export function Dashboard({ history }: { history?: ChatHistory }) {
               state.days !== days && "opacity-60",
             )}
           >
-            <KnowledgeBase kb={state.stats.knowledge_base} />
+            <KnowledgeBase
+              kb={state.stats.knowledge_base}
+              labelUpdate={state.stats.label_update}
+              onUpdate={updateLabels}
+            />
             <Usage usage={state.stats.usage} days={state.days} model={model} />
           </div>
         )}
