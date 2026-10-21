@@ -14,6 +14,10 @@ import {
 import type { ChatModel } from "@/lib/api";
 import { shortName, useModelChoices } from "@/lib/use-model-choices";
 
+// The models every prompt and eval was measured on: gpt-oss-20b locally, gpt-6-luna in the cloud
+// (docs/decisions/chat-model.md).
+export const TESTED_MODELS = ["openai/gpt-oss-20b", "openai/gpt-6-luna"];
+
 /** The settings over the chat, opened by `trigger`: which model writes the answers (#37). */
 export function ModelSettings({
   trigger,
@@ -66,7 +70,7 @@ export function ModelPicker() {
               />
             ))}
           </fieldset>
-          <Disclaimer defaultName={choices.default} answering={answering} />
+          <Disclaimer defaultModel={choices.models[0]} answering={answering} />
         </>
       )}
     </section>
@@ -100,31 +104,44 @@ function ModelOption({
       />
       <span className="min-w-0 truncate font-mono text-[13px]">{shortName(model.name)}</span>
       <span className="ml-auto shrink-0 text-xs text-ink-3">
-        {model.local ? "local" : "cloud"}
-        {isDefault && " · default, tested"}
+        {[
+          model.local ? "local" : "cloud",
+          TESTED_MODELS.includes(model.name) && "tested",
+          isDefault && "default",
+        ]
+          .filter(Boolean)
+          .join(" · ")}
       </span>
     </label>
   );
 }
 
-/** Why the default is the safe pick: everything was measured on it (#37). */
-function Disclaimer({ defaultName, answering }: { defaultName: string; answering: ChatModel }) {
-  const tested = shortName(defaultName);
+/** Why the tested models are the safe pick: everything was measured on them (#37). */
+function Disclaimer({
+  defaultModel,
+  answering,
+}: {
+  defaultModel: ChatModel;
+  answering: ChatModel;
+}) {
   return (
     <div className="flex flex-col gap-2 border-l-2 border-signal pl-3 text-[13px]">
       <p>
-        Molecula was developed and tested with {tested}: every prompt, safety rule and eval was
-        measured on it. Another model can do worse here. It may skip a lookup and answer from
-        memory, or cite the wrong source.
+        Molecula was developed with gpt-oss-20b, which ran every prompt, safety rule and eval, and
+        gpt-6-luna was measured as the cloud model. Another model can do worse here. It may skip a
+        lookup and answer from memory, or cite the wrong source.
       </p>
       <p>
         Whichever model you pick, the safety check before the answer and the source check after it
         stay on the models they were tested with.
       </p>
-      {answering.local && answering.name !== defaultName && (
+      {answering.local && answering.name !== defaultModel.name && (
         <p>
-          A local model loads on the local server when it is first asked, which can take a minute,
-          and it has to fit in memory next to {tested}.
+          A local model loads on the local server when it is first asked, which can take a minute
+          {defaultModel.local &&
+            `, and it has to fit in memory next to ${shortName(defaultModel.name)}`}
+          . Load it with at least 32k tokens of context: one answer with a label search already
+          needs about 9k, more than LM Studio&apos;s default of 8k.
         </p>
       )}
     </div>

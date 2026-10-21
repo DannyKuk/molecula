@@ -30,7 +30,7 @@ function option(name: string): HTMLInputElement {
 }
 
 describe("ModelSettings", () => {
-  it("opens from its button and lists the models, the default marked as tested", async () => {
+  it("opens from its button and lists the models, the tested ones and the default marked", async () => {
     render(<ModelSettings trigger={<button type="button" />}>Settings</ModelSettings>);
 
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
@@ -38,11 +38,28 @@ describe("ModelSettings", () => {
     expect(await screen.findByRole("radio", { name: /^gpt-oss-20b/ })).toBeDefined();
     expect(
       screen.getAllByRole("radio").map((radio) => radio.closest("label")?.textContent),
-    ).toEqual(["gpt-oss-20blocal · default, tested", "gemma-4-31blocal", "claude-haiku-5.5cloud"]);
+    ).toEqual(["gpt-oss-20blocal · tested · default", "gemma-4-31blocal", "claude-haiku-5.5cloud"]);
   });
 });
 
 describe("ModelPicker", () => {
+  it("marks gpt-6-luna as tested when a cloud setup makes it the default", async () => {
+    vi.mocked(getModels).mockResolvedValue({
+      models: [
+        { name: "openai/gpt-6-luna", local: false },
+        { name: "openai/gpt-oss-20b", local: true },
+      ],
+      default: "openai/gpt-6-luna",
+    });
+
+    render(<ModelPicker />);
+
+    expect(
+      (await screen.findByRole("radio", { name: /^gpt-6-luna/ })).closest("label")?.textContent,
+    ).toBe("gpt-6-lunacloud · tested · default");
+    expect(option("gpt-oss-20b").closest("label")?.textContent).toBe("gpt-oss-20blocal · tested");
+  });
+
   it("checks the default until the user picks another model", async () => {
     render(<ModelPicker />);
 
@@ -52,7 +69,7 @@ describe("ModelPicker", () => {
     expect(chosenModel()).toBeNull();
   });
 
-  it("keeps the picked model for the next question and says the default is the tested one", async () => {
+  it("keeps the picked model for the next question and names the tested models", async () => {
     render(<ModelPicker />);
     await screen.findByRole("radio", { name: /^gpt-oss-20b/ });
 
@@ -60,7 +77,7 @@ describe("ModelPicker", () => {
 
     expect(chosenModel()).toBe("anthropic/claude-haiku-5.5");
     expect(option("claude-haiku-5.5").checked).toBe(true);
-    expect(screen.getByText(/developed and tested with gpt-oss-20b/)).toBeDefined();
+    expect(screen.getByText(/developed with gpt-oss-20b.*gpt-6-luna was measured/)).toBeDefined();
   });
 
   it("warns that a local model loads first and must fit next to the default", async () => {
@@ -69,7 +86,9 @@ describe("ModelPicker", () => {
 
     fireEvent.click(option("gemma-4-31b"));
 
-    expect(screen.getByText(/loads on the local server when it is first asked/)).toBeDefined();
+    expect(
+      screen.getByText(/loads on the local server when it is first asked/).textContent,
+    ).toMatch(/fit in memory next to gpt-oss-20b/);
   });
 
   it("forgets the choice when the user goes back to the default", async () => {
