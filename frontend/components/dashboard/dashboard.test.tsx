@@ -99,7 +99,7 @@ describe("Dashboard page", () => {
     await openPage();
 
     expect(screen.getByText("No chat requests in the last 30 days")).toBeDefined();
-    expect(screen.queryByRole("img")).toBeNull();
+    expect(within(screen.getByRole("main")).queryByRole("img")).toBeNull();
     expect(screen.queryByText("Requests", { selector: "dt" })).toBeNull();
     expect(screen.getByRole("region", { name: "Knowledge base" }).textContent).toContain(
       "133 drugs",

@@ -33,6 +33,7 @@ import { useLanguage } from "@/lib/language";
 import { useMessages } from "@/lib/messages";
 import { useSidebarExpanded } from "@/lib/use-sidebar-expanded";
 
+import { Brand, BrandMark } from "./brand-mark";
 import { HistoryRow } from "./history-row";
 import { LanguageSwitch } from "./language-switch";
 import { UserMenu } from "./login";
@@ -89,6 +90,9 @@ export function ChatSidebar(props: ChatListProps) {
         aria-label={t.sidebar.chats}
         className={`${SIDEBAR_CLASSES} w-14 items-center gap-1 py-3`}
       >
+        <div className="grid h-10 place-items-center">
+          <BrandMark label="Molecula" className="size-6" />
+        </div>
         <IconButton label={t.sidebar.show} onClick={() => setExpanded(true)}>
           <PanelLeft />
         </IconButton>
@@ -127,11 +131,11 @@ export function ChatSidebar(props: ChatListProps) {
   }
   return (
     <aside aria-label={t.sidebar.history} className={`${SIDEBAR_CLASSES} w-65`}>
-      <div className="flex min-h-9 items-center gap-1 px-3 pt-3">
+      <div className="flex min-h-9 items-center justify-between gap-1 px-3 pt-3">
+        <Brand className="pl-2 text-[17px]" />
         <IconButton label={t.sidebar.hide} onClick={() => setExpanded(false)}>
           <PanelLeft />
         </IconButton>
-        <span className="pl-1 text-[15px] font-semibold">{t.sidebar.chats}</span>
       </div>
       <ChatList {...props} withMcp />
     </aside>
