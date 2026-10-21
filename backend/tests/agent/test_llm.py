@@ -1,3 +1,4 @@
+import asyncio
 import json
 from collections.abc import Callable
 from pathlib import Path
@@ -14,11 +15,14 @@ from molecula.agent.llm import (
     LocalChatOpenAI,
     PricedChatOpenAI,
     chat_model_name,
+    cloud_model_choices,
     get_answer_model,
     get_chat_model,
     get_source_check_model,
+    local_model_names,
 )
 from molecula.config import Settings
+from molecula.schemas.chat import ChatModel
 from molecula.schemas.usage import usage_of
 
 FIXTURES = Path(__file__).parents[1] / "fixtures" / "openrouter"
@@ -26,6 +30,7 @@ FIXTURES = Path(__file__).parents[1] / "fixtures" / "openrouter"
 LLM_FIELDS: dict[str, Any] = {
     "openrouter_api_key": None,
     "llm_model": None,
+    "llm_models": [],
     "local_llm_base_url": None,
     "local_llm_model": None,
     "llm_reasoning_effort": None,
@@ -205,6 +210,84 @@ def test_a_source_check_effort_of_default_leaves_it_to_the_model() -> None:
 
     assert isinstance(model, ChatOpenAI)
     assert "reasoning_effort" not in model._default_params
+
+
+def test_a_picked_local_model_answers_on_the_local_server() -> None:
+    model = get_answer_model(both_setups(), ChatModel(name="google/gemma-4-31b", local=True))
+
+    assert isinstance(model, LocalChatOpenAI)
+    assert model.openai_api_base == "http://localhost:11434/v1"
+    assert model.model_name == "google/gemma-4-31b"
+    assert model.reasoning_effort == "medium"
+
+
+def test_a_picked_cloud_model_answers_on_openrouter() -> None:
+    model = get_answer_model(
+        both_setups(), ChatModel(name="anthropic/claude-haiku-5.5", local=False)
+    )
+
+    assert isinstance(model, ChatOpenAI)
+    assert not isinstance(model, LocalChatOpenAI)
+    assert model.openai_api_base == "https://openrouter.ai/api/v1"
+    assert model.model_name == "anthropic/claude-haiku-5.5"
+
+
+def test_a_picked_local_model_without_a_local_server_is_an_error() -> None:
+    with pytest.raises(LLMConfigError, match="LOCAL_LLM_BASE_URL is empty"):
+        get_answer_model(openrouter_settings(), ChatModel(name="qwen3:8b", local=True))
+
+
+def test_the_cloud_choices_are_llm_model_and_llm_models_once_each() -> None:
+    choices = cloud_model_choices(
+        openrouter_settings(llm_models=["anthropic/claude-haiku-5.5", "openai/gpt-4o-mini"])
+    )
+
+    assert choices == [
+        ChatModel(name="openai/gpt-4o-mini", local=False),
+        ChatModel(name="anthropic/claude-haiku-5.5", local=False),
+    ]
+
+
+def test_there_are_no_cloud_choices_offline_or_without_a_key() -> None:
+    assert cloud_model_choices(both_setups(offline=True, llm_models=["openai/gpt-6"])) == []
+    assert cloud_model_choices(local_settings(llm_models=["openai/gpt-6"])) == []
+
+
+def models_server(handle: Callable[[httpx.Request], httpx.Response]) -> httpx.AsyncClient:
+    return httpx.AsyncClient(transport=httpx.MockTransport(handle))
+
+
+def listed_by_local_server(
+    settings: Settings, handle: Callable[[httpx.Request], httpx.Response]
+) -> list[str]:
+    return asyncio.run(local_model_names(settings, models_server(handle)))
+
+
+def lm_studio_models(request: httpx.Request) -> httpx.Response:
+    assert request.url == "http://localhost:11434/v1/models"
+    ids = ["openai/gpt-oss-20b", "google/gemma-4-31b", "text-embedding-nomic-embed-text-v1.5"]
+    return httpx.Response(200, json={"object": "list", "data": [{"id": id} for id in ids]})
+
+
+def test_the_local_server_lists_its_chat_models_without_the_embedding_models() -> None:
+    assert listed_by_local_server(local_settings(), lm_studio_models) == [
+        "openai/gpt-oss-20b",
+        "google/gemma-4-31b",
+    ]
+
+
+def test_a_local_server_that_is_down_lists_no_models() -> None:
+    def down(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("connection refused", request=request)
+
+    assert listed_by_local_server(local_settings(), down) == []
+
+
+def test_without_a_local_server_there_is_no_local_list_to_read() -> None:
+    def unexpected(request: httpx.Request) -> httpx.Response:
+        raise AssertionError("no request expected")
+
+    assert listed_by_local_server(openrouter_settings(), unexpected) == []
 
 
 def test_missing_key_without_a_local_server_names_the_settings_to_fill_in() -> None:

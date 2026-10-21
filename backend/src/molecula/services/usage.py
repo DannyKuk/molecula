@@ -31,8 +31,11 @@ class UsageLog:
         self._now = now
         self._clock = clock
 
-    async def recorded(self, events: AsyncIterator[ChatEvent]) -> AsyncIterator[ChatEvent]:
-        """The events, recorded as one request once the stream ends, fails or is left."""
+    async def recorded(
+        self, events: AsyncIterator[ChatEvent], *, model: str | None = None
+    ) -> AsyncIterator[ChatEvent]:
+        """The events, recorded as one request once the stream ends, fails or is left, with
+        the `model` that answered when a user picked one."""
         started_at, start = self._now(), self._clock()
         tools: list[str] = []
         done: DoneEvent | None = None
@@ -58,7 +61,7 @@ class UsageLog:
                 RequestRecord(
                     id=uuid.uuid4().hex,
                     started_at=started_at,
-                    model=self._model,
+                    model=model or self._model,
                     outcome=outcome,
                     latency_ms=round((self._clock() - start) * 1000),
                     input_tokens=usage.input_tokens if usage else None,

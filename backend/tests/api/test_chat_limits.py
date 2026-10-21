@@ -4,12 +4,12 @@ from datetime import UTC, datetime
 import pytest
 from fastapi.testclient import TestClient
 
+from choice_fakes import model_choices
 from fake_llm import CANARY, ScriptedChatModel, answer_message
 from guard_fakes import FakeCheck, FakeSourceCheck
 from molecula.agent.agent import ChatAgent
 from molecula.agent.tool_registry import build_tools
 from molecula.api import dependencies
-from molecula.api.dependencies import chat
 from molecula.config import Settings
 from molecula.guard.chat import GuardedChat
 from molecula.guard.limits import ChatLimits, DailyCostCap, RequestLimiter
@@ -53,7 +53,9 @@ def limited(usage_log: UsageLog) -> Iterator[Callable[..., ChatLimits]]:
         app.state.chat_limits = limits
         return limits
 
-    app.dependency_overrides[chat] = lambda: guarded(answers=10)
+    app.dependency_overrides[dependencies.model_choices] = lambda: model_choices(
+        guarded(answers=10)
+    )
     app.dependency_overrides[dependencies.usage_log] = lambda: usage_log
     yield limit
     app.dependency_overrides.clear()

@@ -48,17 +48,29 @@ class ChatMessage(BaseModel):
 
 
 class ChatModel(BaseModel):
-    """The model that writes the answers, as the chat's header names it."""
+    """A model that writes the answers, by its id on its server, and whether that server is the
+    local one."""
+
+    model_config = ConfigDict(frozen=True)
 
     name: str
     local: bool
 
 
+class ModelChoicesResponse(BaseModel):
+    """The models a user may pick to write the answers (#37), the default first."""
+
+    models: list[ChatModel]
+    default: str
+
+
 class ChatRequest(BaseModel):
     """The conversation so far, oldest first, ending with the user's new message. A longer
-    conversation is sent as its latest messages."""
+    conversation is sent as its latest messages. `model` is the name of one of the models
+    `GET /models` lists; without it the default writes the answer."""
 
     messages: list[ChatMessage]
+    model: Annotated[str, StringConstraints(min_length=1, max_length=200)] | None = None
 
     @field_validator("messages", mode="before")
     @classmethod

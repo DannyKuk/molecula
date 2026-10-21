@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request
 
+from molecula.agent.choices import ModelChoices
 from molecula.guard.chat import GuardedChat
 from molecula.guard.limits import ChatLimited, ChatLimits
 from molecula.schemas.chat import ChatModel
@@ -81,20 +82,21 @@ def label_update_button(updater: LabelUpdaterDep) -> LabelUpdater:
 LabelUpdateButtonDep = Annotated[LabelUpdater, Depends(label_update_button)]
 
 
-def chat(request: Request) -> GuardedChat:
-    """The app's chat, the agent behind the guard, built at startup. Without a chat model or a
-    label index there is none, and the chat answers 503."""
-    guarded: GuardedChat | None = request.app.state.chat
-    if guarded is None:
+def model_choices(request: Request) -> ModelChoices[GuardedChat]:
+    """The models a user may pick and the chat each answers in, the agent behind the guard,
+    built at startup. Without a chat model or a label index there are none, and the chat answers
+    503."""
+    choices: ModelChoices[GuardedChat] | None = request.app.state.model_choices
+    if choices is None:
         raise HTTPException(
             status_code=503,
             detail="Chat is off: the backend has no chat model configured or no label index "
             "built. The backend log at startup says which.",
         )
-    return guarded
+    return choices
 
 
-ChatDep = Annotated[GuardedChat, Depends(chat)]
+ModelChoicesDep = Annotated[ModelChoices[GuardedChat], Depends(model_choices)]
 
 
 def chat_model(request: Request) -> ChatModel:

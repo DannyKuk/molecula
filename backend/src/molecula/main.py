@@ -2,9 +2,10 @@ import asyncio
 import logging
 import secrets
 import sqlite3
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable, Sequence
 from contextlib import AsyncExitStack, asynccontextmanager
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -12,17 +13,21 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models import BaseChatModel
+from langchain_core.tools import BaseTool
 
 from molecula.agent.agent import ChatAgent
+from molecula.agent.choices import ModelChoices
 from molecula.agent.decisions import DecisionConfigError, DecisionModel, get_decision_model
 from molecula.agent.label_filter import DecisionFirstFilterExtractor
 from molecula.agent.llm import (
     LLMConfigError,
     chat_model_is_local,
     chat_model_name,
+    cloud_model_choices,
     get_answer_model,
     get_chat_model,
     get_source_check_model,
+    local_model_names,
 )
 from molecula.agent.tool_registry import build_tools, tools_over_mcp
 from molecula.api import chat, drugs, health, labels, stats
@@ -239,6 +244,37 @@ def open_chat_limits(settings: Settings) -> ChatLimits:
     )
 
 
+def open_agent(
+    settings: Settings, tools: Sequence[BaseTool], canary: str, model: ChatModel | None = None
+) -> ChatAgent:
+    """The answering agent over the configured chat model, or over the `model` a user picked."""
+    return ChatAgent(
+        get_answer_model(settings, model),
+        tools,
+        canary=canary,
+        max_steps=settings.chat_max_steps,
+        timeout_seconds=settings.chat_timeout_seconds,
+    )
+
+
+def open_model_choices(
+    settings: Settings,
+    default_chat: GuardedChat,
+    guarded: Callable[[ChatAgent], GuardedChat],
+    tools: Sequence[BaseTool],
+    canary: str,
+) -> ModelChoices[GuardedChat]:
+    """The models a user may pick (#37). A picked model only writes the answer: the guard's
+    checks before and after it stay on the configured models they were measured with."""
+    return ModelChoices(
+        ChatModel(name=chat_model_name(settings), local=chat_model_is_local(settings)),
+        default_chat,
+        cloud=cloud_model_choices(settings),
+        local_names=partial(local_model_names, settings),
+        build=lambda model: guarded(open_agent(settings, tools, canary, model)),
+    )
+
+
 def log_api_keys(settings: Settings) -> None:
     """Which API keys the backend has, by name: a key's value never leaves its environment."""
     keys = {
@@ -266,6 +302,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.chat_agent = None
     app.state.chat = None
     app.state.chat_model = None
+    app.state.model_choices = None
     index = open_label_index(settings)
     app.state.knowledge_base = KnowledgeBase(
         conn, index, ConformerFiles(settings.conformers_dir), ComplexFiles(settings.complexes_dir)
@@ -290,22 +327,19 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             tools = await mcp_session.enter_async_context(
                 tools_over_mcp(build_server(tools), tools)
             )
-        app.state.chat_agent = ChatAgent(
-            get_answer_model(settings),
-            tools,
-            canary=secrets.token_hex(16),
-            max_steps=settings.chat_max_steps,
-            timeout_seconds=settings.chat_timeout_seconds,
-        )
-        app.state.chat = GuardedChat(
+        canary = secrets.token_hex(16)
+        guarded = partial(
+            GuardedChat,
             open_input_check(settings, chat_model),
-            app.state.chat_agent,
-            ChatModelSourceCheck(get_source_check_model(settings)),
+            source_check=ChatModelSourceCheck(get_source_check_model(settings)),
             timeout_seconds=settings.llm_timeout_seconds,
         )
-        app.state.chat_model = ChatModel(
-            name=chat_model_name(settings), local=chat_model_is_local(settings)
+        app.state.chat_agent = open_agent(settings, tools, canary)
+        app.state.chat = guarded(app.state.chat_agent)
+        app.state.model_choices = open_model_choices(
+            settings, app.state.chat, guarded, tools, canary
         )
+        app.state.chat_model = app.state.model_choices.default
     usage_conn = connect_usage(settings.usage_db_path)
     app.state.usage_log = UsageLog(
         UsageStore(usage_conn), app.state.chat_model.name if app.state.chat_model else None
