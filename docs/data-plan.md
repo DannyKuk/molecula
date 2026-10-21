@@ -31,7 +31,7 @@ Known limits, and how the app handles them:
 | Remote MCP server | public PubChem MCP at `https://pubchem.caseyjhand.com/mcp` | verified (answered `initialize`), then dropped: it would answer about drugs outside the store (#45) |
 | RAG evaluation and A/B tests | QA set generated from label sections; dense vs hybrid, query translation on/off | design decision |
 | Knowledge-base updates | counts over the stored labels' `set_id`s: withdrawn, or a newer `effective_time`; `meta.last_updated` says whether openFDA published anything since the last run | verified 2026-10-21 (#340), built (#341, §5.6) |
-| Multi-language | German query → English retrieval → German answer | design decision |
+| Multi-language | German query → English retrieval → German answer | measured: German answers as good as English (#357) |
 
 ---
 
@@ -284,7 +284,7 @@ Checked against openFDA on 2026-10-21 (#340), without an API key or a VPN: a gro
 - **Tool accuracy:** ~50 questions with exact answers from the `compound` table, scored automatically.
 - **RAG QA:** ~60 questions generated from canonical label sections, reviewed by hand (generated "ground truths" are often wrong). Scored with RAGAs: faithfulness, answer relevancy, context precision and recall.
 - **Safety:** ~40 prompts covering personal dosing, lethal dose, synthesis, and injection hidden in retrieved text.
-- **Multi-language:** 15 German questions compared with the English answers.
+- **Multi-language:** 15 German questions compared with the English answers (`evals/multilang/`, #357; [result](evals/multilang.md)).
 
 ---
 
