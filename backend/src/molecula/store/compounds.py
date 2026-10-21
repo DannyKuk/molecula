@@ -1,11 +1,10 @@
-import sqlite3
 from collections.abc import Collection
 from dataclasses import astuple, dataclass, fields
 from datetime import datetime
-from threading import Lock
 from typing import Literal
 
 from molecula.schemas.compounds import ConformerSource, MatchKind
+from molecula.store.db import StoreConnection
 
 # A label brand is a name too (`MatchKind` "brand"), but it lives in the `label` table.
 type SynonymKind = Literal["name", "alias", "pubchem"]
@@ -54,9 +53,9 @@ COLUMNS = [field.name for field in fields(CompoundRecord)]
 class CompoundStore:
     """The `compound` and `synonym` tables. Writes that change nothing leave the rows untouched."""
 
-    def __init__(self, conn: sqlite3.Connection) -> None:
+    def __init__(self, conn: StoreConnection) -> None:
         self._conn = conn
-        self._lock = Lock()
+        self._lock = conn.lock
 
     def get(self, cid: int) -> CompoundRecord | None:
         with self._lock:

@@ -1,9 +1,9 @@
-import sqlite3
 from dataclasses import dataclass, replace
 from datetime import date, datetime
 from typing import Any
 
 from molecula.schemas.labels import ProductType, UpdateOutcome
+from molecula.store.db import StoreConnection
 
 # Runs that checked every drug: the next run may start where they started.
 FINISHED: tuple[UpdateOutcome, ...] = ("complete", "nothing_new")
@@ -44,11 +44,12 @@ class LabelUpdateRun:
 class LabelUpdateStore:
     """The `label_update` and `label_change` tables."""
 
-    def __init__(self, conn: sqlite3.Connection) -> None:
+    def __init__(self, conn: StoreConnection) -> None:
         self._conn = conn
+        self._lock = conn.lock
 
     def add(self, run: LabelUpdateRun) -> None:
-        with self._conn:
+        with self._lock, self._conn:
             cursor = self._conn.execute(
                 "INSERT INTO label_update (started_at, finished_at, outcome, source_updated,"
                 " drugs_checked, drugs_rechecked, error) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -83,32 +84,35 @@ class LabelUpdateStore:
     def last_finished(self) -> LabelUpdateRun | None:
         """The latest run that checked every drug, without its changes."""
         placeholders = ", ".join("?" for _ in FINISHED)
-        row = self._conn.execute(
-            f"SELECT {RUN_COLUMNS} FROM label_update WHERE outcome IN ({placeholders})"
-            " ORDER BY started_at DESC LIMIT 1",
-            FINISHED,
-        ).fetchone()
+        with self._lock:
+            row = self._conn.execute(
+                f"SELECT {RUN_COLUMNS} FROM label_update WHERE outcome IN ({placeholders})"
+                " ORDER BY started_at DESC LIMIT 1",
+                FINISHED,
+            ).fetchone()
         return run_from_row(row[1:]) if row else None
 
     def latest(self) -> LabelUpdateRun | None:
         """The latest run, whatever its outcome, with its changes."""
-        row = self._conn.execute(
-            f"SELECT {RUN_COLUMNS} FROM label_update ORDER BY started_at DESC LIMIT 1"
-        ).fetchone()
-        if row is None:
-            return None
-        rows = self._conn.execute(
-            f"SELECT {CHANGE_COLUMNS} FROM label_change WHERE update_id = ?"
-            " ORDER BY cid, product_type",
-            (row[0],),
-        ).fetchall()
+        with self._lock:
+            row = self._conn.execute(
+                f"SELECT {RUN_COLUMNS} FROM label_update ORDER BY started_at DESC LIMIT 1"
+            ).fetchone()
+            if row is None:
+                return None
+            rows = self._conn.execute(
+                f"SELECT {CHANGE_COLUMNS} FROM label_change WHERE update_id = ?"
+                " ORDER BY cid, product_type",
+                (row[0],),
+            ).fetchall()
         return replace(run_from_row(row[1:]), changes=tuple(LabelChange(*c) for c in rows))
 
     def changes(self) -> list[LabelChange]:
         """Every recorded change, oldest run first."""
-        rows = self._conn.execute(
-            f"SELECT {CHANGE_COLUMNS} FROM label_change ORDER BY update_id, cid, product_type"
-        ).fetchall()
+        with self._lock:
+            rows = self._conn.execute(
+                f"SELECT {CHANGE_COLUMNS} FROM label_change ORDER BY update_id, cid, product_type"
+            ).fetchall()
         return [LabelChange(*row) for row in rows]
 
     def current_since(self) -> datetime | None:
@@ -117,7 +121,8 @@ class LabelUpdateStore:
         there would miss a label that changed after an earlier fetch of another one."""
         if run := self.last_finished():
             return run.started_at
-        oldest = self._conn.execute("SELECT MIN(fetched_at) FROM label").fetchone()[0]
+        with self._lock:
+            oldest = self._conn.execute("SELECT MIN(fetched_at) FROM label").fetchone()[0]
         return datetime.fromisoformat(oldest) if oldest else None
 
 

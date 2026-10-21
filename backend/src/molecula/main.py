@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import secrets
-import sqlite3
 from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -54,7 +53,7 @@ from molecula.services.labels import LabelService
 from molecula.services.targets import TargetService
 from molecula.services.usage import UsageLog
 from molecula.store.compounds import CompoundStore
-from molecula.store.db import connect
+from molecula.store.db import StoreConnection, connect
 from molecula.store.index import LabelIndex
 from molecula.store.keywords import KeywordIndex
 from molecula.store.label_updates import LabelUpdateStore
@@ -77,7 +76,7 @@ def log_to_console(level: str) -> None:
     app_logger.setLevel(level)
 
 
-def open_store(settings: Settings) -> sqlite3.Connection:
+def open_store(settings: Settings) -> StoreConnection:
     """The built store, or an empty one in memory until the first build or fetch.
 
     `connect` would create the file, and an empty store file would stop `ingest fetch` (#35) from
@@ -99,7 +98,7 @@ class Services:
     complexes: ComplexService
 
 
-def open_services(settings: Settings, conn: sqlite3.Connection) -> Services:
+def open_services(settings: Settings, conn: StoreConnection) -> Services:
     compounds = CompoundStore(conn)
     return Services(
         compounds=CompoundService(
@@ -158,7 +157,7 @@ def open_label_retriever(
 
 def open_label_updater(
     settings: Settings,
-    conn: sqlite3.Connection,
+    conn: StoreConnection,
     index: LabelIndex | None,
     embeddings: Embeddings | None,
 ) -> LabelUpdater:

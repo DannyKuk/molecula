@@ -1,10 +1,9 @@
 import json
-import sqlite3
 from dataclasses import astuple, dataclass, fields
 from datetime import datetime
-from threading import Lock
 from typing import Any, Literal
 
+from molecula.store.db import StoreConnection
 from molecula.store.sources import CHEMBL, RCSB, SourceName
 
 type MatchedOn = Literal["inchikey", "connectivity"]
@@ -75,9 +74,9 @@ class TargetStore:
     A save that changes nothing leaves the rows untouched.
     """
 
-    def __init__(self, conn: sqlite3.Connection) -> None:
+    def __init__(self, conn: StoreConnection) -> None:
         self._conn = conn
-        self._lock = Lock()
+        self._lock = conn.lock
 
     def get(self, cid: int) -> DrugTargets:
         with self._lock:

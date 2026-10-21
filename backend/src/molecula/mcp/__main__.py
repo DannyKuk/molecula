@@ -1,5 +1,4 @@
 import argparse
-import sqlite3
 
 from mcp.server.fastmcp import FastMCP
 
@@ -16,6 +15,7 @@ from molecula.main import (
 )
 from molecula.mcp.server import DEFAULT_PORT, build_server
 from molecula.rag.embeddings import get_embeddings
+from molecula.store.db import StoreConnection
 
 NO_LABEL_SEARCH = (
     "The MCP server needs the label index and a chat model for search_labels: run "
@@ -23,7 +23,7 @@ NO_LABEL_SEARCH = (
 )
 
 
-def open_server(settings: Settings, conn: sqlite3.Connection, *, host: str, port: int) -> FastMCP:
+def open_server(settings: Settings, conn: StoreConnection, *, host: str, port: int) -> FastMCP:
     """The MCP server over the store, built from the settings the way the backend builds its
     agent's tools. Exits when the label search can't be built."""
     services = open_services(settings, conn)

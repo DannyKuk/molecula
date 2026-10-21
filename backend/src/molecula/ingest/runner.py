@@ -1,5 +1,4 @@
 import logging
-import sqlite3
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import closing, contextmanager
 from dataclasses import dataclass, field
@@ -8,7 +7,7 @@ from typing import Protocol
 from molecula.config import Settings
 from molecula.sources.errors import SourceError, SourceUnavailable
 from molecula.sources.http import SourceClient
-from molecula.store.db import connect
+from molecula.store.db import StoreConnection, connect
 from molecula.store.http_cache import HttpCache
 
 logger = logging.getLogger(__name__)
@@ -61,7 +60,7 @@ def run_step[T: Named, R](
 
 
 @contextmanager
-def store_and_sources(settings: Settings) -> Iterator[tuple[sqlite3.Connection, SourceClient]]:
+def store_and_sources(settings: Settings) -> Iterator[tuple[StoreConnection, SourceClient]]:
     """The store connection and a source client that caches in it, both closed afterwards."""
     with (
         closing(connect(settings.db_path)) as conn,
