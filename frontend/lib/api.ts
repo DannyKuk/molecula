@@ -4,10 +4,16 @@ export type HealthResponse = {
   status: "ok";
 };
 
-/** The model that writes the answers (`ChatModel` in `backend/src/molecula/schemas/chat.py`). */
+/** A model that writes the answers (`ChatModel` in `backend/src/molecula/schemas/chat.py`). */
 export type ChatModel = {
   name: string;
   local: boolean;
+};
+
+/** The models a user may pick to write the answers, the default first (`ModelChoicesResponse`). */
+export type ModelChoices = {
+  models: ChatModel[];
+  default: string;
 };
 
 export type Drug = {
@@ -183,6 +189,11 @@ export function getHealth(signal?: AbortSignal): Promise<HealthResponse> {
 /** The model that writes the answers; fails with 503 while the chat is off. */
 export function getChatModel(signal?: AbortSignal): Promise<ChatModel> {
   return getJson<ChatModel>("/chat/model", signal);
+}
+
+/** The models a user may pick to write the answers; fails with 503 while the chat is off. */
+export function getModels(signal?: AbortSignal): Promise<ModelChoices> {
+  return getJson<ModelChoices>("/models", signal);
 }
 
 /** Every drug in the store, sorted by name. */

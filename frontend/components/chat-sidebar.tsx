@@ -10,6 +10,7 @@ import {
   PanelLeft,
   Plug,
   Plus,
+  Settings,
   SquarePen,
   Workflow,
   X,
@@ -31,6 +32,7 @@ import { useSidebarExpanded } from "@/lib/use-sidebar-expanded";
 
 import { HistoryRow } from "./history-row";
 import { McpDialog } from "./mcp-dialog";
+import { ModelSettings } from "./model-settings";
 
 export type ChatListProps = {
   /** Null until the history has loaded, false when the browser doesn't keep it. */
@@ -117,6 +119,9 @@ export function ChatSidebar(props: ChatListProps) {
           {answeringElsewhere && <AnsweringBadge />}
         </IconButton>
         <RailBookmarks {...props} />
+        <ModelSettings trigger={<IconButton label="Settings" className="mt-auto" />}>
+          <Settings />
+        </ModelSettings>
       </nav>
     );
   }
@@ -226,7 +231,7 @@ export function ChatDrawer(props: ChatListProps) {
 
 /**
  * "New chat", the benchmarks, dashboard and how-it-answers links, the MCP server guide when `withMcp`, the bookmarked chats, the
- * others by day, newest first, and what to know about where they are kept.
+ * others by day, newest first, the settings and what to know about where the chats are kept.
  */
 function ChatList({
   onNew,
@@ -270,6 +275,12 @@ function ChatList({
           Saved in this browser only.
         </p>
       )}
+      <div className="border-t border-rule px-3 py-2">
+        <ModelSettings trigger={<button type="button" className={LIST_LINK} />}>
+          <Settings />
+          Settings
+        </ModelSettings>
+      </div>
     </>
   );
 }

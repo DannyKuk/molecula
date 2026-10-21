@@ -8,12 +8,13 @@ import openai
 import pytest
 from fastapi.testclient import TestClient
 
+from choice_fakes import model_choices
 from fake_llm import CANARY, ScriptedChatModel, answer_message, tool_call_message
 from guard_fakes import FakeCheck, FakeSourceCheck
 from molecula.agent.agent import ChatAgent
 from molecula.agent.tool_registry import build_tools
 from molecula.api import dependencies
-from molecula.api.dependencies import chat, chat_limits
+from molecula.api.dependencies import chat_limits
 from molecula.guard.chat import GuardedChat
 from molecula.guard.limits import ChatLimits, RequestLimiter
 from molecula.guard.safety import fixed_answer
@@ -67,7 +68,7 @@ def client(usage_log: UsageLog) -> Iterator[TestClient]:
 
 
 def use(guarded: GuardedChat) -> None:
-    app.dependency_overrides[chat] = lambda: guarded
+    app.dependency_overrides[dependencies.model_choices] = lambda: model_choices(guarded)
 
 
 def test_chat_streams_the_agents_events_as_server_sent_events(client: TestClient) -> None:
@@ -141,7 +142,7 @@ class BrokenAgent:
 
 
 def test_an_unexpected_failure_ends_the_stream_with_an_error_event(client: TestClient) -> None:
-    app.dependency_overrides[chat] = BrokenAgent
+    app.dependency_overrides[dependencies.model_choices] = lambda: model_choices(BrokenAgent())
 
     response = client.post("/chat", json=QUESTION)
 
@@ -231,7 +232,7 @@ def test_the_longest_allowed_conversation_is_answered(client: TestClient) -> Non
 
 
 def test_chat_without_an_agent_answers_503(client: TestClient) -> None:
-    app.state.chat = None
+    app.state.model_choices = None
 
     response = client.post("/chat", json=QUESTION)
 
@@ -252,6 +253,71 @@ def test_the_model_answers_503_while_the_chat_is_off(client: TestClient) -> None
     app.state.chat_model = None
 
     assert client.get("/chat/model").status_code == 503
+
+
+def offer(**choices: Any) -> None:
+    """The default answers in a scripted agent; a picked model answers in its own."""
+    default = agent([answer_message("The default answers.")])
+    app.dependency_overrides[dependencies.model_choices] = lambda: model_choices(
+        default, build=lambda model: agent([answer_message(f"{model.name} answers.")]), **choices
+    )
+
+
+def answer_text(response: httpx.Response) -> str:
+    return "".join(
+        data["text"] for name, data in server_sent_events(response.text) if name == "token"
+    )
+
+
+def test_models_lists_the_default_the_local_and_the_cloud_models(client: TestClient) -> None:
+    offer(local=["google/gemma-4-31b"], cloud=["anthropic/claude-haiku-5.5"])
+
+    response = client.get("/models")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "models": [
+            {"name": "fake-model", "local": True},
+            {"name": "google/gemma-4-31b", "local": True},
+            {"name": "anthropic/claude-haiku-5.5", "local": False},
+        ],
+        "default": "fake-model",
+    }
+
+
+def test_models_answers_503_while_the_chat_is_off(client: TestClient) -> None:
+    app.state.model_choices = None
+
+    assert client.get("/models").status_code == 503
+
+
+def test_without_a_model_the_default_answers(client: TestClient) -> None:
+    offer(local=["google/gemma-4-31b"])
+
+    assert answer_text(client.post("/chat", json=QUESTION)) == "The default answers."
+
+
+def test_the_picked_model_answers_and_the_usage_log_names_it(
+    client: TestClient, usage_store: UsageStore
+) -> None:
+    offer(local=["google/gemma-4-31b"])
+
+    response = client.post("/chat", json=QUESTION | {"model": "google/gemma-4-31b"})
+
+    assert answer_text(response) == "google/gemma-4-31b answers."
+    [record] = usage_store.since(datetime(2026, 1, 1, tzinfo=UTC))
+    assert record.model == "google/gemma-4-31b"
+
+
+def test_a_model_not_on_the_list_is_refused_with_422(client: TestClient) -> None:
+    offer(local=["google/gemma-4-31b"], cloud=["anthropic/claude-haiku-5.5"])
+
+    response = client.post("/chat", json=QUESTION | {"model": "x-ai/grok-9"})
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == (
+        "Molecula has no model x-ai/grok-9. Pick one from the settings."
+    )
 
 
 def test_an_earlier_answer_may_be_longer_than_a_question(client: TestClient) -> None:

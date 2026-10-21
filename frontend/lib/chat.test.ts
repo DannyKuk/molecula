@@ -38,6 +38,17 @@ afterEach(() => {
 });
 
 describe("streamChat", () => {
+  it("names the model the user picked", async () => {
+    const fetchMock = stubFetch(new Response(DONE));
+
+    for await (const event of streamChat(QUESTION, undefined, "google/gemma-4-31b")) void event;
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toEqual({
+      messages: QUESTION,
+      model: "google/gemma-4-31b",
+    });
+  });
+
   it("posts the conversation and yields the events of the stream", async () => {
     const fetchMock = stubFetch(
       new Response(

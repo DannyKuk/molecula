@@ -1,6 +1,8 @@
+import logging
 from dataclasses import dataclass, field
 from typing import Any
 
+import httpx
 import openai
 from langchain_core.language_models import BaseChatModel, LanguageModelInput
 from langchain_core.outputs import ChatGenerationChunk, ChatResult
@@ -9,9 +11,15 @@ from pydantic import SecretStr
 
 from molecula import prompts
 from molecula.config import OPENROUTER_ATTRIBUTION_HEADERS, OPENROUTER_BASE_URL, Settings
+from molecula.schemas.chat import ChatModel
+
+logger = logging.getLogger(__name__)
 
 # The OpenAI client won't start without a key; Ollama and LM Studio ignore it.
 LOCAL_SERVER_API_KEY = SecretStr("local")
+# The model list is read on every chat request that picks a model, so a server that is down
+# must not hold the request up.
+LOCAL_MODEL_LIST_TIMEOUT_SECONDS = 3.0
 
 # What the model from get_chat_model raises when a call fails: it talks to every endpoint
 # through the OpenAI client.
@@ -132,9 +140,10 @@ def get_chat_model(settings: Settings) -> BaseChatModel:
     return _chat_model(settings, settings.llm_reasoning_effort)
 
 
-def get_answer_model(settings: Settings) -> BaseChatModel:
-    """The same model at the answering agent's own reasoning effort, ANSWER_REASONING_EFFORT."""
-    return _chat_model(settings, _own_effort(settings.answer_reasoning_effort))
+def get_answer_model(settings: Settings, model: ChatModel | None = None) -> BaseChatModel:
+    """The same model, or the `model` a user picked (#37), at the answering agent's own
+    reasoning effort, ANSWER_REASONING_EFFORT."""
+    return _chat_model(settings, _own_effort(settings.answer_reasoning_effort), model)
 
 
 def get_source_check_model(settings: Settings) -> BaseChatModel:
@@ -147,8 +156,10 @@ def _own_effort(effort: str) -> str | None:
     return None if effort == "default" else effort
 
 
-def _chat_model(settings: Settings, reasoning_effort: str | None) -> BaseChatModel:
-    endpoint = _resolve_endpoint(settings)
+def _chat_model(
+    settings: Settings, reasoning_effort: str | None, model: ChatModel | None = None
+) -> BaseChatModel:
+    endpoint = _resolve_endpoint(settings) if model is None else _picked_endpoint(settings, model)
     return endpoint.model_class(
         base_url=endpoint.base_url,
         api_key=endpoint.api_key,
@@ -193,6 +204,47 @@ def _resolve_endpoint(settings: Settings) -> Endpoint:
     if settings.openrouter_api_key is None and settings.local_llm_base_url:
         return _local_endpoint(settings.local_llm_base_url, settings.local_llm_model)
     return _openrouter_endpoint(settings.openrouter_api_key, settings.llm_model)
+
+
+def _picked_endpoint(settings: Settings, model: ChatModel) -> Endpoint:
+    if model.local:
+        if not settings.local_llm_base_url:
+            raise LLMConfigError(f"{model.name} is a local model, and LOCAL_LLM_BASE_URL is empty.")
+        return _local_endpoint(settings.local_llm_base_url, model.name)
+    return _openrouter_endpoint(settings.openrouter_api_key, model.name)
+
+
+def cloud_model_choices(settings: Settings) -> list[ChatModel]:
+    """The OpenRouter models a user may pick: LLM_MODEL and LLM_MODELS, online and with
+    OPENROUTER_API_KEY set; none otherwise."""
+    if settings.offline or settings.openrouter_api_key is None:
+        return []
+    names = [settings.llm_model, *settings.llm_models]
+    return [ChatModel(name=name, local=False) for name in dict.fromkeys(names) if name]
+
+
+async def local_model_names(
+    settings: Settings, http_client: httpx.AsyncClient | None = None
+) -> list[str]:
+    """The chat models the local server at LOCAL_LLM_BASE_URL has, as it lists them; none when
+    it isn't set or doesn't answer. LM Studio lists every model it has downloaded and loads one
+    when it is first asked for; Ollama lists the models it has pulled. Embedding models are left
+    out by their name, since neither server says which models chat."""
+    if not settings.local_llm_base_url:
+        return []
+    client = openai.AsyncOpenAI(
+        base_url=settings.local_llm_base_url,
+        api_key=LOCAL_SERVER_API_KEY.get_secret_value(),
+        timeout=LOCAL_MODEL_LIST_TIMEOUT_SECONDS,
+        max_retries=0,
+        http_client=http_client,
+    )
+    try:
+        listed = [model.id async for model in client.models.list()]
+    except openai.APIError as error:
+        logger.warning("The local server didn't list its models: %s", error)
+        return []
+    return [name for name in listed if "embed" not in name.lower()]
 
 
 def _local_endpoint(base_url: str, model: str | None) -> Endpoint:

@@ -28,6 +28,7 @@ from molecula.rag import embeddings as rag_embeddings
 from molecula.rag.embeddings import embedding_model_id
 from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
+from molecula.schemas.chat import ChatModel
 from molecula.services.compounds import CompoundService
 from molecula.services.labels import LabelService
 from molecula.sources.http import SourceClient
@@ -192,7 +193,7 @@ def use_models(monkeypatch: pytest.MonkeyPatch, model: ScriptedChatModel) -> Non
     """The scripted model sorts the message, answers it and checks the answer."""
     monkeypatch.setattr(main, "get_embeddings", lambda settings: UnitEmbeddings())
     monkeypatch.setattr(main, "get_chat_model", lambda settings: model)
-    monkeypatch.setattr(main, "get_answer_model", lambda settings: model)
+    monkeypatch.setattr(main, "get_answer_model", lambda settings, picked=None: model)
     monkeypatch.setattr(main, "get_source_check_model", lambda settings: model)
 
 
@@ -209,7 +210,7 @@ def loaded_models(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         loaded.append("chat")
         return ScriptedChatModel(script=[])
 
-    def answer_model(settings: Settings) -> BaseChatModel:
+    def answer_model(settings: Settings, model: ChatModel | None = None) -> BaseChatModel:
         loaded.append("answer")
         return ScriptedChatModel(script=[])
 
@@ -246,7 +247,7 @@ def test_startup_builds_the_label_search_over_a_matching_index(
         assert isinstance(app.state.chat_agent, ChatAgent)
         assert isinstance(app.state.chat, GuardedChat)
 
-    assert loaded_models == ["chat", "embeddings", "answer", "source check"]
+    assert loaded_models == ["chat", "embeddings", "source check", "answer"]
 
 
 def test_without_a_chat_model_the_label_search_is_off_and_the_routes_still_work(
@@ -455,6 +456,55 @@ def test_chat_describes_the_stored_complex_offline(
     ]
     assert events["sources"]["unknown_refs"] == []
     assert "disclaimer" not in events["sources"]
+
+
+def test_a_picked_model_writes_the_answer_and_the_default_sorts_and_checks_it(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "offline", True)
+    LabelIndex(settings.index_dir).rebuild(
+        [MECHANISM], [[1.0, 0.0, 0.0]], embedding_model_id(settings)
+    )
+    default = ScriptedChatModel(
+        script=[tool_call_message("SortedMessage", {"category": "ok"}), judged_supported()]
+    )
+    gemma = ScriptedChatModel(script=[answer_message("Gemma writes this answer.")])
+    asked_for: list[ChatModel | None] = []
+
+    def answer_model(settings: Settings, model: ChatModel | None = None) -> BaseChatModel:
+        asked_for.append(model)
+        return default if model is None else gemma
+
+    async def local_names(settings: Settings) -> list[str]:
+        return ["google/gemma-4-31b"]
+
+    use_models(monkeypatch, default)
+    monkeypatch.setattr(main, "get_answer_model", answer_model)
+    monkeypatch.setattr(main, "local_model_names", local_names)
+
+    with TestClient(app) as client:
+        listed = client.get("/models").json()
+        response = client.post("/chat", json=QUESTION | {"model": "google/gemma-4-31b"})
+
+    gemma_model = ChatModel(name="google/gemma-4-31b", local=True)
+    assert gemma_model.model_dump() in listed["models"]
+    assert asked_for == [None, gemma_model]
+    events = server_sent_events(response.text)
+    answer = "".join(data["text"] for name, data in events if name == "token")
+    assert answer == "Gemma writes this answer."
+    assert dict(events)["done"]["category"] == "ok"
+    assert dict(events)["source_check"]["checked"] is True
+
+
+def test_without_a_local_server_only_the_configured_model_is_offered(
+    settings: Settings, loaded_models: list[str]
+) -> None:
+    build_index(settings, embedding_model_id(settings))
+
+    with TestClient(app) as client:
+        listed = client.get("/models").json()
+
+    assert [model["name"] for model in listed["models"]] == [listed["default"]]
 
 
 def test_offline_the_chat_model_sorts_messages(make_settings: Callable[..., Settings]) -> None:
