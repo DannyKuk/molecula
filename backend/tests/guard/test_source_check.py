@@ -13,6 +13,7 @@ from molecula.guard.safety import fixed_answer
 from molecula.guard.source_check import ChatModelSourceCheck, cited_sources
 from molecula.schemas.chat import ToolResultEvent
 from molecula.schemas.claims import CheckedClaim
+from molecula.schemas.guard import Language
 from molecula.schemas.source_check import CheckedAnswer, SourceCheckFailed
 from molecula.schemas.usage import Usage
 
@@ -233,8 +234,9 @@ def test_held_by_is_ignored_unless_the_fact_is_held_elsewhere() -> None:
     ]
 
 
-def test_the_guards_emergency_line_is_not_judged() -> None:
-    answer = f"{fixed_answer('overdose_emergency')}\n\nHeadache is common [1]."
+@pytest.mark.parametrize("language", ["en", "de"])
+def test_the_guards_emergency_line_is_not_judged(language: Language) -> None:
+    answer = f"{fixed_answer('overdose_emergency', language)}\n\nHeadache is common [1]."
 
     checked, _ = check(answer, judged((1, "supported")))
 

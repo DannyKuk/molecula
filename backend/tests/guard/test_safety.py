@@ -7,9 +7,16 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from fake_llm import DEFAULT_COST, ScriptedChatModel, answer_message, tool_call_message
 from molecula import prompts
-from molecula.guard.safety import ChatModelInputCheck, InputCheckFailed, Verdict, fixed_answer
+from molecula.guard.safety import (
+    LANGUAGES,
+    ChatModelInputCheck,
+    InputCheckFailed,
+    Verdict,
+    emergency_lines,
+    fixed_answer,
+)
 from molecula.schemas.chat import ChatMessage
-from molecula.schemas.guard import InputCategory
+from molecula.schemas.guard import InputCategory, Language
 from molecula.schemas.usage import Usage
 
 QUESTION = [ChatMessage(role="user", content="How does ibuprofen work?")]
@@ -86,11 +93,20 @@ def test_an_answer_without_a_category_fails_the_check() -> None:
         run(input_check)
 
 
-def test_every_category_but_ok_has_a_fixed_text() -> None:
-    texts = {category: fixed_answer(category) for category in CATEGORIES if category != "ok"}
+REFUSED_AND_EMERGENCY = [category for category in CATEGORIES if category != "ok"]
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_every_category_but_ok_has_a_fixed_text(language: Language) -> None:
+    texts = {category: fixed_answer(category, language) for category in REFUSED_AND_EMERGENCY}
 
     assert all(text and text == text.strip() for text in texts.values())
     assert len(set(texts.values())) == len(texts)
+
+
+@pytest.mark.parametrize("category", REFUSED_AND_EMERGENCY)
+def test_the_german_fixed_text_is_its_own(category: InputCategory) -> None:
+    assert fixed_answer(category, "de") != fixed_answer(category, "en")
 
 
 def test_the_crisis_response_names_help() -> None:
@@ -100,9 +116,29 @@ def test_the_crisis_response_names_help() -> None:
     assert "emergency number" in text
 
 
-def test_fixed_texts_name_only_the_us_and_eu_emergency_numbers() -> None:
-    texts = [fixed_answer(category) for category in CATEGORIES if category != "ok"]
+def test_the_german_crisis_response_names_help() -> None:
+    text = fixed_answer("lethal_dose", "de")
+
+    assert "Krisentelefon" in text
+    assert "Notrufnummer" in text
+    assert "findahelpline.com" in text
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_fixed_texts_name_only_the_us_and_eu_emergency_numbers(language: Language) -> None:
+    texts = [fixed_answer(category, language) for category in REFUSED_AND_EMERGENCY]
     numbers = {number for text in texts for number in re.findall(r"\d[\d\s-]*\d", text)}
 
     assert numbers == {"911", "112"}
+
+
+def test_the_emergency_line_gives_both_numbers_in_each_language() -> None:
     assert "911 in the US, 112 in the EU" in fixed_answer("overdose_emergency")
+    assert "911 in den USA, 112 in der EU" in fixed_answer("overdose_emergency", "de")
+
+
+def test_the_emergency_lines_are_the_emergency_text_in_every_language() -> None:
+    assert emergency_lines() == [
+        fixed_answer("overdose_emergency", "en"),
+        fixed_answer("overdose_emergency", "de"),
+    ]

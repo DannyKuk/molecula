@@ -10,10 +10,11 @@ from molecula.agent.agent import to_langchain
 from molecula.agent.decisions import DecisionModel
 from molecula.schemas.chat import ChatMessage
 from molecula.schemas.decisions import ChoiceAnswer, ChoiceQuestion, StateMessage
-from molecula.schemas.guard import InputCategory, SortedMessage
+from molecula.schemas.guard import InputCategory, Language, SortedMessage
 from molecula.schemas.usage import Usage, usage_of
 
 CATEGORIES: tuple[InputCategory, ...] = get_args(InputCategory.__value__)
+LANGUAGES: tuple[Language, ...] = get_args(Language.__value__)
 
 # Categories that get only a fixed answer; `overdose_emergency` gets its fixed line and then
 # the agent's answer.
@@ -105,7 +106,14 @@ def category_question() -> ChoiceQuestion:
     )
 
 
-def fixed_answer(category: InputCategory) -> str:
+def fixed_answer(category: InputCategory, language: Language = "en") -> str:
     """The answer a refused category gets instead of the agent's, or the emergency line an
-    `overdose_emergency` answer starts with."""
-    return prompts.load(f"guard/{category}").strip()
+    `overdose_emergency` answer starts with, in `language`. The English texts sit in
+    `prompts/guard/`, the others in a folder per language."""
+    folder = "guard" if language == "en" else f"guard/{language}"
+    return prompts.load(f"{folder}/{category}").strip()
+
+
+def emergency_lines() -> list[str]:
+    """The emergency line in every language, for leaving it out of an answer's claims."""
+    return [fixed_answer("overdose_emergency", language) for language in LANGUAGES]

@@ -9,7 +9,7 @@ from molecula import prompts
 from molecula.agent.channel_markers import without_control_tokens
 from molecula.agent.llm import ChatModelError
 from molecula.guard.claims import split_claims
-from molecula.guard.safety import fixed_answer
+from molecula.guard.safety import emergency_lines
 from molecula.schemas.chat import ToolResultEvent
 from molecula.schemas.claims import CheckedClaim, Claim
 from molecula.schemas.source_check import (
@@ -49,7 +49,7 @@ class ChatModelSourceCheck:
         self._model = model
 
     async def check(self, answer: str, results: Sequence[ToolResultEvent]) -> CheckedAnswer:
-        claims = split_claims(answer, leave_out=[fixed_answer("overdose_emergency")])
+        claims = split_claims(answer, leave_out=emergency_lines())
         sources = cited_sources([event.result for event in results])
         to_judge = {
             number: claim

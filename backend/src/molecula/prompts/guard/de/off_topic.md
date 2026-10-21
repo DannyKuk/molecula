@@ -1,0 +1,1 @@
+Molecula beantwortet nur Fragen zu Medikamenten: wie ein Medikament wirkt, wofür es eingesetzt wird, seine Nebenwirkungen, Warnhinweise und Wechselwirkungen, seine Zielproteine und seine chemische Struktur. Fragen Sie nach einem Medikament, zum Beispiel: „Wie senkt Metformin den Blutzucker?“

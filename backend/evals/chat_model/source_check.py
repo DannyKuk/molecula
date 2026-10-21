@@ -38,7 +38,7 @@ from molecula import prompts
 from molecula.agent.llm import chat_model_name, get_source_check_model
 from molecula.config import Settings, get_settings
 from molecula.guard.claims import split_claims
-from molecula.guard.safety import fixed_answer
+from molecula.guard.safety import emergency_lines
 from molecula.guard.source_check import ChatModelSourceCheck
 from molecula.schemas.chat import ToolResultEvent
 from molecula.schemas.claims import CheckedClaim, ClaimLabel
@@ -164,7 +164,7 @@ def read_answers(settings: Settings, labelled: list[LabelledAnswer]) -> dict[str
 
 
 def splits_as_labelled(answer: LabelledAnswer, answers: dict[str, CachedAnswer]) -> bool:
-    claims = split_claims(answers[answer.key].text, leave_out=[fixed_answer("overdose_emergency")])
+    claims = split_claims(answers[answer.key].text, leave_out=emergency_lines())
     return [(c.text, c.refs) for c in claims] == [(c.text, c.refs) for c in answer.claims]
 
 
