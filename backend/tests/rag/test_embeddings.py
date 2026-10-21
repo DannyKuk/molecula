@@ -245,6 +245,7 @@ def test_cloud_model_goes_through_openrouter(make_settings: Callable[..., Settin
         OPENROUTER_BASE_URL,
     )
     assert model.check_embedding_ctx_length is False
+    assert model.chunk_size <= 100
 
 
 def test_cloud_model_without_a_key_is_a_config_error(

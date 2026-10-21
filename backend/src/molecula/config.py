@@ -15,6 +15,9 @@ OPENROUTER_ATTRIBUTION_HEADERS = {
     "HTTP-Referer": "https://github.com/DannyKuk/molecula",
     "X-OpenRouter-Title": "Molecula",
 }
+# EMBEDDING_MODEL's value for the local sentence-transformers model; anything else names a cloud
+# model on OpenRouter.
+LOCAL_EMBEDDINGS = "local"
 
 
 class Settings(BaseSettings):
@@ -52,7 +55,8 @@ class Settings(BaseSettings):
     decision_model: str | None = "jev-1.13"
     local_decision_base_url: str | None = None
     decision_timeout_seconds: Annotated[float, Field(gt=0)] = 10.0
-    embedding_model: str = "local"
+    # A cloud model id becomes a folder name under index/cloud/, so no backslashes or colons.
+    embedding_model: Annotated[str, Field(pattern=r"^[A-Za-z0-9._/-]+$")] = LOCAL_EMBEDDINGS
     # Multilingual and among the best CPU-sized models in docs/decisions/embeddings.md (#88).
     local_embedding_model: str = "BAAI/bge-m3"
     # The Hugging Face commit of LOCAL_EMBEDDING_MODEL that the published index was built with;
@@ -127,8 +131,19 @@ class Settings(BaseSettings):
         return self.data_dir / "hero_set.yaml"
 
     @property
-    def index_dir(self) -> Path:
+    def local_index_dir(self) -> Path:
+        """The local model's label index, the one store releases ship."""
         return self.build_dir / "index" / "chroma"
+
+    @property
+    def index_dir(self) -> Path:
+        """The label index of EMBEDDING_MODEL. A cloud model's index sits next to the local one,
+        so the local index keeps the path store releases unpack to (#96)."""
+        if self.embedding_model == LOCAL_EMBEDDINGS:
+            return self.local_index_dir
+        return (
+            self.build_dir / "index" / "cloud" / self.embedding_model.replace("/", "--") / "chroma"
+        )
 
     @property
     def keyword_index_path(self) -> Path:

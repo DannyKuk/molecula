@@ -6,12 +6,14 @@ import tempfile
 from pathlib import Path, PurePosixPath
 
 import httpx2
+import openai
 from pydantic import ValidationError
 
-from molecula.config import Settings
+from molecula.config import LOCAL_EMBEDDINGS, Settings
+from molecula.ingest import index
 from molecula.ingest.export import ARCHIVE, DB_FILE, FOLDERS, MANIFEST
 from molecula.rag.embeddings import (
-    LOCAL,
+    EmbeddingConfigError,
     ModelDownloadError,
     download_local_model,
     embedding_model_id,
@@ -80,6 +82,9 @@ def check_manifest(manifest: StoreManifest, settings: Settings) -> None:
             f"{settings.store_release} has schema version {manifest.schema_version}, this code "
             f"{SCHEMA_VERSION}. Set STORE_RELEASE to a release made with this code or before."
         )
+    # A cloud model gets an index of its own, built after the download (cloud_index_step).
+    if settings.embedding_model != LOCAL_EMBEDDINGS:
+        return
     model = embedding_model_id(settings)
     if manifest.embedding_model != model:
         raise FetchError(
@@ -193,7 +198,7 @@ def store_step(settings: Settings, *, force: bool, transport: httpx2.BaseTranspo
 
 
 def model_step(settings: Settings) -> bool:
-    if settings.embedding_model != LOCAL:
+    if settings.embedding_model != LOCAL_EMBEDDINGS:
         logger.info(
             "EMBEDDING_MODEL=%s is a cloud model; no local model is needed",
             settings.embedding_model,
@@ -226,23 +231,49 @@ def keyword_step(settings: Settings) -> None:
     """Build the keyword index from the label index when it is missing: store releases made
     before #44 don't hold it. It takes about a second and no network."""
     keywords = KeywordIndex(settings.keyword_index_path)
-    if keywords.exists() or not settings.index_dir.exists():
+    if keywords.exists() or not settings.local_index_dir.exists():
         return
-    chunks = LabelIndex(settings.index_dir).chunks()
+    chunks = LabelIndex(settings.local_index_dir).chunks()
     keywords.rebuild(chunks)
     logger.info(
         "Built the keyword index of %d chunks at %s", len(chunks), settings.keyword_index_path
     )
 
 
+def cloud_index_step(settings: Settings) -> bool:
+    """Build the cloud model's label index from the labels in the store when it is missing:
+    releases ship only the local model's index. One build embeds every label chunk, about $0.56
+    with gemini-embedding-2 (docs/decisions/embeddings.md)."""
+    if settings.embedding_model == LOCAL_EMBEDDINGS:
+        return True
+    cloud_index = LabelIndex(settings.index_dir)
+    if cloud_index.model() == settings.embedding_model:
+        logger.info(
+            "The index of %s is already at %s", settings.embedding_model, settings.index_dir
+        )
+        return True
+    logger.info(
+        "Building the index of %s at %s; it embeds every label chunk through OpenRouter",
+        settings.embedding_model,
+        settings.index_dir,
+    )
+    try:
+        return index.run(settings, index=cloud_index) == 0
+    except (EmbeddingConfigError, openai.APIError) as error:
+        logger.error("The index of %s was not built: %s", settings.embedding_model, error)
+        return False
+
+
 def run(
     settings: Settings, *, force: bool = False, transport: httpx2.BaseTransport | None = None
 ) -> int:
     """`python -m molecula.ingest fetch`: download the pinned store release and the embedding
-    model when they are missing, and build the keyword index the release lacks. It needs the
-    internet once and ignores OFFLINE, which only decides whether the app calls cloud models."""
+    model when they are missing, build the keyword index the release lacks, and with a cloud
+    EMBEDDING_MODEL build that model's index. It needs the internet once and ignores OFFLINE,
+    which only decides whether the app calls cloud models."""
     store_ready = store_step(settings, force=force, transport=transport)
     if store_ready:
         keyword_step(settings)
     model_ready = model_step(settings)
-    return 0 if store_ready and model_ready else 1
+    index_ready = store_ready and cloud_index_step(settings)
+    return 0 if store_ready and model_ready and index_ready else 1

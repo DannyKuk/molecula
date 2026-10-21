@@ -1,6 +1,6 @@
 # Embeddings: which model finds the right label passage
 
-> **Answer:** `BAAI/bge-m3`, run locally on the CPU. It finds the passage that answers a question in the top 5 for 85% of 94 test questions (today's bge-small: 80%), in 37 ms per question on a CPU, and it is multilingual, so German questions (#46) won't need another model. The CPU-sized models bge-large, Qwen3-Embedding-0.6B and modernbert-embed score the same within what 94 questions can tell apart. The large models (Qwen3-Embedding-8B, text-embedding-3-large, gemini-embedding-2) find 97–98%, a real step up, but need a GPU or the cloud. A cloud setup with text-embedding-3-large is the candidate for later, decided together with the chat model and after a re-ranker and hybrid search (#44) have been measured on bge-m3. The price of bge-m3 is its size: 2.3 GB of weights to download and hold in RAM, against 133 MB for bge-small.
+> **Answer:** `BAAI/bge-m3`, run locally on the CPU. It finds the passage that answers a question in the top 5 for 85% of 94 test questions (today's bge-small: 80%), in 37 ms per question on a CPU, and it is multilingual, so German questions (#46) won't need another model. The CPU-sized models bge-large, Qwen3-Embedding-0.6B and modernbert-embed score the same within what 94 questions can tell apart. The large models (Qwen3-Embedding-8B, text-embedding-3-large, gemini-embedding-2) find 97–98%, a real step up, but need a GPU or the cloud. A server too small for bge-m3 uses the cloud setup: `google/gemini-embedding-2` through OpenRouter, with the section boost off. With the filters gpt-oss-20b extracts it finds the passage in the top 5 for 98% of the questions, against 91% for bge-m3 with its boost (#96). The price of bge-m3 is its size: 2.3 GB of weights to download and hold in RAM, against 133 MB for bge-small.
 
 ## Question
 
@@ -96,6 +96,19 @@ Cloud query times include the round trip to OpenRouter (cloud Qwen3-8B had a p95
 
 The app's index, rebuilt with bge-m3 by `python -m molecula.ingest index` (GPU, 2026-10-12): 7,012 chunks from 156 labels in 92 s including the download, 135.1 MB.
 
+**The section boost with gemini-embedding-2** (#96, `python -m evals.retrieval.boost`): the 94 questions under gpt-oss-20b's cached filter extractions from `evals.chat_model.filters`, checked against the store by today's code; 20 have a wrong group. Index built from release `store-2026-10-16` on 2026-10-21. The same run on bge-m3 reproduces the numbers of [filter extraction](../evals/chat-model-filters-2026-10-12.md) (0.85 at boost 0, 0.91 at 0.15).
+
+| Boost | Extracted recall@5 | MRR@10 | Group wrong recall@5 | Ceiling recall@5 |
+|---|---|---|---|---|
+| **0** | **0.98** | **0.821** | **1.00** | 0.98 |
+| 0.04 | 0.96 | 0.816 | 0.85 | 0.99 |
+| 0.08 | 0.93 | 0.797 | 0.65 | 1.00 |
+| 0.12 | 0.91 | 0.791 | 0.60 | 1.00 |
+| 0.15 (bge-m3's) | 0.91 | 0.790 | 0.60 | 1.00 |
+| 0.20 | 0.91 | 0.790 | 0.60 | 1.00 |
+
+bge-m3 at its boost of 0.15, for comparison: 0.91, 0.759, 0.70 and 0.97.
+
 ## What it shows
 
 - **There are three tiers, and only the steps between them are real.** bge-small at 0.80; the CPU-sized models bge-m3, bge-large, Qwen3-0.6B and modernbert at 0.83–0.88; the GPU and cloud models at 0.97–0.98. Within a tier the pairwise counts are close to even (bge-large against bge-m3: 7 to 5), so 94 questions can't rank them. Between tiers they are lopsided (Qwen3-8B against bge-large: 10 to 1).
@@ -110,7 +123,11 @@ The app's index, rebuilt with bge-m3 by `python -m molecula.ingest index` (GPU, 
 ## Decided along the way
 
 - **bge-m3 is the default local model** (Danny, 2026-10-12): multilingual for #46, tied with the best CPU-sized model, and the 2.3 GB are acceptable for an app that should work offline. `LOCAL_EMBEDDING_MODEL` still selects another one; the index has to be rebuilt after a change.
-- **A cloud setup is a later decision** (Danny, 2026-10-12). Once the chat model runs in the cloud, offline use and privacy no longer argue against cloud embeddings, so a cloud setup would pair the cloud chat model with text-embedding-3-large (0.97 here; gemini-embedding-2's 0.98 is a tie). It is decided with the chat model, after a re-ranker and hybrid search (#44) have been measured on bge-m3 with these 94 questions, since they may close part of the gap locally. It needs one index per embedding model; today there is one.
+- **A cloud setup was a later decision** (Danny, 2026-10-12): once the chat model runs in the cloud, offline use and privacy no longer argue against cloud embeddings. It was decided in #96, below.
+- **The cloud setup embeds with gemini-embedding-2** (Danny, 2026-10-21, #96). The deployed app runs on a VPS whose CPUs can't hold bge-m3 (2.3 GB in RAM) and embed with it, so it needs cloud embeddings for capacity alone. Of the three cloud models at 0.97–0.98, gemini-embedding-2 is best or tied on every measure: recall@5 over the whole index 0.98 against 0.93 for text-embedding-3-large, MRR@10 0.829 against 0.796, and a question embedded in 314 ms against 577 ms. It costs $0.20 per million tokens on OpenRouter against $0.13, so a full index build costs about $0.56 instead of $0.37 and a question a few millionths of a dollar; the owner had named text-embedding-3-large as the candidate in #88, and the 19 cents decided nothing. qwen3-embedding-8b is cheapest ($0.03 a build) but took up to 5.7 s for a question. The re-ranker #96 first asked to measure was dropped (owner): hybrid search was measured in #44, and a re-ranker runs on the CPU, so it can't help on that VPS.
+- **Each embedding model has its own index; the local one keeps its path.** bge-m3's index stays at `data/build/index/chroma`, where store releases unpack it, so a release and `fetch` work as before; a cloud model's index goes to `data/build/index/cloud/<model>/chroma`, and `ingest export` leaves it out of the archive. With a cloud `EMBEDDING_MODEL`, `fetch` skips the bge-m3 download, accepts the release's bge-m3 index, and builds the cloud index once from the labels in `molecula.db` (170 s for 7,012 chunks), or finds one copied from another machine that built it from the same release. `OFFLINE=1` refuses a cloud model with a message, and the cloud model needs `OPENROUTER_API_KEY`, which with `OFFLINE=0` also makes the chat model the cloud one, so a local chat model never searches through cloud embeddings. The keyword index is the same for every model, since every model gets the same chunks.
+- **No section boost with gemini-embedding-2.** The boost (#112) is in bge-m3's cosine units and makes up for bge-m3 missing a passage in the right section. Gemini finds it without help, and a boost only lets a wrongly extracted group push the answer out: under gpt-oss-20b's extracted filters, recall@5 falls from 0.98 at boost 0 to 0.91 at 0.15 (table below). So the cloud setup sets `RETRIEVAL_SECTION_GROUP_BOOST=0`. At boost 0 the extracted groups don't affect the ranking, so the 0.98 holds whichever model extracts the filter.
+- **A cloud request carries at most 100 texts.** The first build of the Gemini index failed: Gemini on OpenRouter refuses more than 100 inputs per request, and the index step sent 256. `get_embeddings` sets the request size to 100 for every cloud model (`CLOUD_BATCH_SIZE`).
 - **No second copy of the weights.** bge-m3 publishes only `pytorch_model.bin`. transformers 5 loads it and also downloads a `model.safetensors` converted in a pull request on the model's page, "for next time": the first build left 4.4 GB in `data/build/models`. `load_local_model` sets transformers' `DISABLE_SAFETENSORS_CONVERSION`; an online load afterwards kept the folder at 2.3 GB, and bge-m3 loads offline from the `.bin` alone.
 - **One local model per process, batch size 8, peak GPU memory recorded.** On Windows a model that no longer fits in VRAM doesn't fail: the driver moves the rest into shared system memory and the model keeps running many times slower, with no error. Measured with Qwen3-Embedding-8B (15.1 GB of weights) on the 24 GB card:
 
@@ -135,7 +152,8 @@ The app's index, rebuilt with bge-m3 by `python -m molecula.ingest index` (GPU, 
 - **bge-m3's index build on a CPU is not measured.** The app's index was built on the GPU in 92 s. On a CPU, bge-large, of similar size, embedded 1,000 label passages in 243 s in a scratch measurement for #90 (2026-10-12), so a full rebuild inside Docker, as the label update (#25) would do, likely takes about half an hour.
 - **Hard questions remain.** "Does Nexium 24HR contain sugar?" (the label says sucrose) is missed by every model; its top chunks describe prescription Nexium.
 - **Gemini's task type is not passed.** OpenRouter's OpenAI-style endpoint has no field for it, so gemini-embedding-2 runs below its best.
-- **English questions only.** bge-m3's multilingual strength is the model card's claim, not measured here; German questions come with #46.
+- **English questions only.** bge-m3's and gemini-embedding-2's multilingual strength is the model cards' claim, not measured here; German questions come with #46.
+- **The cloud index was built on Windows.** A copy to a Linux server relies on Chroma's files moving between the two, as the store release already does.
 - **One machine.** Build times and GPU memory are for the RX 7900 XTX on Windows; CPU query times for the Core Ultra 7 265K.
 
 ## Reproduce
@@ -150,6 +168,9 @@ uv run python -m evals.retrieval.compare_embeddings --device cpu --only bge-smal
 uv run python -m evals.retrieval.rescore ../data/build/eval/embeddings-<stamp>.json
 uv run python -m evals.retrieval.benchmark_export                         # the benchmark page's JSON
 uv run python -m molecula.ingest index                                     # the app's index
+EMBEDDING_MODEL=google/gemini-embedding-2 OFFLINE=0 uv run python -m molecula.ingest fetch   # the cloud index
+EMBEDDING_MODEL=google/gemini-embedding-2 OFFLINE=0 uv run python -m evals.retrieval.boost \
+    ../data/build/eval/filters/openai_gpt-oss-20b-<key>.jsonl              # the boost table
 ```
 
 Runs are saved in `data/build/eval/` and chunk vectors cached in `data/build/eval/vectors/` (not in git); the reports behind the numbers here are in [docs/evals/embeddings-2026-10-12.md](../evals/embeddings-2026-10-12.md). The GPU runs used a separate environment with AMD's ROCm 10 PyTorch build (#90).

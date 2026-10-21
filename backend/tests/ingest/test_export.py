@@ -278,3 +278,21 @@ def test_archive_above_the_release_asset_limit_is_refused(
 
     assert not (settings.export_dir / ARCHIVE).exists()
     assert not (settings.export_dir / MANIFEST).exists()
+
+
+def test_cloud_model_indexes_stay_local_and_the_manifest_names_the_local_model(
+    make_settings: Callable[..., Settings], tmp_path: Path
+) -> None:
+    build_store(make_settings(data_dir=tmp_path / "data"))
+    cloud = make_settings(
+        data_dir=tmp_path / "data", embedding_model="openai/text-embedding-3-large"
+    )
+    LabelIndex(cloud.index_dir).rebuild([CHUNK], [[0.0, 1.0]], "openai/text-embedding-3-large")
+
+    assert run(cloud) == 0
+
+    names = archive_names(cloud.export_dir / ARCHIVE)
+    assert "index/chroma/chroma.sqlite3" in names
+    assert not any(name.startswith("index/cloud") for name in names)
+    manifest = StoreManifest.model_validate_json((cloud.export_dir / MANIFEST).read_text())
+    assert manifest.embedding_model == MODEL
