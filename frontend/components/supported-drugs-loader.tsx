@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { type Drug, getDrugs } from "@/lib/api";
+import { useMessages } from "@/lib/messages";
 
 import { SupportedDrugs } from "./supported-drugs";
 
@@ -10,6 +11,7 @@ type LoadState = { kind: "loading" } | { kind: "failed" } | { kind: "loaded"; dr
 
 /** Fetches the supported drugs from the backend and shows them as a searchable list. */
 export function SupportedDrugsLoader({ onAsk }: { onAsk: (question: string) => void }) {
+  const t = useMessages();
   const [state, setState] = useState<LoadState>({ kind: "loading" });
 
   useEffect(() => {
@@ -25,14 +27,14 @@ export function SupportedDrugsLoader({ onAsk }: { onAsk: (question: string) => v
   if (state.kind === "loading") {
     return (
       <p role="status" className="text-sm text-ink-2">
-        Loading the supported drugs…
+        {t.drugs.loading}
       </p>
     );
   }
   if (state.kind === "failed") {
     return (
       <p role="alert" className="text-sm text-red-700 dark:text-red-400">
-        Could not load the supported drugs. Check that the backend is running, then reload the page.
+        {t.drugs.failed}
       </p>
     );
   }

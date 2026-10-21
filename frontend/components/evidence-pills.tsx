@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import type { Turn } from "@/lib/chat-turn";
 import { type EvidenceTab, shownSteps, sourceCards } from "@/lib/evidence";
+import { useMessages } from "@/lib/messages";
 import { structuresOf } from "@/lib/tool-cards";
 
 const PILL =
@@ -19,10 +20,11 @@ export function EvidencePills({
   turn: Turn;
   onShow: (tab: EvidenceTab) => void;
 }) {
+  const t = useMessages();
   if (turn.state === "queued") return null;
   // The sources arrive with the answer's last word; the source check after them has its own badge.
   if (turn.state === "answering" && turn.sources === null) {
-    const current = turn.answer ? "Writing the answer" : (turn.steps.at(-1)?.text ?? "Thinking");
+    const current = turn.answer ? t.pills.writing : (turn.steps.at(-1)?.text ?? t.pills.thinking);
     return (
       // Not a live region: the Steps tab announces the steps.
       <p className="flex h-7 items-center gap-2 text-[13px] text-ink-2">
@@ -41,24 +43,24 @@ export function EvidencePills({
       {steps > 0 && (
         <Pill onClick={() => onShow("steps")}>
           <Check aria-hidden strokeWidth={3} className="size-3 text-signal" />
-          {steps} {steps === 1 ? "step" : "steps"}
+          {t.pills.steps(steps)}
         </Pill>
       )}
       {sources > 0 && (
         <Pill onClick={() => onShow("sources")}>
           <FileText aria-hidden className="size-3.5" />
-          {sources} {sources === 1 ? "source" : "sources"}
+          {t.pills.sources(sources)}
         </Pill>
       )}
       {structure ? (
         <Pill onClick={() => onShow("3d")}>
           <Box aria-hidden className="size-3.5" />
-          3D · {structure.complex?.pdb_id ?? "molecule"}
+          3D · {structure.complex?.pdb_id ?? t.pills.molecule}
         </Pill>
       ) : (
         <span className={`${PILL} opacity-55`}>
           <Box aria-hidden className="size-3.5" />
-          no 3D
+          {t.pills.no3d}
         </span>
       )}
     </div>

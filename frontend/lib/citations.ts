@@ -100,9 +100,9 @@ export function excerpt(text: string): string {
   return text.length > EXCERPT_LENGTH ? `${text.slice(0, EXCERPT_LENGTH).trimEnd()}…` : text;
 }
 
-/** "2026-07-13" → "Jul 13, 2026". */
-export function labelDate(isoDate: string): string {
-  return new Date(`${isoDate}T00:00:00Z`).toLocaleDateString("en-US", {
+/** "2026-07-13" → "Jul 13, 2026", or in another locale its own way ("13. Juli 2026"). */
+export function labelDate(isoDate: string, locale = "en-US"): string {
+  return new Date(`${isoDate}T00:00:00Z`).toLocaleDateString(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",

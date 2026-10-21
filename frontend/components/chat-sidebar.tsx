@@ -27,9 +27,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SheetContent } from "@/components/ui/sheet";
 import { bookmarkedOf, type ConversationSummary, groupChats } from "@/lib/chat-history";
+import { useMessages } from "@/lib/messages";
 import { useSidebarExpanded } from "@/lib/use-sidebar-expanded";
 
 import { HistoryRow } from "./history-row";
+import { LanguageSwitch } from "./language-switch";
 import { McpDialog } from "./mcp-dialog";
 
 export type ChatListProps = {
@@ -66,6 +68,7 @@ const SIDEBAR_CLASSES =
 
 /** The chats on a wide screen: a rail of icons, or once expanded, the whole list. */
 export function ChatSidebar(props: ChatListProps) {
+  const t = useMessages();
   const [expanded, setExpanded] = useSidebarExpanded();
 
   if (!expanded) {
@@ -74,42 +77,45 @@ export function ChatSidebar(props: ChatListProps) {
     const answeringElsewhere =
       props.answeringId !== null && !numbered.some(({ id }) => id === props.answeringId);
     return (
-      <nav aria-label="Chats" className={`${SIDEBAR_CLASSES} w-14 items-center gap-1 py-3`}>
-        <IconButton label="Show chats" onClick={() => setExpanded(true)}>
+      <nav
+        aria-label={t.sidebar.chats}
+        className={`${SIDEBAR_CLASSES} w-14 items-center gap-1 py-3`}
+      >
+        <IconButton label={t.sidebar.show} onClick={() => setExpanded(true)}>
           <PanelLeft />
         </IconButton>
-        <IconButton label="New chat" onClick={props.onNew}>
+        <IconButton label={t.sidebar.newChat} onClick={props.onNew}>
           <SquarePen />
         </IconButton>
         <Link
           href="/benchmarks"
-          aria-label="Benchmarks"
-          title="Benchmarks"
+          aria-label={t.sidebar.benchmarks}
+          title={t.sidebar.benchmarks}
           className={cn(buttonVariants({ variant: "ghost", size: "icon-lg" }), ICON)}
         >
           <ChartColumn />
         </Link>
         <Link
           href="/dashboard"
-          aria-label="Dashboard"
-          title="Dashboard"
+          aria-label={t.sidebar.dashboard}
+          title={t.sidebar.dashboard}
           className={cn(buttonVariants({ variant: "ghost", size: "icon-lg" }), ICON)}
         >
           <Gauge />
         </Link>
         <Link
           href="/how-it-answers"
-          aria-label="How it answers"
-          title="How it answers"
+          aria-label={t.sidebar.howItAnswers}
+          title={t.sidebar.howItAnswers}
           className={cn(buttonVariants({ variant: "ghost", size: "icon-lg" }), ICON)}
         >
           <Workflow />
         </Link>
-        <McpDialog trigger={<IconButton label="MCP server" />}>
+        <McpDialog trigger={<IconButton label={t.sidebar.mcpServer} />}>
           <Plug />
         </McpDialog>
         <IconButton
-          label={answeringElsewhere ? "Chat history, an answer is coming in" : "Chat history"}
+          label={answeringElsewhere ? t.sidebar.historyAnswering : t.sidebar.history}
           onClick={() => setExpanded(true)}
           className="relative"
         >
@@ -121,12 +127,12 @@ export function ChatSidebar(props: ChatListProps) {
     );
   }
   return (
-    <aside aria-label="Chat history" className={`${SIDEBAR_CLASSES} w-65`}>
+    <aside aria-label={t.sidebar.history} className={`${SIDEBAR_CLASSES} w-65`}>
       <div className="flex min-h-9 items-center gap-1 px-3 pt-3">
-        <IconButton label="Hide chats" onClick={() => setExpanded(false)}>
+        <IconButton label={t.sidebar.hide} onClick={() => setExpanded(false)}>
           <PanelLeft />
         </IconButton>
-        <span className="pl-1 text-[15px] font-semibold">Chats</span>
+        <span className="pl-1 text-[15px] font-semibold">{t.sidebar.chats}</span>
       </div>
       <ChatList {...props} withMcp />
     </aside>
@@ -138,6 +144,7 @@ export function ChatSidebar(props: ChatListProps) {
  * chat's number is outlined, or "+N" when the open chat is past the numbers.
  */
 function RailBookmarks({ conversations, bookmarks, activeId, answeringId, onOpen }: ChatListProps) {
+  const t = useMessages();
   const bookmarked = bookmarkedOf(conversations, bookmarks);
   if (bookmarked.length === 0) return null;
   const numbered = bookmarked.slice(0, RAIL_BOOKMARKS);
@@ -147,13 +154,13 @@ function RailBookmarks({ conversations, bookmarks, activeId, answeringId, onOpen
   return (
     <div
       role="group"
-      aria-label="Bookmarks"
+      aria-label={t.sidebar.bookmarks}
       className="mt-2 flex flex-col items-center gap-1 border-t border-rule pt-3"
     >
       {numbered.map(({ id, title }, index) => (
         <IconButton
           key={id}
-          label={id === answeringId ? `${title}, answering` : title}
+          label={id === answeringId ? t.sidebar.answering(title) : title}
           aria-current={id === activeId ? "page" : undefined}
           onClick={() => onOpen(id)}
           className={cn("relative text-[13px] tabular-nums", id === activeId && OUTLINED)}
@@ -167,7 +174,7 @@ function RailBookmarks({ conversations, bookmarks, activeId, answeringId, onOpen
           <DropdownMenuTrigger
             render={
               <IconButton
-                label={`All ${bookmarked.length} bookmarks`}
+                label={t.sidebar.allBookmarks(bookmarked.length)}
                 className={cn("text-[13px] tabular-nums", activeIsMore && OUTLINED)}
               />
             }
@@ -196,6 +203,7 @@ function RailBookmarks({ conversations, bookmarks, activeId, answeringId, onOpen
 
 /** The chats on a phone: a drawer opened from ☰ in the header, closed by picking a chat. */
 export function ChatDrawer(props: ChatListProps) {
+  const t = useMessages();
   const [open, setOpen] = useState(false);
   const thenClose =
     <T extends unknown[]>(action: (...args: T) => void) =>
@@ -207,18 +215,23 @@ export function ChatDrawer(props: ChatListProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
-        render={<IconButton label="Open chats" className="-ml-2 md:hidden print:hidden" />}
+        render={<IconButton label={t.sidebar.open} className="-ml-2 md:hidden print:hidden" />}
       >
         <Menu />
       </DialogTrigger>
       <SheetContent className="bg-panel">
         <div className="flex min-h-9 items-center justify-between px-3 pt-3">
-          <DialogTitle className="pl-1 text-[15px] font-semibold">Chats</DialogTitle>
-          <DialogClose render={<IconButton label="Close chats" />}>
+          <DialogTitle className="pl-1 text-[15px] font-semibold">{t.sidebar.chats}</DialogTitle>
+          <DialogClose render={<IconButton label={t.sidebar.close} />}>
             <X />
           </DialogClose>
         </div>
-        <ChatList {...props} onOpen={thenClose(props.onOpen)} onNew={thenClose(props.onNew)} />
+        <ChatList
+          {...props}
+          onOpen={thenClose(props.onOpen)}
+          onNew={thenClose(props.onNew)}
+          withLanguage
+        />
       </SheetContent>
     </Dialog>
   );
@@ -226,38 +239,41 @@ export function ChatDrawer(props: ChatListProps) {
 
 /**
  * "New chat", the benchmarks, dashboard and how-it-answers links, the MCP server guide when `withMcp`, the bookmarked chats, the
- * others by day, newest first, and what to know about where they are kept.
+ * others by day, newest first, and what to know about where they are kept. A phone's drawer
+ * also has the language switch (`withLanguage`), which its header has no room for.
  */
 function ChatList({
   onNew,
   removedBookmark,
   withMcp = false,
+  withLanguage = false,
   ...props
-}: ChatListProps & { withMcp?: boolean }) {
+}: ChatListProps & { withMcp?: boolean; withLanguage?: boolean }) {
+  const t = useMessages();
   return (
     <>
       <div className="px-3 pt-2 pb-2">
         <Button variant="outline" className="h-9 w-full justify-start gap-2 px-2.5" onClick={onNew}>
           <Plus />
-          New chat
+          {t.sidebar.newChat}
         </Button>
         <Link href="/benchmarks" className={cn(LIST_LINK, "mt-1")}>
           <ChartColumn />
-          Benchmarks
+          {t.sidebar.benchmarks}
         </Link>
         <Link href="/dashboard" className={LIST_LINK}>
           <Gauge />
-          Dashboard
+          {t.sidebar.dashboard}
         </Link>
         <Link href="/how-it-answers" className={LIST_LINK}>
           <Workflow />
-          How it answers
+          {t.sidebar.howItAnswers}
         </Link>
         {withMcp && (
           // Connecting an assistant needs a checkout on a computer, so the phone drawer leaves it out.
           <McpDialog trigger={<button type="button" className={LIST_LINK} />}>
             <Plug />
-            MCP server
+            {t.sidebar.mcpServer}
           </McpDialog>
         )}
       </div>
@@ -265,10 +281,11 @@ function ChatList({
         <ChatGroups {...props} />
       </div>
       {removedBookmark && <UndoBar {...removedBookmark} />}
-      {props.available !== false && (
-        <p className="border-t border-rule px-4 py-3 text-xs text-ink-3">
-          Saved in this browser only.
-        </p>
+      {(props.available !== false || withLanguage) && (
+        <div className="flex items-center justify-between gap-2 border-t border-rule px-4 py-3">
+          {props.available !== false && <p className="text-xs text-ink-3">{t.sidebar.savedHere}</p>}
+          {withLanguage && <LanguageSwitch className="ml-auto" />}
+        </div>
       )}
     </>
   );
@@ -283,20 +300,22 @@ function ChatGroups({
   queuedIds,
   ...actions
 }: Omit<ChatListProps, "onNew" | "removedBookmark">) {
+  const t = useMessages();
   if (available === false) return <HistoryOff />;
   if (available === null) return null;
   if (conversations.length === 0) {
     return (
       <div className="flex flex-col gap-2 px-3 py-4 text-sm text-ink-2">
-        <span className="font-medium text-foreground">No chats yet</span>
-        Your questions show up here, titled by the first question. They&apos;re saved in this
-        browser only, not on a server.
+        <span className="font-medium text-foreground">{t.sidebar.noChats}</span>
+        {t.sidebar.noChatsText}
       </div>
     );
   }
   return groupChats(conversations, bookmarks, new Date()).map((group) => (
-    <section key={group.label} aria-label={group.label}>
-      <h2 className="px-2 pt-3 pb-1 text-xs font-medium text-ink-3">{group.label}</h2>
+    <section key={group.label} aria-label={t.sidebar.groups[group.label]}>
+      <h2 className="px-2 pt-3 pb-1 text-xs font-medium text-ink-3">
+        {t.sidebar.groups[group.label]}
+      </h2>
       <ul className="flex flex-col">
         {group.conversations.map((conversation) => (
           <HistoryRow
@@ -328,15 +347,16 @@ function AnsweringBadge() {
 }
 
 function UndoBar({ title, onUndo }: { title: string; onUndo: () => void }) {
+  const t = useMessages();
   return (
     <div
       role="status"
       className="mx-2 mb-2 flex items-center gap-1 rounded-md bg-ink py-1.5 pr-1.5 pl-3 text-[13px] text-page"
     >
       <p className="min-w-0 flex-1 truncate">
-        Removed &apos;
+        {t.sidebar.removedBefore}
         <span className="inline-block max-w-28 truncate align-bottom">{title}</span>
-        &apos; from bookmarks
+        {t.sidebar.removedAfter}
       </p>
       <span aria-hidden>·</span>
       <Button
@@ -345,18 +365,18 @@ function UndoBar({ title, onUndo }: { title: string; onUndo: () => void }) {
         onClick={onUndo}
         className="font-semibold text-inherit hover:bg-page/15 hover:text-inherit"
       >
-        Undo
+        {t.sidebar.undo}
       </Button>
     </div>
   );
 }
 
 function HistoryOff() {
+  const t = useMessages();
   return (
     <div className="mx-1 my-2 flex flex-col gap-1 rounded-lg border border-rule-2 bg-card px-3 py-2.5 text-[13px] leading-4.5 text-ink">
-      <b className="font-semibold">History is off in this browser</b>
-      It doesn&apos;t let Molecula save chats (a private window, or storage is full). The chat still
-      works; this conversation is gone when you close the tab.
+      <b className="font-semibold">{t.sidebar.historyOffTitle}</b>
+      {t.sidebar.historyOffText}
     </div>
   );
 }

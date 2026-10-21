@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Turn } from "@/lib/chat-turn";
+import { useMessages } from "@/lib/messages";
 import {
   conversationCsv,
   conversationJson,
@@ -30,6 +31,7 @@ type ExportMenuProps = {
 
 /** Saves the open conversation as JSON or CSV, or opens the print dialog to print it or keep a PDF. */
 export function ExportMenu({ title, turns, disabled, onPreparePrint }: ExportMenuProps) {
+  const t = useMessages();
   const [open, setOpen] = useState(false);
   const [preparing, setPreparing] = useState(false);
 
@@ -55,19 +57,15 @@ export function ExportMenu({ title, turns, disabled, onPreparePrint }: ExportMen
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger
-        aria-label="Export chat"
+        aria-label={t.exportMenu.open}
         disabled={disabled}
         className="flex size-9 items-center justify-center rounded-full border border-rule-2 hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3 disabled:opacity-50 disabled:hover:bg-transparent"
       >
         <Download className="size-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="print:hidden">
-        <DropdownMenuItem onClick={() => download("json")}>
-          JSON, with sources and tools
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => download("csv")}>
-          CSV, one row per message
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => download("json")}>{t.exportMenu.json}</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => download("csv")}>{t.exportMenu.csv}</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           // Stays open while the pictures are drawn, so it can say so.
@@ -76,7 +74,7 @@ export function ExportMenu({ title, turns, disabled, onPreparePrint }: ExportMen
           aria-busy={preparing}
           onClick={() => void print()}
         >
-          {preparing ? "Preparing the 3D pictures…" : "Print or save as PDF"}
+          {preparing ? t.exportMenu.preparing : t.exportMenu.print}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

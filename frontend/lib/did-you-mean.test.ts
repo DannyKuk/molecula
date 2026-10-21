@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { didYouMeanOf, withName } from "./did-you-mean";
+import { de } from "./messages/de";
 import {
   COMPARISON_WITH_UNSUPPORTED,
   IBUPROFEN_PROPERTIES,
@@ -39,6 +40,12 @@ describe("withName", () => {
   it("asks about the suggested name on its own when the question spells the name differently", () => {
     expect(withName("Show me novaminsulfn in 3D", "Novaminsuflon", "Novaminsulfon")).toBe(
       "What is Novaminsulfon?",
+    );
+  });
+
+  it("asks that in German for a German reader", () => {
+    expect(withName("Zeig mir Sertralinn", "Sertralin", "Sertraline", de.turn.whatIs)).toBe(
+      "Was ist Sertraline?",
     );
   });
 

@@ -1,10 +1,15 @@
+"use client";
+
+import { useMessages } from "@/lib/messages";
+
 const OPENFDA_URL = "https://open.fda.gov";
 
 // openFDA's terms (https://open.fda.gov/terms/) ask for this credit, though they don't require it.
 export function OpenFdaCredit() {
+  const t = useMessages();
   return (
     <p className="text-xs text-muted-foreground">
-      Data provided by the U.S. Food and Drug Administration (
+      {t.sources.openFdaBefore}
       <a
         href={OPENFDA_URL}
         target="_blank"
@@ -13,7 +18,7 @@ export function OpenFdaCredit() {
       >
         openFDA
       </a>
-      )
+      {t.sources.openFdaAfter}
     </p>
   );
 }
