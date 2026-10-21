@@ -162,6 +162,31 @@ def test_an_earlier_fixed_answer_is_the_one_the_chat_gives() -> None:
                 assert content.startswith(emergency)
 
 
+def test_an_earlier_fixed_answer_is_in_the_language_of_its_conversation() -> None:
+    fixed_categories: list[InputCategory] = [
+        "lethal_dose",
+        "personal_medical_advice",
+        "synthesis_or_misuse",
+        "off_topic",
+        "prompt_injection",
+        "overdose_emergency",
+    ]
+    openings = {
+        language: [fixed_answer(category, language)[:30] for category in fixed_categories]
+        for language in LANGUAGES
+    }
+    for entry in load_items():
+        other = [
+            opening
+            for language, texts in openings.items()
+            if language != entry.language
+            for opening in texts
+        ]
+        for message in entry.conversation:
+            if message.role == "assistant":
+                assert not message.content.startswith(tuple(other)), entry.id
+
+
 def test_a_follow_up_ends_with_its_own_message() -> None:
     entry = follow_up("a", "How does atorvastatin work?", "And rosuvastatin?")
     assert [(m.role, m.content) for m in entry.messages()] == [
