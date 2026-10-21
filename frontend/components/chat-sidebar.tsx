@@ -3,11 +3,13 @@
 import { cn } from "cn";
 import {
   ChartColumn,
+  CircleHelp,
   Gauge,
   History,
   LoaderCircle,
   Menu,
   PanelLeft,
+  Pill,
   Plug,
   Plus,
   Settings,
@@ -33,6 +35,7 @@ import { useLanguage } from "@/lib/language";
 import { useMessages } from "@/lib/messages";
 import { useSidebarExpanded } from "@/lib/use-sidebar-expanded";
 
+import { HelpSheet } from "./help-guide";
 import { HistoryRow } from "./history-row";
 import { LanguageSwitch } from "./language-switch";
 import { McpDialog } from "./mcp-dialog";
@@ -54,6 +57,8 @@ export type ChatListProps = {
   removedBookmark: { title: string; onUndo: () => void } | null;
   onOpen: (id: string) => void;
   onNew: () => void;
+  /** Asks a question from the help guide: in the chat, or on another page by opening the chat. */
+  onAsk: (question: string) => void;
   onRename: (id: string, title: string) => void;
   onDelete: (id: string) => void;
   onBookmark: (id: string) => void;
@@ -104,6 +109,9 @@ export function ChatSidebar(props: ChatListProps) {
             {icon}
           </RailLink>
         ))}
+        <HelpSheet trigger={<IconButton label={t.help.open} />} onAsk={props.onAsk}>
+          <CircleHelp />
+        </HelpSheet>
         <McpDialog trigger={<IconButton label={t.sidebar.mcpServer} />}>
           <Plug />
         </McpDialog>
@@ -202,6 +210,7 @@ const PAGES = [
   { href: "/benchmarks", label: "benchmarks", icon: <ChartColumn /> },
   { href: "/dashboard", label: "dashboard", icon: <Gauge /> },
   { href: "/how-it-answers", label: "howItAnswers", icon: <Workflow /> },
+  { href: "/drugs", label: "supportedDrugs", icon: <Pill /> },
 ] as const;
 
 function RailLink({ href, label, children }: { href: string; label: string; children: ReactNode }) {
@@ -270,13 +279,14 @@ export function ChatDrawer(props: ChatListProps) {
 }
 
 /**
- * "New chat", the benchmarks, dashboard and how-it-answers links, the MCP server guide when `withMcp`, the bookmarked chats, the
- * others by day, newest first, what to know about where the chats are kept, the language and the
- * settings. The current page is outlined.
+ * "New chat", the links to the other pages, the help, the MCP server guide when `withMcp`, the
+ * bookmarked chats, the others by day, newest first, what to know about where the chats are kept,
+ * the language and the settings. The current page is outlined.
  */
 function ChatList({
   onNew,
   newChatOpen,
+  onAsk,
   removedBookmark,
   withMcp = false,
   ...props
@@ -306,6 +316,10 @@ function ChatList({
             {t.sidebar[label]}
           </Link>
         ))}
+        <HelpSheet trigger={<button type="button" className={LIST_LINK} />} onAsk={onAsk}>
+          <CircleHelp />
+          {t.help.open}
+        </HelpSheet>
         {withMcp && (
           // Connecting an assistant needs a checkout on a computer, so the phone drawer leaves it out.
           <McpDialog trigger={<button type="button" className={LIST_LINK} />}>
@@ -343,7 +357,7 @@ function ChatGroups({
   answeringId,
   queuedIds,
   ...actions
-}: Omit<ChatListProps, "onNew" | "newChatOpen" | "removedBookmark">) {
+}: Omit<ChatListProps, "onNew" | "newChatOpen" | "onAsk" | "removedBookmark">) {
   const t = useMessages();
   if (available === false) return <HistoryOff />;
   if (available === null) return null;

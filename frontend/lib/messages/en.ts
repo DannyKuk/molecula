@@ -9,10 +9,20 @@ export const en = {
   },
   header: {
     thisChat: (usage: string) => `This chat: ${usage}`,
-    supportedDrugs: "Supported drugs",
   },
   chat: {
-    intro: "Ask about medicines: what they are for, how they work and what they bind to.",
+    intro:
+      "Ask about a medicine: what it is for, how it works, what it binds to and what its label says.",
+    try: "Try",
+    examples: [
+      { kind: "How it works", question: "How does imatinib work?" },
+      { kind: "Targets", question: "What does sildenafil bind to?" },
+      { kind: "3D", question: "Show oseltamivir bound to its target in 3D." },
+      { kind: "Label", question: "What are the common side effects of metformin?" },
+    ],
+    onlySupported: "Only the",
+    supportedDrugs: "supported drugs",
+    noDosing: "no personal dosing advice",
     conversation: "Conversation",
     evidence: "Evidence",
     close: "Close",
@@ -25,6 +35,7 @@ export const en = {
     placeholder: "Ask about a medicine, e.g. How does imatinib work?",
     send: "Send",
     stop: "Stop",
+    hint: "Enter sends · Shift+Enter starts a new line",
     tooLong: (length: string, max: string) =>
       `The question is too long: ${length} of at most ${max} characters.`,
   },
@@ -35,7 +46,7 @@ export const en = {
     after: "and ask a pharmacist or doctor before acting on anything here.",
   },
   help: {
-    open: "Help",
+    open: "How to use",
     title: "How to use Molecula",
     close: "Close",
     canAsk: "What you can ask",
@@ -79,9 +90,9 @@ export const en = {
       link: "supported drugs",
       after: ".",
     },
-    tags: "A small tag after a fact, like “Gleevec · Warnings and cautions”, names the label section it comes from. Point at it to read the passage, or click it to see the passage with the answer's other sources. Check the passage before relying on the fact.",
+    tags: "A tag after a fact, like “Gleevec · Warnings and cautions”, names the label section it comes from. Point at it to read the passage, and check the passage before relying on the fact.",
     panel:
-      "The evidence behind an answer sits in a panel beside the chat, or in a sheet from the bottom on a phone: the 3D view, the sources with a link to each label on DailyMed, and the steps Molecula took. It follows the question you scroll to, and the pills under each question open it on that answer. While you read an earlier answer, “Live answer” takes you back to the one coming in. Click a step to see what it found: the label passages, the properties, the targets or the 3D complex.",
+      "The panel beside the chat, or a sheet from the bottom on a phone, shows the 3D view, the sources with a link to each label on DailyMed, and the steps Molecula took for the answer you're reading. “Live answer” takes you back to the one coming in.",
   },
   model: {
     local: "local",
@@ -113,6 +124,7 @@ export const en = {
     dashboard: "Dashboard",
     howItAnswers: "How it answers",
     mcpServer: "MCP server",
+    supportedDrugs: "Supported drugs",
     settings: "Settings",
     history: "Chat history",
     historyAnswering: "Chat history, an answer is coming in",
@@ -216,7 +228,6 @@ export const en = {
     copyFailed: "Copy failed",
   },
   drugs: {
-    back: "← Molecula",
     title: "Supported drugs",
     intro:
       "Molecula answers only about the drugs on this list. Search by generic name, brand or another name.",
@@ -227,7 +238,9 @@ export const en = {
       "Could not load the supported drugs. Check that the backend is running, then reload the page.",
     didYouMean: "Did you mean",
     or: " or ",
-    has3d: "3D structure",
+    noStructure: "no 3D",
+    askHint: "Ask how it works",
+    letters: "Jump to a letter",
     question: (name: string) => `How does ${name} work?`,
     supported: (total: number) => `${total} supported ${total === 1 ? "drug" : "drugs"}`,
     pickOne: (supported: string) => `${supported}. Pick one to ask how it works.`,

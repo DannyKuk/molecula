@@ -834,14 +834,14 @@ describe("Chat", () => {
     expect(screen.getByRole("status").textContent).toMatch(/1 of 2 facts backed/);
   });
 
-  it("opens the help guide from the ? button and sends an example asked from it", async () => {
+  it("opens the help guide from the sidebar and sends an example asked from it", async () => {
     const stream = stubChatStream();
     render(<Chat />);
     askQuestion("How does Gleevec work?");
     await streamed(() => stream.send(token("It blocks BCR-ABL.") + DONE));
     await screen.findByText("It blocks BCR-ABL.");
 
-    fireEvent.click(screen.getByRole("button", { name: "Help" }));
+    fireEvent.click(screen.getByRole("button", { name: "How to use" }));
     const guide = screen.getByRole("dialog", { name: "How to use Molecula" });
     fireEvent.click(within(guide).getByRole("button", { name: "What does sildenafil bind to?" }));
 
@@ -864,7 +864,7 @@ describe("Chat", () => {
     askQuestion("How does Gleevec work?");
     await streamed(() => stream.send(token("It blocks BCR-ABL.") + DONE));
     await screen.findByText("It blocks BCR-ABL.");
-    fireEvent.click(screen.getByRole("button", { name: "Help" }));
+    fireEvent.click(screen.getByRole("button", { name: "How to use" }));
     fireEvent.click(
       within(screen.getByRole("dialog")).getByRole("button", {
         name: "What does sildenafil bind to?",
@@ -907,7 +907,7 @@ describe("Chat", () => {
 
     askQuestion("How does Gleevec work?");
     await screen.findByRole("button", { name: "Stop" });
-    fireEvent.click(screen.getByRole("button", { name: "Help" }));
+    fireEvent.click(screen.getByRole("button", { name: "How to use" }));
     fireEvent.click(
       within(screen.getByRole("dialog")).getByRole("button", {
         name: "What does sildenafil bind to?",

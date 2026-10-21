@@ -1,16 +1,12 @@
 "use client";
 
+import { X } from "lucide-react";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { type ReactElement, type ReactNode, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { SheetContent } from "@/components/ui/sheet";
 import { type Messages, useMessages } from "@/lib/messages";
 
 type Topic = Messages["help"]["topics"][number];
@@ -19,29 +15,29 @@ type Topic = Messages["help"]["topics"][number];
 export function HelpGuide({ onAsk }: { onAsk: (question: string) => void }) {
   const t = useMessages();
   return (
-    <div className="flex flex-col gap-6 text-sm">
+    <div className="flex flex-col gap-6 text-sm text-ink-2">
       <section className="flex flex-col gap-3">
-        <h3 className="text-base font-semibold">{t.help.canAsk}</h3>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <h3 className="text-[15px] font-semibold text-foreground">{t.help.canAsk}</h3>
+        <ul className="ml-[3px] flex flex-col gap-4 border-l border-rule pl-4">
           {t.help.topics.map((topic) => (
-            <TopicCard key={topic.title} topic={topic} onAsk={onAsk} />
+            <TopicItem key={topic.title} topic={topic} onAsk={onAsk} />
           ))}
-        </div>
+        </ul>
       </section>
       <section className="flex flex-col gap-2">
-        <h3 className="text-base font-semibold">{t.help.wontAnswerTitle}</h3>
-        <ul className="list-disc space-y-1 pl-5 text-ink-2">
+        <h3 className="text-[15px] font-semibold text-foreground">{t.help.wontAnswerTitle}</h3>
+        <ul className="list-disc space-y-1 pl-5">
           {t.help.wontAnswer.map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ul>
-        <p className="font-medium">{t.help.emergency}</p>
+        <p className="mt-1 border-l-2 border-signal pl-3 text-foreground">{t.help.emergency}</p>
       </section>
-      <section className="flex flex-col gap-2 text-ink-2">
-        <h3 className="text-base font-semibold text-foreground">{t.help.sourcesTitle}</h3>
+      <section className="flex flex-col gap-2">
+        <h3 className="text-[15px] font-semibold text-foreground">{t.help.sourcesTitle}</h3>
         <p>
           {t.help.sources.before}{" "}
-          <Link href="/drugs" className="font-medium underline underline-offset-4">
+          <Link href="/drugs" className="font-medium text-foreground underline underline-offset-4">
             {t.help.sources.link}
           </Link>
           {t.help.sources.after}
@@ -53,61 +49,73 @@ export function HelpGuide({ onAsk }: { onAsk: (question: string) => void }) {
   );
 }
 
-function TopicCard({ topic, onAsk }: { topic: Topic; onAsk: (question: string) => void }) {
+function TopicItem({ topic, onAsk }: { topic: Topic; onAsk: (question: string) => void }) {
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-rule p-3">
-      <h4 className="font-medium">{topic.title}</h4>
-      <p className="text-ink-2">{topic.description}</p>
-      <ul className="flex flex-col gap-1.5">
+    <li className="relative flex flex-col gap-1">
+      <span aria-hidden className="absolute top-2 -left-[19.5px] size-1.5 rounded-full bg-signal" />
+      <h4 className="font-semibold text-foreground">{topic.title}</h4>
+      <p>{topic.description}</p>
+      <ul className="flex flex-wrap gap-x-4 gap-y-1">
         {topic.examples.map((question) => (
           <li key={question}>
             <button
               type="button"
               onClick={() => onAsk(question)}
-              className="w-full rounded-md bg-panel px-3 py-2 text-left hover:bg-rule focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3"
+              className="text-left text-foreground underline decoration-rule-2 underline-offset-4 hover:decoration-ink-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3"
             >
               {question}
             </button>
           </li>
         ))}
       </ul>
-    </div>
+    </li>
   );
 }
 
-/** The "?" button and the help guide it opens over the chat, closed with its Close button,
- * Escape or a click beside it. */
-export function HelpDialog({ onAsk }: { onAsk: (question: string) => void }) {
+/**
+ * The help guide in a sheet from the right, opened by `trigger`, so the chat stays in view. Asking
+ * one of its questions closes it.
+ */
+export function HelpSheet({
+  trigger,
+  children,
+  onAsk,
+}: {
+  trigger: ReactElement;
+  children: ReactNode;
+  onAsk: (question: string) => void;
+}) {
   const t = useMessages();
   const [open, setOpen] = useState(false);
-  const closeRef = useRef<HTMLButtonElement>(null);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        aria-label={t.help.open}
-        className="flex size-9 items-center justify-center rounded-full border border-rule-2 font-semibold hover:bg-panel focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3"
-      >
-        ?
-      </DialogTrigger>
-      <DialogContent
-        showCloseButton={false}
-        initialFocus={closeRef}
-        className="top-auto bottom-0 max-h-[90dvh] max-w-2xl translate-y-0 gap-4 overflow-y-auto rounded-b-none bg-background p-4 sm:top-1/2 sm:bottom-auto sm:max-w-2xl sm:-translate-y-1/2 sm:rounded-2xl sm:p-6"
-      >
-        <div className="flex items-center justify-between gap-4">
-          <DialogTitle className="text-lg font-semibold">{t.help.title}</DialogTitle>
-          <DialogClose ref={closeRef} render={<Button variant="ghost" />}>
-            {t.help.close}
+      <DialogTrigger render={trigger}>{children}</DialogTrigger>
+      <SheetContent side="right" className="bg-panel">
+        <div className="flex items-center justify-between gap-4 border-b border-rule px-5 py-3">
+          <DialogTitle className="text-[15px] font-semibold">{t.help.title}</DialogTitle>
+          <DialogClose
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t.help.close}
+                className="text-ink-2 hover:bg-rule dark:hover:bg-rule"
+              />
+            }
+          >
+            <X />
           </DialogClose>
         </div>
-        <HelpGuide
-          onAsk={(question) => {
-            setOpen(false);
-            onAsk(question);
-          }}
-        />
-      </DialogContent>
+        <div className="thin-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <HelpGuide
+            onAsk={(question) => {
+              setOpen(false);
+              onAsk(question);
+            }}
+          />
+        </div>
+      </SheetContent>
     </Dialog>
   );
 }

@@ -11,10 +11,20 @@ export const de: Messages = {
   },
   header: {
     thisChat: (usage) => `Dieser Chat: ${usage}`,
-    supportedDrugs: "Unterstützte Medikamente",
   },
   chat: {
-    intro: "Fragen Sie zu Medikamenten: wofür sie sind, wie sie wirken und woran sie binden.",
+    intro:
+      "Fragen Sie zu einem Medikament: wofür es ist, wie es wirkt, woran es bindet und was seine Fachinformation sagt.",
+    try: "Probieren Sie",
+    examples: [
+      { kind: "Wirkung", question: "Wie wirkt Imatinib?" },
+      { kind: "Zielproteine", question: "Woran bindet Sildenafil?" },
+      { kind: "3D", question: "Zeig mir Oseltamivir an seinem Zielprotein in 3D." },
+      { kind: "Fachinfo", question: "Was sind die häufigen Nebenwirkungen von Metformin?" },
+    ],
+    onlySupported: "Nur die",
+    supportedDrugs: "unterstützten Medikamente",
+    noDosing: "keine persönliche Dosierungsberatung",
     conversation: "Unterhaltung",
     evidence: "Belege",
     close: "Schließen",
@@ -28,6 +38,7 @@ export const de: Messages = {
     placeholder: "Ihre Frage, z. B. Wie wirkt Imatinib?",
     send: "Senden",
     stop: "Stopp",
+    hint: "Enter sendet · Umschalt+Enter beginnt eine neue Zeile",
     tooLong: (length, max) => `Die Frage ist zu lang: ${length} von höchstens ${max} Zeichen.`,
   },
   disclaimer: {
@@ -37,7 +48,7 @@ export const de: Messages = {
     after: "und fragen Sie Ihren Arzt oder Apotheker, bevor Sie sich nach etwas von hier richten.",
   },
   help: {
-    open: "Hilfe",
+    open: "Anleitung",
     title: "So benutzen Sie Molecula",
     close: "Schließen",
     canAsk: "Was Sie fragen können",
@@ -82,9 +93,9 @@ export const de: Messages = {
       link: "unterstützten Medikamenten",
       after: ".",
     },
-    tags: "Ein kleines Schild nach einem Fakt, etwa „Gleevec · Warnings and cautions“, nennt den Abschnitt der Fachinformation, aus dem er stammt. Die Abschnitte heißen wie in der englischen Fachinformation. Zeigen Sie darauf, um die Textstelle zu lesen, oder klicken Sie, um sie mit den anderen Quellen der Antwort zu sehen. Prüfen Sie die Textstelle, bevor Sie sich auf den Fakt verlassen.",
+    tags: "Ein Schild nach einem Fakt, etwa „Gleevec · Warnings and cautions“, nennt den Abschnitt der englischen Fachinformation, aus dem er stammt. Zeigen Sie darauf, um die Textstelle zu lesen, und prüfen Sie sie, bevor Sie sich auf den Fakt verlassen.",
     panel:
-      "Die Belege einer Antwort stehen in einem Bereich neben dem Chat, auf dem Handy in einem Blatt von unten: die 3D-Ansicht, die Quellen mit einem Link zu jeder Fachinformation auf DailyMed und die Schritte, die Molecula gemacht hat. Der Bereich folgt der Frage, zu der Sie scrollen, und die Knöpfe unter jeder Frage öffnen ihn bei dieser Antwort. Während Sie eine frühere Antwort lesen, bringt „Laufende Antwort“ Sie zu der zurück, die gerade entsteht. Klicken Sie auf einen Schritt, um zu sehen, was er gefunden hat: die Textstellen, die Eigenschaften, die Zielproteine oder den 3D-Komplex.",
+      "Der Bereich neben dem Chat, auf dem Handy ein Blatt von unten, zeigt die 3D-Ansicht, die Quellen mit einem Link zu jeder Fachinformation auf DailyMed und die Schritte, die Molecula für die Antwort gemacht hat, die Sie gerade lesen. „Laufende Antwort“ bringt Sie zu der zurück, die gerade entsteht.",
   },
   model: {
     local: "lokal",
@@ -116,6 +127,7 @@ export const de: Messages = {
     dashboard: "Dashboard",
     howItAnswers: "So antwortet es",
     mcpServer: "MCP-Server",
+    supportedDrugs: "Unterstützte Medikamente",
     settings: "Einstellungen",
     history: "Chatverlauf",
     historyAnswering: "Chatverlauf, eine Antwort kommt gerade",
@@ -220,7 +232,6 @@ export const de: Messages = {
     copyFailed: "Kopieren fehlgeschlagen",
   },
   drugs: {
-    back: "← Molecula",
     title: "Unterstützte Medikamente",
     intro:
       "Molecula antwortet nur zu den Medikamenten auf dieser Liste. Suchen Sie nach Wirkstoff, Marke oder einem anderen Namen.",
@@ -231,7 +242,9 @@ export const de: Messages = {
       "Die unterstützten Medikamente konnten nicht geladen werden. Prüfen Sie, ob das Backend läuft, und laden Sie die Seite neu.",
     didYouMean: "Meinten Sie",
     or: " oder ",
-    has3d: "3D-Struktur",
+    noStructure: "kein 3D",
+    askHint: "Fragen, wie es wirkt",
+    letters: "Zu einem Buchstaben springen",
     question: (name) => `Wie wirkt ${name}?`,
     supported: (total) =>
       `${total} ${total === 1 ? "unterstütztes Medikament" : "unterstützte Medikamente"}`,
