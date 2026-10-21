@@ -641,17 +641,19 @@ describe("Chat sidebar", () => {
     expect(shownAnswer().navigator).toBe(`Question 2: ${SILDENAFIL}`);
   });
 
-  it("links to the benchmarks from the rail, the list and the phone drawer", async () => {
+  it.each([
+    ["Benchmarks", "/benchmarks"],
+    ["How it answers", "/how-it-answers"],
+  ])("links to %s from the rail, the list and the phone drawer", async (name, href) => {
     await openPage(memoryHistory().history);
-    const benchmarks = { name: "Benchmarks" };
-    expect(rail().getByRole("link", benchmarks).getAttribute("href")).toBe("/benchmarks");
+    expect(rail().getByRole("link", { name }).getAttribute("href")).toBe(href);
 
     fireEvent.click(screen.getByRole("button", { name: "Open chats" }));
     const drawer = within(await screen.findByRole("dialog", { name: "Chats" }));
-    expect(drawer.getByRole("link", benchmarks).getAttribute("href")).toBe("/benchmarks");
+    expect(drawer.getByRole("link", { name }).getAttribute("href")).toBe(href);
     fireEvent.click(drawer.getByRole("button", { name: "Close chats" }));
 
-    expect(expandSidebar().getByRole("link", benchmarks).getAttribute("href")).toBe("/benchmarks");
+    expect(expandSidebar().getByRole("link", { name }).getAttribute("href")).toBe(href);
   });
 
   it("opens the MCP server guide from the rail", async () => {
