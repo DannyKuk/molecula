@@ -4,7 +4,7 @@ import sys
 from collections.abc import Callable
 
 from molecula.config import Settings, get_settings
-from molecula.ingest import complexes, compounds, export, fetch, index, labels, targets
+from molecula.ingest import complexes, compounds, export, fetch, index, labels, targets, update
 
 STEPS: dict[str, Callable[[Settings], int]] = {
     "compounds": compounds.run,
@@ -14,6 +14,7 @@ STEPS: dict[str, Callable[[Settings], int]] = {
     "index": index.run,
     "export": export.run,
     "fetch": fetch.run,
+    "update": update.run,
 }
 
 

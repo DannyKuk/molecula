@@ -161,3 +161,10 @@ def test_upgrades_a_version_4_store_keeping_its_labels_and_allowing_the_new_grou
     )
     conn.execute("DELETE FROM label")
     assert conn.execute("SELECT count(*) FROM label_section").fetchone()[0] == 0
+
+
+def test_the_store_uses_write_ahead_logging(tmp_path: Path) -> None:
+    conn = connect(tmp_path / "molecula.db")
+
+    assert conn.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+    conn.close()

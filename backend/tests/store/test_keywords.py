@@ -120,3 +120,15 @@ def test_a_rebuild_replaces_the_chunks(keywords: KeywordIndex) -> None:
     keywords.rebuild([WARNINGS])
 
     assert found_ids(keywords, "5-HT3 QT CYP3A4") == [WARNINGS.id]
+
+
+def test_replace_drug_swaps_one_compounds_chunks_and_keeps_the_others(
+    keywords: KeywordIndex,
+) -> None:
+    newer = replace(WARNINGS, text="Serotonin syndrome has been reported.")
+
+    keywords.replace_drug(4595, [newer])
+
+    assert sorted(found_ids(keywords, "QT serotonin CYP3A4 hypotension")) == sorted(
+        [newer.id, INTERACTIONS.id]
+    )

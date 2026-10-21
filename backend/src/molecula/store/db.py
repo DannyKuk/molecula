@@ -10,6 +10,8 @@ def connect(path: Path) -> sqlite3.Connection:
     # FastAPI runs sync routes in a thread pool, so the connection is shared across threads.
     conn = sqlite3.connect(path, check_same_thread=False)
     conn.execute("PRAGMA foreign_keys = ON")
+    # Readers see the last committed state while a label update writes, instead of waiting.
+    conn.execute("PRAGMA journal_mode = WAL")
     try:
         ensure_schema(conn)
     except SchemaVersionError:

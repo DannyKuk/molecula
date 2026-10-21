@@ -119,3 +119,22 @@ def test_search_keeps_only_chunks_matching_the_filter(index: LabelIndex) -> None
 
 def test_search_before_the_first_build_finds_nothing(index: LabelIndex) -> None:
     assert index.search([1.0, 0.0], n=5) == []
+
+
+def test_replace_drug_swaps_one_compounds_chunks_and_keeps_the_others(index: LabelIndex) -> None:
+    old_extra = replace(MECHANISM, id="gleevec:mechanism_of_action:1", text="Old second chunk.")
+    index.rebuild([MECHANISM, old_extra, PURPOSE], [[1.0, 0.0], [0.5, 0.5], [0.0, 1.0]], MODEL)
+    newer = replace(MECHANISM, text="Imatinib also inhibits KIT.", effective_time="20261101")
+
+    index.replace_drug(5291, [newer], [[0.9, 0.1]])
+
+    assert index.chunks() == [PURPOSE, newer]
+    assert index.vectors([newer.id]) == {newer.id: pytest.approx([0.9, 0.1])}
+
+
+def test_replace_drug_without_chunks_removes_the_compound(index: LabelIndex) -> None:
+    index.rebuild([MECHANISM, PURPOSE], [[1.0, 0.0], [0.0, 1.0]], MODEL)
+
+    index.replace_drug(5291, [], [])
+
+    assert index.chunks() == [PURPOSE]

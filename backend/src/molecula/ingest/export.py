@@ -11,6 +11,7 @@ from pathlib import Path
 from molecula.config import Settings
 from molecula.schemas.store import StoreManifest
 from molecula.store.index import LabelIndex
+from molecula.store.label_updates import LabelUpdateStore
 from molecula.store.schema import SCHEMA_VERSION, ensure_schema
 
 logger = logging.getLogger(__name__)
@@ -40,7 +41,8 @@ def export_store(settings: Settings, out_dir: Path, built_at: datetime) -> Store
         db_copy = Path(staging) / DB_FILE
         copy_without_raw_cache(settings.db_path, db_copy)
         row_counts = count_rows(db_copy)
-        last_run = oldest_label_fetch(db_copy)
+        with closing(sqlite3.connect(db_copy)) as conn:
+            last_run = LabelUpdateStore(conn).current_since()
         staged_archive = Path(staging) / ARCHIVE
         write_archive(staged_archive, db_copy, settings.build_dir)
         size = staged_archive.stat().st_size
@@ -118,14 +120,6 @@ def count_rows(db_path: Path) -> dict[str, int]:
             table: conn.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]
             for table in table_names(conn)
         }
-
-
-def oldest_label_fetch(db_path: Path) -> datetime | None:
-    # The oldest rather than the newest fetch: an update from the newest would miss a label
-    # that changed after an earlier fetch of another one.
-    with closing(sqlite3.connect(db_path)) as conn:
-        oldest = conn.execute("SELECT MIN(fetched_at) FROM label").fetchone()[0]
-    return datetime.fromisoformat(oldest) if oldest else None
 
 
 def write_archive(path: Path, db_copy: Path, build_dir: Path) -> None:

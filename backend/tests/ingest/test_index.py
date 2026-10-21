@@ -7,7 +7,7 @@ import pytest
 from langchain_core.embeddings import DeterministicFakeEmbedding
 
 from molecula.config import Settings
-from molecula.ingest.index import build_index, run
+from molecula.ingest.index import build_index, reindex_drug, run
 from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
 from molecula.store.index import LabelIndex
@@ -128,3 +128,35 @@ def test_step_without_labels_fails_with_a_hint(
 ) -> None:
     assert run(settings) == 1
     assert "run `python -m molecula.ingest labels` first" in caplog.text
+
+
+def test_reindex_drug_replaces_one_compounds_chunks_in_both_indexes(tmp_path: Path) -> None:
+    index = LabelIndex(tmp_path / "chroma")
+    keywords = KeywordIndex(tmp_path / "bm25.db")
+    embeddings = DeterministicFakeEmbedding(size=8)
+    build_index([(5291, GLEEVEC_WITH_LONG_DOSING)], words, embeddings, index, keywords, "fake")
+    newer = replace(
+        GLEEVEC,
+        set_id="newer-gleevec",
+        sections=(
+            LabelSection("indications_and_usage", "indications", "1 INDICATIONS GIST.", False),
+        ),
+    )
+
+    chunks = reindex_drug(5291, [newer], words, embeddings, index, keywords)
+
+    assert index.chunks() == chunks
+    assert [chunk.set_id for chunk in chunks] == ["newer-gleevec"]
+    assert [chunk.id for chunk, _ in keywords.search("GIST dose", 10)] == [chunks[0].id]
+
+
+def test_reindex_drug_leaves_a_missing_keyword_index_missing(tmp_path: Path) -> None:
+    index = LabelIndex(tmp_path / "chroma")
+    embeddings = DeterministicFakeEmbedding(size=8)
+    index.rebuild([], [], "fake")
+    keywords = KeywordIndex(tmp_path / "bm25.db")
+
+    reindex_drug(5291, [GLEEVEC], words, embeddings, index, keywords)
+
+    assert not keywords.exists()
+    assert {chunk.cid for chunk in index.chunks()} == {5291}

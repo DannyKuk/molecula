@@ -84,6 +84,26 @@ class LabelIndex:
                 embeddings=[list(vector) for vector in vectors[start : start + batch]],
             )
 
+    def replace_drug(
+        self, cid: int, chunks: Sequence[Chunk], vectors: Sequence[Sequence[float]]
+    ) -> None:
+        """Replace the compound's chunks with `chunks`. The new ones are written before the old
+        ones are deleted, so a search during the update never finds the drug without chunks."""
+        if len(chunks) != len(vectors):
+            raise ValueError(f"{len(chunks)} chunks but {len(vectors)} vectors")
+        collection = self._client.get_collection(COLLECTION, embedding_function=None)
+        if chunks:
+            collection.upsert(
+                ids=[chunk.id for chunk in chunks],
+                documents=[chunk.text for chunk in chunks],
+                metadatas=[to_metadata(chunk) for chunk in chunks],
+                embeddings=[list(vector) for vector in vectors],
+            )
+        kept = {chunk.id for chunk in chunks}
+        stored = collection.get(where={"cid": cid}, include=[])["ids"]
+        if stale := [id_ for id_ in stored if id_ not in kept]:
+            collection.delete(ids=stale)
+
     def model(self) -> str | None:
         """The embedding model the index was built with; None before the first build."""
         if not self._exists():

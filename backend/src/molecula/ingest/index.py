@@ -1,8 +1,10 @@
 import logging
 from collections import Counter
 from collections.abc import Sequence
+from functools import cached_property
 from pathlib import Path
 from time import perf_counter
+from typing import Protocol
 
 from langchain_core.embeddings import Embeddings
 
@@ -17,6 +19,10 @@ from molecula.store.labels import LabelRecord, LabelStore
 logger = logging.getLogger(__name__)
 
 EMBED_BATCH = 256
+
+
+class Tokenizer(Protocol):
+    def tokenize(self, text: str) -> list[str]: ...
 
 
 def build_index(
@@ -38,6 +44,59 @@ def build_index(
     index.rebuild(chunks, vectors, model)
     keywords.rebuild(chunks)
     return chunks
+
+
+def reindex_drug(
+    cid: int,
+    labels: Sequence[LabelRecord],
+    count_tokens: CountTokens,
+    embeddings: Embeddings,
+    index: LabelIndex,
+    keywords: KeywordIndex,
+) -> list[Chunk]:
+    """Chunk and embed one compound's labels and replace its chunks in both indexes."""
+    chunks = chunk_labels([(cid, label) for label in labels], count_tokens)
+    vectors = embeddings.embed_documents([chunk.text for chunk in chunks]) if chunks else []
+    index.replace_drug(cid, chunks, vectors)
+    # A store fetched before #44 has no keyword index; `ingest fetch` builds it whole.
+    if keywords.exists():
+        keywords.replace_drug(cid, chunks)
+    return chunks
+
+
+class DrugIndexer:
+    """Re-indexes one drug at a time with the settings' embedding model, which is loaded on the
+    first call: most label updates change nothing and never need it."""
+
+    def __init__(self, settings: Settings) -> None:
+        self._settings = settings
+
+    def __call__(self, cid: int, labels: Sequence[LabelRecord]) -> None:
+        tokenizer, embeddings, index = self._loaded
+        reindex_drug(
+            cid,
+            labels,
+            lambda text: len(tokenizer.tokenize(text)),
+            embeddings,
+            index,
+            KeywordIndex(self._settings.keyword_index_path),
+        )
+
+    @cached_property
+    def _loaded(self) -> tuple[Tokenizer, Embeddings, LabelIndex]:
+        from molecula.rag.embeddings import (
+            embedding_model_id,
+            get_embeddings,
+            load_chunk_tokenizer,
+        )
+
+        index = LabelIndex(self._settings.index_dir)
+        index.check_model(embedding_model_id(self._settings))
+        return (
+            load_chunk_tokenizer(self._settings),
+            get_embeddings(self._settings),
+            index,
+        )
 
 
 def stored_labels(db_path: Path) -> list[tuple[int, LabelRecord]]:

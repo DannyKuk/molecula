@@ -3,6 +3,7 @@
 import logging
 import sqlite3
 from collections.abc import Callable
+from datetime import date
 
 import httpx2
 import pytest
@@ -10,8 +11,8 @@ from pydantic import SecretStr
 
 from molecula.sources.errors import SourceFormatError, SourceNotFound
 from molecula.sources.http import SourceClient
-from molecula.sources.openfda import API_KEY_HEADER, PAGE_SIZE, OpenFdaClient
-from openfda_replay import Replay
+from molecula.sources.openfda import API_KEY_HEADER, PAGE_SIZE, SET_ID_BATCH, OpenFdaClient
+from openfda_replay import CANONICAL_TIMES, GLEEVEC, Replay
 
 FAKE_KEY = "fake-openfda-key-4f2a9c"
 
@@ -21,7 +22,7 @@ def openfda(replaying_client: Callable[..., SourceClient]) -> Callable[..., Open
     """Makes an openFDA client that replays recorded responses through the store's HTTP cache."""
 
     def make(
-        handler: Replay | None = None,
+        handler: Callable[[httpx2.Request], httpx2.Response] | None = None,
         *,
         api_key: SecretStr | None = None,
         page_size: int = PAGE_SIZE,
@@ -137,3 +138,41 @@ def test_cache_entry_is_shared_with_and_without_a_key(openfda) -> None:
 
     assert len(openfda(handler).labels("imatinib")) == 22
     assert handler.requests == []
+
+
+def test_last_updated_reads_openfdas_publication_date(openfda) -> None:
+    assert openfda().last_updated(GLEEVEC) == date(2026, 10, 20)
+
+
+def test_listed_names_the_labels_openfda_still_has(openfda) -> None:
+    assert openfda().listed(sorted(CANONICAL_TIMES)) == set(CANONICAL_TIMES)
+
+
+def test_newer_names_the_labels_with_a_later_effective_time(openfda) -> None:
+    older_gleevec = {**CANONICAL_TIMES, GLEEVEC: "20200101"}
+
+    assert openfda().newer(CANONICAL_TIMES) == set()
+    assert openfda().newer(older_gleevec) == {GLEEVEC}
+
+
+def test_checks_go_to_openfda_even_when_cached(openfda) -> None:
+    handler = Replay()
+    client = openfda(handler)
+
+    client.listed([GLEEVEC])
+    client.listed([GLEEVEC])
+
+    assert len(handler.requests) == 2
+
+
+def test_a_check_with_many_labels_is_split_into_batches(openfda) -> None:
+    seen: list[int] = []
+
+    def count_ids(request: httpx2.Request) -> httpx2.Response:
+        seen.append(request.url.params["search"].count('"') // 2)
+        return httpx2.Response(404, json={"error": {"code": "NOT_FOUND"}})
+
+    ids = [f"id-{n}" for n in range(SET_ID_BATCH * 2 + 1)]
+
+    assert openfda(count_ids).listed(ids) == set()
+    assert seen == [SET_ID_BATCH, SET_ID_BATCH, 1]
