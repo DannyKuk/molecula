@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
@@ -10,13 +10,19 @@ import { chatFrame, IN_CONVERSATION, stubChatStream, stubPage } from "@/lib/test
 
 import { LinkedChat } from "./linked-chat";
 
-vi.mock("next/navigation", () => ({ useSearchParams: vi.fn(), usePathname: () => "/" }));
+vi.mock("next/navigation", () => ({
+  useRouter: vi.fn(),
+  useSearchParams: vi.fn(),
+  usePathname: () => "/",
+}));
 vi.mock("@/components/model-status", () => ({ ModelStatus: () => null }));
 
 type ActEnvironment = { IS_REACT_ACT_ENVIRONMENT?: boolean };
 
-function openAt(url: string) {
+/** Opens the page at `url`; a link gets a new `bfcacheId`, Back and Forward keep the old one. */
+function openAt(url: string, bfcacheId = "first link") {
   window.history.replaceState(null, "", url);
+  vi.mocked(useRouter).mockReturnValue({ bfcacheId } as unknown as ReturnType<typeof useRouter>);
   vi.mocked(useSearchParams).mockReturnValue(
     new URLSearchParams(window.location.search) as unknown as ReturnType<typeof useSearchParams>,
   );
@@ -102,5 +108,30 @@ describe("LinkedChat", () => {
     expect(screen.getByRole("button", { name: "How does imatinib work?" })).toBeDefined();
     expect(stream.fetchMock).not.toHaveBeenCalled();
     expect(window.location.search).toBe("");
+  });
+
+  it("opens an empty chat on a later link here, as New chat on another page makes", async () => {
+    stubChatStream();
+    openAt("/?q=How%20does%20imatinib%20work%3F");
+    const page = render(<LinkedChat />);
+    expect(await screen.findByRole("list", { name: "Conversation" })).toBeDefined();
+
+    openAt("/", "second link");
+    page.rerender(<LinkedChat />);
+
+    expect(screen.queryByRole("list", { name: "Conversation" })).toBeNull();
+    expect(screen.getByRole("button", { name: "How does imatinib work?" })).toBeDefined();
+  });
+
+  it("keeps the chat when Back returns to it", async () => {
+    stubChatStream();
+    openAt("/?q=How%20does%20imatinib%20work%3F");
+    const page = render(<LinkedChat />);
+    expect(await screen.findByRole("list", { name: "Conversation" })).toBeDefined();
+
+    openAt("/");
+    page.rerender(<LinkedChat />);
+
+    expect(screen.getByRole("list", { name: "Conversation" })).toBeDefined();
   });
 });
