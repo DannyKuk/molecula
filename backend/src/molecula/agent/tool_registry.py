@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import AsyncIterator, Sequence
 from contextlib import asynccontextmanager
 from typing import Any
@@ -55,6 +56,37 @@ async def tools_over_mcp(
     async with create_connected_server_and_client_session(server) as session:
         tools = await load_mcp_tools(session)
         yield [typed(tool, by_name.get(tool.name)) for tool in tools]
+
+
+class McpSessions:
+    """In-memory MCP sessions that stay open until `aclose`. Each is opened, held and closed by
+    a task of its own, because an anyio context must be left by the task that entered it and a
+    session opened while answering a request outlives that request."""
+
+    def __init__(self) -> None:
+        self._closing = asyncio.Event()
+        self._held: list[asyncio.Task[None]] = []
+
+    async def open(self, server: FastMCP, local: Sequence[BaseTool]) -> list[BaseTool]:
+        """The tools of `server` over a new session, as `tools_over_mcp` gives them."""
+        opened: asyncio.Future[list[BaseTool]] = asyncio.get_running_loop().create_future()
+
+        async def hold() -> None:
+            try:
+                async with tools_over_mcp(server, local) as tools:
+                    opened.set_result(tools)
+                    await self._closing.wait()
+            except Exception as error:
+                if opened.done():
+                    raise
+                opened.set_exception(error)
+
+        self._held.append(asyncio.create_task(hold()))
+        return await opened
+
+    async def aclose(self) -> None:
+        self._closing.set()
+        await asyncio.gather(*self._held)
 
 
 def typed(tool: BaseTool, local: BaseTool | None) -> BaseTool:

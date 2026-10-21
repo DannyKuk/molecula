@@ -23,6 +23,9 @@ def model_choices[Chat](
     async def local_names() -> list[str]:
         return list(local)
 
+    async def build_chat(model: ChatModel, checker: CheckerId) -> Chat:
+        return build(model, checker) if build is not None else default_chat
+
     return ModelChoices(
         DEFAULT_MODEL,
         default_chat,
@@ -30,5 +33,5 @@ def model_choices[Chat](
         local_names=local_names,
         checkers=checkers,
         default_checker=default_checker,
-        build=build or (lambda model, checker: default_chat),
+        build=build_chat,
     )
