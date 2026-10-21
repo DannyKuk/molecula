@@ -151,8 +151,13 @@ export const de: Messages = {
     default: "Standard",
     developedWith:
       "Molecula wurde mit gpt-oss-20b entwickelt, das jeden Prompt, jede Sicherheitsregel und jede Auswertung durchlaufen hat, und gpt-6-luna wurde als Cloud-Modell gemessen. Ein anderes Modell kann hier schlechter abschneiden. Es kann ein Nachschlagen auslassen und aus dem Gedächtnis antworten oder die falsche Quelle zitieren.",
+    checksOn: "Prüfungen ausführen mit",
+    checksTested: "den getesteten Modellen",
+    checksPicked: "dem gewählten Modell, ",
     checksStay:
-      "Welches Modell Sie auch wählen, die Sicherheitsprüfung vor der Antwort und die Quellenprüfung danach bleiben bei den Modellen, mit denen sie getestet wurden.",
+      "Die Sicherheitsprüfung vor der Antwort und die Quellenprüfung danach bleiben bei den Modellen, mit denen sie getestet wurden.",
+    checksOnPicked: (model) =>
+      `${model} übernimmt dann auch die Sicherheitsprüfung vor der Antwort und die Quellenprüfung danach, und auch dafür wurde es nicht gemessen: Die Sicherheitsprüfung, die Fragen nach tödlichen Dosen und nach Synthesen ablehnt, wurde nur mit gpt-oss-20b und Jev gemessen.`,
     loadsFirst:
       "Ein lokales Modell wird auf dem lokalen Server geladen, wenn es zum ersten Mal gefragt wird, was eine Minute dauern kann",
     fitsNextTo: (model) => `, und es muss neben ${model} in den Speicher passen`,

@@ -44,7 +44,7 @@ async def chat(
     """Answers the conversation's last message as server-sent events: each event's name is its
     `type` and its data the event as JSON (`schemas/chat.py`). The stream ends with `done` or
     `error`; `done` says how the guard sorted the question and what it cost."""
-    picked = await choices.chat(request.model)
+    picked = await choices.chat(request.model, request.checks)
     if picked is None:
         raise HTTPException(
             status_code=422,

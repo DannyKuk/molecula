@@ -256,10 +256,15 @@ def test_the_model_answers_503_while_the_chat_is_off(client: TestClient) -> None
 
 
 def offer(**choices: Any) -> None:
-    """The default answers in a scripted agent; a picked model answers in its own."""
+    """The default answers in a scripted agent; a picked model answers in its own, which says
+    which checks it runs with."""
     default = agent([answer_message("The default answers.")])
     app.dependency_overrides[dependencies.model_choices] = lambda: model_choices(
-        default, build=lambda model: agent([answer_message(f"{model.name} answers.")]), **choices
+        default,
+        build=lambda model, checks: agent(
+            [answer_message(f"{model.name} answers with the {checks} checks.")]
+        ),
+        **choices,
     )
 
 
@@ -304,9 +309,38 @@ def test_the_picked_model_answers_and_the_usage_log_names_it(
 
     response = client.post("/chat", json=QUESTION | {"model": "google/gemma-4-31b"})
 
-    assert answer_text(response) == "google/gemma-4-31b answers."
+    assert answer_text(response) == "google/gemma-4-31b answers with the tested checks."
     [record] = usage_store.since(datetime(2026, 1, 1, tzinfo=UTC))
     assert record.model == "google/gemma-4-31b"
+
+
+@pytest.mark.parametrize("checks", ["tested", "picked"])
+def test_the_checks_choice_reaches_the_picked_models_chat(client: TestClient, checks: str) -> None:
+    offer(local=["google/gemma-4-31b"])
+
+    response = client.post(
+        "/chat", json=QUESTION | {"model": "google/gemma-4-31b", "checks": checks}
+    )
+
+    assert answer_text(response) == f"google/gemma-4-31b answers with the {checks} checks."
+
+
+def test_with_the_default_model_the_checks_choice_changes_nothing(client: TestClient) -> None:
+    offer(local=["google/gemma-4-31b"])
+
+    response = client.post("/chat", json=QUESTION | {"checks": "picked"})
+
+    assert answer_text(response) == "The default answers."
+
+
+def test_an_unknown_checks_choice_is_refused_with_422(client: TestClient) -> None:
+    offer(local=["google/gemma-4-31b"])
+
+    response = client.post(
+        "/chat", json=QUESTION | {"model": "google/gemma-4-31b", "checks": "none"}
+    )
+
+    assert response.status_code == 422
 
 
 def test_a_model_not_on_the_list_is_refused_with_422(client: TestClient) -> None:

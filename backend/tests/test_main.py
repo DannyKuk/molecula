@@ -7,6 +7,7 @@ from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 
+import httpx2
 import pytest
 from fastapi.testclient import TestClient
 from langchain_core.embeddings import Embeddings, FakeEmbeddings
@@ -17,6 +18,7 @@ from pydantic import SecretStr
 from fake_llm import ScriptedChatModel, answer_message, tool_call_message
 from molecula import main
 from molecula.agent.agent import ChatAgent
+from molecula.agent.decisions import DecisionModel, get_decision_model
 from molecula.agent.label_filter import DecisionFirstFilterExtractor
 from molecula.agent.llm import LLMConfigError
 from molecula.config import Settings
@@ -192,9 +194,9 @@ def judged_supported() -> AIMessage:
 def use_models(monkeypatch: pytest.MonkeyPatch, model: ScriptedChatModel) -> None:
     """The scripted model sorts the message, answers it and checks the answer."""
     monkeypatch.setattr(main, "get_embeddings", lambda settings: UnitEmbeddings())
-    monkeypatch.setattr(main, "get_chat_model", lambda settings: model)
+    monkeypatch.setattr(main, "get_chat_model", lambda settings, picked=None: model)
     monkeypatch.setattr(main, "get_answer_model", lambda settings, picked=None: model)
-    monkeypatch.setattr(main, "get_source_check_model", lambda settings: model)
+    monkeypatch.setattr(main, "get_source_check_model", lambda settings, picked=None: model)
 
 
 @pytest.fixture
@@ -206,7 +208,7 @@ def loaded_models(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         loaded.append("embeddings")
         return FakeEmbeddings(size=3)
 
-    def chat_model(settings: Settings) -> BaseChatModel:
+    def chat_model(settings: Settings, model: ChatModel | None = None) -> BaseChatModel:
         loaded.append("chat")
         return ScriptedChatModel(script=[])
 
@@ -214,7 +216,7 @@ def loaded_models(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         loaded.append("answer")
         return ScriptedChatModel(script=[])
 
-    def source_check_model(settings: Settings) -> BaseChatModel:
+    def source_check_model(settings: Settings, model: ChatModel | None = None) -> BaseChatModel:
         loaded.append("source check")
         return ScriptedChatModel(script=[])
 
@@ -458,8 +460,9 @@ def test_chat_describes_the_stored_complex_offline(
     assert "disclaimer" not in events["sources"]
 
 
+@pytest.mark.parametrize("checks", [{}, {"checks": "tested"}])
 def test_a_picked_model_writes_the_answer_and_the_default_sorts_and_checks_it(
-    settings: Settings, monkeypatch: pytest.MonkeyPatch
+    settings: Settings, monkeypatch: pytest.MonkeyPatch, checks: dict[str, str]
 ) -> None:
     monkeypatch.setattr(settings, "offline", True)
     LabelIndex(settings.index_dir).rebuild(
@@ -484,7 +487,7 @@ def test_a_picked_model_writes_the_answer_and_the_default_sorts_and_checks_it(
 
     with TestClient(app) as client:
         listed = client.get("/models").json()
-        response = client.post("/chat", json=QUESTION | {"model": "google/gemma-4-31b"})
+        response = client.post("/chat", json=QUESTION | {"model": "google/gemma-4-31b"} | checks)
 
     gemma_model = ChatModel(name="google/gemma-4-31b", local=True)
     assert gemma_model.model_dump() in listed["models"]
@@ -494,6 +497,93 @@ def test_a_picked_model_writes_the_answer_and_the_default_sorts_and_checks_it(
     assert answer == "Gemma writes this answer."
     assert dict(events)["done"]["category"] == "ok"
     assert dict(events)["source_check"]["checked"] is True
+
+
+def search_by_question_then_answer() -> ScriptedChatModel:
+    """Sorts the message, searches the labels without naming the drug, so the filter is
+    extracted from the question, answers and checks the answer."""
+    return ScriptedChatModel(
+        script=[
+            tool_call_message("SortedMessage", {"category": "ok"}),
+            tool_call_message("search_labels", {"question": "How does imatinib work?"}),
+            tool_call_message("LabelQuery", {"substances": ["imatinib"]}),
+            answer_message("It blocks the BCR-ABL kinase [1]."),
+            judged_supported(),
+        ]
+    )
+
+
+@pytest.mark.parametrize("agent_tools", ["local", "mcp"])
+def test_a_local_pick_with_the_picked_checks_makes_no_openrouter_or_jev_call(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch, agent_tools: str
+) -> None:
+    monkeypatch.setattr(settings, "openrouter_api_key", SecretStr("sk-or-test"))
+    monkeypatch.setattr(settings, "agent_tools", agent_tools)
+    store_the_mechanism_label(settings)
+    tested = ScriptedChatModel(script=[])
+    gemma = search_by_question_then_answer()
+    jev_calls: list[httpx2.Request] = []
+
+    def model_for(settings: Settings, model: ChatModel | None = None) -> BaseChatModel:
+        return tested if model is None else gemma
+
+    def jev(settings: Settings) -> DecisionModel:
+        def answer(request: httpx2.Request) -> httpx2.Response:
+            jev_calls.append(request)
+            return httpx2.Response(500)
+
+        return get_decision_model(settings, transport=httpx2.MockTransport(answer))
+
+    async def local_names(settings: Settings) -> list[str]:
+        return ["google/gemma-4-31b"]
+
+    monkeypatch.setattr(main, "get_embeddings", lambda settings: UnitEmbeddings())
+    for getter in ("get_chat_model", "get_answer_model", "get_source_check_model"):
+        monkeypatch.setattr(main, getter, model_for)
+    monkeypatch.setattr(main, "get_decision_model", jev)
+    monkeypatch.setattr(main, "local_model_names", local_names)
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/chat", json=QUESTION | {"model": "google/gemma-4-31b", "checks": "picked"}
+        )
+
+    events = dict(server_sent_events(response.text))
+    assert events["done"]["category"] == "ok"
+    assert events["retrieval_trace"]["filter_source"] == "model"
+    assert events["retrieval_trace"]["filter"]["drugs"][0]["set_ids"] == ["gleevec"]
+    assert [c["label"] for c in events["source_check"]["claims"]] == ["supported"]
+    assert len(gemma.received) == 5
+    assert tested.received == []
+    assert jev_calls == []
+
+
+def test_offline_no_cloud_model_is_offered_and_a_cloud_name_answers_422(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch, loaded_models: list[str]
+) -> None:
+    monkeypatch.setattr(settings, "offline", True)
+    monkeypatch.setattr(settings, "openrouter_api_key", SecretStr("sk-or-test"))
+    monkeypatch.setattr(settings, "llm_models", ["openai/gpt-6-luna"])
+    monkeypatch.setattr(settings, "local_llm_base_url", "http://localhost:1234/v1")
+    monkeypatch.setattr(settings, "local_llm_model", "openai/gpt-oss-20b")
+
+    async def local_names(settings: Settings) -> list[str]:
+        return ["google/gemma-4-31b"]
+
+    monkeypatch.setattr(main, "local_model_names", local_names)
+    build_index(settings, embedding_model_id(settings))
+
+    with TestClient(app) as client:
+        listed = client.get("/models").json()
+        response = client.post(
+            "/chat", json=QUESTION | {"model": "openai/gpt-6-luna", "checks": "picked"}
+        )
+
+    assert listed["models"] == [
+        {"name": "openai/gpt-oss-20b", "local": True},
+        {"name": "google/gemma-4-31b", "local": True},
+    ]
+    assert response.status_code == 422
 
 
 def test_without_a_local_server_only_the_configured_model_is_offered(

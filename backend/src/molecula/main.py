@@ -43,7 +43,7 @@ from molecula.mcp.server import build_server
 from molecula.rag.embeddings import embedding_model_id, get_embeddings
 from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
-from molecula.schemas.chat import ChatModel
+from molecula.schemas.chat import ChatModel, ChecksChoice
 from molecula.services.complexes import ComplexService
 from molecula.services.compounds import CompoundService
 from molecula.services.knowledge_base import KnowledgeBase
@@ -262,16 +262,48 @@ def open_model_choices(
     default_chat: GuardedChat,
     guarded: Callable[[ChatAgent], GuardedChat],
     tools: Sequence[BaseTool],
+    checked_by_picked: Callable[[ChatModel], GuardedChat],
     canary: str,
 ) -> ModelChoices[GuardedChat]:
-    """The models a user may pick (#37). A picked model only writes the answer: the guard's
-    checks before and after it stay on the configured models they were measured with."""
+    """The models a user may pick (#37). With the tested checks a picked model only writes the
+    answer: the guard's checks before and after it stay on the configured models they were
+    measured with. With the picked checks it does all the work (#363)."""
+
+    def build(model: ChatModel, checks: ChecksChoice) -> GuardedChat:
+        if checks == "picked":
+            return checked_by_picked(model)
+        return guarded(open_agent(settings, tools, canary, model))
+
     return ModelChoices(
         ChatModel(name=chat_model_name(settings), local=chat_model_is_local(settings)),
         default_chat,
         cloud=cloud_model_choices(settings),
         local_names=partial(local_model_names, settings),
-        build=lambda model: guarded(open_agent(settings, tools, canary, model)),
+        build=build,
+    )
+
+
+def open_chat_checked_by(
+    settings: Settings,
+    model: ChatModel,
+    services: Services,
+    retriever: LabelRetriever,
+    canary: str,
+) -> GuardedChat:
+    """A chat in which the picked `model` sorts the message, extracts the label filters, writes
+    the answer and checks it, so a local pick makes no cloud call (#363). Its tools are called
+    directly even with AGENT_TOOLS=mcp: the MCP session is opened once at startup, over the
+    tools whose label filter the configured models extract."""
+    checks_model = get_chat_model(settings, model)
+    extractor = FilterExtractor(checks_model, services.compounds, services.labels)
+    tools = build_tools(
+        services.compounds, services.targets, services.complexes, extractor, retriever
+    )
+    return GuardedChat(
+        ChatModelInputCheck(checks_model),
+        open_agent(settings, tools, canary, model),
+        source_check=ChatModelSourceCheck(get_source_check_model(settings, model)),
+        timeout_seconds=settings.llm_timeout_seconds,
     )
 
 
@@ -336,8 +368,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         )
         app.state.chat_agent = open_agent(settings, tools, canary)
         app.state.chat = guarded(app.state.chat_agent)
+        checked_by_picked = partial(
+            open_chat_checked_by,
+            settings,
+            services=services,
+            retriever=app.state.label_retriever,
+            canary=canary,
+        )
         app.state.model_choices = open_model_choices(
-            settings, app.state.chat, guarded, tools, canary
+            settings, app.state.chat, guarded, tools, checked_by_picked, canary
         )
         app.state.chat_model = app.state.model_choices.default
     usage_conn = connect_usage(settings.usage_db_path)

@@ -64,13 +64,20 @@ class ModelChoicesResponse(BaseModel):
     default: str
 
 
+type ChecksChoice = Literal["tested", "picked"]
+
+
 class ChatRequest(BaseModel):
     """The conversation so far, oldest first, ending with the user's new message. A longer
     conversation is sent as its latest messages. `model` is the name of one of the models
-    `GET /models` lists; without it the default writes the answer."""
+    `GET /models` lists; without it the default writes the answer. `checks` says which models
+    run the input check, the label filter and the source check around a picked model's answer:
+    the tested ones, or the picked model itself (#363). With the default model it changes
+    nothing."""
 
     messages: list[ChatMessage]
     model: Annotated[str, StringConstraints(min_length=1, max_length=200)] | None = None
+    checks: ChecksChoice = "tested"
 
     @field_validator("messages", mode="before")
     @classmethod

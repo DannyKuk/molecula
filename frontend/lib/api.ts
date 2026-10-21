@@ -10,6 +10,12 @@ export type ChatModel = {
   local: boolean;
 };
 
+/**
+ * Which models run the checks around a picked model's answer: the tested ones, or the picked model
+ * itself (`ChecksChoice` in `backend/src/molecula/schemas/chat.py`, #363).
+ */
+export type ChecksChoice = "tested" | "picked";
+
 /** The models a user may pick to write the answers, the default first (`ModelChoicesResponse`). */
 export type ModelChoices = {
   models: ChatModel[];

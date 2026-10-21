@@ -50,6 +50,28 @@ describe("streamChat", () => {
     });
   });
 
+  it("lets the picked model run the checks when the user chose so", async () => {
+    const fetchMock = stubFetch(new Response(DONE));
+
+    for await (const event of streamChat(QUESTION, undefined, "google/gemma-4-31b", "picked")) {
+      void event;
+    }
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toEqual({
+      messages: QUESTION,
+      model: "google/gemma-4-31b",
+      checks: "picked",
+    });
+  });
+
+  it("sends no checks choice without a picked model", async () => {
+    const fetchMock = stubFetch(new Response(DONE));
+
+    for await (const event of streamChat(QUESTION, undefined, null, "picked")) void event;
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toEqual({ messages: QUESTION });
+  });
+
   it("posts the conversation and yields the events of the stream", async () => {
     const fetchMock = stubFetch(
       new Response(

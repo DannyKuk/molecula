@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getModels, type ModelChoices } from "@/lib/api";
-import { chooseModel, chosenModel } from "@/lib/use-chosen-model";
+import { chooseChecks, chooseModel, chosenChecks, chosenModel } from "@/lib/use-chosen-model";
 
 import { ModelPicker, ModelSettings } from "./model-settings";
 
@@ -22,6 +22,7 @@ const CHOICES: ModelChoices = {
 
 beforeEach(() => {
   chooseModel(null);
+  chooseChecks("tested");
   vi.mocked(getModels).mockResolvedValue(CHOICES);
 });
 
@@ -109,6 +110,30 @@ describe("ModelPicker", () => {
       (await screen.findByRole("radio", { name: /^gpt-oss-20b/ })) as HTMLInputElement,
     ).toHaveProperty("checked", true);
     expect(chosenModel()).toBeNull();
+  });
+
+  it("hides the checks switch while the default model writes the answers", async () => {
+    render(<ModelPicker />);
+    await screen.findByRole("radio", { name: /^gpt-oss-20b/ });
+
+    expect(screen.queryByRole("group", { name: "Run the checks on" })).toBeNull();
+  });
+
+  it("keeps the checks on the tested models until the user picks the picked model", async () => {
+    chooseModel("google/gemma-4-31b");
+    render(<ModelPicker />);
+    await screen.findByRole("radio", { name: /^gpt-oss-20b/ });
+
+    expect(option("the tested models").checked).toBe(true);
+    expect(screen.getByText(/stay on the models they were tested with/)).toBeDefined();
+
+    fireEvent.click(option("the picked model"));
+
+    expect(chosenChecks()).toBe("picked");
+    expect(option("the picked model, gemma-4-31b").checked).toBe(true);
+    expect(screen.getByText(/gemma-4-31b then also runs the safety check/).textContent).toMatch(
+      /measured only on gpt-oss-20b and Jev/,
+    );
   });
 
   it("says there is nothing to pick while the chat is off", async () => {

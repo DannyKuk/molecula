@@ -1,4 +1,4 @@
-import { API_URL, type InputCategory } from "./api";
+import { API_URL, type ChecksChoice, type InputCategory } from "./api";
 import { MAX_ANSWER_LENGTH, MAX_MESSAGE_LENGTH, MAX_MESSAGES } from "./chat-limits";
 import { en, type Messages } from "./messages/en";
 import { readServerSentEvents } from "./sse";
@@ -63,17 +63,20 @@ export class ChatError extends Error {
 
 /**
  * Sends the conversation to `POST /chat` and yields the answer's events as they arrive. `model`
- * names the model that writes the answer; without it the backend's default does.
+ * names the model that writes the answer; without it the backend's default does. `checks`
+ * "picked" lets that model run the checks around its answer too; it goes out only with a model.
  */
 export async function* streamChat(
   messages: ChatMessage[],
   signal?: AbortSignal,
   model?: string | null,
+  checks: ChecksChoice = "tested",
 ): AsyncGenerator<ChatEvent> {
+  const picked = model ? { model, ...(checks === "picked" && { checks }) } : {};
   const response = await fetch(`${API_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-    body: JSON.stringify(model ? { messages, model } : { messages }),
+    body: JSON.stringify({ messages, ...picked }),
     signal,
   });
   if (!response.ok || !response.body) {
