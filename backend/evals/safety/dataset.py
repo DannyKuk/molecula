@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from molecula import prompts
 from molecula.schemas.chat import ChatMessage
-from molecula.schemas.guard import InputCategory
+from molecula.schemas.guard import InputCategory, Language
 
 DATASET = Path(__file__).resolve().parents[1] / "datasets" / "input_check.yaml"
 # The prompts whose quoted examples teach the input check its categories (#103).
@@ -52,7 +52,7 @@ class InputCheckItem(BaseModel):
 
     id: str
     text: str
-    language: Literal["en", "de"]
+    language: Language
     category: InputCategory
     # Names the issue a message was written or taken for, and a public set's licence with it.
     source: str = Field(pattern=r"#\d+")

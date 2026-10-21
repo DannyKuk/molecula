@@ -47,6 +47,14 @@ from tool_fakes import (
 AGENT_CALL_USAGE = Usage(**DEFAULT_USAGE, cost_usd=DEFAULT_COST)
 
 QUESTION = [ChatMessage(role="user", content="My son swallowed ten acetaminophen tablets.")]
+GERMAN_QUESTION = [ChatMessage(role="user", content="Mein Sohn hat zehn Paracetamol geschluckt.")]
+REFUSED_CATEGORIES: list[InputCategory] = [
+    "personal_medical_advice",
+    "lethal_dose",
+    "synthesis_or_misuse",
+    "prompt_injection",
+    "off_topic",
+]
 
 
 def agent(*script: Any, chunk_size: int | None = None) -> tuple[ChatAgent, ScriptedChatModel]:
@@ -61,9 +69,9 @@ def agent(*script: Any, chunk_size: int | None = None) -> tuple[ChatAgent, Scrip
     return ChatAgent(model, tools, canary=CANARY, max_steps=5, timeout_seconds=10), model
 
 
-def run(chat: GuardedChat) -> list[ChatEvent]:
+def run(chat: GuardedChat, conversation: list[ChatMessage] = QUESTION) -> list[ChatEvent]:
     async def collect() -> list[ChatEvent]:
-        return [event async for event in chat.stream(QUESTION)]
+        return [event async for event in chat.stream(conversation)]
 
     return asyncio.run(collect())
 
@@ -215,6 +223,54 @@ def test_an_unsafe_or_off_topic_message_gets_its_fixed_answer_and_no_agent(
     assert done(events).usage == CHECK_USAGE
 
 
+@pytest.mark.parametrize("category", REFUSED_CATEGORIES)
+def test_a_refused_german_message_gets_the_german_fixed_answer(category: InputCategory) -> None:
+    chat_agent, model = agent()
+    chat = GuardedChat(FakeCheck(category), chat_agent, FakeSourceCheck(), timeout_seconds=5)
+
+    events = run(chat, GERMAN_QUESTION)
+
+    assert answer(events) == fixed_answer(category, "de")
+    assert model.received == []
+    assert done(events).category == category
+
+
+def test_a_german_overdose_question_gets_the_german_emergency_line_first() -> None:
+    chat_agent, _ = agent(answer_message("Laut Label kann eine Überdosis die Leber schädigen."))
+    chat = GuardedChat(
+        FakeCheck("overdose_emergency"), chat_agent, FakeSourceCheck(), timeout_seconds=5
+    )
+
+    events = run(chat, GERMAN_QUESTION)
+
+    first_token = next(event for event in events if isinstance(event, TokenEvent))
+    assert first_token.text == fixed_answer("overdose_emergency", "de") + "\n\n"
+
+
+def test_the_language_is_read_from_the_last_message() -> None:
+    conversation = [
+        GERMAN_QUESTION[0],
+        ChatMessage(role="assistant", content=fixed_answer("lethal_dose", "de")),
+        ChatMessage(role="user", content="Please answer in English: what is the lethal dose?"),
+    ]
+    chat_agent, _ = agent()
+    chat = GuardedChat(FakeCheck("lethal_dose"), chat_agent, FakeSourceCheck(), timeout_seconds=5)
+
+    events = run(chat, conversation)
+
+    assert answer(events) == fixed_answer("lethal_dose")
+
+
+@pytest.mark.parametrize("message", ["Quanto paracetamolo è letale?", "Paracetamool"])
+def test_a_message_in_another_or_no_language_gets_the_english_fixed_answer(message: str) -> None:
+    chat_agent, _ = agent()
+    chat = GuardedChat(FakeCheck("lethal_dose"), chat_agent, FakeSourceCheck(), timeout_seconds=5)
+
+    events = run(chat, [ChatMessage(role="user", content=message)])
+
+    assert answer(events) == fixed_answer("lethal_dose")
+
+
 def provider_timeout() -> openai.APITimeoutError:
     return openai.APITimeoutError(request=httpx.Request("POST", "http://llm.test/chat"))
 
@@ -327,6 +383,19 @@ def test_an_overdose_answer_that_is_stopped_keeps_the_emergency_line() -> None:
         text=fixed_answer("overdose_emergency") + "\n\n" + STOPPED
     )
     assert done(events).category == "overdose_emergency"
+
+
+def test_a_stopped_german_overdose_answer_keeps_the_german_emergency_line() -> None:
+    chat_agent, _ = agent(answer_message(f"{LEAK_INTRO}{CANARY}."))
+    chat = GuardedChat(
+        FakeCheck("overdose_emergency"), chat_agent, FakeSourceCheck(), timeout_seconds=5
+    )
+
+    events = run(chat, GERMAN_QUESTION)
+
+    assert events[-3] == ReplaceAnswerEvent(
+        text=fixed_answer("overdose_emergency", "de") + "\n\n" + STOPPED
+    )
 
 
 def test_a_normal_answer_streams_whole_with_its_last_characters_before_sources() -> None:

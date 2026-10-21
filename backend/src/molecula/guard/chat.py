@@ -9,6 +9,7 @@ from molecula.agent.channel_markers import without_control_tokens
 from molecula.agent.decisions import DecisionModelError
 from molecula.agent.llm import ChatModelError, describe_provider_error
 from molecula.guard.canary import CanaryWatch, PromptLeaked
+from molecula.guard.language import detect_language
 from molecula.guard.safety import REFUSED, InputCheck, InputCheckFailed, Verdict, fixed_answer
 from molecula.schemas.chat import (
     ChatEvent,
@@ -22,6 +23,7 @@ from molecula.schemas.chat import (
     TokenEvent,
     ToolResultEvent,
 )
+from molecula.schemas.guard import Language
 from molecula.schemas.source_check import SourceCheck, SourceCheckFailed
 from molecula.schemas.usage import Usage
 
@@ -53,7 +55,8 @@ class GuardedChat:
 
     async def stream(self, conversation: Sequence[ChatMessage]) -> AsyncIterator[ChatEvent]:
         """The agent's events with a `source_check` event before `done`, or a fixed answer as
-        `token`, `sources` and `done`. `done` carries the category. An input check that fails
+        `token`, `sources` and `done`, in the language of the last message. `done` carries the
+        category. An input check that fails
         ends with an `error` event and no answer. An answer that repeats the system prompt ends
         with `replace_answer`, `sources` and `done`, unchecked."""
         conversation = without_control_tokens_in(conversation)
@@ -76,18 +79,19 @@ class GuardedChat:
             logger.warning("Input check's decision model failed: %r", error)
             yield ErrorEvent(kind="input_check_failed", message=CHECK_FAILED)
             return
+        language = detect_language(conversation[-1].content)
         if verdict.category in REFUSED:
-            for event in fixed(verdict):
+            for event in fixed(verdict, language):
                 yield event
             return
         if verdict.category == "overdose_emergency":
-            yield TokenEvent(text=emergency_line())
+            yield TokenEvent(text=emergency_line(language))
         try:
             async for event in self._answer(conversation, verdict):
                 yield event
         except PromptLeaked as leak:
             logger.warning("Stopped an answer whose %s event held the system prompt's canary", leak)
-            for event in stopped(verdict):
+            for event in stopped(verdict, language):
                 yield event
 
     async def _answer(
@@ -135,18 +139,18 @@ class GuardedChat:
         return SourceCheckEvent(checked=True, claims=checked.claims), checked.usage
 
 
-def emergency_line() -> str:
+def emergency_line(language: Language) -> str:
     """The line an `overdose_emergency` answer starts with, a paragraph of its own so the
     agent's answer doesn't run on from it."""
-    return fixed_answer("overdose_emergency") + "\n\n"
+    return fixed_answer("overdose_emergency", language) + "\n\n"
 
 
-def stopped(verdict: Verdict) -> list[ChatEvent]:
+def stopped(verdict: Verdict, language: Language) -> list[ChatEvent]:
     """The end of an answer that repeated the system prompt. What the agent's calls used is
     unknown, since its `done` never came, so `done` carries only the input check's usage."""
     text = prompts.load("guard/stopped_answer").strip()
     if verdict.category == "overdose_emergency":
-        text = emergency_line() + text
+        text = emergency_line(language) + text
     return [
         ReplaceAnswerEvent(text=text),
         SourcesEvent(sources=[]),
@@ -158,9 +162,9 @@ def stopped(verdict: Verdict) -> list[ChatEvent]:
     ]
 
 
-def fixed(verdict: Verdict) -> list[ChatEvent]:
+def fixed(verdict: Verdict, language: Language) -> list[ChatEvent]:
     return [
-        TokenEvent(text=fixed_answer(verdict.category)),
+        TokenEvent(text=fixed_answer(verdict.category, language)),
         SourcesEvent(sources=[]),
         DoneEvent(
             usage_by_step={"input_check": verdict.usage},

@@ -1,0 +1,3 @@
+Molecula kann Ihnen nicht sagen, was Sie mit Ihren eigenen Medikamenten tun sollen: ob Sie eines anfangen, absetzen oder ändern, welche Dosis Sie nehmen oder ob es für Sie sicher ist. Das hängt von Ihrer Gesundheit und Ihren anderen Medikamenten ab, deshalb entscheidet das Ihr Arzt oder Apotheker mit Ihnen.
+
+Molecula kann aber erklären, was die Fachinformation eines Medikaments allgemein sagt: wie es wirkt, wie es üblicherweise dosiert wird, welche Warnhinweise und Wechselwirkungen es hat und was zu Schwangerschaft oder Operationen darin steht. Fragen Sie zum Beispiel: „Was sagt die Fachinformation von Ibuprofen zur Schwangerschaft?“

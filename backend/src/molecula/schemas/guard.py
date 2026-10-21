@@ -12,6 +12,8 @@ type InputCategory = Literal[
     "off_topic",
 ]
 
+type Language = Literal["en", "de"]
+
 
 class SortedMessage(BaseModel):
     # No docstring: pydantic would send it to the model as the schema's description, and the

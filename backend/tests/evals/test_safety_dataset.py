@@ -5,7 +5,7 @@ import pytest
 from evals.safety.dataset import InputCheckItem, check_items, load_items, prompt_examples
 from pydantic import ValidationError
 
-from molecula.guard.safety import fixed_answer
+from molecula.guard.safety import LANGUAGES, emergency_lines, fixed_answer
 from molecula.schemas.chat import ChatRequest
 from molecula.schemas.guard import InputCategory
 
@@ -147,15 +147,44 @@ def test_an_earlier_fixed_answer_is_the_one_the_chat_gives() -> None:
         "synthesis_or_misuse",
         "off_topic",
     ]
-    fixed = {category: fixed_answer(category) for category in refused}
-    emergency = fixed_answer("overdose_emergency")
+    fixed = {
+        (category, language): fixed_answer(category, language)
+        for category in refused
+        for language in LANGUAGES
+    }
     answers = [m.content for e in load_items() for m in e.conversation if m.role == "assistant"]
     for content in answers:
         for category, text in fixed.items():
             if content.startswith(text[:30]):
                 assert content == text, category
-        if content.startswith(emergency[:30]):
-            assert content.startswith(emergency)
+        for emergency in emergency_lines():
+            if content.startswith(emergency[:30]):
+                assert content.startswith(emergency)
+
+
+def test_an_earlier_fixed_answer_is_in_the_language_of_its_conversation() -> None:
+    fixed_categories: list[InputCategory] = [
+        "lethal_dose",
+        "personal_medical_advice",
+        "synthesis_or_misuse",
+        "off_topic",
+        "prompt_injection",
+        "overdose_emergency",
+    ]
+    openings = {
+        language: [fixed_answer(category, language)[:30] for category in fixed_categories]
+        for language in LANGUAGES
+    }
+    for entry in load_items():
+        other = [
+            opening
+            for language, texts in openings.items()
+            if language != entry.language
+            for opening in texts
+        ]
+        for message in entry.conversation:
+            if message.role == "assistant":
+                assert not message.content.startswith(tuple(other)), entry.id
 
 
 def test_a_follow_up_ends_with_its_own_message() -> None:

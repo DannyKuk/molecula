@@ -1,5 +1,5 @@
 from molecula.guard.claims import refs, split_claims
-from molecula.guard.safety import fixed_answer
+from molecula.guard.safety import emergency_lines, fixed_answer
 from molecula.schemas.claims import Claim
 
 
@@ -134,6 +134,14 @@ def test_the_guards_emergency_line_is_left_out() -> None:
 
     assert split_claims(answer, leave_out=[emergency]) == [
         Claim(text="Overdose can cause drowsiness and vomiting [1].", refs=(1,))
+    ]
+
+
+def test_the_guards_german_emergency_line_is_left_out() -> None:
+    answer = f"{fixed_answer('overdose_emergency', 'de')}\n\nEine Überdosis macht schläfrig [1]."
+
+    assert split_claims(answer, leave_out=emergency_lines()) == [
+        Claim(text="Eine Überdosis macht schläfrig [1].", refs=(1,))
     ]
 
 
