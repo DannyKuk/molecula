@@ -89,6 +89,16 @@ For production, Clerk needs a domain you own: `npx clerk@latest deploy` creates 
 
 With the login on, every page needs a signed-in user, and every backend route but `/health` answers 401 without a valid session token. The backend checks the token with the public key, without a call to Clerk, so the check also works with `OFFLINE=1`. The chat's request limits count per user instead of per IP. The MCP server below has no login: keep its port off the internet.
 
+### Deploying on Coolify
+
+`docker-compose.coolify.yaml` runs the app on a server managed by [Coolify](https://coolify.io) ([#383](https://github.com/DannyKuk/molecula/issues/383)). It differs from `docker-compose.yaml` where a server needs it: no published ports (Coolify's proxy routes each domain to its container, and Coolify's own dashboard already uses port 8000), no MCP server, the store in a named volume that survives redeploys, and fixed `OFFLINE=0`, `TRUST_PROXY=1` and cloud embeddings by default, since a small server can't hold bge-m3. It uses Coolify's `exclude_from_hc` key, so plain Docker Compose won't read it.
+
+1. Add two DNS A records pointing at the server, one for the app and one for its API, e.g. `molecula.example.com` and `api.molecula.example.com`.
+2. In Coolify: New Resource → Private Repository (with GitHub App), this repo, branch `main`, Build Pack **Docker Compose**, Docker Compose Location `/docker-compose.coolify.yaml`.
+3. Under Domains, give `frontend` `https://molecula.example.com:3000` and `backend` `https://api.molecula.example.com:8000`: the port after the domain is the container's.
+4. Under Environment Variables, fill `OPENROUTER_API_KEY`, `NEXT_PUBLIC_API_URL=https://api.molecula.example.com`, `CORS_ORIGINS=["https://molecula.example.com"]` and the three Clerk keys from the section above. Fields left empty keep the defaults in `.env.example`.
+5. Deploy. The first deploy downloads the store into the volume and builds the cloud index from it (about 3 minutes and $0.56, see above); later deploys reuse both.
+
 ### MCP server
 
 The agent's six tools (`resolve_drug`, `get_properties`, `get_targets`, `get_complex`, `search_labels`, `compare_drugs`) are also an MCP server, with the same descriptions and answers. It reads the same `.env` and store as the backend and takes about 30 seconds to start while it loads the embedding model. Every tool but `search_labels` reads only the store; each label search also makes one model call to read the filter from the question (Jev online, the local chat model with `OFFLINE=1`), as in the chat. The app shows the same setup under "MCP server" in the chat sidebar (#301).

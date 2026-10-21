@@ -31,7 +31,11 @@ WORKDIR /app
 
 COPY --from=builder /app /app
 
-RUN useradd --create-home --uid 1000 molecula
+# A new named volume takes the owner of the directory it is mounted on, so the store's volume on a
+# server (docker-compose.coolify.yaml) is writable by this user.
+RUN useradd --create-home --uid 1000 molecula \
+    && mkdir /data \
+    && chown molecula /data
 USER molecula
 
 EXPOSE 8000

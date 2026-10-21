@@ -1,0 +1,68 @@
+# docker-compose.yaml for a server run by Coolify (#383): no published ports, Coolify's proxy routes
+# the frontend's and the backend's domains to ports 3000 and 8000. No MCP service: it has no auth.
+# Each ${VAR} is a field in Coolify's Environment Variables; an empty one keeps the code's default.
+services:
+  fetch:
+    build: ./backend
+    command: ["python", "-m", "molecula.ingest", "fetch"]
+    restart: "no"
+    # Coolify's key, which plain Docker Compose rejects: a one-time step that exits doesn't count
+    # towards the stack's health.
+    exclude_from_hc: true
+    environment:
+      DATA_DIR: /data
+      OFFLINE: "0"
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:?}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-google/gemini-embedding-2}
+      STORE_RELEASE: ${STORE_RELEASE:-}
+    volumes:
+      - molecula-data:/data
+
+  backend:
+    build: ./backend
+    depends_on:
+      fetch:
+        condition: service_completed_successfully
+    environment:
+      DATA_DIR: /data
+      OFFLINE: "0"
+      TRUST_PROXY: "1"
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:?}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-google/gemini-embedding-2}
+      STORE_RELEASE: ${STORE_RELEASE:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:?}
+      CLERK_JWT_KEY: ${CLERK_JWT_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_MODELS: ${LLM_MODELS:-}
+      CHAT_REQUESTS_PER_MINUTE: ${CHAT_REQUESTS_PER_MINUTE:-}
+      CHAT_REQUESTS_PER_DAY: ${CHAT_REQUESTS_PER_DAY:-}
+      DAILY_COST_LIMIT_USD: ${DAILY_COST_LIMIT_USD:-}
+      LABEL_UPDATE_SCHEDULE: ${LABEL_UPDATE_SCHEDULE:-}
+      LABEL_UPDATE_HOUR: ${LABEL_UPDATE_HOUR:-}
+      OPENFDA_API_KEY: ${OPENFDA_API_KEY:-}
+      LOG_LEVEL: ${LOG_LEVEL:-}
+    volumes:
+      - molecula-data:/data
+    healthcheck:
+      # The slim image has no curl.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # The backend's public address, as the browser reaches it.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?}
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}
+    environment:
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-}
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  molecula-data:
