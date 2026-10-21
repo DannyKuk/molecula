@@ -3,9 +3,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { API_URL } from "./api";
 import {
   CHAT_FAILED,
+  CHAT_SIGNED_OUT,
   CHAT_UNAVAILABLE,
   type ChatEvent,
   type ChatMessage,
+  errorText,
   failureText,
   questionProblem,
   requestMessages,
@@ -121,6 +123,13 @@ describe("streamChat", () => {
     const detail = "Molecula can't answer questions about doses for you.";
 
     expect(await failureOf(Response.json({ detail }, { status: 422 }))).toBe(detail);
+  });
+
+  it("asks to sign in again when the backend turns away an expired login", async () => {
+    const response = Response.json({ detail: "Sign in to use Molecula." }, { status: 401 });
+
+    expect(await failureOf(response)).toBe(CHAT_SIGNED_OUT);
+    expect(errorText(CHAT_SIGNED_OUT, de)).toBe(de.chat.signedOut);
   });
 
   it("shows a fixed message for a 422 with validation details", async () => {

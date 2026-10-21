@@ -1,3 +1,5 @@
+import { fetchWithLogin } from "./login";
+
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export type HealthResponse = {
@@ -197,7 +199,7 @@ export class ApiError extends Error {
 }
 
 async function get(path: string, signal?: AbortSignal): Promise<Response> {
-  const response = await fetch(`${API_URL}${path}`, { signal });
+  const response = await fetchWithLogin(`${API_URL}${path}`, { signal });
   if (!response.ok) {
     throw new ApiError(path, response.status);
   }
@@ -255,7 +257,7 @@ export function getStats(days: number, signal?: AbortSignal): Promise<Stats> {
 /** Start a label update; 409 while one runs, 404 while the button is off (`LABEL_UPDATE_BUTTON`). */
 export async function startLabelUpdate(): Promise<LabelUpdateStatus> {
   const path = "/labels/update";
-  const response = await fetch(`${API_URL}${path}`, { method: "POST" });
+  const response = await fetchWithLogin(`${API_URL}${path}`, { method: "POST" });
   if (!response.ok) {
     throw new ApiError(path, response.status);
   }

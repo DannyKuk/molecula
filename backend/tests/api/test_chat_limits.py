@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from choice_fakes import model_choices
+from clerk_tokens import bearer, clerk_login, session_token
 from fake_llm import CANARY, ScriptedChatModel, answer_message
 from guard_fakes import FakeCheck, FakeSourceCheck
 from molecula.agent.agent import ChatAgent
@@ -110,6 +111,18 @@ def test_behind_a_trusted_proxy_the_address_it_added_counts(
     # A client can write its own X-Forwarded-For; the proxy adds the real address at the end.
     assert ask(proxy, **{"X-Forwarded-For": "192.0.2.9, 203.0.113.5"}) == 429
     assert ask(proxy, **{"X-Forwarded-For": "198.51.100.7"}) == 200
+
+
+def test_signed_in_users_behind_one_address_have_a_limit_each(
+    limited: Callable[..., ChatLimits],
+) -> None:
+    limited(per_minute=1)
+    app.state.login = clerk_login()
+    client = TestClient(app, client=CLIENT)
+    assert ask(client, **bearer(session_token("user_a"))) == 200
+
+    assert ask(client, **bearer(session_token("user_b"))) == 200
+    assert ask(client, **bearer(session_token("user_a"))) == 429
 
 
 def test_answers_add_their_cost_until_the_cap_turns_requests_away(

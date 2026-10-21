@@ -8,7 +8,10 @@ WORKDIR /app
 # NEXT_PUBLIC_ values are baked into the browser bundle at build time, so the URL
 # is the one the browser uses to reach the backend, not the compose service name.
 ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+# Empty builds the app without the Clerk login (#343).
+ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \
     NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

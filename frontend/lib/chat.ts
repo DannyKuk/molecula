@@ -1,6 +1,7 @@
 import { API_URL, type CheckerId, type InputCategory } from "./api";
 import { MAX_ANSWER_LENGTH, MAX_MESSAGE_LENGTH, MAX_MESSAGES } from "./chat-limits";
 import { en, type Messages } from "./messages/en";
+import { fetchWithLogin } from "./login";
 import { readServerSentEvents } from "./sse";
 import type { RetrievalTrace } from "./tool-cards";
 import type { Usage } from "./usage";
@@ -52,12 +53,14 @@ export type ChatEvent =
 
 export const CHAT_UNAVAILABLE = "The chat is currently unavailable. Try again later.";
 export const CHAT_FAILED = "Something went wrong while answering. Try again.";
+export const CHAT_SIGNED_OUT = "Your login has expired. Reload the page to sign in again.";
 
-/** A failed turn's error: the app's own two in the interface language, a message from the
- * backend as it came. */
+/** A failed turn's error: the app's own in the interface language, a message from the backend
+ * as it came. */
 export function errorText(error: string | undefined, t: Messages = en): string | undefined {
   if (error === CHAT_FAILED) return t.chat.failed;
   if (error === CHAT_UNAVAILABLE) return t.chat.unavailable;
+  if (error === CHAT_SIGNED_OUT) return t.chat.signedOut;
   return error;
 }
 
@@ -80,7 +83,7 @@ export async function* streamChat(
   model?: string | null,
   checker?: CheckerId | null,
 ): AsyncGenerator<ChatEvent> {
-  const response = await fetch(`${API_URL}/chat`, {
+  const response = await fetchWithLogin(`${API_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
     body: JSON.stringify({ messages, ...(model && { model }), ...(checker && { checker }) }),
@@ -104,6 +107,7 @@ async function failureMessage(response: Response): Promise<string> {
   // the chat is off, and its detail is written for whoever runs the backend.
   if (detail && typeof body?.retry_after === "number") return detail;
   if (response.status === 503) return CHAT_UNAVAILABLE;
+  if (response.status === 401) return CHAT_SIGNED_OUT;
   if (response.status === 422 && detail) return detail;
   return CHAT_FAILED;
 }

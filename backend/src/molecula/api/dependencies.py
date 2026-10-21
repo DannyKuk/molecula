@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, Request
 
 from molecula.agent.choices import ModelChoices
+from molecula.api.login import ClerkLogin
 from molecula.guard.chat import GuardedChat
 from molecula.guard.limits import ChatLimited, ChatLimits
 from molecula.schemas.chat import ChatModel
@@ -120,13 +121,26 @@ def chat_model(request: Request) -> ChatModel:
 ChatModelDep = Annotated[ChatModel, Depends(chat_model)]
 
 
-def chat_limits(request: Request, usage_log: UsageLogDep) -> ChatLimits:
-    """The app's chat limits, built at startup, once they have counted this request; raises
-    ChatLimited when they turn it away, and the usage log records that. Tests replace it with
-    an override."""
+def signed_in_user(request: Request) -> str | None:
+    """The Clerk id of the user who sent the request, or None while the login is off; 401 when
+    the login is on and nobody is signed in."""
+    login: ClerkLogin | None = request.app.state.login
+    return login.user_id(request) if login is not None else None
+
+
+SignedInUserDep = Annotated[str | None, Depends(signed_in_user)]
+
+
+def chat_limits(request: Request, user: SignedInUserDep, usage_log: UsageLogDep) -> ChatLimits:
+    """The app's chat limits, built at startup, once they have counted this request against the
+    signed-in user, or the client's address while the login is off; raises ChatLimited when they
+    turn it away, and the usage log records that. Tests replace it with an override."""
     limits: ChatLimits = request.app.state.chat_limits
+    client = (
+        f"user:{user}" if user is not None else client_ip(request, trust_proxy=limits.trust_proxy)
+    )
     try:
-        limits.admit(client_ip(request, trust_proxy=limits.trust_proxy))
+        limits.admit(client)
     except ChatLimited:
         usage_log.limited()
         raise
