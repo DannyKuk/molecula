@@ -33,8 +33,9 @@ function search(query: string) {
 }
 
 function listedDrugs(): string[] {
-  return within(screen.getByRole("list"))
-    .queryAllByRole("button")
+  return screen
+    .queryAllByRole("listitem")
+    .flatMap((item) => within(item).queryAllByRole("button"))
     .map((button) => button.getAttribute("aria-labelledby"))
     .map((nameId) => document.getElementById(nameId ?? "")?.textContent ?? "");
 }
@@ -45,24 +46,51 @@ describe("SupportedDrugs", () => {
 
     expect(listedDrugs()).toEqual(["acetaminophen", "caffeine", "imatinib"]);
     expect(
-      screen.getByRole("button", { name: "acetaminophen", description: "Tylenol, Paracetamol" }),
+      screen.getByRole("button", { name: "acetaminophen", description: /^Tylenol, Paracetamol/ }),
     ).toBeDefined();
     expect(screen.getByRole("status").textContent).toBe(
       "3 supported drugs. Pick one to ask how it works.",
     );
   });
 
-  it("shows the 3D structure badge only on drugs that have one", () => {
+  it("marks only the drugs without a 3D structure", () => {
     renderList();
 
     expect(
-      screen.getByRole("button", { name: "imatinib", description: "Gleevec, Glivec 3D structure" }),
+      screen.getByRole("button", {
+        name: "acetaminophen",
+        description: "Tylenol, Paracetamol no 3D",
+      }),
     ).toBeDefined();
     expect(
-      screen.getByRole("button", { name: "caffeine", description: "3D structure" }),
+      screen.getByRole("button", { name: "imatinib", description: "Gleevec, Glivec" }),
     ).toBeDefined();
-    const acetaminophen = screen.getByRole("button", { name: "acetaminophen" });
-    expect(within(acetaminophen).queryByText("3D structure")).toBeNull();
+    const caffeine = screen.getByRole("button", { name: "caffeine" });
+    expect(caffeine.getAttribute("aria-describedby")).toBeNull();
+  });
+
+  it("groups the drugs by letter and links each letter that has drugs", () => {
+    renderList();
+
+    expect(screen.getAllByRole("region").map((group) => group.getAttribute("aria-label"))).toEqual([
+      "A",
+      "C",
+      "I",
+    ]);
+    const letters = within(screen.getByRole("navigation", { name: "Jump to a letter" }));
+    expect(letters.getAllByRole("link").map((link) => link.textContent)).toEqual(["A", "C", "I"]);
+    expect(letters.getByRole("link", { name: "I" }).getAttribute("href")).toBe("#drugs-I");
+  });
+
+  it("leaves the letters out while searching", () => {
+    renderList();
+
+    search("caf");
+
+    expect(screen.queryByRole("navigation", { name: "Jump to a letter" })).toBeNull();
+    expect(screen.getAllByRole("region").map((group) => group.getAttribute("aria-label"))).toEqual([
+      "C",
+    ]);
   });
 
   it.each([

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Compound, Drug, Resolution } from "./api";
-import { filterDrugs, namesToOffer } from "./drug-search";
+import { byLetter, filterDrugs, namesToOffer } from "./drug-search";
 import { notSupported } from "./test-fixtures";
 
 const imatinib: Drug = {
@@ -61,6 +61,23 @@ const imatinibCompound: Compound = {
   source: "PubChem",
   source_url: "https://pubchem.ncbi.nlm.nih.gov/compound/5291",
 };
+
+describe("byLetter", () => {
+  it("groups the drugs by the capital of their first letter, keeping their order", () => {
+    const drug = (name: string): Drug => ({ cid: name.length, name, aliases: [], has_3d: true });
+
+    const groups = byLetter([drug("acetaminophen"), drug("amlodipine"), drug("caffeine")]);
+
+    expect(groups.map(({ letter, drugs }) => [letter, drugs.map(({ name }) => name)])).toEqual([
+      ["A", ["acetaminophen", "amlodipine"]],
+      ["C", ["caffeine"]],
+    ]);
+  });
+
+  it("gives no groups for no drugs", () => {
+    expect(byLetter([])).toEqual([]);
+  });
+});
 
 describe("namesToOffer", () => {
   it("offers the backend's suggestions for an unsupported name, in its order", () => {

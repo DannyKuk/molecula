@@ -1,9 +1,10 @@
 "use client";
 
-import { X } from "lucide-react";
+import { CircleHelp, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogTitle } from "@/components/ui/dialog";
 import { SheetContent } from "@/components/ui/sheet";
 import { type ChatHistory, reopenedTurns } from "@/lib/chat-history";
@@ -23,9 +24,10 @@ import { ChatComposer } from "./chat-composer";
 import { ChatDrawer, type ChatListProps, ChatSidebar } from "./chat-sidebar";
 import { ConversationTurn } from "./conversation-turn";
 import { Disclaimer } from "./disclaimer";
+import { EmptyChat } from "./empty-chat";
+import { HelpSheet } from "./help-guide";
 import { EvidencePanel } from "./evidence-panel";
 import { ExportMenu } from "./export-menu";
-import { HelpDialog, HelpGuide } from "./help-guide";
 import { ModelStatus } from "./model-status";
 import { PrintedEnd, PrintedHeader } from "./printed-conversation";
 import { QuestionNavigator } from "./question-navigator";
@@ -43,7 +45,7 @@ type ChatProps = {
   history?: ChatHistory;
 };
 
-/** The chat: the saved chats, the conversation so far, the question box and the help guide. */
+/** The chat: the saved chats, the conversation so far and the question box. */
 export function Chat({ initialQuestion, initialChatId, history = browserHistory }: ChatProps) {
   const t = useMessages();
   const saved = useChatHistory(history);
@@ -217,6 +219,20 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
             >
               {t.header.supportedDrugs}
             </Link>
+            <HelpSheet
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t.help.open}
+                  title={t.help.open}
+                  className="text-ink-2 hover:bg-rule hover:text-foreground dark:hover:bg-rule [&_svg:not([class*='size-'])]:size-4.5"
+                />
+              }
+              onAsk={ask}
+            >
+              <CircleHelp />
+            </HelpSheet>
             {turns.length > 0 && (
               <ExportMenu
                 title={title}
@@ -225,7 +241,6 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
                 onPreparePrint={printed.prepare}
               />
             )}
-            <HelpDialog onAsk={ask} />
           </nav>
         </header>
         <div className="relative min-h-0 flex-1">
@@ -237,7 +252,7 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
             <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-4 sm:px-6">
               <div className="flex flex-1 flex-col gap-6 pr-3 pb-6 sm:pr-0">
                 {turns.length === 0 ? (
-                  <EmptyState onAsk={ask} />
+                  <EmptyChat onAsk={ask} />
                 ) : (
                   <>
                     <PrintedHeader title={title} questions={turns.map((turn) => turn.question)} />
@@ -307,15 +322,5 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
         </Dialog>
       )}
     </div>
-  );
-}
-
-function EmptyState({ onAsk }: { onAsk: (question: string) => void }) {
-  const t = useMessages();
-  return (
-    <section className="flex flex-col gap-4">
-      <p className="text-ink-2">{t.chat.intro}</p>
-      <HelpGuide onAsk={onAsk} />
-    </section>
   );
 }

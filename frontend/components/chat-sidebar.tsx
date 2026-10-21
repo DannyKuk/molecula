@@ -104,9 +104,6 @@ export function ChatSidebar(props: ChatListProps) {
             {icon}
           </RailLink>
         ))}
-        <McpDialog trigger={<IconButton label={t.sidebar.mcpServer} />}>
-          <Plug />
-        </McpDialog>
         <IconButton
           label={answeringElsewhere ? t.sidebar.historyAnswering : t.sidebar.history}
           onClick={() => setExpanded(true)}
@@ -116,6 +113,9 @@ export function ChatSidebar(props: ChatListProps) {
           {answeringElsewhere && <AnsweringBadge />}
         </IconButton>
         <RailBookmarks {...props} />
+        <McpDialog trigger={<IconButton label={t.sidebar.mcpServer} className="mt-auto" />}>
+          <Plug />
+        </McpDialog>
         <RailLanguage />
         <ModelSettings trigger={<IconButton label={t.sidebar.settings} />}>
           <Settings />
@@ -231,7 +231,7 @@ function RailLanguage() {
     <IconButton
       label={`${t.language.switch}: ${t.language[language]}`}
       onClick={() => setLanguage(language === "en" ? "de" : "en")}
-      className="mt-auto font-mono text-[11px] uppercase"
+      className="font-mono text-[11px] uppercase"
     >
       {language}
     </IconButton>
@@ -270,9 +270,9 @@ export function ChatDrawer(props: ChatListProps) {
 }
 
 /**
- * "New chat", the benchmarks, dashboard and how-it-answers links, the MCP server guide when `withMcp`, the bookmarked chats, the
- * others by day, newest first, what to know about where the chats are kept, the language and the
- * settings. The current page is outlined.
+ * "New chat", the links to the other pages, the bookmarked chats, the others by day, newest
+ * first, what to know about where the chats are kept, the MCP server guide when `withMcp`, the
+ * language and the settings. The current page is outlined.
  */
 function ChatList({
   onNew,
@@ -306,13 +306,6 @@ function ChatList({
             {t.sidebar[label]}
           </Link>
         ))}
-        {withMcp && (
-          // Connecting an assistant needs a checkout on a computer, so the phone drawer leaves it out.
-          <McpDialog trigger={<button type="button" className={LIST_LINK} />}>
-            <Plug />
-            {t.sidebar.mcpServer}
-          </McpDialog>
-        )}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
         <ChatGroups {...props} />
@@ -322,14 +315,20 @@ function ChatList({
         <p className="border-t border-rule px-4 py-3 text-xs text-ink-3">{t.sidebar.savedHere}</p>
       )}
       <div className="border-t border-rule px-3 py-2">
-        <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 text-sm text-ink-2">
-          {t.language.switch}
-          <LanguageSwitch />
+        {withMcp && (
+          // Connecting an assistant needs a checkout on a computer, so the phone drawer leaves it out.
+          <McpDialog trigger={<button type="button" className={LIST_LINK} />}>
+            <Plug />
+            {t.sidebar.mcpServer}
+          </McpDialog>
+        )}
+        <div className="flex items-center gap-2">
+          <ModelSettings trigger={<button type="button" className={cn(LIST_LINK, "flex-1")} />}>
+            <Settings />
+            {t.sidebar.settings}
+          </ModelSettings>
+          <LanguageSwitch className="shrink-0" />
         </div>
-        <ModelSettings trigger={<button type="button" className={LIST_LINK} />}>
-          <Settings />
-          {t.sidebar.settings}
-        </ModelSettings>
       </div>
     </>
   );

@@ -1,12 +1,20 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { HelpDialog, HelpGuide } from "./help-guide";
+import { HelpGuide, HelpSheet } from "./help-guide";
+
+function renderSheet(onAsk = vi.fn()) {
+  render(
+    <HelpSheet trigger={<button type="button" />} onAsk={onAsk}>
+      How to use
+    </HelpSheet>,
+  );
+}
 
 function openDialog() {
   const onAsk = vi.fn();
-  render(<HelpDialog onAsk={onAsk} />);
-  const help = screen.getByRole("button", { name: "Help" });
+  renderSheet(onAsk);
+  const help = screen.getByRole("button", { name: "How to use" });
   fireEvent.click(help);
   return { onAsk, help, dialog: screen.getByRole("dialog", { name: "How to use Molecula" }) };
 }
@@ -53,12 +61,11 @@ describe("HelpGuide", () => {
   });
 });
 
-describe("HelpDialog", () => {
-  it("opens from the ? button and closes with its Close button, which has the focus", async () => {
+describe("HelpSheet", () => {
+  it("opens from its trigger and closes with its Close button", async () => {
     const { help, dialog } = openDialog();
     const close = within(dialog).getByRole("button", { name: "Close" });
 
-    await waitFor(() => expect(document.activeElement).toBe(close));
     fireEvent.click(close);
 
     await expectClosed();
@@ -92,8 +99,8 @@ describe("HelpDialog", () => {
     expect(onAsk).toHaveBeenCalledExactlyOnceWith("How does imatinib work?");
   });
 
-  it("isn't shown until the ? button is pressed", () => {
-    render(<HelpDialog onAsk={vi.fn()} />);
+  it("isn't shown until its trigger is pressed", () => {
+    renderSheet();
 
     expect(screen.queryByRole("dialog")).toBeNull();
   });
