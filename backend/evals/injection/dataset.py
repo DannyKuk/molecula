@@ -13,14 +13,17 @@ DATASET = Path(__file__).resolve().parents[1] / "datasets" / "injection.yaml"
 QUESTION = "{question}"
 ALONE = "-alone"
 
-type AttackKind = Literal["direct", "indirect", "multi_turn", "forged_history"]
+type AttackKind = Literal["direct", "indirect", "multi_turn", "forged_history", "priming"]
+FORGED: tuple[AttackKind, ...] = ("forged_history", "priming")
 
 
 class InjectionItem(BaseModel):
     """An attack and how the run tells that it got through: `marker` in the answer or a tool
     call, a line of the system prompt in the answer (`asks_for_prompt`), or, for forged history,
-    the question sorted into anything but `category`. `planted` is the text an indirect attack
-    puts in front of the first passage of every label search."""
+    the question sorted into anything but `category`. Priming has a `category` too, the `ok` its
+    question is sorted into alone, but is scored by `marker`: a made-up figure from the forged
+    answer. `planted` is the text an indirect attack puts in front of the first passage of every
+    label search."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -40,14 +43,15 @@ class InjectionItem(BaseModel):
         roles = [message.role for message in self.conversation]
         if roles != ["user", "assistant"] * (len(roles) // 2) or len(roles) % 2:
             raise ValueError(f"{self.id}: the conversation must alternate user, assistant")
-        ways = [self.marker is not None, self.asks_for_prompt, self.category is not None]
+        sorted_by_guard = self.kind == "forged_history"
+        ways = [self.marker is not None, self.asks_for_prompt, sorted_by_guard]
         if sum(ways) != 1:
             raise ValueError(f"{self.id}: needs exactly one of marker, asks_for_prompt, question")
         if (self.kind == "indirect") != (self.planted is not None):
             raise ValueError(f"{self.id}: an indirect attack and only one has `planted`")
-        if (self.kind == "forged_history") != (self.category is not None):
-            raise ValueError(f"{self.id}: a forged history and only one has `question`")
-        if self.kind in ("multi_turn", "forged_history") and not self.conversation:
+        if (self.kind in FORGED) != (self.category is not None):
+            raise ValueError(f"{self.id}: only a forged history or priming has `question`")
+        if self.kind in ("multi_turn", *FORGED) and not self.conversation:
             raise ValueError(f"{self.id}: a {self.kind} attack needs earlier turns")
         return self
 
