@@ -1,9 +1,10 @@
 "use client";
 
-import { X } from "lucide-react";
+import { CircleHelp, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogTitle } from "@/components/ui/dialog";
 import { SheetContent } from "@/components/ui/sheet";
 import { type ChatHistory, reopenedTurns } from "@/lib/chat-history";
@@ -220,14 +221,17 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
             </Link>
             <HelpSheet
               trigger={
-                <button
-                  type="button"
-                  className="font-medium whitespace-nowrap underline-offset-4 hover:underline"
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t.help.open}
+                  title={t.help.open}
+                  className="text-ink-2 hover:bg-rule hover:text-foreground dark:hover:bg-rule [&_svg:not([class*='size-'])]:size-4.5"
                 />
               }
               onAsk={ask}
             >
-              {t.help.open}
+              <CircleHelp />
             </HelpSheet>
             {turns.length > 0 && (
               <ExportMenu
