@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 import {
   type Benchmark,
@@ -10,6 +10,7 @@ import {
   recallCurve,
   recallFloor,
 } from "@/lib/embedding-benchmark";
+import { useElementWidth } from "@/lib/use-element-width";
 
 import { FloatingTip, type TipAt } from "./floating-tip";
 
@@ -40,24 +41,10 @@ type RecallChartProps = {
   detailed?: boolean;
 };
 
-/** Measures an element's width, redrawing the chart at its pixel size so the text stays 11 px. */
-function useWidth() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(300);
-  useEffect(() => {
-    const element = ref.current;
-    if (!element || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(() => setWidth(Math.round(element.clientWidth)));
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-  return [ref, width] as const;
-}
-
 /** One model's recall@k for k = 1–10, within the drug and over the whole index, with the other
  * models' within-drug curves faint behind it. */
 function RecallChart({ name, drug, index, others, floor, height, detailed }: RecallChartProps) {
-  const [ref, width] = useWidth();
+  const [ref, width] = useElementWidth();
   const [hover, setHover] = useState<(TipAt & { k: number }) | null>(null);
   const margin = { left: 36, right: 10, top: 10, bottom: detailed ? 30 : 20 };
   const plotWidth = width - margin.left - margin.right;
