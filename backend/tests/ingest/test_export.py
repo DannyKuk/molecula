@@ -3,7 +3,7 @@ import sqlite3
 import tarfile
 from collections.abc import Callable
 from contextlib import closing
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
@@ -17,6 +17,7 @@ from molecula.store.db import connect
 from molecula.store.http_cache import CachedResponse, HttpCache
 from molecula.store.index import Chunk, LabelIndex
 from molecula.store.keywords import KeywordIndex
+from molecula.store.label_updates import LabelUpdateRun, LabelUpdateStore
 from molecula.store.labels import LabelRecord, LabelSection, LabelStore
 from molecula.store.schema import SCHEMA_VERSION
 from molecula.store.structures import ConformerFiles
@@ -25,6 +26,7 @@ from store_records import GLEEVEC, IMATINIB
 LABELS_FETCHED = datetime(2026, 10, 12, 9, 30, tzinfo=UTC)
 LATER_LABEL_FETCHED = datetime(2026, 10, 12, 10, 0, tzinfo=UTC)
 BUILT_AT = datetime(2026, 10, 13, 12, 0, tzinfo=UTC)
+UPDATED = datetime(2026, 10, 13, 3, 0, tzinfo=UTC)
 MODEL = "fake-model"
 CACHED_URL = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/imatinib/cids/JSON"
 IBUPROFEN = CompoundRecord(
@@ -195,6 +197,24 @@ def test_last_run_is_the_oldest_label_fetch(settings: Settings) -> None:
     manifest = export_store(settings, settings.export_dir, BUILT_AT)
 
     assert manifest.last_run == LABELS_FETCHED
+
+
+def test_last_run_is_the_start_of_the_last_label_update(settings: Settings) -> None:
+    build_store(settings)
+    update = LabelUpdateRun(
+        started_at=UPDATED,
+        finished_at=UPDATED,
+        outcome="complete",
+        source_updated=date(2026, 10, 20),
+        drugs_checked=2,
+        drugs_rechecked=0,
+    )
+    with closing(connect(settings.db_path)) as conn:
+        LabelUpdateStore(conn).add(update)
+
+    manifest = export_store(settings, settings.export_dir, BUILT_AT)
+
+    assert manifest.last_run == UPDATED
 
 
 def test_store_without_labels_has_no_last_run(settings: Settings) -> None:

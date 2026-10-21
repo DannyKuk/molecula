@@ -143,6 +143,31 @@ ALTER TABLE label_section_new RENAME TO label_section;
     6: """
 DROP TABLE source_disclaimer;
 """,
+    # Label update runs and what each changed (#341). Kept in the store, so a snapshot carries
+    # the run a fresh clone's first update starts from.
+    7: """
+CREATE TABLE label_update (
+    id INTEGER PRIMARY KEY,
+    started_at TEXT NOT NULL,
+    finished_at TEXT NOT NULL,
+    outcome TEXT NOT NULL CHECK (outcome IN ('complete', 'nothing_new', 'incomplete', 'failed')),
+    source_updated TEXT,
+    drugs_checked INTEGER NOT NULL,
+    drugs_rechecked INTEGER NOT NULL,
+    error TEXT
+);
+
+CREATE TABLE label_change (
+    update_id INTEGER NOT NULL REFERENCES label_update (id) ON DELETE CASCADE,
+    cid INTEGER NOT NULL,
+    product_type TEXT NOT NULL CHECK (product_type IN ('rx', 'otc')),
+    old_set_id TEXT,
+    old_effective_time TEXT,
+    new_set_id TEXT,
+    new_effective_time TEXT,
+    PRIMARY KEY (update_id, cid, product_type)
+);
+""",
 }
 SCHEMA_VERSION = max(MIGRATIONS)
 

@@ -209,7 +209,15 @@ def test_archive_larger_than_the_manifest_says_is_rejected(
     assert leftovers(settings) == []
 
 
-def test_other_schema_version_is_rejected_before_the_download(
+def test_older_schema_version_is_fetched(release: Release, settings: Settings) -> None:
+    older = release.manifest.model_copy(update={"schema_version": SCHEMA_VERSION - 1})
+
+    assert fetch(settings, serve(Release(older, release.archive), settings)) == 0
+
+    assert stored_compounds(settings) == ["imatinib"]
+
+
+def test_newer_schema_version_is_rejected_before_the_download(
     release: Release, settings: Settings, caplog: pytest.LogCaptureFixture
 ) -> None:
     newer = release.manifest.model_copy(update={"schema_version": SCHEMA_VERSION + 1})

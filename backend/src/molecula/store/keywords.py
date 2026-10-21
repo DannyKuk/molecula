@@ -48,6 +48,17 @@ class KeywordIndex:
             conn.execute(f"INSERT INTO {TABLE} ({TABLE}) VALUES ('optimize')")
         building.replace(self._path)
 
+    def replace_drug(self, cid: int, chunks: Sequence[Chunk]) -> None:
+        """Replace the compound's chunks with `chunks` in one transaction; a search sees either
+        the old or the new ones."""
+        placeholders = ", ".join("?" for _ in COLUMNS)
+        with closing(sqlite3.connect(self._path)) as conn, conn:
+            conn.execute(f"DELETE FROM {TABLE} WHERE cid = ?", (cid,))
+            conn.executemany(
+                f"INSERT INTO {TABLE} ({', '.join(COLUMNS)}) VALUES ({placeholders})",
+                (astuple(chunk) for chunk in chunks),
+            )
+
     def search(
         self, question: str, n: int, where: dict[str, Any] | None = None
     ) -> list[tuple[Chunk, float]]:

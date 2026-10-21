@@ -74,10 +74,11 @@ def download_manifest(client: httpx2.Client, url: str) -> StoreManifest:
 
 
 def check_manifest(manifest: StoreManifest, settings: Settings) -> None:
-    if manifest.schema_version != SCHEMA_VERSION:
+    # An older store is upgraded when the app first opens it; a newer one this code can't read.
+    if manifest.schema_version > SCHEMA_VERSION:
         raise FetchError(
             f"{settings.store_release} has schema version {manifest.schema_version}, this code "
-            f"{SCHEMA_VERSION}. Set STORE_RELEASE to a release made with this code."
+            f"{SCHEMA_VERSION}. Set STORE_RELEASE to a release made with this code or before."
         )
     model = embedding_model_id(settings)
     if manifest.embedding_model != model:

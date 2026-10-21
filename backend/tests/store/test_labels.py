@@ -1,10 +1,12 @@
 import sqlite3
 from dataclasses import replace
 from datetime import UTC, date, datetime
+from pathlib import Path
 
 import pytest
 
 from molecula.store.compounds import CompoundRecord, CompoundStore
+from molecula.store.db import connect
 from molecula.store.labels import LabelRecord, LabelSection, LabelStore, label_date
 from store_records import MOTRIN
 
@@ -111,3 +113,24 @@ def test_a_stored_effective_time_reads_as_a_date() -> None:
 def test_an_effective_time_in_another_format_is_rejected() -> None:
     with pytest.raises(ValueError):
         label_date("2025-01-01")
+
+
+def test_a_reader_during_a_save_sees_the_old_labels_never_a_mix(
+    store: LabelStore, conn: sqlite3.Connection, tmp_path: Path
+) -> None:
+    store.save(3672, (MOTRIN, OTC), FIRST_FETCH)
+    reader = connect(tmp_path / "molecula.db")
+    seen: list[tuple[LabelRecord, ...]] = []
+
+    def read_once_the_old_rows_are_gone(statement: str) -> None:
+        if statement.startswith("INSERT INTO label_section") and not seen:
+            seen.append(LabelStore(reader).get(3672))
+
+    newer = replace(MOTRIN, set_id="newer-motrin", effective_time="20261101")
+    conn.set_trace_callback(read_once_the_old_rows_are_gone)
+    store.save(3672, (newer, OTC), LATER_FETCH)
+    conn.set_trace_callback(None)
+
+    assert seen == [(MOTRIN, OTC)]
+    assert LabelStore(reader).get(3672) == (newer, OTC)
+    reader.close()
