@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 import type { ChatHistory } from "@/lib/chat-history";
@@ -23,17 +24,23 @@ export function Benchmarks({ history }: { history?: ChatHistory }) {
           <ChatDrawer {...chats} />
           <label className="ml-auto inline-flex items-center gap-2 text-sm text-ink-2">
             <span className="max-sm:sr-only">Benchmark</span>
-            <select
-              value={id}
-              onChange={(e) => setId(e.target.value)}
-              className="max-w-full rounded-lg border border-input bg-background px-2.5 py-1.5 text-foreground"
-            >
-              {BENCHMARKS.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.title}
-                </option>
-              ))}
-            </select>
+            <span className="relative inline-flex max-w-full">
+              <select
+                value={id}
+                onChange={(e) => setId(e.target.value)}
+                className="max-w-full appearance-none rounded-lg border border-input bg-background py-1.5 pr-8 pl-2.5 text-foreground"
+              >
+                {BENCHMARKS.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.title}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                aria-hidden
+                className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-ink-2"
+              />
+            </span>
           </label>
         </div>
         {benchmark.render()}

@@ -24,7 +24,10 @@ async function openChat() {
   return page;
 }
 
+/** The switch in the expanded sidebar, which it expands first. */
 function languageSwitch() {
+  const expand = screen.queryByRole("button", { name: /^(Show chats|Chats zeigen)$/ });
+  if (expand) fireEvent.click(expand);
   return within(screen.getByRole("group", { name: /^(Language|Sprache)$/ }));
 }
 
@@ -81,6 +84,20 @@ describe("Language switch", () => {
 
     expect(screen.getByRole("button", { name: "Senden" })).toBeDefined();
     expect(screen.getByText(/^Molecula ist ein KI-Assistent/)).toBeDefined();
+  });
+
+  it("sits in the sidebar, not the chat header, and the rail's button switches it", async () => {
+    browserIn("en-US");
+    await openChat();
+    const header = within(screen.getByRole("banner"));
+    expect(header.queryByRole("group", { name: "Language" })).toBeNull();
+    expect(header.queryByRole("link", { name: "Benchmarks" })).toBeNull();
+
+    const rail = within(screen.getByRole("navigation", { name: "Chats" }));
+    fireEvent.click(rail.getByRole("button", { name: "Language: English" }));
+
+    expect(screen.getByRole("button", { name: "Senden" })).toBeDefined();
+    expect(rail.getByRole("button", { name: "Sprache: Deutsch" }).textContent).toBe("de");
   });
 
   it("keeps the choice until the page closes when the browser refuses storage", async () => {

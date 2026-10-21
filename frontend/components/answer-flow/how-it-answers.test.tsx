@@ -9,7 +9,7 @@ import { memoryHistory } from "@/lib/test-fixtures";
 
 import { HowItAnswers } from "./how-it-answers";
 
-vi.mock("next/navigation", () => ({ useRouter: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: vi.fn(), usePathname: () => "/how-it-answers" }));
 
 beforeEach(() => {
   vi.stubGlobal("matchMedia", () => ({

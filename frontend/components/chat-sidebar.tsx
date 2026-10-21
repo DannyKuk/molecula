@@ -16,7 +16,8 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { type ComponentProps, useState } from "react";
+import { usePathname } from "next/navigation";
+import { type ComponentProps, type ReactNode, useState } from "react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -28,6 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SheetContent } from "@/components/ui/sheet";
 import { bookmarkedOf, type ConversationSummary, groupChats } from "@/lib/chat-history";
+import { useLanguage } from "@/lib/language";
 import { useMessages } from "@/lib/messages";
 import { useSidebarExpanded } from "@/lib/use-sidebar-expanded";
 
@@ -43,6 +45,8 @@ export type ChatListProps = {
   /** The bookmarked conversations' ids, in the order they were bookmarked. */
   bookmarks: string[];
   activeId: string | null;
+  /** Whether the chat shows an empty new chat, which makes "New chat" the current page. */
+  newChatOpen: boolean;
   /** The chat whose answer is coming in, and the chats whose questions wait for it, in order. */
   answeringId: string | null;
   queuedIds: string[];
@@ -58,12 +62,13 @@ export type ChatListProps = {
 
 const RAIL_BOOKMARKS = 5;
 const OUTLINED = "border-ink-3 text-foreground";
+const CURRENT = "border-rule-2 bg-card text-foreground hover:bg-card";
 
 const ICON =
   "text-ink-2 hover:bg-rule hover:text-foreground [&_svg:not([class*='size-'])]:size-4.5";
 
 const LIST_LINK =
-  "flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-ink-2 hover:bg-rule hover:text-foreground [&_svg]:size-4";
+  "flex w-full items-center gap-2 rounded-lg border border-transparent px-2.5 py-2 text-sm text-ink-2 hover:bg-rule hover:text-foreground [&_svg]:size-4";
 
 const SIDEBAR_CLASSES =
   "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-rule bg-panel md:flex print:hidden";
@@ -86,33 +91,19 @@ export function ChatSidebar(props: ChatListProps) {
         <IconButton label={t.sidebar.show} onClick={() => setExpanded(true)}>
           <PanelLeft />
         </IconButton>
-        <IconButton label={t.sidebar.newChat} onClick={props.onNew}>
+        <IconButton
+          label={t.sidebar.newChat}
+          aria-current={props.newChatOpen ? "page" : undefined}
+          onClick={props.onNew}
+          className={cn(props.newChatOpen && OUTLINED)}
+        >
           <SquarePen />
         </IconButton>
-        <Link
-          href="/benchmarks"
-          aria-label={t.sidebar.benchmarks}
-          title={t.sidebar.benchmarks}
-          className={cn(buttonVariants({ variant: "ghost", size: "icon-lg" }), ICON)}
-        >
-          <ChartColumn />
-        </Link>
-        <Link
-          href="/dashboard"
-          aria-label={t.sidebar.dashboard}
-          title={t.sidebar.dashboard}
-          className={cn(buttonVariants({ variant: "ghost", size: "icon-lg" }), ICON)}
-        >
-          <Gauge />
-        </Link>
-        <Link
-          href="/how-it-answers"
-          aria-label={t.sidebar.howItAnswers}
-          title={t.sidebar.howItAnswers}
-          className={cn(buttonVariants({ variant: "ghost", size: "icon-lg" }), ICON)}
-        >
-          <Workflow />
-        </Link>
+        {PAGES.map(({ href, label, icon }) => (
+          <RailLink key={href} href={href} label={t.sidebar[label]}>
+            {icon}
+          </RailLink>
+        ))}
         <McpDialog trigger={<IconButton label={t.sidebar.mcpServer} />}>
           <Plug />
         </McpDialog>
@@ -125,7 +116,8 @@ export function ChatSidebar(props: ChatListProps) {
           {answeringElsewhere && <AnsweringBadge />}
         </IconButton>
         <RailBookmarks {...props} />
-        <ModelSettings trigger={<IconButton label={t.sidebar.settings} className="mt-auto" />}>
+        <RailLanguage />
+        <ModelSettings trigger={<IconButton label={t.sidebar.settings} />}>
           <Settings />
         </ModelSettings>
       </nav>
@@ -206,6 +198,46 @@ function RailBookmarks({ conversations, bookmarks, activeId, answeringId, onOpen
   );
 }
 
+const PAGES = [
+  { href: "/benchmarks", label: "benchmarks", icon: <ChartColumn /> },
+  { href: "/dashboard", label: "dashboard", icon: <Gauge /> },
+  { href: "/how-it-answers", label: "howItAnswers", icon: <Workflow /> },
+] as const;
+
+function RailLink({ href, label, children }: { href: string; label: string; children: ReactNode }) {
+  const current = usePathname() === href;
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      title={label}
+      aria-current={current ? "page" : undefined}
+      className={cn(
+        buttonVariants({ variant: "ghost", size: "icon-lg" }),
+        ICON,
+        current && OUTLINED,
+      )}
+    >
+      {children}
+    </Link>
+  );
+}
+
+/** The rail's language button: it shows the interface language and switches to the other one. */
+function RailLanguage() {
+  const t = useMessages();
+  const [language, setLanguage] = useLanguage();
+  return (
+    <IconButton
+      label={`${t.language.switch}: ${t.language[language]}`}
+      onClick={() => setLanguage(language === "en" ? "de" : "en")}
+      className="mt-auto font-mono text-[11px] uppercase"
+    >
+      {language}
+    </IconButton>
+  );
+}
+
 /** The chats on a phone: a drawer opened from ☰ in the header, closed by picking a chat. */
 export function ChatDrawer(props: ChatListProps) {
   const t = useMessages();
@@ -231,12 +263,7 @@ export function ChatDrawer(props: ChatListProps) {
             <X />
           </DialogClose>
         </div>
-        <ChatList
-          {...props}
-          onOpen={thenClose(props.onOpen)}
-          onNew={thenClose(props.onNew)}
-          withLanguage
-        />
+        <ChatList {...props} onOpen={thenClose(props.onOpen)} onNew={thenClose(props.onNew)} />
       </SheetContent>
     </Dialog>
   );
@@ -244,36 +271,41 @@ export function ChatDrawer(props: ChatListProps) {
 
 /**
  * "New chat", the benchmarks, dashboard and how-it-answers links, the MCP server guide when `withMcp`, the bookmarked chats, the
- * others by day, newest first, the settings and what to know about where the chats are kept. A
- * phone's drawer also has the language switch (`withLanguage`), which its header has no room for.
+ * others by day, newest first, what to know about where the chats are kept, the language and the
+ * settings. The current page is outlined.
  */
 function ChatList({
   onNew,
+  newChatOpen,
   removedBookmark,
   withMcp = false,
-  withLanguage = false,
   ...props
-}: ChatListProps & { withMcp?: boolean; withLanguage?: boolean }) {
+}: ChatListProps & { withMcp?: boolean }) {
   const t = useMessages();
+  const pathname = usePathname();
   return (
     <>
       <div className="px-3 pt-2 pb-2">
-        <Button variant="outline" className="h-9 w-full justify-start gap-2 px-2.5" onClick={onNew}>
+        <button
+          type="button"
+          aria-current={newChatOpen ? "page" : undefined}
+          onClick={onNew}
+          className={cn(LIST_LINK, newChatOpen && CURRENT)}
+        >
           <Plus />
           {t.sidebar.newChat}
-        </Button>
-        <Link href="/benchmarks" className={cn(LIST_LINK, "mt-1")}>
-          <ChartColumn />
-          {t.sidebar.benchmarks}
-        </Link>
-        <Link href="/dashboard" className={LIST_LINK}>
-          <Gauge />
-          {t.sidebar.dashboard}
-        </Link>
-        <Link href="/how-it-answers" className={LIST_LINK}>
-          <Workflow />
-          {t.sidebar.howItAnswers}
-        </Link>
+        </button>
+        {PAGES.map(({ href, label, icon }) => (
+          <Link
+            key={href}
+            href={href}
+            aria-current={pathname === href ? "page" : undefined}
+            className={cn(LIST_LINK, pathname === href && CURRENT)}
+          >
+            {icon}
+            {t.sidebar[label]}
+          </Link>
+        ))}
         {withMcp && (
           // Connecting an assistant needs a checkout on a computer, so the phone drawer leaves it out.
           <McpDialog trigger={<button type="button" className={LIST_LINK} />}>
@@ -286,13 +318,14 @@ function ChatList({
         <ChatGroups {...props} />
       </div>
       {removedBookmark && <UndoBar {...removedBookmark} />}
-      {(props.available !== false || withLanguage) && (
-        <div className="flex items-center justify-between gap-2 border-t border-rule px-4 py-3">
-          {props.available !== false && <p className="text-xs text-ink-3">{t.sidebar.savedHere}</p>}
-          {withLanguage && <LanguageSwitch className="ml-auto" />}
-        </div>
+      {props.available !== false && (
+        <p className="border-t border-rule px-4 py-3 text-xs text-ink-3">{t.sidebar.savedHere}</p>
       )}
       <div className="border-t border-rule px-3 py-2">
+        <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 text-sm text-ink-2">
+          {t.language.switch}
+          <LanguageSwitch />
+        </div>
         <ModelSettings trigger={<button type="button" className={LIST_LINK} />}>
           <Settings />
           {t.sidebar.settings}
@@ -310,7 +343,7 @@ function ChatGroups({
   answeringId,
   queuedIds,
   ...actions
-}: Omit<ChatListProps, "onNew" | "removedBookmark">) {
+}: Omit<ChatListProps, "onNew" | "newChatOpen" | "removedBookmark">) {
   const t = useMessages();
   if (available === false) return <HistoryOff />;
   if (available === null) return null;

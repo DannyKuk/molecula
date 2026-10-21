@@ -10,7 +10,6 @@ export const en = {
   header: {
     thisChat: (usage: string) => `This chat: ${usage}`,
     supportedDrugs: "Supported drugs",
-    benchmarks: "Benchmarks",
   },
   chat: {
     intro: "Ask about medicines: what they are for, how they work and what they bind to.",

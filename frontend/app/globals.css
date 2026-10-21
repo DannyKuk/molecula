@@ -270,6 +270,20 @@
     text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
     text-decoration-thickness: 1px;
   }
+  /* Tailwind 4 gives buttons the arrow; everything clickable shows the hand, unless it is disabled. */
+  :is(
+    button,
+    select,
+    summary,
+    [role="button"],
+    [role="tab"],
+    [role="menuitem"],
+    [role="menuitemradio"],
+    [role="option"],
+    label:has(input[type="radio"], input[type="checkbox"])
+  ):not(:disabled, [aria-disabled="true"], [data-disabled]) {
+    cursor: pointer;
+  }
   /* Reserves the scrollbar's space before the page overflows, so the page doesn't shift left when a
      classic (non-overlay) scrollbar appears, as on Windows. */
   html {

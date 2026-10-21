@@ -51,7 +51,7 @@ function DropdownMenuItem({
       data-slot="dropdown-menu-item"
       data-variant={variant}
       className={cn(
-        "flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 outline-hidden select-none data-highlighted:bg-muted data-[variant=destructive]:text-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 outline-hidden select-none data-highlighted:bg-muted data-[variant=destructive]:text-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}
