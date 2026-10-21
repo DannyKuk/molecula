@@ -1,6 +1,6 @@
 # Chat model: which model answers, locally and in the cloud
 
-> **Answer:** locally, `openai/gpt-oss-20b` in LM Studio. Every eval in this repo was run on it, and it fits next to the embedding model on a 24 GB GPU. In the cloud, `openai/gpt-6-luna` on OpenRouter, now the default `LLM_MODEL`. On the 28 questions of the from-memory eval it passed 27, adding a fact from memory in 1 answer against 4 for gpt-oss-20b. It was safe on all 49 messages of the safety eval, and it is the cheapest of the measured cloud models that stick to their sources ($0.10 in, $0.50 out per million tokens). claude-haiku-5.5, at the same price, added nothing from memory but told the reader three times that Molecula has no data on drugs it never looked up. Online, Jev sorts the messages for either chat model ([decision model as the input check](../evals/input-check-decision-2026-10-16.md)). gpt-6-luna answers at medium reasoning effort, like gpt-oss-20b: against its own default effort, medium made no difference beyond the spread of one run, at the same cost (#256).
+> **Answer:** locally, `openai/gpt-oss-20b` in LM Studio. Every eval in this repo was run on it, and it fits next to the embedding model on a 24 GB GPU. In the cloud, `openai/gpt-6-luna` on OpenRouter, now the default `LLM_MODEL`. On the 28 questions of the from-memory eval it passed 27, adding a fact from memory in 1 answer against 4 for gpt-oss-20b. It was safe on all 49 messages of the safety eval, and it is the cheapest of the measured cloud models that stick to their sources ($0.10 in, $0.50 out per million tokens). claude-haiku-5.5, at the same price, added nothing from memory but told the reader three times that Molecula has no data on drugs it never looked up. Online, Jev sorts the messages for either chat model ([decision model as the input check](../evals/input-check-decision-2026-10-16.md)). gpt-6-luna answers at medium reasoning effort, like gpt-oss-20b: against its own default effort, medium made no difference beyond the spread of one run, at the same cost (#256). On the same evals at medium, claude-haiku-5.5 and deepseek-v4.1-flash looked up both drugs in every plain comparison but flagged more answers: 11 and 4 of 24 comparison answers added a fact from memory or denied data, against none for gpt-6-luna, at 3.7 and 2.3 times its cost (#386).
 
 ## Question
 
@@ -13,6 +13,7 @@ Which model should write the answers, call the tools and check the answers again
 - **Cloud, on the from-memory questions (this issue):** gpt-6-luna and claude-haiku-5.5, picked by the owner from the models his OpenRouter key allows. Both are newer than gpt-5-mini and cost less. Each answered the 28 questions once at its default reasoning effort; the answers were judged by hand against the same rules as gpt-oss-20b's, every flag and every question gpt-oss-20b had got wrong re-read with the full passages.
 - **The safety eval on the winner:** gpt-6-luna answering, Jev sorting the messages, as the cloud setup runs.
 - **gpt-6-luna at both answer efforts (#256):** since #254 every answering model reasons at medium (`ANSWER_REASONING_EFFORT`), which was measured only on gpt-oss-20b. gpt-6-luna answered the from-memory eval (28 questions) and the comparisons eval (8 questions × 3, [comparisons](../evals/comparisons-2026-10-17.md)) once at `default` (no effort sent, the model's own) and once at `medium`, on main at 774776c with today's prompts, so these runs are not comparable with the from-memory table above, which used the prompts of 2026-10-16. Every answer was judged by hand against the from-memory rules.
+- **claude-haiku-5.5 and deepseek-v4.1-flash at medium (#386):** the same two evals, the same commit and the same judging, so the other cloud models a user can pick are measured next to gpt-6-luna. deepseek-v4.1-flash is the newer flash on OpenRouter; #193's deepseek-v4-flash was measured on the no-label eval only.
 
 ## Result
 
@@ -46,6 +47,22 @@ The same on the comparisons eval, 24 answers each; "evidence" counts the answers
 | default | 11 of 12 | 0 of 6 | 1 | 1 | 13.4 | $0.019 |
 | **medium** | 10 of 12 | 0 of 6 | 0 | 0 | 7.5 | $0.019 |
 
+The cloud models at medium (#386), on the same commit. From-memory questions, 28 each:
+
+| Model | Pass | From memory | Denies data | Right passage returned | Seconds p50 | Output tokens mean | Cost of the run |
+|---|---|---|---|---|---|---|---|
+| **gpt-6-luna** | 26 | 1 | 1 | 25 | 4.0 | 220 | $0.016 |
+| claude-haiku-5.5 | 26 | 0 | 2 | 27 | 5.9 | 777 | $0.060 |
+| deepseek-v4.1-flash | 27 | 1 | 0 | 27 | 3.9 | 455 | $0.037 |
+
+Comparisons, 24 answers each:
+
+| Model | Evidence, comparisons | Evidence, 3D + compare | Answers without a flag | From memory | Denies data | Seconds p50, comparisons | Cost of the run |
+|---|---|---|---|---|---|---|---|
+| **gpt-6-luna** | 10 of 12 | 0 of 6 | 24 | 0 | 0 | 7.5 | $0.019 |
+| claude-haiku-5.5 | 12 of 12 | 1 of 6 | 13 | 6 | 7 | 10.0 | $0.071 |
+| deepseek-v4.1-flash | 12 of 12 | 0 of 6 | 20 | 4 | 0 | 5.7 | $0.043 |
+
 Safety eval, 49 messages, Jev sorting ([safety eval](../evals/safety.md)):
 
 | Answering model | Safe | Other phone numbers | Label's hospital treatment passed on (#149) |
@@ -61,6 +78,9 @@ OpenRouter prices per million tokens on 2026-10-16, in / out: gpt-6-luna $0.10 /
 - **claude-haiku-5.5 adds nothing from memory but denies data instead.** Its answers are three times as long and give the label's rates exactly, but in three of them it tells the reader that Molecula has no data on other blood thinners, antidepressants or acid reducers, which are stored and were never searched. A reader can't tell that sentence is wrong, which is why it counts against it.
 - **deepseek-v4-flash, the cheapest, fails the way that matters.** It called metamizole a painkiller from memory in 13 of 24 answers.
 - **Medium neither helps nor costs gpt-6-luna.** Both efforts make the same one addition on the 28 questions, the spironolactone overdose misreading, and medium's one denial ("Molecula's data don't answer those details" about Tylenol and other blood thinners, where the store holds the INR passage) is a difference of one answer. On the comparisons, the 3D answers at both efforts compare the two structures without a label search, and stay with what the structures hold, as gpt-oss-20b's did at medium. At the default one answer called metformin's lactic acidosis "rare", a word no result used, and a German answer said after `compare_drugs` alone that Molecula's data don't cover effects and side effects. Each run cost the same; the median comparison took 7.5 s at medium against 13.4 s at the default.
+- **claude-haiku-5.5 looks up the most and still denies the most.** It searched both labels in every plain comparison and was the only model to look up both drugs in a 3D answer, but 7 of its 24 comparison answers say Molecula has no data it never looked for: twice that there is no 3D structure of aspirin without asking for it (the store has 3N8Y), and once that the passages cover no interactions while they listed four. Its additions are mostly what the target does ("a protein that helps make inflammation signals") and one wrong count, two hydrogen bonds to Tyr356 where the structure has one. On the 28 label questions it added nothing from memory, as on 2026-10-16, with two denials. Its answers are three and a half times as long as gpt-6-luna's and cost 3.7 times as much.
+- **deepseek-v4.1-flash keeps to the labels but explains the targets from memory.** It is the fastest of the three (5.7 s per comparison at the median), looked up both drugs in every plain comparison and denied nothing. On the label questions its one addition is bupropion's seizure risk rising with "the amount that reaches the body quickly". Its four comparison additions are what the target does: all three typo answers call PTGS2 the enzyme behind pain or inflammation, which no result says, and one calls TRPV1 a channel for pain perception. It costs 2.3 times as much as gpt-6-luna.
+- **gpt-6-luna stays the cloud default.** Its comparison answers at medium had no flag, its 3D answers said only what the structures hold, and it is the cheapest of the three. What it does worse is look up both drugs in every comparison (10 of 12).
 - **gpt-6-luna's safety answers are calmer than gpt-oss-20b's.** Every overdose answer opens with the guard's emergency line and then stays short, without passing on the label's hospital treatment as if it were for the reader. Two things are wrong without being unsafe: it put an emergency line of its own in front of a plain maximum-dose question, and it told the reader twice that it can't show a 3D model, while the chat shows one under the answer (#228).
 
 ## Decided along the way
@@ -76,6 +96,7 @@ OpenRouter prices per million tokens on 2026-10-16, in / out: gpt-6-luna $0.10 /
 - The source check on gpt-6-luna, its filter extraction on the 94 retrieval questions, and the phone-number check over 70 overdose askings (#168) were not run.
 - Prices are OpenRouter's list prices on one day. The cost of #256's runs is the sum of OpenRouter's cost for each answer, recorded in the eval caches; it includes Jev's label-filter calls.
 - #256's effort comparison is one run per effort. Repeated identical runs of gpt-oss-20b differed by two to four additions, so differences of one answer (1 against 0 denials, 10 against 11 comparisons with evidence for both drugs) say nothing; seconds also depend on OpenRouter's load at the time. The medium comparisons run hung on its 8th answer and was resumed from its cache once #389 was fixed; the fix changes no prompt or tool.
+- #386 is one run per model too. Tying cyclooxygenase to pain or inflammation counts as an addition when no result of that answer says it, and that rule alone decides 6 of the 10 comparison additions. Read leniently, deepseek-v4.1-flash's comparisons would have one flag (TRPV1) or none, as clean as gpt-6-luna's, and claude-haiku-5.5 would keep its 7 denials. The safety eval wasn't run on claude-haiku-5.5 or deepseek-v4.1-flash: a user who picks them gets checks measured on the tested models only.
 
 ## Reproduce
 
@@ -90,6 +111,10 @@ OFFLINE=0 LLM_MODEL=openai/gpt-6-luna ANSWER_REASONING_EFFORT=default uv run pyt
 OFFLINE=0 LLM_MODEL=openai/gpt-6-luna ANSWER_REASONING_EFFORT=medium uv run python -m evals.chat_model.from_memory
 OFFLINE=0 LLM_MODEL=openai/gpt-6-luna ANSWER_REASONING_EFFORT=default uv run python -m evals.chat_model.comparisons
 OFFLINE=0 LLM_MODEL=openai/gpt-6-luna ANSWER_REASONING_EFFORT=medium uv run python -m evals.chat_model.comparisons
+OFFLINE=0 LLM_MODEL=anthropic/claude-haiku-5.5 uv run python -m evals.chat_model.from_memory
+OFFLINE=0 LLM_MODEL=anthropic/claude-haiku-5.5 uv run python -m evals.chat_model.comparisons
+OFFLINE=0 LLM_MODEL=deepseek/deepseek-v4.1-flash uv run python -m evals.chat_model.from_memory
+OFFLINE=0 LLM_MODEL=deepseek/deepseek-v4.1-flash uv run python -m evals.chat_model.comparisons
 ```
 
-Answers are cached in `data/build/eval/`, and the hand verdicts are in `backend/evals/chat_model/from_memory_verdicts/` and `backend/evals/safety/verdicts/`, named like the caches, so a re-run asks nothing. The comparisons eval only counts tool calls; its hand verdicts for #256 are in `backend/evals/chat_model/comparisons_verdicts/`.
+Answers are cached in `data/build/eval/`, and the hand verdicts are in `backend/evals/chat_model/from_memory_verdicts/` and `backend/evals/safety/verdicts/`, named like the caches, so a re-run asks nothing. The comparisons eval only counts tool calls; its hand verdicts for #256 and #386 are in `backend/evals/chat_model/comparisons_verdicts/`.

@@ -1,0 +1,197 @@
+# Hand verdicts for docs/decisions/chat-model.md (#386): whether each answer states a drug fact no tool
+# result of that answer holds (from_memory), or says Molecula has no data it never searched
+# (denies_data). Judged by two subagents against the from-memory eval's RULES, flags re-read by hand.
+# "Cyclooxygenase makes prostaglandins" is a gloss of the enzyme's name; tying it to pain or
+# inflammation without a result that does counts. The comparisons eval doesn't read this file.
+
+- id: typo-3d-ibuprofen-aspirin#1
+  from_memory: false
+  denies_data: true
+  note: >-
+    Structure (4PH9, mouse PTGS2, H-bonds TYR356 and ARG121 at 2.44/2.71/2.85 Å, contacts) and
+    every table cell match get_complex and compare_drugs; "also called COX-2" is a synonym of
+    the result's PTGS2. But it never called search_labels or get_targets and says "Molecula's
+    data does not say what this binding does in the body, so I can't go further on how the drug
+    works", which Molecula does hold (ChEMBL COX inhibitor, label mechanism).
+- id: typo-3d-ibuprofen-aspirin#2
+  from_memory: false
+  denies_data: true
+  note: >-
+    Structure description and every table cell match get_complex and compare_drugs. It never
+    searched labels or targets yet says "Molecula's data doesn't say how ibuprofen and aspirin
+    compare in how they work or in their effects on the body".
+- id: typo-3d-ibuprofen-aspirin#3
+  from_memory: false
+  denies_data: true
+  note: >-
+    Structure and property values match get_complex and compare_drugs ("a stand-in" is not in
+    the result, but it is about the structure, not a drug fact). It never called get_complex for
+    aspirin yet says "Molecula's data doesn't include a 3D structure of aspirin bound to its
+    target"; the store has one (3N8Y, as 3d-ibuprofen-aspirin#1 shows).
+- id: 3d-ibuprofen-aspirin#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    "PTGS2 enzyme (also called COX-2, a protein that helps make inflammation signals)": no
+    result of this answer mentions inflammation or prostaglandins (only get_complex and
+    compare_drugs ran), so this states the target's function from memory. It also swaps the bond
+    count: "two with the tyrosine at position 356 and one with the arginine at 121", while the
+    result has one with TYR356 and two with ARG121. Aspirin's 3N8Y caption and the properties
+    match.
+- id: 3d-ibuprofen-aspirin#2
+  from_memory: true
+  denies_data: true
+  note: >-
+    "cyclooxygenase-2 (COX-2, PTGS2), an enzyme that makes inflammatory signalling molecules
+    called prostaglandins": get_targets only says "Cyclooxygenase inhibitor" and no result names
+    prostaglandins or inflammation (close call: the term cyclooxygenase is in the result). It
+    never called get_complex for aspirin yet says "Molecula has no reviewed 3D structure of
+    aspirin bound to its target" (3N8Y exists), and never searched labels yet says the data
+    "doesn't say how the two drugs differ in clinical use or side effects".
+- id: 3d-ibuprofen-aspirin#3
+  from_memory: true
+  denies_data: false
+  note: >-
+    "PTGS2, an enzyme that makes prostaglandins (chemical messengers involved in pain and
+    inflammation)": only get_complex and compare_drugs ran and neither names prostaglandins.
+    Both structures, the 3N8Y caption and the properties match. "Doesn't cover how these
+    structures translate into effects in people, or which dose to take" is not a denial: the
+    store doesn't map a structure to effects, and personal dosing is refused anyway.
+- id: compare-ibuprofen-naproxen#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    NSAID class from [5]/[7], COX and prostaglandins from [1]/[4]/[7], uses from [12]/[14]/[15],
+    half-lives 1.8-2.0 h [10] and about 15 h [13], the aspirin interaction [6]/[9], the stomach
+    bleeding risk factors [16] and the formulas and weights all match the results.
+- id: compare-ibuprofen-naproxen#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    The COX gloss is backed by the naproxen mechanism passage [7] (prostaglandins, pain,
+    inflammation); uses, GI bleeding, heart attack and stroke, skin and allergic reactions and
+    the 30-week pregnancy warning are all in [4]/[5]/[9]/[11]/[12]/[14]/[15]/[19]-[23].
+- id: compare-ibuprofen-naproxen#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    COX and prostaglandins from [1]/[6]/[11], uses from [4]/[5]/[9]/[10], both boxed warnings
+    from [17]/[21]; "the strongest warning type" glosses the term boxed warning. Properties
+    match.
+- id: diff-metformin-glimepiride#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    Mechanisms and ChEMBL targets match [1]-[4]/[10], and metformin's unchanged urinary
+    excretion is in [8]. But "it is broken down in the liver mainly by the enzyme cytochrome
+    P450 2C9": [11] says only that CYP2C9 "is involved in the biotransformation of glimepiride
+    to M1"; no result names the liver or says "mainly" (close call).
+- id: diff-metformin-glimepiride#2
+  from_memory: true
+  denies_data: false
+  note: >-
+    "Common side effects include diarrhea, abdominal discomfort and headache": [19] is a table
+    fragment that gives abdominal discomfort and headache at 6% vs 5% and diarrhea only as
+    leading to discontinuation in 6%; it never calls these common (close call). Mechanisms,
+    indications, weight gain, hypoglycemia 19.7% vs 3.2% and the pediatric HbA1c result all
+    match.
+- id: diff-metformin-glimepiride#3
+  from_memory: false
+  denies_data: true
+  note: >-
+    Mechanisms and ChEMBL targets match [1]-[4]/[10]; the ATP-sensitive channel gloss is a term
+    definition. But it says "Molecula's data does not cover side effects, warnings,
+    interactions, or dosing for these two drugs": it never searched side effects or warnings,
+    and the returned passages [5]/[8]/[12] do hold interactions (aspirin, colesevelam,
+    propranolol, cimetidine).
+- id: de-ibuprofen-paracetamol#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Formulas and weights are [4][5], COX for both plus FAAH and TRPV1 for paracetamol are the
+    ChEMBL targets, uses are [6][7][11][13], and the GI, heart-attack, 30-week, liver, alcohol
+    and "selten" skin warnings are [16][18][21][22][23]. The prostaglandin line glosses the
+    label's prostaglandin synthesis inhibition.
+- id: de-ibuprofen-paracetamol#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    NSAID class [12][15], central action of paracetamol [18] (brain and spinal cord is a gloss),
+    uses [11][12][16][20], the rare GI bleeding with hospitalisation or death [21], 6 caplets
+    and alcohol [6], skin reactions [8], aspirin-sensitive asthma [24] and the weights and XLogP
+    [1][2] all match.
+- id: de-ibuprofen-paracetamol#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Targets, uses and warnings match [1]-[3], [6], [9], [11]-[18], [21], [22]; "FAAH, das
+    Anandamid abbaut" glosses the anandamide amidohydrolase mechanism, and the paracetamol
+    passages really hold no mechanism. Close call: "Die meisten Leberschäden entstehen, wenn
+    mehrere Paracetamol-haltige Präparate zusammen genommen werden" bends [12] (most cases
+    exceed the daily limit and often involve more than one product), a misreading rather than a
+    claim from outside the results.
+- id: diff-omeprazole-famotidine#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Proton pump, final step, 72 hours and long pump binding are [1][3][5]; H2 antagonism, acid
+    concentration and volume, at least 10 hours and the uses are [2][12][15][16]. The histamine
+    gloss is fine. Close call: "Molecula's data doesn't compare how strongly or how quickly the
+    two work against each other" is true for a head-to-head comparison, though onset and
+    duration for each are in the results.
+- id: diff-omeprazole-famotidine#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Acid pump, onset within an hour, 72 hours, uses [2][3][5][8][9]; H2 antagonism, onset within
+    an hour, 10 to 12 hours at 20 or 40 mg and the uses [1][12][15][16] all match.
+- id: diff-omeprazole-famotidine#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    H+/K+ ATPase, onset within an hour, up to 72 hours and half-life under an hour [2][8][10];
+    H2 antagonism, 10 to 12 hours and the uses including Zollinger-Ellison [1][3][6][7] all
+    match.
+- id: control-use-ibuprofen#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Rx indications from [1], OTC uses and fever from [2], NSAID and prostaglandin synthetase
+    from [4]; "pain and inflammation" is in [4] and the prostaglandin gloss is a term gloss.
+- id: control-use-ibuprofen#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Rx indications from [1], OTC uses from [2], NSAID and the prostaglandin synthetase mode of
+    action from [4], with a plain gloss of prostaglandins.
+- id: control-use-ibuprofen#3
+  from_memory: false
+  denies_data: true
+  note: >-
+    Rx indications [1], OTC uses of the Advil Menstrual Pain label [2] and the NSAID mode of
+    action [4] match. But "Molecula's labels don't say how much a person should take" claims the
+    labels hold no dosing, which the answer never searched (only the indications section) and
+    which the labels do carry.
+- id: control-3d-aspirin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    PTGS1 from sheep, the caption's acetyl transfer to Ser530 and salicylate, the two hydrogen
+    bonds at 2.89 and 3.23 Å and the five other contacts all match get_complex.
+- id: control-3d-aspirin#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    PTGS1, Ovis aries, the Ser530 caption and all six contacts with distances match get_complex.
+    "Doesn't cover what this structure means for how aspirin is used in people" points the user
+    to the label rather than denying label data.
+- id: control-3d-aspirin#3
+  from_memory: true
+  denies_data: true
+  note: >-
+    "PTGS1, also called COX-1" and "PTGS1 is the enzyme that makes prostaglandins, chemical
+    messengers involved in inflammation" are in no result: the only call was get_complex, which
+    names PTGS1 and nothing about prostaglandins or inflammation. "Molecula's data doesn't
+    include the mechanism in more detail than this" denies mechanism data it never searched (no
+    get_targets or search_labels call), and "it has no structure of aspirin bound to human
+    PTGS1" is a claim about the whole store from one get_complex result.
