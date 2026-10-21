@@ -1,0 +1,162 @@
+# Hand verdicts for docs/decisions/chat-model.md (#256): whether each answer states a drug fact no tool
+# result of that answer holds (from_memory), or says Molecula has no data it never searched
+# (denies_data). Judged by a subagent against the from-memory eval's RULES, flags re-read by hand.
+# The comparisons eval doesn't read this file; it counts the tool calls.
+
+- id: typo-3d-ibuprofen-aspirin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Target PTGS2 (mouse), H-bonds TYR356/ARG121, contacts SER531/ALA528 and MW/XLogP/TPSA values
+    all match the get_complex and compare_drugs results; "weak attractions between atoms" is a
+    plain gloss of hydrogen bond.
+- id: typo-3d-ibuprofen-aspirin#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Every table cell (formula, MW, XLogP, TPSA) and the 4PH9 contacts match the results; the
+    XLogP and TPSA explanations are plain-language glosses of terms in the result.
+- id: typo-3d-ibuprofen-aspirin#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Structure description and the MW, H-bond acceptor and TPSA comparisons all come from the
+    get_complex and compare_drugs results.
+- id: 3d-ibuprofen-aspirin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Both structures (4PH9 mouse PTGS2, 3N8Y sheep PTGS1) and the acetyl transfer onto Ser530
+    leaving salicylate come from the get_complex results and the 3N8Y caption; the note that the
+    two structures differ in protein and species compares two values in the results.
+- id: 3d-ibuprofen-aspirin#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Contacts, MW, TPSA and formulas all match the get_complex and get_properties results.
+- id: 3d-ibuprofen-aspirin#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    MW, formulas, TPSA, H-bond acceptors (4 vs 2) and rotatable bonds (4 vs 3) all match
+    compare_drugs; the structure description matches get_complex.
+- id: compare-ibuprofen-naproxen#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Uses come from [9][18], mechanism (ibuprofen not fully understood, possibly prostaglandin
+    synthesis; naproxen COX-1/COX-2) from [14][19], side effects (GI most frequent; headache
+    15%, dyspepsia 14%) from [6][7], and the caution against comparing trial rates from [4].
+    Properties match compare_drugs.
+- id: compare-ibuprofen-naproxen#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    "Both are NSAIDs" is in the results ([5]/[8] for ibuprofen, [9] for naproxen), the COX
+    inhibitor claim comes from ChEMBL [3], uses from [4][9], and the stomach bleeding and heart
+    attack/stroke warnings from [8][10]. "Cyclooxygenase, a protein involved in making
+    prostaglandins" is a gloss of the term (close call).
+- id: compare-ibuprofen-naproxen#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Only compare_drugs values are used, and all match. The closing "covers chemical properties,
+    not how they work clinically, their uses, or their risks" states the scope; it does not
+    claim Molecula lacks that data.
+- id: diff-metformin-glimepiride#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Indications come from [17][6] and the mechanisms from [4] and [15]; "does not increase
+    insulin secretion" paraphrases the label's "insulin secretion remains unchanged".
+- id: diff-metformin-glimepiride#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    The metformin mechanism (liver glucose production, gut absorption, insulin sensitivity,
+    secretion unchanged) comes from [9] and glimepiride's insulin release from beta cells from
+    [5].
+- id: diff-metformin-glimepiride#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    The mechanisms come from [4] and [10] and match closely; no extra drug facts.
+- id: de-ibuprofen-paracetamol#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Every table value matches compare_drugs (formula, MW, XLogP, TPSA, donors/acceptors,
+    rotatable bonds, heavy atoms). The closing scope line ("chemical properties, not effect or
+    use") does not claim missing data.
+- id: de-ibuprofen-paracetamol#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Analgesic/antipyretic activity and the mechanisms come from [3][8][11] ("zentralen
+    Nervensystem" glosses the label's "central actions"), ibuprofen uses from [7], and
+    paracetamol adult side effects from [12]. "No indications" and "no side-effect data" for
+    ibuprofen describe the returned pharmacology passages after a real search, so they are not
+    denials.
+- id: de-ibuprofen-paracetamol#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Uses come from [7] and [11] (the injection label is correctly named), ChEMBL COX/FAAH/TRPV1
+    from [3][4][5], properties from compare_drugs, and side effects from [8][13].
+- id: diff-omeprazole-famotidine#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    The acid pump and final step of acid production come from [7], and the H2 receptor block and
+    reduced secretion from [6]. "Don't provide a full comparison of their uses or side effects"
+    is true of the pharmacology search it ran.
+- id: diff-omeprazole-famotidine#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    The mechanisms come from [7] and [6] ("amount and concentration" = the label's acid volume
+    and concentration). Close call: "histamine-2 receptors (cell signals that stimulate acid
+    secretion)" goes slightly past [6], which only says blocking them inhibits secretion; read
+    as a gloss. "Don't cover enough to compare their uses" is true of the passages returned.
+- id: diff-omeprazole-famotidine#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    The proton pump and final step come from [7] and the H2 block reducing acid from [6]. Close
+    call: "famotidine blocks one signal that prompts acid release" implies other signals that
+    [6] does not name; read as a gloss of the receptor's role.
+- id: control-use-ibuprofen#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    The Rx indications come from [1] and the OTC minor aches and fever from [2].
+- id: control-use-ibuprofen#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    The Rx indications come from [1]; the OTC headache, backache, toothache, muscle aches and
+    fever are all listed in [2].
+- id: control-use-ibuprofen#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    The indications come from [1] ("painful menstrual periods" glosses primary dysmenorrhea) and
+    the OTC uses from [2].
+- id: control-3d-aspirin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    SAL, sheep PTGS1, 3N8Y, the acetyl transfer, the six contacts and the two hydrogen bonds to
+    residue 530 all come from the get_complex result and its caption.
+- id: control-3d-aspirin#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    The caption content (acetyl onto Ser530, blocking the enzyme, becomes salicylate) and the
+    contacts match the result.
+- id: control-3d-aspirin#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Contacts with distances (2.89 to 3.71 Å) match the result exactly, and the caption is
+    restated; "residues are the protein's amino-acid units" is a gloss.
