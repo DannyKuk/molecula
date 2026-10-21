@@ -1,0 +1,168 @@
+# Hand verdicts for docs/decisions/chat-model.md (#256): whether each answer states a drug fact no tool
+# result of that answer holds (from_memory), or says Molecula has no data it never searched
+# (denies_data). Judged by a subagent against the from-memory eval's RULES, flags re-read by hand.
+# The comparisons eval doesn't read this file; it counts the tool calls.
+
+- id: typo-3d-ibuprofen-aspirin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Target, organism (mouse, sheep as glosses of Mus musculus / Ovis aries), hydrogen bonds and
+    contacts all match the two get_complex results; the acetyl transfer to Ser530 leaving
+    salicylate is in the 3N8Y caption.
+- id: typo-3d-ibuprofen-aspirin#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    3D description matches get_complex 4PH9; every table cell (formula, MW, XLogP, TPSA,
+    donors/acceptors) matches compare_drugs. "attractions between atoms" is a gloss.
+- id: typo-3d-ibuprofen-aspirin#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    3D description matches get_complex; formula, MW and XLogP cells match compare_drugs; the
+    XLogP explanation is a gloss.
+- id: 3d-ibuprofen-aspirin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    PDB 4PH9, PTGS2, mouse, H-bonds to TYR356/ARG121 from get_complex; MW, XLogP, TPSA and
+    formulas compared from compare_drugs values.
+- id: 3d-ibuprofen-aspirin#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    3D description and all table cells match get_complex and compare_drugs; "a measure of
+    lipophilicity" is a gloss.
+- id: 3d-ibuprofen-aspirin#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    "three hydrogen bonds to TYR356 and ARG121" matches the three hydrogen_bonds entries;
+    property comparison matches compare_drugs.
+- id: compare-ibuprofen-naproxen#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Mechanisms from the ibuprofen clinical pharmacology passage (prostaglandin synthetase
+    inhibition) and the naproxen mechanism passage (COX-1/COX-2, prostaglandins as mediators of
+    pain and inflammation); ibuprofen uses, the aspirin warning for both and the properties are
+    all in results. Correctly says naproxen indications were not returned.
+- id: compare-ibuprofen-naproxen#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    COX inhibitor for both from get_targets; ibuprofen uses from the indications passage;
+    naproxen headache/dyspepsia/flu syndrome and ibuprofen GI complaints from adverse-reaction
+    passages; acceptor and rotatable-bond differences match compare_drugs (2 vs 3, 4 vs 3).
+    Saying the label results don't cover naproxen's uses is accurate for that search.
+- id: compare-ibuprofen-naproxen#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    COX inhibition from get_targets and the naproxen mechanism passage; ibuprofen and Naprelan
+    indications (incl. ankylosing spondylitis, tendinitis, bursitis, acute gout) are in the
+    returned passages; properties match. "an enzyme" is a gloss of cyclooxygenase.
+- id: diff-metformin-glimepiride#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    "Metformin's label also warns about a rare but serious risk called lactic acidosis": the
+    lactic acidosis passages describe postmarketing cases including fatal ones but never call it
+    rare, so the frequency qualifier is from memory. Everything else (mechanisms, GI effects,
+    glimepiride hypoglycemia/weight gain/headache/nausea/dizziness, combined hypoglycemia risk
+    with secretagogues) is in the passages.
+- id: diff-metformin-glimepiride#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Metformin mechanism (hepatic glucose production, intestinal absorption, peripheral uptake,
+    insulin secretion unchanged) and glimepiride mechanism (sulfonylurea receptor on beta cells,
+    closure of the ATP-sensitive potassium channel, insulin release) both come from the
+    mechanism-of-action passages.
+- id: diff-metformin-glimepiride#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    "helps the body respond to insulin" glosses "improves insulin sensitivity"; insulin
+    secretion unchanged and glimepiride stimulating insulin release are in the mechanism
+    passages.
+- id: de-ibuprofen-paracetamol#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    ChEMBL targets (COX for both, FAAH and TRPV1 for paracetamol), ibuprofen indications, OTC
+    warnings (stomach bleeding, heart attack, heart failure, stroke), acetaminophen liver damage
+    above the daily maximum, skin and allergic reactions, injection indications and properties
+    all match results.
+- id: de-ibuprofen-paracetamol#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    COX/FAAH/TRPV1 from get_targets; "probable mechanism ... inhibit prostaglandin synthesis"
+    from the ibuprofen pharmacology passage; uses, the aspirin warning, the no-other-
+    acetaminophen and liver-disease ask-a-doctor lines and the properties are all in results.
+    "eines Enzyms" is a gloss.
+- id: de-ibuprofen-paracetamol#3
+  from_memory: false
+  denies_data: true
+  note: >-
+    All property cells match compare_drugs. But it never called search_labels or get_targets and
+    says "Moleculas Daten decken diesen Teil deiner Frage hier nicht ab" about effect, use and
+    side effects, which Molecula does hold.
+- id: diff-omeprazole-famotidine#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Proton pump and final step of acid production from the omeprazole mechanism passage;
+    famotidine as an H2-receptor inhibitor that suppresses gastric secretion from its mechanism
+    passage; the receptor explanation is a gloss.
+- id: diff-omeprazole-famotidine#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Mechanisms from the two mechanism passages; overlapping uses (GERD, ulcers), H. pylori
+    eradication with antibiotics to reduce duodenal-ulcer recurrence and famotidine's DU-
+    recurrence risk reduction are in the indications passages. "H2 receptors, which normally
+    signal the stomach to secrete acid" goes slightly past the label but follows from it.
+- id: diff-omeprazole-famotidine#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    "an enzyme system that carries out the final step of acid production" is the omeprazole
+    mechanism passage; famotidine H2 blockade suppressing acid secretion is its mechanism
+    passage.
+- id: control-use-ibuprofen#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Prescription indications and the OTC "Uses" list (headache, backache, toothache, common
+    cold, fever) are both in the returned indications passages.
+- id: control-use-ibuprofen#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Indications and OTC uses match the two indications passages.
+- id: control-use-ibuprofen#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Indications and OTC uses match the two indications passages.
+- id: control-3d-aspirin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    PDB 3N8Y, PTGS1, sheep, the caption's acetyl transfer to Ser530 and the listed contact
+    residues all match get_complex.
+- id: control-3d-aspirin#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Salicylate left behind after acetyl transfer is the caption; contacts match (Ser530 for
+    OAS530, the acetylated serine the caption names).
+- id: control-3d-aspirin#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    PDB 3N8Y, salicylate in sheep PTGS1, the Ser530 caption and the six contacts all match
+    get_complex.
