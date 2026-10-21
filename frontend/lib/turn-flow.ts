@@ -35,8 +35,10 @@ export type TurnStepState =
   "done" | "skipped" | "running" | "waiting" | "stopped" | "failed" | "not_reached";
 
 /**
- * One step the answer ran, as its Flow tab shows it. `guide` is the guide step's anchor on
- * `/how-it-answers`, null for a step the guide doesn't follow; `whoLabel` names who did it when
+ * One step the answer ran, as its Flow tab shows it. `number` counts the answer's own steps from
+ * 1, so it differs from the guide's numbering when the answer took another path than the guide's
+ * example. `guide` is the guide step's anchor on `/how-it-answers`, null for a step the guide
+ * doesn't follow; `whoLabel` names who did it when
  * the event doesn't say which of two models it was. `outcome` is what happened in this answer,
  * `call` the tool call as the chat model wrote it and `ranking` the passages a dense search kept,
  * ordered as the section bonus left them.
@@ -59,7 +61,7 @@ export type TurnStep = {
  * the answer, which have no title. */
 export type TurnFlowPart = { title: string | null; steps: TurnStep[] };
 
-type Draft = Omit<TurnStep, "state"> & { state: TurnStepState | "pending" };
+type Draft = Omit<TurnStep, "state" | "number"> & { state: TurnStepState | "pending" };
 
 type DraftPart = { title: string | null; steps: Draft[] };
 
@@ -81,8 +83,9 @@ type ToolStep = Step & { tool: ToolRun };
 /**
  * The steps an answer ran, in order, from its own events: the input check, each lookup the chat
  * model asked for, the answer, the canary watch and the source check. A label search shows the
- * guide's steps 2 to 5 from its arguments, its result and its `retrieval_trace`; any other tool
- * shows the call and the store lookup. Steps that haven't concluded take their state from the
+ * guide's call, filter, scoring and ranking steps from its arguments, its result and its
+ * `retrieval_trace`; any other tool shows the call and the store lookup, and a structure lookup
+ * the 3D view as well. Steps that haven't concluded take their state from the
  * turn: the first one running, stopped or failed, the others waiting or not reached.
  */
 export function turnFlow(turn: Turn): TurnFlowPart[] {
@@ -136,7 +139,6 @@ function fromGuide(id: string, key: string, changes: Partial<Draft> = {}): Draft
   return {
     key,
     guide: step.id,
-    number: step.number,
     title: step.title,
     who: step.who,
     line: step.short,
@@ -164,13 +166,15 @@ function checkOutcome(category: InputCategory | undefined, fixed: boolean): stri
   return "Passed, so it went on.";
 }
 
-/** Steps 2 to 5 of an answer that looked nothing up. */
+/** The lookup steps of an answer that looked nothing up. */
 function noLookupSteps(fixed: boolean, answered: boolean): Draft[] {
   const decide = fromGuide("decide-what-to-look-up", "decide");
   if (!fixed && !answered) return [decide];
-  const lookups = ["narrow-to-the-drug", "score-by-meaning", "boost-and-keep-five"].map((id) =>
-    fromGuide(id, id, { state: "skipped" }),
-  );
+  const lookups = [
+    fromGuide("narrow-to-the-drug", "narrow", { state: "skipped" }),
+    fromGuide("score-by-meaning", "score", { state: "skipped" }),
+    fromGuide("boost-and-keep-five", "boost", { state: "skipped" }),
+  ];
   return [
     {
       ...decide,
@@ -202,7 +206,6 @@ function lookupSteps(tool: ToolRun): Draft[] {
   const lookup: Draft = {
     key: `${key}:lookup`,
     guide: null,
-    number: "3",
     title: "Look it up in the store",
     who: "code",
     line: "Code reads the answer from Molecula's own store. No AI is asked.",
@@ -277,7 +280,6 @@ function showIn3d(card: Extract<Card, { kind: "complex" | "no_complex" }>, key: 
   return {
     key: `${key}:3d`,
     guide: null,
-    number: "4",
     title: "Show it in 3D",
     who: "code",
     line: "The 3D tab loads the structure from Molecula's own store and your browser draws it. No AI is asked and nothing is fetched from outside.",
@@ -300,7 +302,6 @@ function searchSteps(tool: ToolRun, index: string): Draft[] {
     trace?.filter_source === "model"
       ? [
           fromGuide("decide-what-to-look-up", `${key}:extract`, {
-            number: "2b",
             title: "Read the drugs from the question",
             whoLabel: EITHER_MODEL,
             line: "The call named no drug, so one more small call reads the drugs and the parts of the label from the question.",
@@ -314,7 +315,7 @@ function searchSteps(tool: ToolRun, index: string): Draft[] {
   return [decide, ...extracted, ...searchedSteps(tool, trace, key)];
 }
 
-/** Steps 3 to 5 of one label search. */
+/** The filter, scoring and ranking steps of one label search. */
 function searchedSteps(tool: ToolRun, trace: RetrievalTrace | null, key: string): Draft[] {
   const narrow = fromGuide("narrow-to-the-drug", `${key}:narrow`);
   const score = fromGuide("score-by-meaning", `${key}:score`);
@@ -526,10 +527,16 @@ function checkSourcesStep(check: Draft, turn: Turn): Draft {
   };
 }
 
-/** The pending steps' states from the turn: the first one is where it is, or where it ended. */
+/**
+ * The steps numbered in the order the answer ran them, and the pending ones' states from the
+ * turn: the first pending step is where the answer is, or where it ended.
+ */
 function settle(parts: DraftPart[], turn: Turn): TurnFlowPart[] {
+  let number = 0;
   let first = true;
-  const settled = (step: Draft): TurnStep => {
+  const settled = (draft: Draft): TurnStep => {
+    number += 1;
+    const step = { ...draft, number: String(number) };
     if (step.state !== "pending") return step as TurnStep;
     const wasFirst = first;
     first = false;

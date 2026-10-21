@@ -66,9 +66,11 @@ function all(parts: TurnFlowPart[]): TurnStep[] {
   return parts.flatMap((part) => part.steps);
 }
 
-function step(parts: TurnFlowPart[], number: string, nth = 0): TurnStep {
-  const found = all(parts).filter((candidate) => candidate.number === number)[nth];
-  if (!found) throw new Error(`No step ${number}`);
+/** The first step named `name` by its key: `check`, `decide`, `extract`, `narrow`, `score`,
+ * `boost`, `lookup`, `3d`, `write`, `watch` or `check-sources`. */
+function step(parts: TurnFlowPart[], name: string): TurnStep {
+  const found = all(parts).find(({ key }) => key === name || key.endsWith(`:${name}`));
+  if (!found) throw new Error(`No step ${name}`);
   return found;
 }
 
@@ -88,13 +90,13 @@ describe("turnFlow", () => {
       ["4", "embedder", "score-by-meaning", "done"],
       ["5", "code", "boost-and-keep-five", "done"],
       ["6", "model", "write-the-answer", "done"],
-      ["6b", "code", "watch-for-a-leak", "done"],
-      ["7", "model", "check-the-sources", "done"],
+      ["7", "code", "watch-for-a-leak", "done"],
+      ["8", "model", "check-the-sources", "done"],
     ]);
   });
 
   it("says the input check may be Jev or the chat model, since no event names it", () => {
-    const check = step(turnFlow(answered([search()])), "1");
+    const check = step(turnFlow(answered([search()])), "check");
 
     expect(check.whoLabel).toBe("Jev or chat model");
     expect(check.outcome).toBe("Sorted as a medicine question, so it went on.");
@@ -103,12 +105,12 @@ describe("turnFlow", () => {
   it("shows the search's call, filter, similarities and bonus from its events", () => {
     const flow = turnFlow(answered([search()]));
 
-    expect(step(flow, "2").call).toBe('search_labels(drug="Gleevec", section="pharmacology")');
-    expect(step(flow, "3").outcome).toBe("Searched “Gleevec” as imatinib: 1 label.");
-    expect(step(flow, "4").outcome).toBe(
+    expect(step(flow, "decide").call).toBe('search_labels(drug="Gleevec", section="pharmacology")');
+    expect(step(flow, "narrow").outcome).toBe("Searched “Gleevec” as imatinib: 1 label.");
+    expect(step(flow, "score").outcome).toBe(
       `Searched with “${IMATINIB_LABELS.question}”. The 3 closest passages have a similarity of 0.21 to 0.71.`,
     );
-    const boost = step(flow, "5");
+    const boost = step(flow, "boost");
     expect(boost.title).toBe("Add the +0.15 and keep the top 2");
     expect(boost.outcome).toBe(
       "2 passages got +0.15; the order stayed the same. 1 passage below the minimum similarity of 0.30 was dropped.",
@@ -125,9 +127,9 @@ describe("turnFlow", () => {
   it("shows the answer's citations and the source check's verdict", () => {
     const flow = turnFlow(answered([search()]));
 
-    expect(step(flow, "6").outcome).toBe("Wrote the answer, citing [1].");
-    expect(step(flow, "6b").outcome).toBe("The marker never showed up.");
-    expect(step(flow, "7").outcome).toBe("The answer states no facts to check.");
+    expect(step(flow, "write").outcome).toBe("Wrote the answer, citing [1].");
+    expect(step(flow, "watch").outcome).toBe("The marker never showed up.");
+    expect(step(flow, "check-sources").outcome).toBe("The answer states no facts to check.");
   });
 
   it("moves a passage in the guessed section up by the trace's bonus", () => {
@@ -140,7 +142,7 @@ describe("turnFlow", () => {
       section_group_boost: 0.2,
     };
 
-    const boost = step(turnFlow(answered([search({ trace })])), "5");
+    const boost = step(turnFlow(answered([search({ trace })])), "boost");
 
     expect(boost.title).toBe("Add the +0.20 and keep the top 2");
     expect(boost.outcome).toBe("1 passage got +0.20; 2 passages changed place.");
@@ -162,10 +164,12 @@ describe("turnFlow", () => {
       "4 skipped",
       "5 skipped",
       "6 done",
-      "6b done",
       "7 done",
+      "8 done",
     ]);
-    expect(step(flow, "2").outcome).toBe("The chat model answered without looking anything up.");
+    expect(step(flow, "decide").outcome).toBe(
+      "The chat model answered without looking anything up.",
+    );
   });
 
   it("shows another tool as the call and one store lookup done by code", () => {
@@ -176,16 +180,16 @@ describe("turnFlow", () => {
       ["2", "model", "decide-what-to-look-up"],
       ["3", "code", null],
     ]);
-    expect(step(flow, "2").call).toBe('get_targets(drug="metformin")');
-    expect(step(flow, "3").title).toBe("Look it up in the store");
-    expect(step(flow, "3").outcome).toBe(
+    expect(step(flow, "decide").call).toBe('get_targets(drug="metformin")');
+    expect(step(flow, "lookup").title).toBe("Look it up in the store");
+    expect(step(flow, "lookup").outcome).toBe(
       "2 targets: Mitochondrial complex I (NADH dehydrogenase), Glycerol-3-phosphate dehydrogenase, mitochondrial.",
     );
   });
 
   it("says what each store lookup found", () => {
     const lookup = (name: string, result: unknown) =>
-      step(turnFlow(answered([tool(name, result)])), "3").outcome;
+      step(turnFlow(answered([tool(name, result)])), "lookup").outcome;
 
     expect(lookup("resolve_drug", GLEEVEC_FOUND)).toBe("“Gleevec” is imatinib in the store.");
     expect(lookup("resolve_drug", TYLENOLL_NOT_SUPPORTED)).toBe("Not in the store: Tylenoll.");
@@ -205,18 +209,20 @@ describe("turnFlow", () => {
       ["3", "code", null],
       ["4", "code", null],
     ]);
-    expect(step(flow, "3").outcome).toMatch(
+    expect(step(flow, "lookup").outcome).toMatch(
       /^A reviewed structure: Imatinib in ABL1 \(BCR-ABL\), PDB 2HYY · Homo sapiens · \d+ hydrogen bonds\.$/,
     );
-    expect(step(flow, "4").title).toBe("Show it in 3D");
-    expect(step(flow, "4").outcome).toBe("The 3D tab shows Imatinib in ABL1 (BCR-ABL).");
+    expect(step(flow, "3d").title).toBe("Show it in 3D");
+    expect(step(flow, "3d").outcome).toBe("The 3D tab shows Imatinib in ABL1 (BCR-ABL).");
   });
 
   it("shows the molecule alone in 3D when the drug has no reviewed structure", () => {
     const flow = turnFlow(answered([tool("get_complex", ACETAMINOPHEN_NO_COMPLEX)]));
 
-    expect(step(flow, "3").outcome).toBe("No reviewed structure of acetaminophen with its target.");
-    expect(step(flow, "4").outcome).toBe(
+    expect(step(flow, "lookup").outcome).toBe(
+      "No reviewed structure of acetaminophen with its target.",
+    );
+    expect(step(flow, "3d").outcome).toBe(
       "The 3D tab shows the molecule alone, from its stored 3D shape.",
     );
   });
@@ -224,7 +230,24 @@ describe("turnFlow", () => {
   it("adds no 3D view for a structure lookup that found no drug", () => {
     const flow = turnFlow(answered([tool("get_complex", TYLENOLL_NOT_SUPPORTED)]));
 
-    expect(flow[1].steps.map(({ number }) => number)).toEqual(["2", "3"]);
+    expect(flow[1].steps.map(({ title }) => title)).toEqual([
+      "Decide what to look up",
+      "Look it up in the store",
+    ]);
+  });
+
+  it("numbers the steps in the order this answer ran them, not by the guide", () => {
+    const flow = turnFlow(answered([tool("get_complex", IMATINIB_COMPLEX)]));
+
+    expect(all(flow).map(({ number, title }) => `${number} ${title}`)).toEqual([
+      "1 Check the question",
+      "2 Decide what to look up",
+      "3 Look it up in the store",
+      "4 Show it in 3D",
+      "5 Write the answer",
+      "6 Watch for a leaked system prompt",
+      "7 Check the answer against the sources",
+    ]);
   });
 
   it("numbers two label searches", () => {
@@ -241,16 +264,17 @@ describe("turnFlow", () => {
       null,
     ]);
     expect(new Set(all(flow).map((candidate) => candidate.key)).size).toBe(all(flow).length);
+    expect(flow[3].steps.map(({ number }) => number)).toEqual(["8", "9", "10", "11"]);
   });
 
   it("says a hybrid search merged its rankings by place instead of adding the bonus", () => {
     const flow = turnFlow(answered([search({ trace: { ...IMATINIB_TRACE, mode: "hybrid" } })]));
 
-    const boost = step(flow, "5");
+    const boost = step(flow, "boost");
     expect(boost.title).toBe("Merge the rankings and keep the top 2");
     expect(boost.ranking).toBeUndefined();
     expect(boost.outcome).toContain("the +0.15 only changed the order of the embedding ranking");
-    expect(step(flow, "4").outcome).toContain(
+    expect(step(flow, "score").outcome).toContain(
       "A keyword search (BM25) ranked the passages as well.",
     );
   });
@@ -258,7 +282,7 @@ describe("turnFlow", () => {
   it("scores a keyword-only search by code", () => {
     const score = step(
       turnFlow(answered([search({ trace: { ...IMATINIB_TRACE, mode: "bm25" } })])),
-      "4",
+      "score",
     );
 
     expect(score.who).toBe("code");
@@ -268,10 +292,10 @@ describe("turnFlow", () => {
   it("says a search saved before the trace was kept has no details", () => {
     const flow = turnFlow(answered([search({ trace: undefined })]));
 
-    expect(step(flow, "3").outcome).toContain("Not recorded");
-    expect(step(flow, "4").outcome).toContain("Not recorded");
-    expect(step(flow, "5").outcome).toBe("Kept 2 passages, numbered [1] to [2].");
-    expect(step(flow, "5").ranking).toBeUndefined();
+    expect(step(flow, "narrow").outcome).toContain("Not recorded");
+    expect(step(flow, "score").outcome).toContain("Not recorded");
+    expect(step(flow, "boost").outcome).toBe("Kept 2 passages, numbered [1] to [2].");
+    expect(step(flow, "boost").ranking).toBeUndefined();
   });
 
   it("adds the extra call that read the drugs when the chat model named none", () => {
@@ -280,8 +304,8 @@ describe("turnFlow", () => {
       answered([search({ args: { question: "How does Gleevec work?" }, trace })]),
     );
 
-    const extracted = step(flow, "2b");
-    expect(step(flow, "2").call).toBe('search_labels(question="How does Gleevec work?")');
+    const extracted = step(flow, "extract");
+    expect(step(flow, "decide").call).toBe('search_labels(question="How does Gleevec work?")');
     expect(extracted.whoLabel).toBe("Jev or chat model");
     expect(extracted.guide).toBe("decide-what-to-look-up");
     expect(extracted.outcome).toBe("Drugs: imatinib. Sections: pharmacology.");
@@ -291,11 +315,11 @@ describe("turnFlow", () => {
     const rejected = { status: "invalid_arguments", errors: ["section: not a label section"] };
     const flow = turnFlow(answered([search({ result: rejected, trace: undefined })]));
 
-    expect(step(flow, "3").outcome).toBe(
+    expect(step(flow, "narrow").outcome).toBe(
       "Rejected and sent back to the chat model as an error, so nothing was searched: section: not a label section",
     );
-    expect(step(flow, "4").state).toBe("skipped");
-    expect(step(flow, "5").state).toBe("skipped");
+    expect(step(flow, "score").state).toBe("skipped");
+    expect(step(flow, "boost").state).toBe("skipped");
   });
 
   it("says a search for names Molecula doesn't know found nothing to search", () => {
@@ -305,10 +329,10 @@ describe("turnFlow", () => {
     };
     const flow = turnFlow(answered([search({ result: unknown })]));
 
-    expect(step(flow, "3").outcome).toBe(
+    expect(step(flow, "narrow").outcome).toBe(
       "None of the names is in the store (Tylenoll), so nothing was searched.",
     );
-    expect(step(flow, "4").state).toBe("skipped");
+    expect(step(flow, "score").state).toBe("skipped");
   });
 
   it("shows that the canary fired and the withdrawn answer went unchecked", () => {
@@ -322,11 +346,11 @@ describe("turnFlow", () => {
       }),
     );
 
-    expect(step(flow, "6b").outcome).toBe(
+    expect(step(flow, "watch").outcome).toBe(
       "The marker showed up, so the answer was replaced with a fixed one before the marker reached you.",
     );
-    expect(step(flow, "7").state).toBe("skipped");
-    expect(step(flow, "7").outcome).toBe("A withdrawn answer isn't checked.");
+    expect(step(flow, "check-sources").state).toBe("skipped");
+    expect(step(flow, "check-sources").outcome).toBe("A withdrawn answer isn't checked.");
   });
 
   it("shows a fixed answer as the end of the flow", () => {
@@ -340,7 +364,7 @@ describe("turnFlow", () => {
 
     const flow = turnFlow(refused);
 
-    expect(step(flow, "1").outcome).toBe(
+    expect(step(flow, "check").outcome).toBe(
       "Sorted as off topic, so Molecula gave a fixed answer and nothing else ran.",
     );
     expect(
@@ -348,7 +372,7 @@ describe("turnFlow", () => {
         .slice(1)
         .every((line) => line.endsWith("skipped")),
     ).toBe(true);
-    expect(step(flow, "2").outcome).toBeUndefined();
+    expect(step(flow, "decide").outcome).toBeUndefined();
   });
 
   it("recognises a fixed answer saved before the category was kept", () => {
@@ -360,7 +384,7 @@ describe("turnFlow", () => {
       category: undefined,
     });
 
-    expect(step(turnFlow(saved), "1").outcome).toBe(
+    expect(step(turnFlow(saved), "check").outcome).toBe(
       "Molecula gave a fixed answer, so nothing else ran.",
     );
   });
@@ -368,16 +392,16 @@ describe("turnFlow", () => {
   it("says a possible overdose answer starts with emergency help", () => {
     const flow = turnFlow(answered([search()], { category: "overdose_emergency" }));
 
-    expect(step(flow, "1").outcome).toBe(
+    expect(step(flow, "check").outcome).toBe(
       "Sorted as a possible overdose, so the answer starts with emergency help.",
     );
-    expect(step(flow, "6").state).toBe("done");
+    expect(step(flow, "write").state).toBe("done");
   });
 
   it("says the source check failed when it gave no verdict", () => {
     const check = step(
       turnFlow(answered([search()], { sourceCheck: { checked: false, claims: [] } })),
-      "7",
+      "check-sources",
     );
 
     expect(check.state).toBe("failed");
@@ -400,7 +424,7 @@ describe("turnFlow", () => {
       ],
     };
 
-    expect(step(turnFlow(answered([search()], { sourceCheck })), "7").outcome).toBe(
+    expect(step(turnFlow(answered([search()], { sourceCheck })), "check-sources").outcome).toBe(
       "1 of 2 facts backed · 1 sentence isn't in Molecula's sources (underlined).",
     );
   });
@@ -418,21 +442,15 @@ describe("turnFlow", () => {
       "4 waiting",
       "5 waiting",
       "6 waiting",
-      "6b waiting",
       "7 waiting",
+      "8 waiting",
     ]);
   });
 
   it("is running the input check before anything else has come", () => {
     const flow = turnFlow({ ...startTurn("How does imatinib work?"), steps: [CHECKING] });
 
-    expect(states(flow)).toEqual([
-      "1 running",
-      "2 waiting",
-      "6 waiting",
-      "6b waiting",
-      "7 waiting",
-    ]);
+    expect(states(flow)).toEqual(["1 running", "2 waiting", "3 waiting", "4 waiting", "5 waiting"]);
   });
 
   it("marks where a stopped answer stopped and what it never reached", () => {
@@ -445,8 +463,8 @@ describe("turnFlow", () => {
 
     expect(states(turnFlow(stopped)).slice(-3)).toEqual([
       "6 stopped",
-      "6b not_reached",
       "7 not_reached",
+      "8 not_reached",
     ]);
   });
 
@@ -460,9 +478,9 @@ describe("turnFlow", () => {
 
     const flow = turnFlow(failed);
 
-    expect(step(flow, "1").state).toBe("failed");
-    expect(step(flow, "1").outcome).toBe(failed.error);
-    expect(step(flow, "7").state).toBe("not_reached");
+    expect(step(flow, "check").state).toBe("failed");
+    expect(step(flow, "check").outcome).toBe(failed.error);
+    expect(step(flow, "check-sources").state).toBe("not_reached");
   });
 
   it("keeps the lookup undecided while a live answer has only its emergency line", () => {
@@ -475,9 +493,9 @@ describe("turnFlow", () => {
     expect(states(turnFlow(live))).toEqual([
       "1 done",
       "2 running",
-      "6 waiting",
-      "6b waiting",
-      "7 waiting",
+      "3 waiting",
+      "4 waiting",
+      "5 waiting",
     ]);
   });
 });
