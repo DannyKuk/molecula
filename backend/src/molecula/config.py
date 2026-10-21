@@ -15,6 +15,12 @@ OPENROUTER_ATTRIBUTION_HEADERS = {
     "HTTP-Referer": "https://github.com/DannyKuk/molecula",
     "X-OpenRouter-Title": "Molecula",
 }
+# EMBEDDING_MODEL's value for the local sentence-transformers model; anything else names a cloud
+# model on OpenRouter.
+LOCAL_EMBEDDINGS = "local"
+# The section-group boost chosen for bge-m3 on the retrieval questions (#112). A cloud model gets
+# none: with gemini-embedding-2 the boost only cost recall (#96).
+LOCAL_SECTION_GROUP_BOOST = 0.15
 
 
 class Settings(BaseSettings):
@@ -52,7 +58,8 @@ class Settings(BaseSettings):
     decision_model: str | None = "jev-1.13"
     local_decision_base_url: str | None = None
     decision_timeout_seconds: Annotated[float, Field(gt=0)] = 10.0
-    embedding_model: str = "local"
+    # A cloud model id becomes a folder name under index/cloud/, so no backslashes or colons.
+    embedding_model: Annotated[str, Field(pattern=r"^[A-Za-z0-9._/-]+$")] = LOCAL_EMBEDDINGS
     # Multilingual and among the best CPU-sized models in docs/decisions/embeddings.md (#88).
     local_embedding_model: str = "BAAI/bge-m3"
     # The Hugging Face commit of LOCAL_EMBEDDING_MODEL that the published index was built with;
@@ -62,9 +69,10 @@ class Settings(BaseSettings):
     )
     retrieval_top_k: Annotated[int, Field(ge=1, le=50)] = 5
     retrieval_min_score: Annotated[float, Field(ge=-1.0, le=1.0)] = 0.0
-    # Added to the cosine similarity of a chunk in the extracted section groups. Chosen with
-    # bge-m3 on the retrieval questions; re-measure when the embeddings or ranking change (#112).
-    retrieval_section_group_boost: Annotated[float, Field(ge=0.0, le=2.0)] = 0.15
+    # Added to the cosine similarity of a chunk in the extracted section groups. Empty takes the
+    # embedding model's value (section_group_boost); re-measure when the embeddings or ranking
+    # change (#112).
+    retrieval_section_group_boost: Annotated[float | None, Field(ge=0.0, le=2.0)] = None
     # "hybrid" adds BM25 keyword search to the embeddings, merged by reciprocal rank fusion (#44).
     retrieval_mode: Literal["dense", "bm25", "hybrid"] = "dense"
     # Model calls per answer; the last one gets no tools, so the agent answers (#124).
@@ -94,6 +102,16 @@ class Settings(BaseSettings):
     data_dir: Path = REPO_ROOT / "data"
     cors_origins: list[str] = ["http://localhost:3000"]
     name_suggestion_cutoff: Annotated[float, Field(ge=0.0, le=1.0)] = 0.8
+
+    @property
+    def section_group_boost(self) -> float:
+        """RETRIEVAL_SECTION_GROUP_BOOST, or when it is empty 0.15 for the local model and 0 for
+        a cloud model."""
+        if self.retrieval_section_group_boost is not None:
+            return self.retrieval_section_group_boost
+        if self.embedding_model == LOCAL_EMBEDDINGS:
+            return LOCAL_SECTION_GROUP_BOOST
+        return 0.0
 
     @property
     def build_dir(self) -> Path:
@@ -127,8 +145,19 @@ class Settings(BaseSettings):
         return self.data_dir / "hero_set.yaml"
 
     @property
-    def index_dir(self) -> Path:
+    def local_index_dir(self) -> Path:
+        """The local model's label index, the one store releases ship."""
         return self.build_dir / "index" / "chroma"
+
+    @property
+    def index_dir(self) -> Path:
+        """The label index of EMBEDDING_MODEL. A cloud model's index sits next to the local one,
+        so the local index keeps the path store releases unpack to (#96)."""
+        if self.embedding_model == LOCAL_EMBEDDINGS:
+            return self.local_index_dir
+        return (
+            self.build_dir / "index" / "cloud" / self.embedding_model.replace("/", "--") / "chroma"
+        )
 
     @property
     def keyword_index_path(self) -> Path:

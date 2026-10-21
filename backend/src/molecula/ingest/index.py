@@ -123,8 +123,9 @@ def stored_labels(db_path: Path) -> list[tuple[int, LabelRecord]]:
         conn.close()
 
 
-def run(settings: Settings) -> int:
-    """`python -m molecula.ingest index`: chunk, embed and index every stored label section."""
+def run(settings: Settings, *, index: LabelIndex | None = None) -> int:
+    """`python -m molecula.ingest index`: chunk, embed and index every stored label section.
+    An `index` already open is rebuilt in place: Windows can't delete a folder Chroma holds."""
     labels = stored_labels(settings.db_path)
     if not labels:
         logger.error("The store has no labels; run `python -m molecula.ingest labels` first")
@@ -144,7 +145,7 @@ def run(settings: Settings) -> int:
         labels,
         lambda text: len(tokenizer.tokenize(text)),
         get_embeddings(settings),
-        LabelIndex.empty(settings.index_dir),
+        index or LabelIndex.empty(settings.index_dir),
         KeywordIndex(settings.keyword_index_path),
         model,
     )

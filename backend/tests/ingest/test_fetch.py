@@ -8,8 +8,11 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
+import httpx
 import httpx2
+import openai
 import pytest
+from langchain_core.embeddings import DeterministicFakeEmbedding, Embeddings
 
 from fake_hub import FakeHub, install_fake_hub
 from molecula.config import Settings
@@ -21,11 +24,13 @@ from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
 from molecula.store.index import Chunk, LabelIndex
 from molecula.store.keywords import KeywordIndex
+from molecula.store.labels import LabelStore
 from molecula.store.schema import SCHEMA_VERSION
 from molecula.store.structures import ConformerFiles
-from store_records import IMATINIB
+from store_records import GLEEVEC, IMATINIB
 
 MODEL = "BAAI/bge-m3"
+CLOUD_MODEL = "openai/text-embedding-3-large"
 CHUNK = Chunk(
     id="gleevec:mechanism_of_action:0",
     text="Inhibits BCR-ABL.",
@@ -91,6 +96,7 @@ def built_release(tmp_path_factory: pytest.TempPathFactory, *, with_keywords: bo
     built = Settings(_env_file=None, data_dir=tmp_path_factory.mktemp("built"), offline=True)
     with closing(connect(built.db_path)) as conn:
         CompoundStore(conn).save(IMATINIB, [], datetime(2026, 10, 12, tzinfo=UTC))
+        LabelStore(conn).save(5291, (GLEEVEC,), datetime(2026, 10, 12, tzinfo=UTC))
     ConformerFiles(built.conformers_dir).write(5291, "imatinib\n$$$$\n")
     LabelIndex(built.index_dir).rebuild([CHUNK], [[1.0, 0.0]], MODEL)
     if with_keywords:
@@ -107,6 +113,39 @@ def hub(monkeypatch: pytest.MonkeyPatch) -> FakeHub:
 @pytest.fixture
 def settings(make_settings: Callable[..., Settings], tmp_path: Path) -> Settings:
     return make_settings(data_dir=tmp_path / "data", offline=False)
+
+
+@pytest.fixture
+def cloud_settings(make_settings: Callable[..., Settings], tmp_path: Path) -> Settings:
+    return make_settings(
+        data_dir=tmp_path / "data",
+        offline=False,
+        embedding_model=CLOUD_MODEL,
+        openrouter_api_key="test-key",
+    )
+
+
+class FakeTokenizer:
+    def tokenize(self, text: str) -> list[str]:
+        return text.split()
+
+
+def use_cloud_embeddings(monkeypatch: pytest.MonkeyPatch, embeddings: Embeddings) -> list[str]:
+    """Stand in for the cloud model; returns the models the index step asked for."""
+    asked: list[str] = []
+
+    def fake_embeddings(current: Settings) -> Embeddings:
+        asked.append(current.embedding_model)
+        return embeddings
+
+    monkeypatch.setattr("molecula.rag.embeddings.get_embeddings", fake_embeddings)
+    monkeypatch.setattr("molecula.rag.embeddings.load_chunk_tokenizer", lambda _: FakeTokenizer())
+    return asked
+
+
+class UnreachableCloud(DeterministicFakeEmbedding):
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        raise openai.APIConnectionError(request=httpx.Request("POST", "https://openrouter.ai"))
 
 
 def serve(release: Release, settings: Settings) -> FakeGitHub:
@@ -377,3 +416,61 @@ def test_unsafe_archive_member_is_rejected(
     assert not (tmp_path / "evil.txt").exists()
     assert not (settings.data_dir / "evil.txt").exists()
     assert not (settings.models_dir / "evil.bin").exists()
+
+
+def test_cloud_model_gets_its_own_index_and_no_local_model(
+    release: Release,
+    cloud_settings: Settings,
+    hub: FakeHub,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    asked = use_cloud_embeddings(monkeypatch, DeterministicFakeEmbedding(size=8))
+
+    assert fetch(cloud_settings, serve(release, cloud_settings)) == 0
+
+    assert asked == [CLOUD_MODEL]
+    assert LabelIndex(cloud_settings.index_dir).model() == CLOUD_MODEL
+    assert LabelIndex(cloud_settings.local_index_dir).model() == MODEL
+    assert KeywordIndex(cloud_settings.keyword_index_path).exists()
+    assert hub.calls == []
+
+
+def test_cloud_index_is_built_only_once(
+    release: Release, cloud_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    asked = use_cloud_embeddings(monkeypatch, DeterministicFakeEmbedding(size=8))
+    fetch(cloud_settings, serve(release, cloud_settings))
+
+    assert fetch(cloud_settings, serve(release, cloud_settings)) == 0
+
+    assert asked == [CLOUD_MODEL]
+
+
+def test_cloud_model_offline_fails_with_a_hint(
+    release: Release,
+    cloud_settings: Settings,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    monkeypatch.setattr("molecula.rag.embeddings.load_chunk_tokenizer", lambda _: FakeTokenizer())
+    offline = cloud_settings.model_copy(update={"offline": True})
+
+    assert fetch(offline, serve(release, offline)) == 1
+
+    assert f"The index of {CLOUD_MODEL} was not built" in caplog.text
+    assert "OFFLINE=1 allows no external calls" in caplog.text
+    assert stored_compounds(offline) == ["imatinib"]
+
+
+def test_unreachable_cloud_model_fails_the_step(
+    release: Release,
+    cloud_settings: Settings,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    use_cloud_embeddings(monkeypatch, UnreachableCloud(size=8))
+
+    assert fetch(cloud_settings, serve(release, cloud_settings)) == 1
+
+    assert f"The index of {CLOUD_MODEL} was not built" in caplog.text
+    assert LabelIndex(cloud_settings.index_dir).model() is None

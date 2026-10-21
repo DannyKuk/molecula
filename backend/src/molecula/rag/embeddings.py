@@ -8,7 +8,12 @@ import httpx
 from langchain_core.embeddings import Embeddings
 from langchain_openai import OpenAIEmbeddings
 
-from molecula.config import OPENROUTER_ATTRIBUTION_HEADERS, OPENROUTER_BASE_URL, Settings
+from molecula.config import (
+    LOCAL_EMBEDDINGS,
+    OPENROUTER_ATTRIBUTION_HEADERS,
+    OPENROUTER_BASE_URL,
+    Settings,
+)
 
 if TYPE_CHECKING:
     from sentence_transformers import SentenceTransformer
@@ -16,10 +21,11 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-LOCAL = "local"
 # Every model gets the same chunks, so a comparison of models compares only the models.
 CHUNK_TOKENIZER = "BAAI/bge-small-en-v1.5"
 BATCH_SIZE = 32
+# Texts per request to a cloud model: Gemini on OpenRouter refuses more than 100 (#96).
+CLOUD_BATCH_SIZE = 100
 
 # The pinned model `ingest fetch` downloads; LOCAL_EMBEDDING_MODEL_REVISION's default in config.py
 # is its commit. Exact names, because a pattern like *.json would also match onnx/tokenizer.json.
@@ -75,7 +81,7 @@ class LocalEmbeddings(Embeddings):
 
 def embedding_model_id(settings: Settings) -> str:
     """The model the index is built with, recorded with it: every query must use the same one."""
-    if settings.embedding_model == LOCAL:
+    if settings.embedding_model == LOCAL_EMBEDDINGS:
         return settings.local_embedding_model
     return settings.embedding_model
 
@@ -86,7 +92,7 @@ def get_embeddings(settings: Settings) -> Embeddings:
 
     Raises EmbeddingConfigError when the cloud model has no key or OFFLINE=1 forbids it.
     """
-    if settings.embedding_model == LOCAL:
+    if settings.embedding_model == LOCAL_EMBEDDINGS:
         return LocalEmbeddings(load_local_model(settings))
     if settings.offline:
         raise EmbeddingConfigError(
@@ -106,6 +112,7 @@ def get_embeddings(settings: Settings) -> Embeddings:
         # The length check downloads tiktoken's encodings and counts with OpenAI's tokenizer;
         # chunks are already sized with CHUNK_TOKENIZER.
         check_embedding_ctx_length=False,
+        chunk_size=CLOUD_BATCH_SIZE,
     )
 
 

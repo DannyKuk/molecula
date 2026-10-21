@@ -15,6 +15,7 @@ ENV_KEYS = [
     "LLM_MAX_RETRIES",
     "EMBEDDING_MODEL",
     "LOCAL_EMBEDDING_MODEL",
+    "RETRIEVAL_SECTION_GROUP_BOOST",
     "OPENFDA_API_KEY",
     "OFFLINE",
     "DATA_DIR",
@@ -108,3 +109,46 @@ def test_missing_env_file_uses_defaults(tmp_path: Path) -> None:
     assert settings.openfda_api_key is None
     assert settings.offline is False
     assert settings.build_dir == settings.data_dir / "build"
+
+
+def test_cloud_embedding_model_gets_an_index_next_to_the_local_one(tmp_path: Path) -> None:
+    local = Settings(_env_file=None, data_dir=tmp_path)
+    cloud = Settings(
+        _env_file=None, data_dir=tmp_path, embedding_model="openai/text-embedding-3-large"
+    )
+
+    assert local.index_dir == tmp_path / "build" / "index" / "chroma"
+    assert cloud.local_index_dir == local.index_dir
+    assert cloud.index_dir == (
+        tmp_path / "build" / "index" / "cloud" / "openai--text-embedding-3-large" / "chroma"
+    )
+
+
+@pytest.mark.parametrize("model", ["openai\text-embedding-3-large", "c:model", ""])
+def test_embedding_model_that_cant_be_a_folder_name_is_rejected(tmp_path: Path, model: str) -> None:
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, data_dir=tmp_path, embedding_model=model)
+
+
+def test_section_group_boost_follows_the_embedding_model(tmp_path: Path) -> None:
+    local = Settings(_env_file=None, data_dir=tmp_path)
+    cloud = Settings(_env_file=None, data_dir=tmp_path, embedding_model="google/gemini-embedding-2")
+
+    assert (local.section_group_boost, cloud.section_group_boost) == (0.15, 0.0)
+
+
+@pytest.mark.parametrize("model", ["local", "google/gemini-embedding-2"])
+def test_set_section_group_boost_wins_over_the_models(tmp_path: Path, model: str) -> None:
+    env_file = write_env(tmp_path, "RETRIEVAL_SECTION_GROUP_BOOST=0.08\n")
+
+    settings = Settings(_env_file=env_file, data_dir=tmp_path, embedding_model=model)
+
+    assert settings.section_group_boost == 0.08
+
+
+def test_empty_section_group_boost_takes_the_models(tmp_path: Path) -> None:
+    env_file = write_env(
+        tmp_path, "EMBEDDING_MODEL=google/gemini-embedding-2\nRETRIEVAL_SECTION_GROUP_BOOST=\n"
+    )
+
+    assert Settings(_env_file=env_file, data_dir=tmp_path).section_group_boost == 0.0

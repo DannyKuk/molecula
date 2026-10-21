@@ -1,5 +1,6 @@
 services:
-  # Downloads the store and the embedding model into ./data when they are missing, then exits.
+  # Downloads the store and the embedding model into ./data when they are missing, then exits;
+  # with a cloud EMBEDDING_MODEL it skips the model and builds that model's index instead.
   # A step of its own, because the 2.3 GB model wouldn't fit in the backend's healthcheck window.
   fetch:
     build: ./backend

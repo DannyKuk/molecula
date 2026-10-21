@@ -80,7 +80,7 @@ def main() -> int:
             embeddings,
             top_k=top_k,
             min_score=settings.retrieval_min_score,
-            section_group_boost=settings.retrieval_section_group_boost,
+            section_group_boost=settings.section_group_boost,
             mode=settings.retrieval_mode,
             keywords=KeywordIndex(settings.keyword_index_path),
         )

@@ -22,6 +22,9 @@ DB_FILE = "molecula.db"
 # Only these go into the archive. The rest of data/build/ stays local: the model weights
 # (fetched from Hugging Face instead), eval output and review notes.
 FOLDERS = ("structures", "index")
+# A cloud model's index stays on the machine that built it: whoever uses that model can build
+# it for themselves (#96).
+CLOUD_INDEXES = "index/cloud"
 RAW_CACHE_TABLE = "http_cache"
 # GitHub's limit for one release asset.
 ASSET_LIMIT_BYTES = 2 * 1024**3
@@ -36,7 +39,7 @@ def export_store(settings: Settings, out_dir: Path, built_at: datetime) -> Store
     `out_dir`, with a manifest next to the archive. The store's database is opened read-only."""
     if not settings.db_path.exists():
         raise ExportError(f"There is no store at {settings.db_path}; run the ingest steps first.")
-    embedding_model = index_model(settings.index_dir)
+    embedding_model = index_model(settings.local_index_dir)
     with tempfile.TemporaryDirectory() as staging:
         db_copy = Path(staging) / DB_FILE
         copy_without_raw_cache(settings.db_path, db_copy)
@@ -127,7 +130,13 @@ def write_archive(path: Path, db_copy: Path, build_dir: Path) -> None:
         archive.add(db_copy, arcname=DB_FILE)
         for folder in FOLDERS:
             if (build_dir / folder).exists():
-                archive.add(build_dir / folder, arcname=folder)
+                archive.add(build_dir / folder, arcname=folder, filter=without_cloud_indexes)
+
+
+def without_cloud_indexes(member: tarfile.TarInfo) -> tarfile.TarInfo | None:
+    if member.name == CLOUD_INDEXES or member.name.startswith(f"{CLOUD_INDEXES}/"):
+        return None
+    return member
 
 
 def run(settings: Settings) -> int:
