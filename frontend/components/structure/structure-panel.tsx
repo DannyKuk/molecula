@@ -16,10 +16,11 @@ import {
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ApiError, getComplex, getStructure } from "@/lib/api";
 import { coordinationBonds } from "@/lib/complex-scene";
+import { type Messages, useMessages } from "@/lib/messages";
 import { structureSubtitle, structureTitle, type StructureTarget } from "@/lib/tool-cards";
 import { useMediaQuery } from "@/lib/use-media-query";
 
-import { ELEMENT_NAMES, legendElements, readout } from "./readout";
+import { legendElements, readout } from "./readout";
 import { COLORS, type SceneData, type ViewMode } from "./scene";
 import { StructureViewer, type StructureViewerHandle } from "./structure-viewer";
 
@@ -29,11 +30,7 @@ type Loaded =
   | { status: "missing" }
   | { status: "failed" };
 
-const MODES: { mode: ViewMode; label: string }[] = [
-  { mode: "molecule", label: "Molecule" },
-  { mode: "site", label: "Binding site" },
-  { mode: "protein", label: "Whole protein" },
-];
+const MODES: ViewMode[] = ["molecule", "site", "protein"];
 
 const ON_SCREEN =
   "rounded-md border border-screen-dim/50 bg-screen-ink/8 text-screen-ink hover:bg-screen-ink/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-screen-ink";
@@ -46,6 +43,8 @@ const TOOL = `${ON_SCREEN} inline-flex size-8 items-center justify-center`;
  * it (#297).
  */
 export function StructurePanel({ target }: { target: StructureTarget }) {
+  const t = useMessages();
+  const s = t.structure;
   const [loaded, setLoaded] = useState<Loaded>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [mode, setMode] = useState<ViewMode>(target.complex ? "site" : "molecule");
@@ -76,20 +75,17 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
     return () => abort.abort();
   }, [target.cid, hasComplex, attempt]);
 
-  const title = structureTitle(target);
-  const subtitle = structureSubtitle(target);
+  const title = structureTitle(target, t);
+  const subtitle = structureSubtitle(target, t);
   const ready = loaded.status === "ready" ? loaded.data : null;
   const complex = ready?.kind === "complex" ? ready.complex : null;
   const switchable = complex !== null;
 
   if (loaded.status === "missing") {
     return (
-      <section aria-label={`3D view of ${target.name}`} className="flex flex-col gap-1">
+      <section aria-label={s.viewOf(target.name)} className="flex flex-col gap-1">
         <span className="font-medium">{title}</span>
-        <p className="text-sm text-ink-2">
-          No 3D model: Molecula has them for small-molecule drugs only, and {target.name} is too
-          large.
-        </p>
+        <p className="text-sm text-ink-2">{s.noModel(target.name)}</p>
       </section>
     );
   }
@@ -104,23 +100,21 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
   const modeSwitch = switchable && (
     <div
       role="group"
-      aria-label="What the 3D view shows"
+      aria-label={s.modeSwitch}
       className="inline-flex rounded-lg border border-screen-dim/50 bg-screen-ink/8 p-0.5"
     >
       {MODES.map((option) => (
         <button
-          key={option.mode}
+          key={option}
           type="button"
-          aria-pressed={mode === option.mode}
-          onClick={() => setMode(option.mode)}
+          aria-pressed={mode === option}
+          onClick={() => setMode(option)}
           className={cn(
             "rounded-md px-2.5 py-1 text-xs focus-visible:outline-2 focus-visible:outline-screen-ink",
-            mode === option.mode
-              ? "bg-screen-ink text-screen"
-              : "text-screen-dim hover:text-screen-ink",
+            mode === option ? "bg-screen-ink text-screen" : "text-screen-dim hover:text-screen-ink",
           )}
         >
-          {option.label}
+          {s.modes[option]}
         </button>
       ))}
     </div>
@@ -128,14 +122,14 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
 
   const replayable = switchable && mode !== "molecule" && !reduceMotion;
 
-  const counts = ready && <Readout lines={readout(ready)} />;
+  const counts = ready && <Readout lines={readout(ready, t)} />;
 
   const legend = ready && (
     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-2">
       <LegendItem
         swatch={<span className="size-2.5 rounded-full" style={fill(COLORS.screen.drug)} />}
       >
-        {target.name} carbons
+        {s.carbons(target.name)}
       </LegendItem>
       {legendElements(ready, mode).map((element) => (
         <LegendItem
@@ -148,7 +142,7 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
             />
           }
         >
-          {ELEMENT_NAMES[element]}
+          {s.elements[element]}
         </LegendItem>
       ))}
       {switchable && mode !== "molecule" && (
@@ -158,7 +152,7 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
               <span className="w-4 border-t-2 border-dashed" style={line(COLORS.screen.hbond)} />
             }
           >
-            hydrogen bond
+            {s.hydrogenBond}
           </LegendItem>
           {coordinationBonds(complex).length > 0 && (
             <LegendItem
@@ -169,38 +163,38 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
                 />
               }
             >
-              metal bond
+              {s.metalBond}
             </LegendItem>
           )}
           {complex.cofactors.length > 0 && (
             <LegendItem
               swatch={<span className="w-4 border-t-2" style={line(COLORS.screen.cofactor)} />}
             >
-              cofactor
+              {s.cofactor}
             </LegendItem>
           )}
           <LegendItem
             swatch={<span className="w-4 border-t-2" style={line(COLORS.screen.pocket)} />}
           >
-            residues within 4 Å
+            {s.pocket}
           </LegendItem>
           {mode === "protein" && (
             <LegendItem
               swatch={<span className="w-4 border-t-4" style={line(COLORS.screen.trace)} />}
             >
-              protein backbone
+              {s.backbone}
             </LegendItem>
           )}
         </>
       )}
-      <span>Drag to turn · scroll to zoom</span>
+      <span>{s.controls}</span>
     </div>
   );
 
   return (
     <section
       data-structure={target.cid}
-      aria-label={`3D view of ${target.name}`}
+      aria-label={s.viewOf(target.name)}
       className="flex scroll-mt-4 flex-col gap-2"
     >
       {target.complex?.caption && (
@@ -212,8 +206,8 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
         heading={heading("div")}
         tools={
           ready && (
-            <ViewTools handle={viewer} replayable={replayable}>
-              <Tool label="Full screen" onClick={() => setFullScreen(true)}>
+            <ViewTools handle={viewer} replayable={replayable} t={t}>
+              <Tool label={s.fullScreen} onClick={() => setFullScreen(true)}>
                 <Maximize2 />
               </Tool>
             </ViewTools>
@@ -228,13 +222,14 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
             ref={viewer}
             data={ready}
             mode={mode}
-            label={`${title}, in 3D`}
+            label={s.inThreeD(title)}
             onError={failed}
             className="size-full"
           />
         ) : (
           <Placeholder
             loaded={loaded}
+            t={t}
             onRetry={() => {
               setLoaded({ status: "loading" });
               setAttempt((n) => n + 1);
@@ -252,8 +247,8 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
             <Screen
               heading={heading(DialogTitle)}
               tools={
-                <ViewTools handle={fullScreenViewer} replayable={replayable}>
-                  <DialogClose className={TOOL} aria-label="Close" title="Close">
+                <ViewTools handle={fullScreenViewer} replayable={replayable} t={t}>
+                  <DialogClose className={TOOL} aria-label={s.close} title={s.close}>
                     <X className="size-4" />
                   </DialogClose>
                 </ViewTools>
@@ -266,7 +261,7 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
                 ref={fullScreenViewer}
                 data={ready}
                 mode={mode}
-                label={`${title}, in 3D`}
+                label={s.inThreeD(title)}
                 onError={failed}
                 className="size-full"
               />
@@ -322,20 +317,22 @@ function Screen({
 function ViewTools({
   handle,
   replayable,
+  t,
   children,
 }: {
   handle: RefObject<StructureViewerHandle | null>;
   replayable: boolean;
+  t: Messages;
   children: ReactNode;
 }) {
   return (
     <>
       {replayable && (
-        <Tool label="Replay binding" onClick={() => handle.current?.replay()}>
+        <Tool label={t.structure.replay} onClick={() => handle.current?.replay()}>
           <Play />
         </Tool>
       )}
-      <Tool label="Reset view" onClick={() => handle.current?.reset()}>
+      <Tool label={t.structure.reset} onClick={() => handle.current?.reset()}>
         <RotateCcw />
       </Tool>
       {children}
@@ -400,19 +397,19 @@ function LegendItem({ swatch, children }: { swatch: ReactNode; children: ReactNo
   );
 }
 
-function Placeholder({ loaded, onRetry }: { loaded: Loaded; onRetry: () => void }) {
+function Placeholder({ loaded, t, onRetry }: { loaded: Loaded; t: Messages; onRetry: () => void }) {
   return (
     <div className="flex size-full items-center justify-center p-6 text-center text-sm text-screen-dim">
-      {loaded.status === "loading" && <p role="status">Loading the 3D structure…</p>}
+      {loaded.status === "loading" && <p role="status">{t.structure.loading}</p>}
       {loaded.status === "failed" && (
         <div role="alert">
-          <p>The 3D structure couldn&apos;t be loaded.</p>
+          <p>{t.structure.failed}</p>
           <button
             type="button"
             className={cn(ON_SCREEN, "mt-2 px-3 py-1 text-sm")}
             onClick={onRetry}
           >
-            Try again
+            {t.structure.tryAgain}
           </button>
         </div>
       )}

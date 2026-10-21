@@ -1,3 +1,5 @@
+import { en, type Messages } from "@/lib/messages";
+
 import type { SceneData, ViewMode } from "./scene";
 
 /**
@@ -5,33 +7,24 @@ import type { SceneData, ViewMode } from "./scene";
  * 4 Å and the hydrogen bonds. Hydrogens aren't counted, since a PDB structure seldom has them and a
  * PubChem conformer has them all, so the same drug gets the same count either way.
  */
-export function readout(data: SceneData): string[] {
+export function readout(data: SceneData, t: Messages = en): string[] {
+  const { atoms, residues, hBonds } = t.structure;
   if (data.kind === "molecule") {
     const elements = sdfElements(data.sdf);
-    return elements === null
-      ? []
-      : [count(elements.filter((element) => element !== "H").length, "atom")];
+    return elements === null ? [] : [atoms(elements.filter((element) => element !== "H").length)];
   }
   const { ligand, pocket, contacts } = data.complex;
   return [
-    count(ligand.atoms.filter((atom) => atom.element !== "H").length, "atom"),
-    count(pocket.length, "residue"),
-    count(contacts.filter((contact) => contact.kind === "hbond").length, "H-bond"),
+    atoms(ligand.atoms.filter((atom) => atom.element !== "H").length),
+    residues(pocket.length),
+    hBonds(contacts.filter((contact) => contact.kind === "hbond").length),
   ];
 }
 
-/** The elements the legend explains beside the drug's carbons, as it names them, in the order of a
- * molecular formula after its carbons: hydrogen, then the rest alphabetically. */
-export const ELEMENT_NAMES: Record<string, string> = {
-  H: "hydrogen",
-  Cl: "chlorine",
-  F: "fluorine",
-  I: "iodine",
-  N: "nitrogen",
-  O: "oxygen",
-  P: "phosphorus",
-  S: "sulfur",
-};
+/** The elements the legend explains beside the drug's carbons, in the order of a molecular formula
+ * after its carbons: hydrogen, then the rest alphabetically. The dictionaries name them
+ * (`structure.elements`). */
+export const LEGEND_ELEMENTS = ["H", "Cl", "F", "I", "N", "O", "P", "S"];
 
 /** Which of those elements the view draws in `mode`: the drug's, and outside Molecule view also the
  * pocket's. */
@@ -44,7 +37,7 @@ export function legendElements(data: SceneData, mode: ViewMode): string[] {
           ...(mode === "molecule" ? [] : data.complex.pocket.flatMap((residue) => residue.atoms)),
         ].map((atom) => atom.element),
   );
-  return Object.keys(ELEMENT_NAMES).filter((element) => drawn.has(element));
+  return LEGEND_ELEMENTS.filter((element) => drawn.has(element));
 }
 
 /** The elements of the atoms in a V2000 molfile, or null if it has no counts line. */
@@ -53,8 +46,4 @@ function sdfElements(sdf: string): string[] | null {
   const atoms = Number.parseInt(lines[3]?.slice(0, 3) ?? "", 10);
   if (Number.isNaN(atoms)) return null;
   return lines.slice(4, 4 + atoms).map((line) => line.trim().split(/\s+/)[3]);
-}
-
-function count(n: number, noun: string): string {
-  return `${n} ${noun}${n === 1 ? "" : "s"}`;
 }

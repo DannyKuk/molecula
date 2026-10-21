@@ -5,25 +5,25 @@ import type { Source } from "@/lib/chat";
 import type { Turn } from "@/lib/chat-turn";
 import { isLabel, sourceEntries } from "@/lib/citations";
 import { coordinationBonds } from "@/lib/complex-scene";
+import { en, type Messages, useMessages } from "@/lib/messages";
 import type { Picture } from "@/lib/printed-pictures";
 import { structureSubtitle, structureTitle, type StructureTarget } from "@/lib/tool-cards";
 
 import { OpenFdaCredit } from "./answer-sources";
 import { Disclaimer } from "./disclaimer";
-import { ELEMENT_NAMES } from "./structure/readout";
 import { COLORS, type Palette } from "./structure/scene";
 
 // The pieces of the printed conversation that the screen doesn't show. The rest of the print
 // design is the `@media print` section of `app/globals.css`.
 
-/** "October 20, 2026". */
-function printedDate(date: Date): string {
-  return date.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+/** "October 20, 2026", or "20. Oktober 2026" for a German reader. */
+function printedDate(date: Date, locale: string): string {
+  return date.toLocaleDateString(locale, { year: "numeric", month: "long", day: "numeric" });
 }
 
 /** "Oct 20, 2026, 14:05": when a question was asked. */
-export function askedTime(epochMs: number): string {
-  return new Date(epochMs).toLocaleString("en-US", {
+export function askedTime(epochMs: number, locale = en.locale): string {
+  return new Date(epochMs).toLocaleString(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -36,16 +36,17 @@ export function askedTime(epochMs: number): string {
 /** The head of the first page: Molecula, how many questions and when it was printed, a ruler,
  * then the chat's title when it was renamed; otherwise it is the first question, which follows. */
 export function PrintedHeader({ title, questions }: { title: string; questions: string[] }) {
-  const count = questions.length;
+  const t = useMessages();
   return (
-    <section aria-label="Printed conversation" className="hidden print:block">
+    <section aria-label={t.print.label} className="hidden print:block">
       <div className="flex items-baseline justify-between gap-4">
         <p className="flex items-center gap-1.5 text-[11pt] font-semibold tracking-tight">
           <SignalLight />
           Molecula
         </p>
         <p className="font-mono text-[7.5pt] tracking-wider text-ink-2 uppercase tabular-nums">
-          {count === 1 ? "1 question" : `${count} questions`} · Printed on {printedDate(new Date())}
+          {t.print.questions(questions.length)} ·{" "}
+          {t.print.printedOn(printedDate(new Date(), t.locale))}
         </p>
       </div>
       <Ruler />
@@ -89,10 +90,13 @@ function Ruler() {
 
 /** Every source of the answer with its number and link, where the evidence panel doesn't print. */
 export function PrintedSources({ sources }: { sources: Source[] }) {
+  const t = useMessages();
   if (sources.length === 0) return null;
   return (
-    <section aria-label="Sources" className="hidden break-inside-avoid-page print:block">
-      <p className="font-mono text-[7pt] tracking-wider text-ink-3 uppercase">Sources</p>
+    <section aria-label={t.sources.sources} className="hidden break-inside-avoid-page print:block">
+      <p className="font-mono text-[7pt] tracking-wider text-ink-3 uppercase">
+        {t.sources.sources}
+      </p>
       <ul className="mt-1 grid grid-cols-[max-content_1fr] border-t border-rule-2">
         {sourceEntries(sources).map(({ refs, where, what, url }) => (
           <li
@@ -125,13 +129,16 @@ export function PrintedStructure({
   target: StructureTarget;
   picture: Picture | undefined;
 }) {
-  const title = structureTitle(target);
+  const t = useMessages();
+  const title = structureTitle(target, t);
   return (
     <figure
-      aria-label={`3D structure of ${target.name}`}
+      aria-label={t.print.structureOf(target.name)}
       className="hidden break-inside-avoid print:block"
     >
-      <p className="font-mono text-[7pt] tracking-wider text-ink-3 uppercase">3D structure</p>
+      <p className="font-mono text-[7pt] tracking-wider text-ink-3 uppercase">
+        {t.print.structure}
+      </p>
       {picture?.status === "ready" ? (
         <div className="mt-1 grid grid-cols-[58%_1fr] gap-x-4 border-t border-rule-2 pt-2">
           <div>
@@ -140,36 +147,37 @@ export function PrintedStructure({
             <img
               data-printed-picture
               src={picture.png}
-              alt={`${title}, as the 3D view first shows it`}
+              alt={t.print.pictureAlt(title)}
               className="block w-full border border-rule"
             />
             <PictureLegend
               name={target.name}
               complex={picture.complex}
               elements={picture.elements}
+              t={t}
             />
           </div>
           <figcaption className="text-[8pt] leading-snug">
             <p className="text-[10pt] font-semibold">{title}</p>
-            <p className="mt-0.5 font-mono text-[7.5pt] text-ink-2">{structureSubtitle(target)}</p>
+            <p className="mt-0.5 font-mono text-[7.5pt] text-ink-2">
+              {structureSubtitle(target, t)}
+            </p>
             {target.complex?.caption && <p className="mt-2">{target.complex.caption}</p>}
           </figcaption>
         </div>
       ) : (
         <p className="mt-1 border-t border-rule-2 pt-1 text-[8pt] text-ink-2">
-          {withoutPicture(target.name, picture)}
+          {withoutPicture(target.name, picture, t)}
         </p>
       )}
     </figure>
   );
 }
 
-function withoutPicture(name: string, picture: Picture | undefined): string {
-  if (picture?.status === "missing") {
-    return `No 3D model: Molecula has them for small-molecule drugs only, and ${name} is too large.`;
-  }
-  if (picture?.status === "failed") return `The 3D picture of ${name} couldn't be drawn.`;
-  return `For the 3D picture of ${name}, print from the chat's export menu ("Print or save as PDF").`;
+function withoutPicture(name: string, picture: Picture | undefined, t: Messages): string {
+  if (picture?.status === "missing") return t.structure.noModel(name);
+  if (picture?.status === "failed") return t.print.pictureFailed(name);
+  return t.print.printFromMenu(name);
 }
 
 /** The colours of the picture, as in the 3D view's legend: the drug's carbons and `elements`, and
@@ -179,44 +187,58 @@ function PictureLegend({
   name,
   complex,
   elements,
+  t,
 }: {
   name: string;
   complex: Complex | null;
   elements: string[];
+  t: Messages;
 }) {
   const colors: Palette = COLORS.paper;
   return (
-    <ul aria-label="Colours" className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[7.5pt]">
-      <LegendItem label={`${name} carbons`}>
+    <ul
+      aria-label={t.print.colours}
+      className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[7.5pt]"
+    >
+      <LegendItem label={t.structure.carbons(name)}>
         <circle cx="8" cy="4" r="3.5" fill={colors.drug} stroke="#16a34a" strokeWidth="0.75" />
       </LegendItem>
       {elements.map((element) => (
-        <LegendItem key={element} label={ELEMENT_NAMES[element]}>
+        <LegendItem key={element} label={t.structure.elements[element]}>
           <circle cx="8" cy="4" r="3" fill={colors.elements[element]} />
         </LegendItem>
       ))}
-      {complex && <BindingSiteLegend complex={complex} colors={colors} />}
+      {complex && <BindingSiteLegend complex={complex} colors={colors} t={t} />}
     </ul>
   );
 }
 
-function BindingSiteLegend({ complex, colors }: { complex: Complex; colors: Palette }) {
+function BindingSiteLegend({
+  complex,
+  colors,
+  t,
+}: {
+  complex: Complex;
+  colors: Palette;
+  t: Messages;
+}) {
+  const s = t.structure;
   return (
     <>
-      <LegendItem label="hydrogen bond">
+      <LegendItem label={s.hydrogenBond}>
         <DashedLine color={colors.hbond} />
       </LegendItem>
       {coordinationBonds(complex).length > 0 && (
-        <LegendItem label="metal bond">
+        <LegendItem label={s.metalBond}>
           <DashedLine color={colors.coordination} />
         </LegendItem>
       )}
       {complex.cofactors.length > 0 && (
-        <LegendItem label="cofactor">
+        <LegendItem label={s.cofactor}>
           <line x1="0" y1="4" x2="16" y2="4" stroke={colors.cofactor} strokeWidth="2" />
         </LegendItem>
       )}
-      <LegendItem label="residues within 4 Å">
+      <LegendItem label={s.pocket}>
         <line x1="0" y1="4" x2="16" y2="4" stroke={colors.pocket} strokeWidth="2.5" />
       </LegendItem>
     </>
@@ -241,10 +263,11 @@ function DashedLine({ color }: { color: string }) {
 /** The end of the printed conversation: the disclaimer, and the openFDA credit once when an answer
  * used label text. */
 export function PrintedEnd({ turns }: { turns: Turn[] }) {
+  const t = useMessages();
   const usedLabels = turns.some((turn) => turn.sources?.some(isLabel));
   return (
     <section
-      aria-label="End of the printed conversation"
+      aria-label={t.print.end}
       className="mt-10 hidden break-inside-avoid border-t border-rule-2 pt-3 text-[8pt] print:block [&_p]:text-[8pt]"
     >
       <Disclaimer />

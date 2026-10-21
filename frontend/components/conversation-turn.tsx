@@ -156,7 +156,7 @@ function TurnLabel({
       Q-{String(number).padStart(2, "0")} · {t.turn.query}
       {askedAt !== undefined && (
         <span className="ml-auto hidden text-ink-3 tabular-nums print:inline">
-          {askedTime(askedAt)}
+          {askedTime(askedAt, t.locale)}
         </span>
       )}
     </p>
