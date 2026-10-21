@@ -269,6 +269,21 @@ def test_without_a_chat_model_the_label_search_is_off_and_the_routes_still_work(
     assert loaded_models == []
 
 
+def test_startup_refuses_a_cloud_embedding_model_offline(
+    make_settings: Callable[..., Settings], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cloud = make_settings(offline=True, embedding_model="openai/text-embedding-3-large")
+    monkeypatch.setattr(main, "get_settings", lambda: cloud)
+    monkeypatch.setattr(main, "get_chat_model", lambda settings: ScriptedChatModel(script=[]))
+    build_index(cloud, "openai/text-embedding-3-large")
+
+    with (
+        pytest.raises(rag_embeddings.EmbeddingConfigError, match="OFFLINE=1 allows no external"),
+        TestClient(app),
+    ):
+        pass
+
+
 def test_startup_refuses_an_index_built_with_another_embedding_model(
     settings: Settings, loaded_models: list[str]
 ) -> None:

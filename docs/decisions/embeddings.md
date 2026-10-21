@@ -153,7 +153,8 @@ bge-m3 at its boost of 0.15, for comparison: 0.91, 0.759, 0.70 and 0.97.
 - **Hard questions remain.** "Does Nexium 24HR contain sugar?" (the label says sucrose) is missed by every model; its top chunks describe prescription Nexium.
 - **Gemini's task type is not passed.** OpenRouter's OpenAI-style endpoint has no field for it, so gemini-embedding-2 runs below its best.
 - **English questions only.** bge-m3's and gemini-embedding-2's multilingual strength is the model cards' claim, not measured here; German questions come with #46.
-- **The cloud index was built on Windows.** A copy to a Linux server relies on Chroma's files moving between the two, as the store release already does.
+- **The cloud index was built on Windows and checked once on Linux.** In the backend's Docker image, `fetch` found the copied Gemini index and built nothing, and the backend answered a German question from it with citations (2026-10-21). Other Chroma versions weren't tried.
+- **The boost was measured with gpt-oss-20b's extractions.** The cloud setup extracts the filter with Jev. At boost 0 the extracted groups don't enter the ranking, so only the drug filter matters, which Jev fills as well as gpt-oss-20b ([label filter](../evals/label-filter-decision-2026-10-19.md)).
 - **One machine.** Build times and GPU memory are for the RX 7900 XTX on Windows; CPU query times for the Core Ultra 7 265K.
 
 ## Reproduce
