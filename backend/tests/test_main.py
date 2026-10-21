@@ -95,6 +95,14 @@ def test_app_starts_without_a_store_and_supports_no_drug(settings: Settings) -> 
     assert not settings.db_path.exists()
 
 
+@pytest.mark.usefixtures("settings")
+def test_without_a_store_or_chat_the_embedding_setup_is_still_reported() -> None:
+    with TestClient(app) as client:
+        setup = client.get("/retrieval").json()
+
+    assert setup == {"embedding_model": "BAAI/bge-m3", "local": True, "section_group_boost": 0.15}
+
+
 def test_routes_serve_the_built_store(settings: Settings) -> None:
     conn = connect(settings.db_path)
     CompoundStore(conn).save(

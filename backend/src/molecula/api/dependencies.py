@@ -6,6 +6,7 @@ from molecula.agent.choices import ModelChoices
 from molecula.guard.chat import GuardedChat
 from molecula.guard.limits import ChatLimited, ChatLimits
 from molecula.schemas.chat import ChatModel
+from molecula.schemas.retrieval import EmbeddingSetup
 from molecula.services.complexes import ComplexService
 from molecula.services.compounds import CompoundService
 from molecula.services.knowledge_base import KnowledgeBase
@@ -61,6 +62,15 @@ def knowledge_base(request: Request) -> KnowledgeBase:
 
 
 KnowledgeBaseDep = Annotated[KnowledgeBase, Depends(knowledge_base)]
+
+
+def embedding_setup(request: Request) -> EmbeddingSetup:
+    """The embedding setup the settings name, read at startup. Tests replace it with an
+    override."""
+    return request.app.state.embedding_setup
+
+
+EmbeddingSetupDep = Annotated[EmbeddingSetup, Depends(embedding_setup)]
 
 
 def label_updater(request: Request) -> LabelUpdater:

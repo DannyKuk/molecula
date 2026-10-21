@@ -14,6 +14,7 @@ from molecula.config import (
     OPENROUTER_BASE_URL,
     Settings,
 )
+from molecula.schemas.retrieval import EmbeddingSetup
 
 if TYPE_CHECKING:
     from sentence_transformers import SentenceTransformer
@@ -84,6 +85,15 @@ def embedding_model_id(settings: Settings) -> str:
     if settings.embedding_model == LOCAL_EMBEDDINGS:
         return settings.local_embedding_model
     return settings.embedding_model
+
+
+def embedding_setup(settings: Settings) -> EmbeddingSetup:
+    """What the settings say the search runs on, whether or not the index is there to search."""
+    return EmbeddingSetup(
+        embedding_model=embedding_model_id(settings),
+        local=settings.embedding_model == LOCAL_EMBEDDINGS,
+        section_group_boost=settings.section_group_boost,
+    )
 
 
 def get_embeddings(settings: Settings) -> Embeddings:

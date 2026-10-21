@@ -5,6 +5,7 @@ import {
   ApiError,
   getComplex,
   getDrugs,
+  getEmbeddingSetup,
   getStats,
   getHealth,
   getStructure,
@@ -138,5 +139,19 @@ describe("getStats", () => {
 
     await expect(getStats(7)).resolves.toEqual(STATS);
     expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/stats?days=7`, { signal: undefined });
+  });
+});
+
+describe("getEmbeddingSetup", () => {
+  it("returns the instance's embedding model and section bonus", async () => {
+    const setup = {
+      embedding_model: "google/gemini-embedding-2",
+      local: false,
+      section_group_boost: 0,
+    };
+    const fetchMock = stubFetch(Response.json(setup));
+
+    await expect(getEmbeddingSetup()).resolves.toEqual(setup);
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/retrieval`, { signal: undefined });
   });
 });

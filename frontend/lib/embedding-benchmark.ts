@@ -1,3 +1,5 @@
+import type { EmbeddingSetup } from "./api";
+
 export type Scope = "in_drug" | "whole_index";
 export type Rank = number | null;
 export type ModelGroup = "cpu" | "gpu" | "cloud";
@@ -45,6 +47,8 @@ export type SectionGroup = { id: string; name: string; questions: Question[] };
 export type Benchmark = {
   meta: EmbeddingRun["meta"];
   models: Model[];
+  /** The model the instance embeds with, or null when this run didn't measure it. */
+  app: Model | null;
   questions: Question[];
   sections: SectionGroup[];
   ranks: EmbeddingRun["ranks"];
@@ -52,7 +56,10 @@ export type Benchmark = {
   chunks: EmbeddingRun["chunks"];
 };
 
-export const APP_MODEL = "bge-m3";
+/** The instance's embedding model as the backend names it (`GET /retrieval`), and whether it runs
+ * in-process. Until the backend answers, and when it doesn't, the page assumes the local setup. */
+export type InstanceModel = Pick<EmbeddingSetup, "embedding_model" | "local">;
+export const LOCAL_SETUP: InstanceModel = { embedding_model: "BAAI/bge-m3", local: true };
 export const TOP_K = 5;
 export const SCOPES: Record<Scope, string> = {
   in_drug: "Within the drug",
@@ -119,14 +126,25 @@ export function groupBySection(questions: Question[]): SectionGroup[] {
     }));
 }
 
-export function loadBenchmark(run: EmbeddingRun): Benchmark {
+/** The run's entry for the instance's model. Variants of one model (bge-small with and without the
+ * instruction) share its id, so the first one, run as the model ships, stands for it. */
+function instanceLabel(run: EmbeddingRun, instance: InstanceModel): string | undefined {
+  return run.models.find(
+    (m) => m.model === instance.embedding_model && (modelGroup(m) !== "cloud") === instance.local,
+  )?.label;
+}
+
+export function loadBenchmark(run: EmbeddingRun, instance: InstanceModel = LOCAL_SETUP): Benchmark {
   const questions = run.questions.map((q, index) => ({ ...q, index }));
+  const appLabel = instanceLabel(run, instance);
+  const models = run.models.map((m) => {
+    const [name, short] = MODEL_NAMES[m.label] ?? [m.label, m.label];
+    return { ...m, name, short, group: modelGroup(m), isApp: m.label === appLabel };
+  });
   return {
     meta: run.meta,
-    models: run.models.map((m) => {
-      const [name, short] = MODEL_NAMES[m.label] ?? [m.label, m.label];
-      return { ...m, name, short, group: modelGroup(m), isApp: m.label === APP_MODEL };
-    }),
+    models,
+    app: models.find((m) => m.isApp) ?? null,
     questions,
     sections: groupBySection(questions),
     ranks: run.ranks,
@@ -212,8 +230,10 @@ export function topPassages(benchmark: Benchmark, question: Question): TopPassag
 
 /** A question worth opening first: the app's model misses it and most others find it. */
 export function showcaseQuestion(benchmark: Benchmark): number {
+  const { app } = benchmark;
+  if (!app) return 0;
   const missedByApp = benchmark.questions.filter(
-    (q) => !isHit(benchmark.ranks[APP_MODEL].in_drug[q.index]),
+    (q) => !isHit(benchmark.ranks[app.label].in_drug[q.index]),
   );
   const found = (q: Question) =>
     benchmark.models.filter((m) => isHit(benchmark.ranks[m.label].in_drug[q.index])).length;

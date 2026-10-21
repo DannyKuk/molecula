@@ -20,9 +20,10 @@ export const TINY_RUN: EmbeddingRun = {
   meta: { run: "tiny", date: "2026-10-12", questions: 4, chunks: 3, top_k: 10 },
   models: [
     model("bge-small", { cpu_query_ms: 8 }),
-    model("bge-m3", {}),
+    model("bge-m3", { model: "BAAI/bge-m3" }),
     model("qwen3-8b", { cpu_query_ms: null, query_ms: 39, weights_mb: 15100 }),
     model("cloud:gemini-embedding-2", {
+      model: "google/gemini-embedding-2",
       query_device: "cloud",
       cpu_query_ms: null,
       query_ms: 314,

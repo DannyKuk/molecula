@@ -10,6 +10,14 @@ export type ChatModel = {
   local: boolean;
 };
 
+/** The model the instance embeds the labels and questions with, and the bonus a passage from the
+ * guessed section group gets (`EmbeddingSetup` in `backend/src/molecula/schemas/retrieval.py`). */
+export type EmbeddingSetup = {
+  embedding_model: string;
+  local: boolean;
+  section_group_boost: number;
+};
+
 /**
  * Who checks the messages (#363): the decision model (Jev), LOCAL_LLM_MODEL (gpt-oss-20b), or the
  * model that writes the answer (`CheckerId` in `backend/src/molecula/schemas/chat.py`).
@@ -207,6 +215,11 @@ export function getHealth(signal?: AbortSignal): Promise<HealthResponse> {
 /** The model that writes the answers; fails with 503 while the chat is off. */
 export function getChatModel(signal?: AbortSignal): Promise<ChatModel> {
   return getJson<ChatModel>("/chat/model", signal);
+}
+
+/** The embedding setup the instance searches with; answers also while the chat is off. */
+export function getEmbeddingSetup(signal?: AbortSignal): Promise<EmbeddingSetup> {
+  return getJson<EmbeddingSetup>("/retrieval", signal);
 }
 
 /** The models a user may pick to write the answers; fails with 503 while the chat is off. */

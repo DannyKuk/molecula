@@ -61,6 +61,33 @@ describe("modelGroup", () => {
   });
 });
 
+describe("loadBenchmark", () => {
+  const appLabels = (embedding_model: string, local: boolean) =>
+    loadBenchmark(run as EmbeddingRun, { embedding_model, local })
+      .models.filter((m) => m.isApp)
+      .map((m) => m.label);
+
+  it("marks the model the instance embeds with, by the id the backend reports", () => {
+    expect(appLabels("BAAI/bge-m3", true)).toEqual(["bge-m3"]);
+    expect(appLabels("google/gemini-embedding-2", false)).toEqual(["cloud:gemini-embedding-2"]);
+    expect(REAL.app?.label).toBe("bge-m3");
+  });
+
+  it("marks one variant of a model run with and without the instruction", () => {
+    expect(appLabels("BAAI/bge-small-en-v1.5", true)).toEqual(["bge-small"]);
+  });
+
+  it("marks nothing for a model the run didn't measure, or measured only elsewhere", () => {
+    const unmeasured = loadBenchmark(run as EmbeddingRun, {
+      embedding_model: "mistralai/mistral-embed",
+      local: false,
+    });
+    expect(unmeasured.app).toBeNull();
+    expect(showcaseQuestion(unmeasured)).toBe(0);
+    expect(appLabels("google/gemini-embedding-2", true)).toEqual([]);
+  });
+});
+
 describe("groupBySection", () => {
   it("orders the groups as a label reads, puts unknown ones last and counts hits per group", () => {
     const benchmark = loadBenchmark(TINY_RUN);

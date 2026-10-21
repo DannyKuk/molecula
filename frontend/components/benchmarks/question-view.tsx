@@ -5,7 +5,6 @@ import { CircleCheck, CircleX } from "lucide-react";
 import { useState } from "react";
 
 import {
-  APP_MODEL,
   type Benchmark,
   type Question,
   type Scope,
@@ -52,7 +51,7 @@ export function QuestionView({
   const found = benchmark.models.filter((m) =>
     isHit(benchmark.ranks[m.label][scope][question.index]),
   ).length;
-  const appRank = benchmark.ranks[APP_MODEL][scope][question.index];
+  const { app } = benchmark;
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
@@ -88,8 +87,9 @@ export function QuestionView({
         <strong>
           {found} of {benchmark.models.length} models
         </strong>{" "}
-        put a passage with the answer in their top 5 ({SCOPES[scope].toLowerCase()}). bge-m3, the
-        model the app uses: {rankText(appRank)}.
+        put a passage with the answer in their top 5 ({SCOPES[scope].toLowerCase()}).
+        {app &&
+          ` ${app.name}, the model the app uses: ${rankText(benchmark.ranks[app.label][scope][question.index])}.`}
       </p>
       <div className="flex flex-col gap-2.5">
         <h3 className="font-semibold">What each model ranked first</h3>

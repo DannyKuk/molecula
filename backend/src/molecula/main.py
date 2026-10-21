@@ -30,7 +30,7 @@ from molecula.agent.llm import (
     local_model_names,
 )
 from molecula.agent.tool_registry import build_tools, tools_over_mcp
-from molecula.api import chat, drugs, health, labels, stats
+from molecula.api import chat, drugs, health, labels, retrieval, stats
 from molecula.config import Settings, get_settings
 from molecula.guard.chat import GuardedChat
 from molecula.guard.limits import ChatLimited, ChatLimits, DailyCostCap, RequestLimiter
@@ -40,7 +40,7 @@ from molecula.guard.validation import readable_validation_error
 from molecula.ingest.index import DrugIndexer
 from molecula.ingest.update import update_store
 from molecula.mcp.server import build_server
-from molecula.rag.embeddings import embedding_model_id, get_embeddings
+from molecula.rag.embeddings import embedding_model_id, embedding_setup, get_embeddings
 from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
 from molecula.schemas.chat import ChatModel, Checker, CheckerId
@@ -354,6 +354,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.target_service = services.targets
     app.state.label_service = services.labels
     app.state.complex_service = services.complexes
+    app.state.embedding_setup = embedding_setup(settings)
     app.state.label_retriever = None
     app.state.filter_extractor = None
     app.state.chat_agent = None
@@ -434,3 +435,4 @@ app.include_router(drugs.router)
 app.include_router(chat.router)
 app.include_router(stats.router)
 app.include_router(labels.router)
+app.include_router(retrieval.router)

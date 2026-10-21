@@ -7,10 +7,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogTitle } from "@/components/ui/dialog";
 import { SheetContent } from "@/components/ui/sheet";
+import { getEmbeddingSetup } from "@/lib/api";
 import {
-  APP_MODEL,
+  type Benchmark,
   type EmbeddingRun,
   GROUP_NAMES,
+  type InstanceModel,
+  LOCAL_SETUP,
   type Scope,
   SCOPES,
   loadBenchmark,
@@ -32,12 +35,63 @@ type View =
 
 const MUTED = "text-ink-2";
 
-/** The embedding comparison: the hit grid with a detail panel beside it (a sheet on a phone),
- * then the recall curves, the costs and how it was measured. */
+/** The embedding comparison, with the model this instance embeds with marked as the app's. */
 export function EmbeddingBenchmark({ run }: { run: EmbeddingRun }) {
-  const benchmark = useMemo(() => loadBenchmark(run), [run]);
+  const [instance, setInstance] = useState<InstanceModel>(LOCAL_SETUP);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getEmbeddingSetup(controller.signal)
+      .then(setInstance)
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+
+  // Keyed so that another model opens on its own showcase question.
+  return <BenchmarkView key={instance.embedding_model} run={run} instance={instance} />;
+}
+
+function InstanceSentence({
+  benchmark,
+  instance,
+}: {
+  benchmark: Benchmark;
+  instance: InstanceModel;
+}) {
+  const { app } = benchmark;
+  if (!app) {
+    return (
+      <>This instance embeds with {instance.embedding_model}, which this run didn&apos;t measure.</>
+    );
+  }
+  const top5 = percent(app.recall_at_5.in_drug);
+  if (app.group === "cloud") {
+    const local = benchmark.models.find(
+      (m) => m.model === LOCAL_SETUP.embedding_model && m.group !== "cloud",
+    );
+    return (
+      <>
+        This instance uses {app.name}, a cloud model, which gets {top5} of the questions into its
+        top 5.
+        {local &&
+          ` Run on its own, the app uses ${local.name} instead, which gets ${percent(local.recall_at_5.in_drug)} on an ordinary CPU.`}
+      </>
+    );
+  }
+  return (
+    <>
+      The app uses {app.name}, which gets {top5} of the questions into its top 5
+      {app.group === "cpu" ? " on an ordinary CPU" : " on a graphics card"}; the best GPU and cloud
+      models reach 97–98%.
+    </>
+  );
+}
+
+/** The hit grid with a detail panel beside it (a sheet on a phone), then the recall curves, the
+ * costs and how it was measured. */
+function BenchmarkView({ run, instance }: { run: EmbeddingRun; instance: InstanceModel }) {
+  const benchmark = useMemo(() => loadBenchmark(run, instance), [run, instance]);
   const order = benchmark.sections.flatMap((s) => s.questions.map((q) => q.index));
-  const app = benchmark.models.find((m) => m.isApp)!;
   const [scope, setScope] = useState<Scope>("in_drug");
   const [view, setView] = useState<View>(() => ({
     kind: "question",
@@ -108,8 +162,7 @@ export function EmbeddingBenchmark({ run }: { run: EmbeddingRun }) {
         </h1>
         <p className={MUTED}>
           Every square is one question asked of one model, shaded by where the passage with the
-          answer ranked. The app uses bge-m3, which gets {percent(app.recall_at_5.in_drug)} of the
-          questions into its top 5 on an ordinary CPU; the best GPU and cloud models reach 97–98%.
+          answer ranked. <InstanceSentence benchmark={benchmark} instance={instance} />
         </p>
       </div>
 
@@ -216,8 +269,7 @@ export function EmbeddingBenchmark({ run }: { run: EmbeddingRun }) {
                   >
                     <span className="truncate text-[0.8125rem] font-semibold">{m.name}</span>
                     <span className={cn("text-[0.72rem] tabular-nums", MUTED)}>
-                      {percent(m.recall_at_5.in_drug)} in top 5
-                      {m.label === APP_MODEL && " · the app's model"}
+                      {percent(m.recall_at_5.in_drug)} in top 5{m.isApp && " · the app's model"}
                     </span>
                     <ModelRecall benchmark={benchmark} model={m} height={120} />
                   </button>
