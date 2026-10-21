@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { StrictMode } from "react";
+import { Activity, StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CHAT_FAILED, CHAT_UNAVAILABLE } from "@/lib/chat";
@@ -750,6 +750,47 @@ describe("Chat", () => {
     expect(await screen.findByText("Imatinib blocks BCR-ABL.")).toBeDefined();
     expect(screen.getAllByText("How does imatinib work?", IN_CONVERSATION)).toHaveLength(1);
     expect(screen.queryByText("Stopped.")).toBeNull();
+  });
+
+  it("doesn't ask the question it was opened with again when Back shows the hidden chat", async () => {
+    const stream = stubChatStream();
+    const chat = (mode: "visible" | "hidden") => (
+      <Activity mode={mode}>
+        <Chat initialQuestion="How does imatinib work?" />
+      </Activity>
+    );
+    const page = render(chat("visible"));
+    await act(async () => {});
+    await streamed(() => stream.send(token("Imatinib blocks BCR-ABL.") + DONE));
+    await screen.findByText("Imatinib blocks BCR-ABL.");
+
+    page.rerender(chat("hidden"));
+    page.rerender(chat("visible"));
+    await act(async () => {});
+
+    expect(stream.fetchMock).toHaveBeenCalledOnce();
+    expect(screen.getByText("Imatinib blocks BCR-ABL.")).toBeDefined();
+  });
+
+  it("asks the question it was opened with again when leaving the chat cut its answer off", async () => {
+    const stream = stubChatStream();
+    const chat = (mode: "visible" | "hidden") => (
+      <Activity mode={mode}>
+        <Chat initialQuestion="How does imatinib work?" />
+      </Activity>
+    );
+    const page = render(chat("visible"));
+    await act(async () => {});
+    await streamed(() => stream.send(token("Imatinib blocks")));
+
+    page.rerender(chat("hidden"));
+    page.rerender(chat("visible"));
+    await act(async () => {});
+    await streamed(() => stream.send(token("Imatinib blocks BCR-ABL.") + DONE));
+
+    expect(stream.fetchMock).toHaveBeenCalledTimes(2);
+    expect(await screen.findByText("Imatinib blocks BCR-ABL.")).toBeDefined();
+    expect(screen.getAllByText("How does imatinib work?", IN_CONVERSATION)).toHaveLength(1);
   });
 
   it("keeps the disclaimer in view and shows example questions on the empty chat", () => {

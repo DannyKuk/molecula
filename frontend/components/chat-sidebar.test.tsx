@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { Activity } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ChatHistory } from "@/lib/chat-history";
@@ -380,6 +381,35 @@ describe("Answers in the background", () => {
       ]);
     });
     expect(stored.size).toBe(2);
+    expect(stored.get("c0")?.turns).toMatchObject([{ answer: `About ${SILDENAFIL}.` }]);
+  });
+
+  it("asks a linked question cut off by leaving again in its own chat, not the one on screen", async () => {
+    const stream = stubChatStream();
+    const { history, stored } = historyWith([SILDENAFIL]);
+    const chat = (mode: "visible" | "hidden") => (
+      <Activity mode={mode}>
+        <Chat history={history} initialQuestion={IMATINIB} />
+      </Activity>
+    );
+    const page = render(chat("visible"));
+    await act(async () => stream.send(token("Imatinib blocks")));
+    fireEvent.click(expandSidebar().getByRole("button", { name: SILDENAFIL }));
+    expect(await screen.findByText(`About ${SILDENAFIL}.`)).toBeDefined();
+
+    page.rerender(chat("hidden"));
+    page.rerender(chat("visible"));
+    await act(async () => stream.send(token("Imatinib blocks BCR-ABL.") + DONE));
+
+    expect(stream.fetchMock).toHaveBeenCalledTimes(2);
+    expect(conversationText()).toContain(`About ${SILDENAFIL}.`);
+    expect(conversationText()).not.toContain("Imatinib");
+    await waitFor(() => {
+      const answered = [...stored.values()].find((c) => c.title === IMATINIB);
+      expect(answered?.turns).toMatchObject([
+        { answer: "Imatinib blocks BCR-ABL.", state: "done" },
+      ]);
+    });
     expect(stored.get("c0")?.turns).toMatchObject([{ answer: `About ${SILDENAFIL}.` }]);
   });
 

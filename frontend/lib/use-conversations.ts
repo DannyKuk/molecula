@@ -119,13 +119,8 @@ export function useConversations(
   );
 
   const askIn = useCallback(
-    (question: string, earlier: Turn[]) => {
-      const asked = {
-        id: (shownIdRef.current ??= newConversationId()),
-        question,
-        earlier,
-        askedAt: Date.now(),
-      };
+    (question: string, earlier: Turn[], id = (shownIdRef.current ??= newConversationId())) => {
+      const asked = { id, question, earlier, askedAt: Date.now() };
       setSent((count) => count + 1);
       if (!running.current) {
         answerInLine(asked);
@@ -140,8 +135,16 @@ export function useConversations(
     [answerInLine, setTurnsOf, showBusy],
   );
 
+  // Next.js hides the page on leaving instead of unmounting it, so this runs again when Back shows
+  // it (#395), as it does twice in a row under StrictMode. Leaving stops a running answer, so the
+  // question is asked again only when its answer was cut off before it ended.
+  const linkedChatId = useRef<string | null>(null);
   useEffect(() => {
-    if (initialQuestion) askIn(initialQuestion, []);
+    if (!initialQuestion) return;
+    const linkedId = linkedChatId.current;
+    if (linkedId && !pending(chats.current.get(linkedId)?.[0])) return;
+    askIn(initialQuestion, [], linkedId ?? undefined);
+    linkedChatId.current ??= shownIdRef.current;
   }, [initialQuestion, askIn]);
 
   /** Takes the chat's question out of the line; false when it has none waiting. */
