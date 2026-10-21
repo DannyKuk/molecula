@@ -85,7 +85,8 @@ class CompoundStore:
         with self._lock:
             row = self._conn.execute(
                 f"SELECT {compound_columns}, synonym.alias, synonym.kind"
-                " FROM synonym JOIN compound USING (cid) WHERE synonym.alias = ?"
+                " FROM synonym JOIN compound USING (cid)"
+                " WHERE casefold(synonym.alias) = casefold(?)"
                 " ORDER BY CASE synonym.kind WHEN 'name' THEN 0 WHEN 'alias' THEN 1 ELSE 2 END,"
                 " synonym.rowid LIMIT 1",
                 (alias,),
@@ -94,7 +95,8 @@ class CompoundStore:
                 row = self._conn.execute(
                     f"SELECT {compound_columns}, label.brand, 'brand'"
                     " FROM label JOIN compound USING (cid)"
-                    " WHERE replace(label.brand, '-', ' ') = replace(?, '-', ' ') COLLATE NOCASE"
+                    " WHERE casefold(replace(label.brand, '-', ' '))"
+                    " = casefold(replace(?, '-', ' '))"
                     " ORDER BY label.cid LIMIT 1",
                     (alias,),
                 ).fetchone()

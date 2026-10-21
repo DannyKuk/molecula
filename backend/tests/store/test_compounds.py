@@ -114,6 +114,27 @@ def test_find_matches_an_alias_ignoring_case(store: CompoundStore) -> None:
     assert match == SynonymMatch(CAFFEINE, "Guaranine", "pubchem")
 
 
+@pytest.mark.parametrize(
+    ("stored", "name"),
+    [("Östradiol", "östradiol"), ("Östradiol", "ÖSTRADIOL"), ("Valproinsäure", "VALPROINSÄURE")],
+)
+def test_find_ignores_the_case_of_letters_outside_a_to_z(
+    store: CompoundStore, stored: str, name: str
+) -> None:
+    store.save(CAFFEINE, [Synonym("caffeine", "name"), Synonym(stored, "alias")], FIRST_FETCH)
+
+    assert store.find(name) == SynonymMatch(CAFFEINE, stored, "alias")
+
+
+def test_find_matches_a_label_brand_ignoring_the_case_of_letters_outside_a_to_z(
+    conn: sqlite3.Connection, store: CompoundStore
+) -> None:
+    store.save(CAFFEINE, [Synonym("caffeine", "name")], FIRST_FETCH)
+    save_label(conn, CAFFEINE.cid, "Wachmacher Ölig")
+
+    assert store.find("wachmacher-ölig") == SynonymMatch(CAFFEINE, "Wachmacher Ölig", "brand")
+
+
 def test_find_prefers_a_scope_name_over_another_compounds_synonym(store: CompoundStore) -> None:
     store.save(CAFFEINE, [Synonym("caffeine", "name"), Synonym("theine", "pubchem")], FIRST_FETCH)
     theine = replace(CAFFEINE, cid=99, name="theine")
