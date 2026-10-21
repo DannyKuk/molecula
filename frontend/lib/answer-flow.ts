@@ -5,12 +5,12 @@ export const WHO: Record<Who, { label: string; meaning: string }> = {
   model: {
     label: "Chat model",
     meaning:
-      "gpt-oss-20b, the AI that reads and writes text. It is asked to decide or write something.",
+      "The AI that reads and writes text, gpt-oss-20b in this run. It is asked to decide or write something.",
   },
   embedder: {
     label: "Embedder",
     meaning:
-      "bge-m3, a smaller AI that only turns text into numbers so meanings can be compared. It never writes.",
+      "A smaller AI, bge-m3 in this run, that only turns text into numbers so meanings can be compared. It never writes.",
   },
   code: { label: "Code", meaning: "Our own rules. Same input, same result, every time." },
 };
@@ -65,7 +65,7 @@ export const FLOW_STEPS: FlowStep[] = [
     number: "3",
     title: "Narrow the search to the drug",
     who: "code",
-    text: "The code looks the drug name up in our store, so “Gleevec” becomes imatinib, and only that drug's labels are searched (here, 2 ibuprofen labels). A section name that doesn't exist is dropped.",
+    text: "The code looks the drug name up in our store, so “Gleevec” becomes imatinib, and only that drug's labels are searched (here, 2 ibuprofen labels). The section must be one of the label's real sections: a made-up name is sent back to the chat model as an error and never reaches the search.",
     aside: "Two drugs are searched one by one, and each keeps its own top 5.",
     passes: "ibuprofen's labels, cut into passages and tagged by section",
   },
