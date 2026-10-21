@@ -83,7 +83,10 @@ describe("cardSteps", () => {
     { text: "Checking the question" },
     properties("ibuprofen", IBUPROFEN_PROPERTIES),
     properties("naproxen", NAPROXEN_PROPERTIES),
-    { text: "Searching the ibuprofen label", tool: run("search_labels", IMATINIB_LABELS) },
+    {
+      text: "Searching the ibuprofen label",
+      tool: run("search_labels", IMATINIB_LABELS, { drug: "ibuprofen" }),
+    },
   ];
 
   it("merges properties looked up drug by drug into one table at the first lookup", () => {

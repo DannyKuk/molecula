@@ -1,3 +1,4 @@
+import { useMessages } from "@/lib/messages";
 import type { DrugComplex, NoComplex } from "@/lib/tool-cards";
 
 import { ShowMore } from "./show-more";
@@ -8,6 +9,7 @@ const SHOWN_CONTACTS = 8;
 
 /** A drug's reviewed complex: what holds it, the hydrogen bonds and the residues around it. */
 export function ComplexCard({ result }: { result: DrugComplex }) {
+  const t = useMessages();
   return (
     <>
       {result.caption && (
@@ -18,29 +20,29 @@ export function ComplexCard({ result }: { result: DrugComplex }) {
         </p>
       )}
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
-        <dt className="text-muted-foreground">Target</dt>
+        <dt className="text-muted-foreground">{t.cards.target}</dt>
         <dd>{result.target ?? "–"}</dd>
-        <dt className="text-muted-foreground">Organism</dt>
+        <dt className="text-muted-foreground">{t.cards.organism}</dt>
         <dd>{result.organism ?? "–"}</dd>
-        <dt className="text-muted-foreground">Structure</dt>
+        <dt className="text-muted-foreground">{t.cards.structure}</dt>
         <dd>
           <SourceLink href={result.source_url}>PDB {result.pdb_id}</SourceLink>
         </dd>
-        <dt className="text-muted-foreground">Drug&apos;s code in the entry</dt>
+        <dt className="text-muted-foreground">{t.cards.ligandCode}</dt>
         <dd>
           <code className="font-mono">{result.ligand_code}</code>
         </dd>
       </dl>
-      <h4 className="mt-3 font-medium">Hydrogen bonds</h4>
+      <h4 className="mt-3 font-medium">{t.cards.hydrogenBonds}</h4>
       {result.hydrogen_bonds.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="mt-1 w-full text-sm">
             <thead className="text-xs text-muted-foreground">
               <tr>
-                <th className="py-1 text-left font-normal">Residue</th>
-                <th className="text-left font-normal">Chain</th>
-                <th className="text-left font-normal">Atoms (protein – drug)</th>
-                <th className="text-right font-normal">Distance</th>
+                <th className="py-1 text-left font-normal">{t.cards.residue}</th>
+                <th className="text-left font-normal">{t.cards.chain}</th>
+                <th className="text-left font-normal">{t.cards.atoms}</th>
+                <th className="text-right font-normal">{t.cards.distance}</th>
               </tr>
             </thead>
             <tbody>
@@ -61,9 +63,9 @@ export function ComplexCard({ result }: { result: DrugComplex }) {
           </table>
         </div>
       ) : (
-        <p className="mt-1 text-muted-foreground">No hydrogen bonds in this structure.</p>
+        <p className="mt-1 text-muted-foreground">{t.cards.noHydrogenBonds}</p>
       )}
-      <h4 className="mt-3 font-medium">Residues within 4 Å, closest first</h4>
+      <h4 className="mt-3 font-medium">{t.cards.residuesWithin}</h4>
       <p className="mt-1 flex flex-wrap items-center gap-1">
         <ShowMore
           items={result.contacts}
@@ -82,7 +84,7 @@ export function ComplexCard({ result }: { result: DrugComplex }) {
         />
       </p>
       <p className="mt-3">
-        <ViewIn3D cid={result.cid}>View in 3D</ViewIn3D>
+        <ViewIn3D cid={result.cid}>{t.cards.viewIn3d}</ViewIn3D>
       </p>
     </>
   );
@@ -90,14 +92,12 @@ export function ComplexCard({ result }: { result: DrugComplex }) {
 
 /** A supported drug without a reviewed complex. */
 export function NoComplexCard({ result }: { result: NoComplex }) {
+  const t = useMessages();
   return (
     <>
-      <p>
-        Molecula has no reviewed structure of {result.name} bound to its target. The 3D view shows
-        the molecule alone.
-      </p>
+      <p>{t.cards.noComplex(result.name)}</p>
       <p className="mt-3">
-        <ViewIn3D cid={result.cid}>View the molecule in 3D</ViewIn3D>
+        <ViewIn3D cid={result.cid}>{t.cards.viewMoleculeIn3d}</ViewIn3D>
       </p>
     </>
   );

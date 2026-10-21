@@ -1,3 +1,4 @@
+import { useMessages } from "@/lib/messages";
 import type { DrugTargetList } from "@/lib/tool-cards";
 
 import { ShowMore } from "./show-more";
@@ -8,8 +9,9 @@ const SHOWN_GENES = 6;
 
 /** The targets ChEMBL lists for a drug, each with its mechanism and its ChEMBL page. */
 export function TargetsCard({ result }: { result: DrugTargetList }) {
+  const t = useMessages();
   if (result.targets.length === 0) {
-    return <p>ChEMBL lists no mechanism of action for {result.name}.</p>;
+    return <p>{t.cards.noMechanismFor(result.name)}</p>;
   }
   return (
     <ul className="flex flex-col gap-3">
@@ -21,7 +23,7 @@ export function TargetsCard({ result }: { result: DrugTargetList }) {
             {[target.organism, target.target_type.toLowerCase()].filter(Boolean).join(" · ")}
             {target.gene_symbols.length > 0 && (
               <>
-                <span>· genes:</span>
+                <span>{t.cards.genes}</span>
                 <ShowMore
                   items={target.gene_symbols}
                   shown={SHOWN_GENES}

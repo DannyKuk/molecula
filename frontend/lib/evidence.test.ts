@@ -26,7 +26,7 @@ describe("sourceCards", () => {
 
 describe("defaultTab", () => {
   const imatinibIn3D = {
-    text: "Getting the complex of imatinib",
+    text: "Looking up the 3D complex of imatinib",
     tool: { id: "call_1", name: "get_complex", args: {}, result: IMATINIB_COMPLEX },
   };
 
