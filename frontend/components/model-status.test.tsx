@@ -19,6 +19,8 @@ beforeEach(() => {
       { name: "openai/gpt-6-luna", local: false },
     ],
     default: "openai/gpt-oss-20b",
+    checkers: [{ id: "local", name: "openai/gpt-oss-20b", local: true }],
+    default_checker: "local",
   });
 });
 

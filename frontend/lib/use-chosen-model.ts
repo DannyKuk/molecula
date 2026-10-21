@@ -1,9 +1,14 @@
 import { useSyncExternalStore } from "react";
 
+import type { CheckerId } from "./api";
+
 export const MODEL_KEY = "molecula:model";
+export const CHECKER_KEY = "molecula:checker";
+
+const CHECKERS: CheckerId[] = ["decision", "local", "answer"];
 
 const listeners = new Set<() => void>();
-let unsaved: string | null = null;
+const unsaved = new Map<string, string>();
 
 /**
  * The model the user picked in the settings to write the answers, by name, kept in `localStorage`
@@ -15,6 +20,13 @@ export function useChosenModel(): [string | null, (name: string | null) => void]
   return [chosen, chooseModel];
 }
 
+/** The model the user picked to check the messages (#363), kept like the model; null for the
+ * backend's default checker. */
+export function useChosenChecker(): [CheckerId | null, (checker: CheckerId | null) => void] {
+  const chosen = useSyncExternalStore(subscribe, chosenChecker, () => null);
+  return [chosen, chooseChecker];
+}
+
 function subscribe(onChange: () => void) {
   listeners.add(onChange);
   return () => listeners.delete(onChange);
@@ -22,19 +34,38 @@ function subscribe(onChange: () => void) {
 
 /** The picked model's name, read when a question is sent; null for the default. */
 export function chosenModel(): string | null {
-  try {
-    return localStorage.getItem(MODEL_KEY);
-  } catch {
-    return unsaved;
-  }
+  return stored(MODEL_KEY);
 }
 
 export function chooseModel(name: string | null) {
+  store(MODEL_KEY, name);
+}
+
+/** The picked checker, read when a question is sent; null for the default. */
+export function chosenChecker(): CheckerId | null {
+  const checker = stored(CHECKER_KEY);
+  return CHECKERS.find((id) => id === checker) ?? null;
+}
+
+export function chooseChecker(checker: CheckerId | null) {
+  store(CHECKER_KEY, checker);
+}
+
+function stored(key: string): string | null {
   try {
-    if (name === null) localStorage.removeItem(MODEL_KEY);
-    else localStorage.setItem(MODEL_KEY, name);
+    return localStorage.getItem(key);
   } catch {
-    unsaved = name;
+    return unsaved.get(key) ?? null;
+  }
+}
+
+function store(key: string, value: string | null) {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  } catch {
+    if (value === null) unsaved.delete(key);
+    else unsaved.set(key, value);
   }
   listeners.forEach((notify) => notify());
 }

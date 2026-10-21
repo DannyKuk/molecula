@@ -127,17 +127,18 @@ class Endpoint:
     local: bool = False
 
 
-def get_chat_model(settings: Settings) -> BaseChatModel:
+def get_chat_model(settings: Settings, model: ChatModel | None = None) -> BaseChatModel:
     """The chat model the settings point at: with OFFLINE=1 the local OpenAI-compatible server
     (Ollama, LM Studio) at LOCAL_LLM_BASE_URL; online, OpenRouter when OPENROUTER_API_KEY is
-    set and the local server otherwise (#230).
+    set and the local server otherwise (#230). With a `model` a user picked, that model, for the
+    checks it runs when the user lets it (#363).
 
     The model streams. Every AIMessage it returns, and the last chunk of a stream, carries the
     call's token counts in `usage_metadata` and its cost in US dollars as `cost` in
     `response_metadata["token_usage"]` (0 for a local server). Raises LLMConfigError when a
     setting is missing.
     """
-    return _chat_model(settings, settings.llm_reasoning_effort)
+    return _chat_model(settings, settings.llm_reasoning_effort, model)
 
 
 def get_answer_model(settings: Settings, model: ChatModel | None = None) -> BaseChatModel:
@@ -146,10 +147,10 @@ def get_answer_model(settings: Settings, model: ChatModel | None = None) -> Base
     return _chat_model(settings, _own_effort(settings.answer_reasoning_effort), model)
 
 
-def get_source_check_model(settings: Settings) -> BaseChatModel:
-    """The same model at the source check's own reasoning effort,
-    SOURCE_CHECK_REASONING_EFFORT."""
-    return _chat_model(settings, _own_effort(settings.source_check_reasoning_effort))
+def get_source_check_model(settings: Settings, model: ChatModel | None = None) -> BaseChatModel:
+    """The same model, or the `model` a user picked (#363), at the source check's own reasoning
+    effort, SOURCE_CHECK_REASONING_EFFORT."""
+    return _chat_model(settings, _own_effort(settings.source_check_reasoning_effort), model)
 
 
 def _own_effort(effort: str) -> str | None:

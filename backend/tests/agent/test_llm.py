@@ -232,6 +232,21 @@ def test_a_picked_cloud_model_answers_on_openrouter() -> None:
     assert model.model_name == "anthropic/claude-haiku-5.5"
 
 
+def test_a_picked_local_model_runs_the_checks_on_the_local_server_at_their_own_effort() -> None:
+    gemma = ChatModel(name="google/gemma-4-31b", local=True)
+    settings = both_setups(llm_reasoning_effort="low", source_check_reasoning_effort="high")
+
+    checks = get_chat_model(settings, gemma)
+    source_check = get_source_check_model(settings, gemma)
+
+    assert isinstance(checks, LocalChatOpenAI)
+    assert isinstance(source_check, LocalChatOpenAI)
+    assert checks.openai_api_base == source_check.openai_api_base == "http://localhost:11434/v1"
+    assert checks.model_name == source_check.model_name == "google/gemma-4-31b"
+    assert checks.reasoning_effort == "low"
+    assert source_check.reasoning_effort == "high"
+
+
 def test_a_picked_local_model_without_a_local_server_is_an_error() -> None:
     with pytest.raises(LLMConfigError, match="LOCAL_LLM_BASE_URL is empty"):
         get_answer_model(openrouter_settings(), ChatModel(name="qwen3:8b", local=True))

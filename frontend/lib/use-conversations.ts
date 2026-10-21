@@ -13,7 +13,7 @@ import {
   stopTurn,
   type Turn,
 } from "./chat-turn";
-import { chosenModel } from "./use-chosen-model";
+import { chosenChecker, chosenModel } from "./use-chosen-model";
 
 /** A question and the chat it was asked in, with the turns before it. */
 type Asked = { id: string; question: string; earlier: Turn[]; askedAt: number };
@@ -74,7 +74,8 @@ export function useConversations(
       saveRef.current(id, [...earlier, latest]);
       try {
         const messages = requestMessages(conversationWith(earlier, question));
-        for await (const event of streamChat(messages, controller.signal, chosenModel())) {
+        const answering = streamChat(messages, controller.signal, chosenModel(), chosenChecker());
+        for await (const event of answering) {
           updateLatest((turn) => applyEvent(turn, event));
           // `done` or `error` ends the answer, so the next one in line needn't wait for the close.
           if (latest.state !== "answering") break;

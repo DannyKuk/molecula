@@ -8,7 +8,7 @@ import openai
 import pytest
 from fastapi.testclient import TestClient
 
-from choice_fakes import model_choices
+from choice_fakes import GPT_OSS, model_choices
 from fake_llm import CANARY, ScriptedChatModel, answer_message, tool_call_message
 from guard_fakes import FakeCheck, FakeSourceCheck
 from molecula.agent.agent import ChatAgent
@@ -256,10 +256,15 @@ def test_the_model_answers_503_while_the_chat_is_off(client: TestClient) -> None
 
 
 def offer(**choices: Any) -> None:
-    """The default answers in a scripted agent; a picked model answers in its own."""
+    """The default answers in a scripted agent; any other model and checker in its own, which
+    says who checks it."""
     default = agent([answer_message("The default answers.")])
     app.dependency_overrides[dependencies.model_choices] = lambda: model_choices(
-        default, build=lambda model: agent([answer_message(f"{model.name} answers.")]), **choices
+        default,
+        build=lambda model, checker: agent(
+            [answer_message(f"{model.name} answers, checked by {checker}.")]
+        ),
+        **choices,
     )
 
 
@@ -269,7 +274,7 @@ def answer_text(response: httpx.Response) -> str:
     )
 
 
-def test_models_lists_the_default_the_local_and_the_cloud_models(client: TestClient) -> None:
+def test_models_lists_the_models_and_the_checkers_each_default_first(client: TestClient) -> None:
     offer(local=["google/gemma-4-31b"], cloud=["anthropic/claude-haiku-5.5"])
 
     response = client.get("/models")
@@ -282,6 +287,11 @@ def test_models_lists_the_default_the_local_and_the_cloud_models(client: TestCli
             {"name": "anthropic/claude-haiku-5.5", "local": False},
         ],
         "default": "fake-model",
+        "checkers": [
+            {"id": "decision", "name": "jev-1.13", "local": False},
+            {"id": "local", "name": "openai/gpt-oss-20b", "local": True},
+        ],
+        "default_checker": "decision",
     }
 
 
@@ -304,9 +314,49 @@ def test_the_picked_model_answers_and_the_usage_log_names_it(
 
     response = client.post("/chat", json=QUESTION | {"model": "google/gemma-4-31b"})
 
-    assert answer_text(response) == "google/gemma-4-31b answers."
+    assert answer_text(response) == "google/gemma-4-31b answers, checked by decision."
     [record] = usage_store.since(datetime(2026, 1, 1, tzinfo=UTC))
     assert record.model == "google/gemma-4-31b"
+
+
+@pytest.mark.parametrize("checker", ["decision", "local", "answer"])
+def test_the_picked_checker_checks_the_picked_models_answer(
+    client: TestClient, checker: str
+) -> None:
+    offer(local=["google/gemma-4-31b"])
+
+    response = client.post(
+        "/chat", json=QUESTION | {"model": "google/gemma-4-31b", "checker": checker}
+    )
+
+    assert answer_text(response) == f"google/gemma-4-31b answers, checked by {checker}."
+
+
+def test_the_default_model_may_be_checked_by_another_checker(client: TestClient) -> None:
+    offer(local=["google/gemma-4-31b"])
+
+    response = client.post("/chat", json=QUESTION | {"checker": "answer"})
+
+    assert answer_text(response) == "fake-model answers, checked by answer."
+
+
+def test_a_checker_the_backend_does_not_offer_is_refused_with_422(client: TestClient) -> None:
+    offer(checkers=[GPT_OSS], default_checker="local")
+
+    response = client.post("/chat", json=QUESTION | {"checker": "decision"})
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == (
+        "Molecula can't check messages with decision here. Pick a checker from the settings."
+    )
+
+
+def test_an_unknown_checker_is_refused_with_422(client: TestClient) -> None:
+    offer(local=["google/gemma-4-31b"])
+
+    response = client.post("/chat", json=QUESTION | {"checker": "none"})
+
+    assert response.status_code == 422
 
 
 def test_a_model_not_on_the_list_is_refused_with_422(client: TestClient) -> None:

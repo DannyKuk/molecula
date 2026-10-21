@@ -1,4 +1,4 @@
-import { API_URL, type InputCategory } from "./api";
+import { API_URL, type CheckerId, type InputCategory } from "./api";
 import { MAX_ANSWER_LENGTH, MAX_MESSAGE_LENGTH, MAX_MESSAGES } from "./chat-limits";
 import { en, type Messages } from "./messages/en";
 import { readServerSentEvents } from "./sse";
@@ -63,17 +63,19 @@ export class ChatError extends Error {
 
 /**
  * Sends the conversation to `POST /chat` and yields the answer's events as they arrive. `model`
- * names the model that writes the answer; without it the backend's default does.
+ * names the model that writes the answer and `checker` the one that checks the messages; without
+ * them the backend's defaults do.
  */
 export async function* streamChat(
   messages: ChatMessage[],
   signal?: AbortSignal,
   model?: string | null,
+  checker?: CheckerId | null,
 ): AsyncGenerator<ChatEvent> {
   const response = await fetch(`${API_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-    body: JSON.stringify(model ? { messages, model } : { messages }),
+    body: JSON.stringify({ messages, ...(model && { model }), ...(checker && { checker }) }),
     signal,
   });
   if (!response.ok || !response.body) {

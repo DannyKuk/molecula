@@ -50,6 +50,31 @@ describe("streamChat", () => {
     });
   });
 
+  it("names the checker the user picked next to the model", async () => {
+    const fetchMock = stubFetch(new Response(DONE));
+
+    for await (const event of streamChat(QUESTION, undefined, "google/gemma-4-31b", "answer")) {
+      void event;
+    }
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toEqual({
+      messages: QUESTION,
+      model: "google/gemma-4-31b",
+      checker: "answer",
+    });
+  });
+
+  it("names a picked checker with the default model too", async () => {
+    const fetchMock = stubFetch(new Response(DONE));
+
+    for await (const event of streamChat(QUESTION, undefined, null, "local")) void event;
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toEqual({
+      messages: QUESTION,
+      checker: "local",
+    });
+  });
+
   it("posts the conversation and yields the events of the stream", async () => {
     const fetchMock = stubFetch(
       new Response(
