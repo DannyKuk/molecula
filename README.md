@@ -95,9 +95,12 @@ With the login on, every page needs a signed-in user, and every backend route bu
 
 1. Add two DNS A records pointing at the server, one for the app and one for its API, e.g. `molecula.example.com` and `api.molecula.example.com`.
 2. In Coolify: New Resource → Private Repository (with GitHub App), this repo, branch `main`, Build Pack **Docker Compose**, Docker Compose Location `/docker-compose.coolify.yaml`.
-3. Under Domains, give `frontend` `https://molecula.example.com:3000` and `backend` `https://api.molecula.example.com:8000`: the port after the domain is the container's.
-4. Under Environment Variables, fill `OPENROUTER_API_KEY`, `NEXT_PUBLIC_API_URL=https://api.molecula.example.com`, `CORS_ORIGINS=["https://molecula.example.com"]` and the three Clerk keys from the section above. Fields left empty keep the defaults in `.env.example`.
-5. Deploy. The first deploy downloads the store into the volume and builds the cloud index from it (about 3 minutes and $0.56, see above); later deploys reuse both.
+3. Under Advanced → Build, set build arguments to **Managed manually in Dockerfile**. Otherwise Coolify adds every variable, the API keys too, as an `ARG` to the Dockerfiles, and Docker records them in the image history. The compose file passes the frontend the two values it needs at build time.
+4. Under Domains, give `frontend` `https://molecula.example.com` and `backend` `https://api.molecula.example.com`; the ports come from the file's `expose`.
+5. Under Environment Variables, fill `OPENROUTER_API_KEY`, `NEXT_PUBLIC_API_URL=https://api.molecula.example.com`, `CORS_ORIGINS=["https://molecula.example.com"]` (brackets and quotes included) and the three Clerk keys from the section above. Paste `CLERK_JWT_KEY` on one line with **Is Multiline?** off: a multiline value arrived empty in the backend, which then ran with the login off (its log says so). Fields left empty keep the defaults in `.env.example`.
+6. Deploy. The first deploy downloads the store into the volume and builds the cloud index from it (about 3 minutes and $0.56, see above); later deploys reuse both. The build needs outgoing HTTP (port 80) for Debian's packages, and the GitHub App needs the server's clock in sync (NTP, outgoing UDP 123).
+
+Check the login after a deploy: `https://api.molecula.example.com/stats` must answer 401.
 
 ### MCP server
 
