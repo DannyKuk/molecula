@@ -11,6 +11,7 @@ export const de: Messages = {
   },
   header: {
     thisChat: (usage) => `Dieser Chat: ${usage}`,
+    supportedDrugs: "Unterstützte Medikamente",
   },
   chat: {
     intro:
@@ -127,7 +128,6 @@ export const de: Messages = {
     dashboard: "Dashboard",
     howItAnswers: "So antwortet es",
     mcpServer: "MCP-Server",
-    supportedDrugs: "Unterstützte Medikamente",
     settings: "Einstellungen",
     history: "Chatverlauf",
     historyAnswering: "Chatverlauf, eine Antwort kommt gerade",

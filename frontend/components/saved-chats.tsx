@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 import type { ChatHistory } from "@/lib/chat-history";
 import { browserHistory } from "@/lib/chat-history-indexeddb";
-import { chatLink, savedChatLink } from "@/lib/chat-link";
+import { savedChatLink } from "@/lib/chat-link";
 import { useChatHistory } from "@/lib/use-chat-history";
 
 import type { ChatListProps } from "./chat-sidebar";
@@ -29,7 +29,6 @@ export function useSavedChats(history: ChatHistory = browserHistory): ChatListPr
     removedBookmark,
     onOpen: (id) => router.push(savedChatLink(id)),
     onNew: () => router.push("/"),
-    onAsk: (question) => router.push(chatLink(question)),
     onRename: saved.rename,
     onDelete: saved.remove,
     onBookmark: saved.bookmark,

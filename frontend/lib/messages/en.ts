@@ -9,6 +9,7 @@ export const en = {
   },
   header: {
     thisChat: (usage: string) => `This chat: ${usage}`,
+    supportedDrugs: "Supported drugs",
   },
   chat: {
     intro:
@@ -124,7 +125,6 @@ export const en = {
     dashboard: "Dashboard",
     howItAnswers: "How it answers",
     mcpServer: "MCP server",
-    supportedDrugs: "Supported drugs",
     settings: "Settings",
     history: "Chat history",
     historyAnswering: "Chat history, an answer is coming in",

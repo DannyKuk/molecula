@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { Dialog, DialogClose, DialogTitle } from "@/components/ui/dialog";
@@ -23,6 +24,7 @@ import { ChatDrawer, type ChatListProps, ChatSidebar } from "./chat-sidebar";
 import { ConversationTurn } from "./conversation-turn";
 import { Disclaimer } from "./disclaimer";
 import { EmptyChat } from "./empty-chat";
+import { HelpSheet } from "./help-guide";
 import { EvidencePanel } from "./evidence-panel";
 import { ExportMenu } from "./export-menu";
 import { ModelStatus } from "./model-status";
@@ -184,7 +186,6 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
       if (openedId !== id) void openSaved(openedId);
     },
     onNew: startNew,
-    onAsk: ask,
     onRename: saved.rename,
     onDelete: (deletedId) => {
       remove(deletedId);
@@ -211,6 +212,23 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
             )}
           </div>
           <nav className="flex items-center gap-4 text-[13.5px] text-ink-2">
+            <Link
+              href="/drugs"
+              className="font-medium whitespace-nowrap underline-offset-4 hover:underline"
+            >
+              {t.header.supportedDrugs}
+            </Link>
+            <HelpSheet
+              trigger={
+                <button
+                  type="button"
+                  className="font-medium whitespace-nowrap underline-offset-4 hover:underline"
+                />
+              }
+              onAsk={ask}
+            >
+              {t.help.open}
+            </HelpSheet>
             {turns.length > 0 && (
               <ExportMenu
                 title={title}
