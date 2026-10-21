@@ -292,4 +292,16 @@ export const de: Messages = {
     didYouMean: "Meinten Sie",
     whatIs: (name) => `Was ist ${name}?`,
   },
+  progress: {
+    label: "Fortschritt",
+    checking: "Prüfe die Frage",
+    checkingAnswer: "Prüfe die Antwort anhand der Quellen",
+    resolving: (name) => `Schlage ${name} nach`,
+    properties: (drug) => `Rufe die Eigenschaften von ${drug} ab`,
+    targets: (drug) => `Suche die Zielproteine von ${drug}`,
+    complex: (drug) => `Schlage den 3D-Komplex von ${drug} nach`,
+    comparing: (drugs) => `Vergleiche ${drugs.join(", ")}`,
+    searchingLabel: (drug) => `Durchsuche die Fachinformation von ${drug}`,
+    searchingLabels: "Durchsuche die Fachinformationen",
+  },
 };

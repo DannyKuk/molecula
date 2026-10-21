@@ -287,6 +287,18 @@ export const en = {
     didYouMean: "Did you mean",
     whatIs: (name: string) => `What is ${name}?`,
   },
+  progress: {
+    label: "Progress",
+    checking: "Checking the question",
+    checkingAnswer: "Checking the answer against the sources",
+    resolving: (name: string) => `Looking up ${name}`,
+    properties: (drug: string) => `Getting the properties of ${drug}`,
+    targets: (drug: string) => `Finding the targets of ${drug}`,
+    complex: (drug: string) => `Looking up the 3D complex of ${drug}`,
+    comparing: (drugs: string[]) => `Comparing ${drugs.join(", ")}`,
+    searchingLabel: (drug: string) => `Searching the ${drug} label`,
+    searchingLabels: "Searching the drug labels",
+  },
 };
 
 export type Messages = typeof en;
