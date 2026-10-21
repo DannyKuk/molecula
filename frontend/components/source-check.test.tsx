@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import type { CheckedClaim, SourceCheck } from "@/lib/chat";
+import { LANGUAGE_KEY } from "@/lib/language";
 import { IMATINIB_PASSAGES, IMATINIB_SOURCES } from "@/lib/test-fixtures";
 
 import { AnswerMarkdown } from "./answer-markdown";
@@ -36,6 +37,8 @@ function marks(container: HTMLElement): string[] {
 const BACKED = "Imatinib blocks BCR-ABL [1].";
 const UNBACKED = "It was approved in 2001.";
 const NOT_A_CLAIM = "Ask your doctor before taking it.";
+
+afterEach(() => localStorage.clear());
 
 describe("source check in the answer", () => {
   it("leaves a fully backed answer unmarked and says it was checked", () => {
@@ -129,6 +132,23 @@ describe("source check in the answer", () => {
     render(<SourceCheckBadge check={null} checking />);
 
     expect(screen.getByRole("status").textContent).toBe("Checking the answer against the sources…");
+  });
+
+  it("says in German that the answer is being checked, and why a sentence isn't backed", async () => {
+    localStorage.setItem(LANGUAGE_KEY, "de");
+    render(<SourceCheckBadge check={null} checking />);
+    expect(screen.getByRole("status").textContent).toBe("Prüfe die Antwort anhand der Quellen…");
+
+    renderChecked(UNBACKED, {
+      checked: true,
+      claims: [{ ...claim(UNBACKED, "unsupported"), decided_by: "unknown_refs" }],
+    });
+    fireEvent.click(screen.getByRole("button", { name: UNBACKED }));
+    const popover = within(await screen.findByRole("dialog"));
+    expect(popover.getByText("Nicht in Moleculas Quellen")).toBeDefined();
+    expect(
+      popover.getByText("Der Satz zitiert eine Quelle, die Molecula nicht nachgeschlagen hat."),
+    ).toBeDefined();
   });
 
   it("says nothing under an answer that states no drug facts, or one that wasn't checked", () => {

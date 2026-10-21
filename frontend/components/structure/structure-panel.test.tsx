@@ -6,6 +6,7 @@ import { useImperativeHandle } from "react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { API_URL } from "@/lib/api";
+import { LANGUAGE_KEY } from "@/lib/language";
 import IMATINIB_2HYY from "@/lib/fixtures/complex-5291.json";
 import { METAL_COMPLEX, SMALL_COMPLEX } from "@/lib/test-complexes";
 import { IMATINIB_COMPLEX, METFORMIN_COMPLEX } from "@/lib/test-tool-results";
@@ -271,6 +272,42 @@ describe("StructurePanel", () => {
     expect(within(dialog).getByRole("img").dataset.mode).toBe("protein");
     expect(within(dialog).getByRole("button", { name: "Replay binding" })).toBeDefined();
     await waitFor(() => expect(screen.getAllByRole("img", { hidden: true })).toHaveLength(2));
+  });
+});
+
+describe("StructurePanel in German", () => {
+  afterEach(() => localStorage.clear());
+
+  it("names the view, its switch, its counts and its legend in German", async () => {
+    localStorage.setItem(LANGUAGE_KEY, "de");
+    stubFetch(Response.json(METAL_COMPLEX));
+    render(<StructurePanel target={imatinib} />);
+
+    expect(await screen.findByText("3 Atome")).toBeDefined();
+    expect(screen.getByRole("img", { name: "Imatinib an ABL1 (BCR-ABL), in 3D" })).toBeDefined();
+    expect(screen.getByText("PDB 2HYY · Homo sapiens · 6 Wasserstoffbrücken")).toBeDefined();
+    const modes = screen.getByRole("group", { name: "Was die 3D-Ansicht zeigt" });
+    expect(
+      within(modes)
+        .getAllByRole("button")
+        .map((button) => button.textContent),
+    ).toEqual(["Molekül", "Bindungsstelle", "Ganzes Protein"]);
+    expect(swatch("Kohlenstoffatome von imatinib").backgroundColor).toBe(css(COLORS.screen.drug));
+    expect(swatch("Stickstoff").backgroundColor).toBe(css(COLORS.screen.elements.N));
+    expect(swatch("Metallbindung").borderColor).toBe(css(COLORS.screen.coordination));
+    expect(screen.getByRole("button", { name: "Ansicht zurücksetzen" })).toBeDefined();
+    expect(screen.getByText("Ziehen zum Drehen · Scrollen zum Zoomen")).toBeDefined();
+  });
+
+  it("says in German when the structure couldn't be loaded", async () => {
+    localStorage.setItem(LANGUAGE_KEY, "de");
+    stubFetch(new Error("offline"));
+    render(<StructurePanel target={imatinib} />);
+
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Die 3D-Struktur konnte nicht geladen werden.",
+    );
+    expect(screen.getByRole("button", { name: "Noch einmal versuchen" })).toBeDefined();
   });
 });
 

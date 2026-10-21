@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { LANGUAGE_KEY } from "@/lib/language";
 import { cardOf, type Card, type RetrievalTrace } from "@/lib/tool-cards";
 import {
   ACETAMINOPHEN_NO_COMPLEX,
@@ -324,5 +325,61 @@ describe("search_labels", () => {
     });
 
     expect(card.textContent).toContain("“Tylenoll” isn't in Molecula's data");
+  });
+});
+
+describe("in German", () => {
+  beforeEach(() => localStorage.setItem(LANGUAGE_KEY, "de"));
+  afterEach(() => localStorage.clear());
+
+  it("writes the summary and the result in German", () => {
+    const trigger = renderCard("resolve_drug", GLEEVEC_FOUND);
+    expect(trigger.textContent).toBe("Step„Gleevec“ → imatinib");
+
+    fireEvent.click(trigger);
+    expect(trigger.parentElement!.textContent).toContain(
+      "„Gleevec“ ist ein gespeicherter Name für imatinib (PubChem CID 5291).",
+    );
+  });
+
+  it("names the properties in German", () => {
+    const properties = openCard("get_properties", METFORMIN_PROPERTIES);
+
+    expect(within(properties).getByRole("rowheader", { name: /^Molmasse/ })).toBeDefined();
+    expect(properties.textContent).toContain("Atome außer Wasserstoff");
+  });
+
+  it("names the complex's facts in German", () => {
+    const complex = openCard("get_complex", IMATINIB_COMPLEX);
+    expect(within(complex).getByText("Zielprotein")).toBeDefined();
+    expect(within(complex).getByText("Wasserstoffbrücken")).toBeDefined();
+    expect(within(complex).getByRole("button", { name: "In 3D ansehen" })).toBeDefined();
+  });
+
+  it("says in German what a label search looked for, keeping the label's section names", () => {
+    const card = openCard(
+      "search_labels",
+      IMATINIB_LABELS,
+      { drug: "imatinib", section: "pharmacology" },
+      "Imatinib blocks BCR-ABL [1].",
+    );
+
+    expect(card.textContent).toContain(
+      `Gesucht nach „${IMATINIB_LABELS.question}“ in der Fachinformation von imatinib, den Abschnitten „Pharmacology“.`,
+    );
+    const first = within(card).getAllByRole("listitem")[0];
+    expect(first.querySelector("summary")?.textContent).toBe(
+      "[1] Gleevec · Mechanism of action · 13. Juli 2026zitiert",
+    );
+    expect(linkTo(first, /^Die Fachinformation auf DailyMed öffnen/)).toBe(
+      IMATINIB_LABELS.passages[0].url,
+    );
+  });
+
+  it("says in German that a name isn't supported", () => {
+    const card = openCard("resolve_drug", TYLENOLL_NOT_SUPPORTED);
+
+    expect(card.textContent).toContain("Nicht unterstützt");
+    expect(card.textContent).toContain("„Tylenoll“ ist nicht in Moleculas Daten");
   });
 });

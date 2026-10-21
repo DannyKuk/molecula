@@ -1,5 +1,6 @@
 "use client";
 
+import { useMessages } from "@/lib/messages";
 import type { CardStep, Step } from "@/lib/tool-cards";
 import { cardSteps } from "@/lib/tool-cards";
 
@@ -20,11 +21,12 @@ type ProgressStepsProps = {
  * answer is done, so the list doesn't jump while it streams.
  */
 export function ProgressSteps({ steps, live, answer }: ProgressStepsProps) {
+  const t = useMessages();
   if (steps.length === 0) return null;
-  const shown = cardSteps(steps, !live);
+  const shown = cardSteps(steps, !live, t);
   return (
     <ol
-      aria-label="Progress"
+      aria-label={t.progress.label}
       aria-live={live ? "polite" : undefined}
       className="flex flex-col gap-1 text-sm"
     >

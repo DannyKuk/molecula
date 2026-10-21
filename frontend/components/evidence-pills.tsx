@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import type { Turn } from "@/lib/chat-turn";
 import { type EvidenceTab, shownSteps, sourceCards } from "@/lib/evidence";
 import { useMessages } from "@/lib/messages";
+import { stepLine } from "@/lib/step-line";
 import { structuresOf } from "@/lib/tool-cards";
 
 const PILL =
@@ -24,7 +25,8 @@ export function EvidencePills({
   if (turn.state === "queued") return null;
   // The sources arrive with the answer's last word; the source check after them has its own badge.
   if (turn.state === "answering" && turn.sources === null) {
-    const current = turn.answer ? t.pills.writing : (turn.steps.at(-1)?.text ?? t.pills.thinking);
+    const last = turn.steps.at(-1);
+    const current = turn.answer ? t.pills.writing : last ? stepLine(last, t) : t.pills.thinking;
     return (
       // Not a live region: the Steps tab announces the steps.
       <p className="flex h-7 items-center gap-2 text-[13px] text-ink-2">

@@ -66,7 +66,7 @@ export type Palette = {
   hbond: string;
   coordination: string;
   cofactor: string;
-  /** A colour for every element the legend names (`ELEMENT_NAMES`), so the view never falls back
+  /** A colour for every element the legend names (`LEGEND_ELEMENTS`), so the view never falls back
    * to 3Dmol's own and the legend shows what is drawn. */
   elements: Record<string, string>;
 };

@@ -3,9 +3,10 @@ import { useRouter } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FLOW_STEPS, WHO } from "@/lib/answer-flow";
+import { de } from "@/lib/messages/de";
+import { en } from "@/lib/messages/en";
 import { memoryHistory } from "@/lib/test-fixtures";
 
-import { ordinal } from "./boost-bars";
 import { HowItAnswers } from "./how-it-answers";
 
 vi.mock("next/navigation", () => ({ useRouter: vi.fn() }));
@@ -92,6 +93,10 @@ describe("ordinal", () => {
     [13, "13th"],
     [21, "21st"],
   ])("writes %i as %s", (place, written) => {
-    expect(ordinal(place)).toBe(written);
+    expect(en.flow.bars.ordinal(place)).toBe(written);
+  });
+
+  it("writes a German place with a full stop", () => {
+    expect(de.flow.bars.ordinal(3)).toBe("3.");
   });
 });

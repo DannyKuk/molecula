@@ -1,9 +1,10 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Source } from "@/lib/chat";
 import { startTurn, type Turn } from "@/lib/chat-turn";
 import type { Shown } from "@/lib/evidence";
+import { LANGUAGE_KEY } from "@/lib/language";
 import { IMATINIB_SOURCES } from "@/lib/test-fixtures";
 import { ACETAMINOPHEN_NO_COMPLEX, IMATINIB_COMPLEX } from "@/lib/test-tool-results";
 import type { StructureTarget } from "@/lib/tool-cards";
@@ -27,7 +28,7 @@ const CHEMBL_ONLY: Source = {
 
 function complexStep(drug: string, result: unknown) {
   return {
-    text: `Getting the complex of ${drug}`,
+    text: `Looking up the 3D complex of ${drug}`,
     tool: { id: `call_${drug}`, name: "get_complex", args: { drug }, result },
   };
 }
@@ -54,6 +55,8 @@ function sourceCards(): HTMLElement[] {
     "listitem",
   );
 }
+
+afterEach(() => localStorage.clear());
 
 describe("EvidencePanel", () => {
   it("names the answer it shows and steps to its neighbours on their own tabs", () => {
@@ -169,10 +172,22 @@ describe("EvidencePanel", () => {
   it("lists the steps and opens a structure from them in the 3D tab", () => {
     const onShow = renderPanel([IMATINIB_TURN], { turn: 0, tab: "steps" });
 
-    fireEvent.click(screen.getByRole("button", { name: /^Getting the complex of imatinib/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Looking up the 3D complex of imatinib/ }));
     fireEvent.click(screen.getByRole("button", { name: "View in 3D" }));
 
     expect(onShow).toHaveBeenCalledExactlyOnceWith({ turn: 0, tab: "3d", cid: 5291 });
+  });
+
+  it("lists a saved answer's steps in German for a German reader", () => {
+    localStorage.setItem(LANGUAGE_KEY, "de");
+    renderPanel([IMATINIB_TURN], { turn: 0, tab: "steps" });
+
+    const steps = screen.getByRole("list", { name: "Fortschritt" });
+    fireEvent.click(
+      within(steps).getByRole("button", { name: /^Schlage den 3D-Komplex von imatinib nach/ }),
+    );
+
+    expect(screen.getByRole("button", { name: "In 3D ansehen" })).toBeDefined();
   });
 
   it("shows the answer's flow in the Flow tab after Steps", () => {
@@ -184,7 +199,9 @@ describe("EvidencePanel", () => {
       "Steps1",
       "Flow",
     ]);
-    expect(screen.getByRole("list", { name: "Getting the complex of imatinib" })).toBeDefined();
+    expect(
+      screen.getByRole("list", { name: "Looking up the 3D complex of imatinib" }),
+    ).toBeDefined();
 
     fireEvent.click(screen.getByRole("tab", { name: /Steps/ }));
 

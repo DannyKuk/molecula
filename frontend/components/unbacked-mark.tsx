@@ -4,6 +4,7 @@ import { createContext, useContext, type ReactNode } from "react";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { CheckedClaim } from "@/lib/chat";
+import { useMessages } from "@/lib/messages";
 import { unbackedReason } from "@/lib/source-check";
 
 /** The claims of the answer's source check, by the index a mark carries. */
@@ -11,6 +12,7 @@ export const CheckedClaimsContext = createContext<CheckedClaim[]>([]);
 
 /** Text of a claim the sources don't back, underlined; its popover says why. */
 export function UnbackedMark({ claim, children }: { claim: number; children: ReactNode }) {
+  const t = useMessages();
   const checked = useContext(CheckedClaimsContext)[claim];
   if (!checked) return <>{children}</>;
   return (
@@ -25,10 +27,8 @@ export function UnbackedMark({ claim, children }: { claim: number; children: Rea
         {children}
       </PopoverTrigger>
       <PopoverContent align="start" className="gap-1">
-        <p className="font-medium text-amber-700 dark:text-amber-400">
-          Not in Molecula&apos;s sources
-        </p>
-        <p className="text-ink-2">{unbackedReason(checked)}</p>
+        <p className="font-medium text-amber-700 dark:text-amber-400">{t.check.notInSources}</p>
+        <p className="text-ink-2">{unbackedReason(checked, t)}</p>
       </PopoverContent>
     </Popover>
   );

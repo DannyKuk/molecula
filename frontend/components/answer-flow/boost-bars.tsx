@@ -1,27 +1,32 @@
 import { cn } from "cn";
 
 import { type RankedPassage } from "@/lib/answer-flow";
-
-/** "1st", "2nd", "3rd", "4th", … */
-export function ordinal(place: number): string {
-  const teen = place % 100 >= 11 && place % 100 <= 13;
-  const suffix = teen ? "th" : ({ 1: "st", 2: "nd", 3: "rd" }[place % 10] ?? "th");
-  return `${place}${suffix}`;
-}
+import { en, type Messages } from "@/lib/messages";
 
 /**
  * The passages a search kept, best first: the similarity as a grey bar, the section bonus as an
  * orange end, the score and the place before and after the bonus. The bars run from 0 to the best
- * score rounded up to a tenth, so the bonus is wide enough to see.
+ * score rounded up to a tenth, so the bonus is wide enough to see. The words are in the language
+ * of `t`: the Flow tab's, or English on the guide, which is written in English only.
  */
-export function BoostBars({ passages, boost }: { passages: RankedPassage[]; boost: number }) {
+export function BoostBars({
+  passages,
+  boost,
+  t = en,
+}: {
+  passages: RankedPassage[];
+  boost: number;
+  t?: Messages;
+}) {
+  const bars = t.flow.bars;
+  const ordinal = bars.ordinal;
   if (passages.length === 0) return null;
   const top = Math.max(...passages.map((passage) => passage.score));
   const scale = Math.ceil(top * 10) / 10;
   const width = (value: number) => `${(value / scale) * 100}%`;
   return (
     <div className="flex flex-col gap-2">
-      <ol aria-label="Passages by score" className="flex flex-col">
+      <ol aria-label={bars.label} className="flex flex-col">
         {passages.map((passage) => (
           <li
             key={`${passage.before}`}
@@ -35,7 +40,7 @@ export function BoostBars({ passages, boost }: { passages: RankedPassage[]; boos
                   passage.inSection ? "text-signal" : "text-ink-3",
                 )}
               >
-                {passage.inSection ? `+${boost.toFixed(2)}, section asked for` : "no bonus"}
+                {passage.inSection ? bars.sectionAskedFor(boost.toFixed(2)) : bars.noBonus}
               </span>
             </span>
             <span
@@ -67,13 +72,13 @@ export function BoostBars({ passages, boost }: { passages: RankedPassage[]; boos
       <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-3">
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden className="h-2 w-3 rounded-sm bg-ink-3" />
-          Similarity, from the embedder
+          {bars.similarity}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden className="h-2 w-3 rounded-sm bg-signal" />
-          Section bonus, from the code
+          {bars.bonus}
         </span>
-        <span>Bars from 0 to {scale.toFixed(1)}</span>
+        <span>{bars.scale(scale.toFixed(1))}</span>
       </p>
     </div>
   );

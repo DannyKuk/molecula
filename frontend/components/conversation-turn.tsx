@@ -1,10 +1,10 @@
 import { cn } from "cn";
 
-import { CHAT_FAILED, CHAT_UNAVAILABLE } from "@/lib/chat";
+import { errorText } from "@/lib/chat";
 import type { Turn } from "@/lib/chat-turn";
 import { didYouMeanOf } from "@/lib/did-you-mean";
 import type { EvidenceTab } from "@/lib/evidence";
-import { type Messages, useMessages } from "@/lib/messages";
+import { useMessages } from "@/lib/messages";
 import type { Pictures } from "@/lib/printed-pictures";
 import { checkingAnswer } from "@/lib/source-check";
 import { structuresOf } from "@/lib/tool-cards";
@@ -156,16 +156,9 @@ function TurnLabel({
       Q-{String(number).padStart(2, "0")} · {t.turn.query}
       {askedAt !== undefined && (
         <span className="ml-auto hidden text-ink-3 tabular-nums print:inline">
-          {askedTime(askedAt)}
+          {askedTime(askedAt, t.locale)}
         </span>
       )}
     </p>
   );
-}
-
-/** The app's own errors in the interface language; a message from the backend as it came. */
-function errorText(error: string | undefined, t: Messages): string | undefined {
-  if (error === CHAT_FAILED) return t.chat.failed;
-  if (error === CHAT_UNAVAILABLE) return t.chat.unavailable;
-  return error;
 }

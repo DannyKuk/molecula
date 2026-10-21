@@ -5,9 +5,11 @@ import { describe, expect, it } from "vitest";
 
 import type { Atom, Complex, Molecule } from "@/lib/api";
 import imatinib from "@/lib/fixtures/complex-5291.json";
+import { de } from "@/lib/messages/de";
+import { en } from "@/lib/messages/en";
 import { SMALL_COMPLEX } from "@/lib/test-complexes";
 
-import { ELEMENT_NAMES, legendElements, readout } from "./readout";
+import { LEGEND_ELEMENTS, legendElements, readout } from "./readout";
 import { COLORS, type SceneData } from "./scene";
 
 const acetaminophen = readFileSync(
@@ -32,6 +34,11 @@ describe("readout", () => {
     };
 
     expect(readout({ kind: "complex", complex })).toEqual(["3 atoms", "1 residue", "1 H-bond"]);
+    expect(readout({ kind: "complex", complex }, de)).toEqual([
+      "3 Atome",
+      "1 Aminosäure",
+      "1 H-Brücke",
+    ]);
   });
 
   it("counts only the atoms of a molecule without a complex, leaving out its hydrogens", () => {
@@ -96,10 +103,16 @@ describe("legendElements", () => {
   });
 });
 
-describe("ELEMENT_NAMES", () => {
-  it("has a colour for every element it names, on the screen and on paper", () => {
+describe("LEGEND_ELEMENTS", () => {
+  it("has a colour for every element it lists, on the screen and on paper", () => {
     for (const colors of [COLORS.screen, COLORS.screenDark, COLORS.paper]) {
-      expect(Object.keys(colors.elements).sort()).toEqual(Object.keys(ELEMENT_NAMES).sort());
+      expect(Object.keys(colors.elements).sort()).toEqual([...LEGEND_ELEMENTS].sort());
+    }
+  });
+
+  it("has a name for every element it lists in each language", () => {
+    for (const t of [en, de]) {
+      expect(Object.keys(t.structure.elements).sort()).toEqual([...LEGEND_ELEMENTS].sort());
     }
   });
 });

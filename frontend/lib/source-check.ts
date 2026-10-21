@@ -1,5 +1,6 @@
 import type { CheckedClaim, SourceCheck } from "./chat";
 import type { Turn } from "./chat-turn";
+import { en, type Messages } from "./messages/en";
 
 /** Where a claim the sources don't back stands in the answer's Markdown; `claim` is its index
  * in the check. */
@@ -87,30 +88,30 @@ export type CheckSummary = {
   detail?: string;
 };
 
-export function checkSummary(check: SourceCheck): CheckSummary | null {
-  if (!check.checked) return { kind: "unchecked", title: "Not checked against the sources" };
+export function checkSummary(check: SourceCheck, t: Messages = en): CheckSummary | null {
+  if (!check.checked) return { kind: "unchecked", title: t.check.unchecked };
   const facts = check.claims.filter((claim) => claim.label !== "not_a_claim");
   const unbacked = facts.filter((claim) => claim.label === "unsupported").length;
   const elsewhere = facts.filter((claim) => claim.label === "held_elsewhere").length;
   if (facts.length === 0) return null;
-  const title = "Checked against the sources";
+  const title = t.check.checked;
   if (unbacked === 0 && elsewhere === 0) {
-    return { kind: "backed", title, detail: "Every fact is backed by the source it cites." };
+    return { kind: "backed", title, detail: t.check.allBacked };
   }
   if (unbacked === 0) {
-    return { kind: "backed", title, detail: "Every fact is in Molecula's sources." };
+    return { kind: "backed", title, detail: t.check.allInSources };
   }
-  const sentences = unbacked === 1 ? "1 sentence isn't" : `${unbacked} sentences aren't`;
   return {
     kind: "unbacked",
     title,
-    detail: `${facts.length - unbacked} of ${facts.length} facts backed · ${sentences} in Molecula's sources (underlined).`,
+    detail: t.check.someUnbacked(facts.length - unbacked, facts.length, unbacked),
   };
 }
 
-/** Why the sources don't back a claim: the check's own reason, or why it has none. */
-export function unbackedReason(claim: CheckedClaim): string {
-  if (claim.decided_by === "unknown_refs") return "It cites a source Molecula didn't look up.";
-  if (claim.decided_by === "no_verdict") return "The check gave no verdict on it.";
+/** Why the sources don't back a claim: the check's own reason, or why it has none. The check's
+ * reason comes from its model and stays as it wrote it. */
+export function unbackedReason(claim: CheckedClaim, t: Messages = en): string {
+  if (claim.decided_by === "unknown_refs") return t.check.unknownRefs;
+  if (claim.decided_by === "no_verdict") return t.check.noVerdict;
   return claim.reason;
 }

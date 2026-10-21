@@ -53,6 +53,14 @@ export type ChatEvent =
 export const CHAT_UNAVAILABLE = "The chat is currently unavailable. Try again later.";
 export const CHAT_FAILED = "Something went wrong while answering. Try again.";
 
+/** A failed turn's error: the app's own two in the interface language, a message from the
+ * backend as it came. */
+export function errorText(error: string | undefined, t: Messages = en): string | undefined {
+  if (error === CHAT_FAILED) return t.chat.failed;
+  if (error === CHAT_UNAVAILABLE) return t.chat.unavailable;
+  return error;
+}
+
 /** A failure the backend explained, with a message written for the user. */
 export class ChatError extends Error {
   constructor(message: string) {

@@ -1,4 +1,6 @@
 import type { Resolution, Suggestion } from "./api";
+import { en, type Messages } from "./messages/en";
+import { stepLine } from "./step-line";
 
 /** A tool the model called, and what it returned once it has (`ToolCallEvent` and
  * `ToolResultEvent` in `backend/src/molecula/schemas/chat.py`). A label search also has its
@@ -224,11 +226,12 @@ function stringArg(value: unknown): string | null {
 }
 
 /**
- * The steps with their cards. With `mergeProperties`, the properties of several drugs, each
- * looked up on its own, show as one table at the first lookup's place.
+ * The steps with their cards and their lines in the interface language. With `mergeProperties`,
+ * the properties of several drugs, each looked up on its own, show as one table at the first
+ * lookup's place.
  */
-export function cardSteps(steps: Step[], mergeProperties: boolean): CardStep[] {
-  const shown = steps.map((step) => ({ text: step.text, card: cardOf(step.tool) }));
+export function cardSteps(steps: Step[], mergeProperties: boolean, t: Messages = en): CardStep[] {
+  const shown = steps.map((step) => ({ text: stepLine(step, t), card: cardOf(step.tool) }));
   if (!mergeProperties) return shown;
   const lookups = shown.filter(
     (step) =>
@@ -242,7 +245,7 @@ export function cardSteps(steps: Step[], mergeProperties: boolean): CardStep[] {
   );
   const names = drugs.map((drug) => (drug.status === "found" ? drug.compound.name : drug.query));
   const merged: CardStep = {
-    text: `Getting the properties of ${names.join(", ")}`,
+    text: t.progress.properties(names.join(", ")),
     card: { kind: "properties", drugs },
   };
   return shown
@@ -269,19 +272,18 @@ export function structuresOf(steps: Step[]): StructureTarget[] {
 }
 
 /** "Imatinib in ABL1", or the drug's name alone when it has no complex. */
-export function structureTitle(target: StructureTarget): string {
+export function structureTitle(target: StructureTarget, t: Messages = en): string {
   const name = target.name.charAt(0).toUpperCase() + target.name.slice(1);
   return target.complex
-    ? `${name} in ${target.complex.target ?? `PDB ${target.complex.pdb_id}`}`
+    ? t.structure.inTarget(name, target.complex.target ?? `PDB ${target.complex.pdb_id}`)
     : name;
 }
 
 /** "PDB 2HYY · Homo sapiens · 5 hydrogen bonds", or why the drug shows alone. */
-export function structureSubtitle(target: StructureTarget): string {
-  if (!target.complex) return "the molecule alone: no reviewed structure with its target";
+export function structureSubtitle(target: StructureTarget, t: Messages = en): string {
+  if (!target.complex) return t.structure.alone;
   const { pdb_id, organism, hydrogen_bonds } = target.complex;
-  const bonds = hydrogen_bonds.length;
-  return [`PDB ${pdb_id}`, organism, `${bonds} hydrogen ${bonds === 1 ? "bond" : "bonds"}`]
+  return [`PDB ${pdb_id}`, organism, t.structure.hydrogenBonds(hydrogen_bonds.length)]
     .filter(Boolean)
     .join(" · ");
 }

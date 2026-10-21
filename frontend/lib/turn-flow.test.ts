@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { CHAT_FAILED } from "./chat";
 import { startTurn, type Turn } from "./chat-turn";
+import { de } from "./messages/de";
 import { CHECKING_ANSWER } from "./source-check";
 import {
   ACETAMINOPHEN_NO_COMPLEX,
@@ -36,7 +38,7 @@ function search(changes: Partial<ToolRun> = {}): Step {
 
 function targets(): Step {
   return {
-    text: "Getting the targets of metformin",
+    text: "Finding the targets of metformin",
     tool: {
       id: "call_2",
       name: "get_targets",
@@ -175,7 +177,7 @@ describe("turnFlow", () => {
   it("shows another tool as the call and one store lookup done by code", () => {
     const flow = turnFlow(answered([targets()]));
 
-    expect(flow[1].title).toBe("Getting the targets of metformin");
+    expect(flow[1].title).toBe("Finding the targets of metformin");
     expect(flow[1].steps.map(({ number, who, guide }) => [number, who, guide])).toEqual([
       ["2", "model", "decide-what-to-look-up"],
       ["3", "code", null],
@@ -251,7 +253,7 @@ describe("turnFlow", () => {
   });
 
   it("numbers two label searches", () => {
-    const second = search({ id: "call_3" });
+    const second = search({ id: "call_3", args: { question: IMATINIB_LABELS.question } });
     const flow = turnFlow(
       answered([search(), targets(), { ...second, text: "Searching the drug labels" }]),
     );
@@ -259,7 +261,7 @@ describe("turnFlow", () => {
     expect(flow.map((part) => part.title)).toEqual([
       null,
       "Search 1 of 2 · Searching the Gleevec label",
-      "Getting the targets of metformin",
+      "Finding the targets of metformin",
       "Search 2 of 2 · Searching the drug labels",
       null,
     ]);
@@ -535,5 +537,74 @@ describe("callText", () => {
         args: { question: "Is imatinib safe in pregnancy?", drug: "imatinib", section: null },
       }),
     ).toBe('search_labels(drug="imatinib")');
+  });
+});
+
+describe("turnFlow in German", () => {
+  it("writes the guide's steps, the tags and the lookups' titles in German", () => {
+    const flow = turnFlow(answered([search(), targets()]), de);
+
+    expect(flow.map((part) => part.title)).toEqual([
+      null,
+      "Durchsuche die Fachinformation von Gleevec",
+      "Suche die Zielproteine von metformin",
+      null,
+    ]);
+    const check = step(flow, "check");
+    expect([check.title, check.whoLabel, check.outcome]).toEqual([
+      "Die Frage prüfen",
+      "Jev oder Chatmodell",
+      "Als Medikamentenfrage eingeordnet, deshalb ging es weiter.",
+    ]);
+    expect(step(flow, "lookup").title).toBe("Im Datenbestand nachschlagen");
+    expect(step(flow, "write").outcome).toBe("Hat die Antwort geschrieben und [1] zitiert.");
+  });
+
+  it("says in German what a label search did, keeping the label's section names", () => {
+    const flow = turnFlow(answered([search()]), de);
+
+    expect(step(flow, "narrow").outcome).toBe(
+      "Durchsucht: „Gleevec“ als imatinib, 1 Fachinformation.",
+    );
+    expect(step(flow, "score").outcome).toBe(
+      `Gesucht mit „${IMATINIB_LABELS.question}“. Die 3 nächsten Textstellen haben eine Ähnlichkeit von 0.21 bis 0.71.`,
+    );
+    const boost = step(flow, "boost");
+    expect(boost.title).toBe("+0.15 addieren und die besten 2 behalten");
+    expect(boost.outcome).toBe(
+      "2 Textstellen bekamen +0.15; die Reihenfolge blieb gleich. 1 Textstelle unter der Mindestähnlichkeit von 0.30 wurde verworfen.",
+    );
+    expect(boost.ranking?.passages.map(({ section }) => section)).toEqual([
+      "Mechanism of action",
+      "Pharmacokinetics",
+    ]);
+  });
+
+  it("names why a question got a fixed answer in German", () => {
+    const refused = answered([], {
+      steps: [CHECKING],
+      answer: "Molecula beantwortet nur Fragen zu Medikamenten.",
+      sources: [],
+      sourceCheck: null,
+      category: "off_topic",
+    });
+
+    expect(step(turnFlow(refused, de), "check").outcome).toBe(
+      "Als Frage außerhalb des Themas eingeordnet, deshalb gab Molecula eine feste Antwort und sonst lief nichts.",
+    );
+  });
+
+  it("gives the app's own error in German and the backend's as it came", () => {
+    const failed = (error: string): Turn => ({
+      ...startTurn("Wie wirkt Imatinib?"),
+      state: "failed",
+      error,
+      steps: [CHECKING],
+    });
+
+    expect(step(turnFlow(failed(CHAT_FAILED), de), "check").outcome).toBe(de.chat.failed);
+    expect(step(turnFlow(failed("Rate limit reached."), de), "check").outcome).toBe(
+      "Rate limit reached.",
+    );
   });
 });

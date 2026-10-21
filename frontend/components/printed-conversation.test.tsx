@@ -1,9 +1,11 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import type { Complex } from "@/lib/api";
 import type { Source } from "@/lib/chat";
 import { startTurn, type Turn } from "@/lib/chat-turn";
+import { LANGUAGE_KEY } from "@/lib/language";
+import { de } from "@/lib/messages/de";
 import type { Picture } from "@/lib/printed-pictures";
 import { METAL_COMPLEX, SMALL_COMPLEX } from "@/lib/test-complexes";
 import { IMATINIB_SOURCES } from "@/lib/test-fixtures";
@@ -218,5 +220,69 @@ describe("PrintedEnd", () => {
 describe("askedTime", () => {
   it("gives the day and the time on a 24-hour clock", () => {
     expect(askedTime(new Date(2026, 9, 20, 14, 5).getTime())).toBe("Oct 20, 2026, 14:05");
+  });
+});
+
+describe("the printed conversation in German", () => {
+  beforeEach(() => localStorage.setItem(LANGUAGE_KEY, "de"));
+  afterEach(() => localStorage.clear());
+
+  it("counts the questions and dates the print in German", () => {
+    render(<PrintedHeader title="Wie wirkt Gleevec?" questions={["Wie wirkt Gleevec?", "Und?"]} />);
+
+    const printed = screen.getByRole("region", { name: "Gedruckte Unterhaltung" });
+    expect(within(printed).getByText(/^2 Fragen · Gedruckt am \d+\. \p{L}+ \d{4}$/u)).toBeDefined();
+  });
+
+  it("names the structure, its legend and its sources in German", () => {
+    render(
+      <>
+        <PrintedStructure
+          target={{ cid: 5291, name: "imatinib", complex: IMATINIB_COMPLEX as DrugComplex }}
+          picture={{
+            status: "ready",
+            png: "data:image/png;base64,iVBORw0KGgo=",
+            complex: SMALL_COMPLEX,
+            elements: ["N", "O"],
+          }}
+        />
+        <PrintedSources sources={IMATINIB_SOURCES} />
+      </>,
+    );
+
+    const figure = screen.getByRole("figure", { name: "3D-Struktur von imatinib" });
+    expect(within(figure).getByText("Imatinib an ABL1 (BCR-ABL)")).toBeDefined();
+    const colours = screen.getByRole("list", { name: "Farben" });
+    expect(
+      within(colours)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual([
+      "Kohlenstoffatome von imatinib",
+      "Stickstoff",
+      "Sauerstoff",
+      "Wasserstoffbrücke",
+      "Aminosäuren im Umkreis von 4 Å",
+    ]);
+    expect(screen.getByRole("region", { name: "Quellen" })).toBeDefined();
+  });
+
+  it("says in German why a drug has no picture", () => {
+    render(
+      <PrintedStructure
+        target={{ cid: 1983, name: "acetaminophen", complex: null }}
+        picture={{ status: "failed" }}
+      />,
+    );
+
+    expect(
+      screen.getByText("Das 3D-Bild von acetaminophen konnte nicht gezeichnet werden."),
+    ).toBeDefined();
+  });
+
+  it("gives the time a question was asked in German", () => {
+    expect(askedTime(new Date(2026, 9, 20, 14, 5).getTime(), de.locale)).toBe(
+      "20. Okt. 2026, 14:05",
+    );
   });
 });

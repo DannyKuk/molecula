@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 
 import { StepDot } from "@/components/step-dot";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { type Messages, useMessages } from "@/lib/messages";
 import type { Card } from "@/lib/tool-cards";
 
 import { ComplexCard, NoComplexCard } from "./complex-card";
@@ -31,6 +32,7 @@ export function ToolCard({
   answer: string;
   current: boolean;
 }) {
+  const t = useMessages();
   return (
     <Collapsible>
       <CollapsibleTrigger className="group grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-0.5 rounded text-left text-ink-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3">
@@ -42,7 +44,7 @@ export function ToolCard({
             className="size-3.5 shrink-0 transition-transform group-data-[panel-open]:rotate-90"
           />
         </span>
-        <span className="col-start-2 font-mono text-xs text-ink-3">{summary(card)}</span>
+        <span className="col-start-2 font-mono text-xs text-ink-3">{summary(card, t)}</span>
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-1.5 mb-2 ml-[2px] border-l border-rule pl-4">
         {body(card, answer)}
@@ -51,34 +53,31 @@ export function ToolCard({
   );
 }
 
-function summary(card: ShownCard): ReactNode {
+function summary(card: ShownCard, { cards: t, quote }: Messages): ReactNode {
   switch (card.kind) {
     case "invalid":
-      return <Badge tone="error">Rejected call</Badge>;
+      return <Badge tone="error">{t.rejected}</Badge>;
     case "not_supported":
-      return <Badge tone="warning">Not supported</Badge>;
+      return <Badge tone="warning">{t.notSupported}</Badge>;
     case "drug":
-      return `“${card.result.query}” → ${card.result.name}`;
+      return `${quote(card.result.query)} → ${card.result.name}`;
     case "properties": {
-      if (card.drugs.length > 1) return "Side by side";
+      if (card.drugs.length > 1) return t.sideBySide;
       const drug = card.drugs[0];
       return drug.status === "found"
         ? `${drug.compound.formula} · ${drug.compound.molecular_weight} g/mol`
-        : "Not supported";
+        : t.notSupported;
     }
     case "targets": {
       const count = card.result.targets.length;
-      if (count === 0) return "No mechanism listed";
-      return `${count} ${count === 1 ? "target" : "targets"}`;
+      return count === 0 ? t.noMechanism : t.targets(count);
     }
     case "complex":
       return [card.result.pdb_id, card.result.target].filter(Boolean).join(" · ");
     case "no_complex":
-      return "No reviewed structure";
-    case "labels": {
-      const count = card.result.passages.length;
-      return `${count} ${count === 1 ? "passage" : "passages"}`;
-    }
+      return t.noStructure;
+    case "labels":
+      return t.passages(card.result.passages.length);
   }
 }
 

@@ -137,7 +137,7 @@ function status(message: string): string {
 }
 
 const IMATINIB_IN_3D =
-  status("Getting the complex of imatinib") +
+  status("Looking up the 3D complex of imatinib") +
   chatFrame({ type: "tool_call", id: "call_1", name: "get_complex", args: { drug: "imatinib" } }) +
   chatFrame({
     type: "tool_result",

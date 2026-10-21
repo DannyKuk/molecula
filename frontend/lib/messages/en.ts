@@ -1,6 +1,7 @@
 /** The interface text in English. `de.ts` has the same keys; the type below makes sure of it. */
 export const en = {
   locale: "en-US",
+  quote: (text: string) => `“${text}”`,
   language: {
     switch: "Language",
     en: "English",
@@ -287,6 +288,368 @@ export const en = {
     didYouMean: "Did you mean",
     whatIs: (name: string) => `What is ${name}?`,
   },
+  progress: {
+    label: "Progress",
+    checking: "Checking the question",
+    checkingAnswer: "Checking the answer against the sources",
+    resolving: (name: string) => `Looking up ${name}`,
+    properties: (drug: string) => `Getting the properties of ${drug}`,
+    targets: (drug: string) => `Finding the targets of ${drug}`,
+    complex: (drug: string) => `Looking up the 3D complex of ${drug}`,
+    comparing: (drugs: string[]) => `Comparing ${drugs.join(", ")}`,
+    searchingLabel: (drug: string) => `Searching the ${drug} label`,
+    searchingLabels: "Searching the drug labels",
+  },
+  cards: {
+    rejected: "Rejected call",
+    notSupported: "Not supported",
+    sideBySide: "Side by side",
+    noMechanism: "No mechanism listed",
+    targets: (count: number) => `${count} ${count === 1 ? "target" : "targets"}`,
+    noStructure: "No reviewed structure",
+    passages: (count: number) => `${count} ${count === 1 ? "passage" : "passages"}`,
+    showAll: (count: number) => `Show all ${count}`,
+    matches: {
+      name: "is the generic name of",
+      alias: "is a stored name for",
+      brand: "is a brand of",
+      pubchem: "is a PubChem synonym of",
+    },
+    notInData: (query: string) => `“${query}” isn't in Molecula's data, so nothing was looked up.`,
+    closestNames: (names: string) => `Closest supported names: ${names}`,
+    toolRejected: "The tool rejected the request, so nothing was looked up:",
+    noMechanismFor: (name: string) => `ChEMBL lists no mechanism of action for ${name}.`,
+    genes: "· genes:",
+    target: "Target",
+    organism: "Organism",
+    structure: "Structure",
+    ligandCode: "Drug's code in the entry",
+    hydrogenBonds: "Hydrogen bonds",
+    residue: "Residue",
+    chain: "Chain",
+    atoms: "Atoms (protein – drug)",
+    distance: "Distance",
+    noHydrogenBonds: "No hydrogen bonds in this structure.",
+    residuesWithin: "Residues within 4 Å, closest first",
+    viewIn3d: "View in 3D",
+    noComplex: (name: string) =>
+      `Molecula has no reviewed structure of ${name} bound to its target. The 3D view shows the molecule alone.`,
+    viewMoleculeIn3d: "View the molecule in 3D",
+    properties: {
+      formula: { label: "Formula" },
+      weight: { label: "Molecular weight" },
+      xlogp: { label: "XLogP", hint: "higher = dissolves better in fat than in water" },
+      tpsa: { label: "Polar surface (TPSA)", hint: "lower = crosses cell membranes more easily" },
+      hbonds: { label: "H-bond donors / acceptors" },
+      rotatable: { label: "Rotatable bonds", hint: "how flexible the molecule is" },
+      heavy: { label: "Heavy atoms", hint: "atoms other than hydrogen" },
+    },
+    unsupported: "not supported",
+    closest: (names: string) => `closest: ${names}`,
+    searchedFor: (question: string, scope: string) =>
+      `Searched for “${question}”${scope && ` in ${scope}`}.`,
+    inLabel: (drug: string) => `the ${drug} label`,
+    inSections: (section: string) => `${section.toLowerCase()} sections`,
+    noUsLabel: (names: string) => `No US label for ${names}.`,
+    notSupportedNames: (names: string) => `Not supported: ${names}.`,
+    noPassage: "No passage matched the question.",
+    ranking: {
+      dense: "Embeddings: closest in meaning",
+      bm25: "Keywords (BM25)",
+      hybrid: "Keywords and embeddings, merged by rank",
+    },
+    translation: "Translation",
+    asWritten: "searched with the question as written",
+    drugs: "Drugs",
+    noDrugNamed: "No drug named, so every label was searched.",
+    namedByModel: "Named by the chat model when it called the search.",
+    readByFilter: "Read from the question by the label filter.",
+    filterFailed: (error: string) => `The label filter gave no answer: ${error}`,
+    sections: "Sections",
+    product: "Product",
+    productLabels: { otc: "Over the counter labels", rx: "Prescription labels" },
+    rankedBy: "Ranked by",
+    passagesByRank: "Passages by rank",
+    droppedBelow: (count: number, minimum: string) =>
+      `${count} dropped for a similarity below ${minimum}.`,
+    noneBelow: (minimum: string) => `Nothing scored below the minimum similarity of ${minimum}.`,
+    boostNote: (boost: string) =>
+      ` A passage from the section the search asked for counts ${boost} higher in the ranking, the light end of its bar.`,
+    rankFusionNote:
+      " The order comes from each passage's place in both rankings, not from the similarity.",
+    anyDrug: "Any",
+    labels: (count: number) => `${count} ${count === 1 ? "label" : "labels"}`,
+    narrowed: ", narrowed",
+    toTop: "moved to the top, the rest still searched",
+    wholeLabel: "The whole label",
+    widened: "The narrowed labels have none of these, so every label of the drug was searched.",
+    leftOut: (groups: string) => `Left out, not a label section: ${groups}`,
+    sectionAskedFor: (boost: string) => `+${boost} section asked for`,
+    ranks: (dense: string, bm25: string) => `embeddings #${dense} · keywords #${bm25}`,
+    dropped: (minimum: string) => `dropped, below ${minimum}`,
+    similarity: "Similarity to the question",
+    citedSr: " cited",
+    cited: "cited",
+    skipped: "Skipped",
+  },
+  check: {
+    unchecked: "Not checked against the sources",
+    checked: "Checked against the sources",
+    allBacked: "Every fact is backed by the source it cites.",
+    allInSources: "Every fact is in Molecula's sources.",
+    someUnbacked: (backed: number, facts: number, unbacked: number) =>
+      `${backed} of ${facts} facts backed · ${unbacked === 1 ? "1 sentence isn't" : `${unbacked} sentences aren't`} in Molecula's sources (underlined).`,
+    notInSources: "Not in Molecula's sources",
+    unknownRefs: "It cites a source Molecula didn't look up.",
+    noVerdict: "The check gave no verdict on it.",
+    copy: "Copy details",
+    copied: "Copied",
+    copyFailed: "Copy failed",
+  },
+  report: {
+    title: "Molecula answer report",
+    question: "Question",
+    answer: "Answer",
+    sourceCheck: "Source check",
+    sources: "Sources",
+    toolCalls: "Tool calls",
+    noCheck: "No check.",
+    checkFailed: "Not checked: the check failed.",
+    noClaims: "No claims.",
+    refs: (refs: string) => `refs ${refs}`,
+    heldBy: (refs: string) => `held by ${refs}`,
+    decidedBy: (by: string) => `decided by ${by}`,
+    reason: (reason: string) => `Reason: ${reason}`,
+    noRefs: "none",
+    none: "None.",
+  },
+  flow: {
+    intro: "The steps this answer ran, in order. The tag on each says who did it.",
+    guideLink: "How Molecula answers",
+    guideAfter: "follows one question through every step.",
+    steps: "Steps",
+    states: {
+      skipped: "Skipped",
+      running: "Running",
+      waiting: "Not yet",
+      stopped: "Stopped",
+      failed: "Failed",
+      not_reached: "Not reached",
+    },
+    whatThisMeans: "What this step means",
+    who: { model: "Chat model", embedder: "Embedder", code: "Code" },
+    eitherModel: "Jev or chat model",
+    guide: {
+      "check-the-question": {
+        title: "Check the question",
+        short:
+          "A short separate call sorts the message. Only medicine questions and possible overdoses go on to an answer.",
+      },
+      "decide-what-to-look-up": {
+        title: "Decide what to look up",
+        short:
+          "The chat model picks what to look up and fills in the call, before it has seen what the lookup returns.",
+      },
+      "narrow-to-the-drug": {
+        title: "Narrow the search to the drug",
+        short: "Code looks the drug up in the store and searches only that drug's labels.",
+      },
+      "score-by-meaning": {
+        title: "Score the passages by meaning",
+        short:
+          "The embedder scores the drug's passages by how close they are in meaning to the question.",
+      },
+      "boost-and-keep-five": {
+        title: "Add the +0.15 and keep the top 5",
+        short:
+          "Code adds +0.15 to passages in the guessed section, sorts by the new score and keeps the top 5. No AI is asked.",
+      },
+      "write-the-answer": {
+        title: "Write the answer",
+        short:
+          "The chat model reads what the lookups returned and writes the answer, citing each source as [n].",
+      },
+      "watch-for-a-leak": {
+        title: "Watch for a leaked system prompt",
+        short: "While the answer streams, code watches for a hidden marker from the system prompt.",
+      },
+      "check-the-sources": {
+        title: "Check the answer against the sources",
+        short: "A separate call checks each claim in the answer against the source it cites.",
+      },
+    },
+    categories: {
+      ok: "medicine question",
+      off_topic: "off topic",
+      personal_medical_advice: "personal advice",
+      overdose_emergency: "overdose emergency",
+      lethal_dose: "lethal dose",
+      synthesis_or_misuse: "synthesis or misuse",
+      prompt_injection: "prompt injection",
+    },
+    searchOf: (number: number, total: number, line: string) =>
+      `Search ${number} of ${total} · ${line}`,
+    overdose: "Sorted as a possible overdose, so the answer starts with emergency help.",
+    sortedFixed: (category: string) =>
+      `Sorted as ${category}, so Molecula gave a fixed answer and nothing else ran.`,
+    fixed: "Molecula gave a fixed answer, so nothing else ran.",
+    sortedOk: "Sorted as a medicine question, so it went on.",
+    passed: "Passed, so it went on.",
+    answeredWithoutLookup: "The chat model answered without looking anything up.",
+    lookupTitle: "Look it up in the store",
+    lookupLine: "Code reads the answer from Molecula's own store. No AI is asked.",
+    done: "Done.",
+    rejected: (errors: string) => `Rejected and sent back to the chat model as an error: ${errors}`,
+    notInStore: (names: string) => `Not in the store: ${names}.`,
+    isInStore: (query: string, name: string) => `“${query}” is ${name} in the store.`,
+    sideBySide: (names: string) => `The properties of ${names}, side by side.`,
+    noMechanism: (name: string) => `ChEMBL lists no mechanism for ${name}.`,
+    targets: (count: number, shown: string, more: number) =>
+      `${plural(count, "target")}: ${shown}${more > 0 ? ` and ${more} more` : ""}.`,
+    complexFound: (title: string, subtitle: string) =>
+      `A reviewed structure: ${title}, ${subtitle}.`,
+    noComplex: (name: string) => `No reviewed structure of ${name} with its target.`,
+    passagesFound: (count: number) => `${plural(count, "passage")} found.`,
+    show3dTitle: "Show it in 3D",
+    show3dLine:
+      "The 3D tab loads the structure from Molecula's own store and your browser draws it. No AI is asked and nothing is fetched from outside.",
+    shows3d: (title: string) => `The 3D tab shows ${title}.`,
+    showsMolecule: "The 3D tab shows the molecule alone, from its stored 3D shape.",
+    extractTitle: "Read the drugs from the question",
+    extractLine:
+      "The call named no drug, so one more small call reads the drugs and the parts of the label from the question.",
+    noDrugFoundEveryLabel: "No drug found, so every label was searched.",
+    searchRejected: (errors: string) =>
+      `Rejected and sent back to the chat model as an error, so nothing was searched: ${errors}`,
+    noneInStore: (names: string) =>
+      `None of the names is in the store (${names}), so nothing was searched.`,
+    narrowSeveralTitle: "Narrow the search to the drugs",
+    narrowSeveralLine:
+      "Code looks the drugs up in the store and searches only their labels, one drug at a time.",
+    noPassageToScore: "No passage to score.",
+    boostSeveralLine:
+      "Code adds +0.15 to passages in the guessed section, sorts by the new score and keeps each drug's top 5. No AI is asked.",
+    unrecorded: "Not recorded: this search was saved before searches kept their details.",
+    noPassageMatched: "No passage matched the question.",
+    keptNumbered: (count: number, range: string) =>
+      `Kept ${plural(count, "passage")}, numbered ${range}.`,
+    refRange: (first: number, last: number) => `[${first}] to [${last}]`,
+    noDrugNamed: "No drug named, so every label was searched.",
+    drugs: (names: string[]) => `Drugs: ${names.join(", ")}.`,
+    noDrug: "No drug found.",
+    sections: (names: string[]) =>
+      `Sections: ${names.map((name) => name.toLowerCase()).join(", ")}.`,
+    noSection: "No section.",
+    searchedAs: (name: string, generic: string) => `“${name}” as ${generic}`,
+    searched: (names: string[], labels: number) =>
+      `Searched ${names.join(" and ")}: ${plural(labels, "label")}.`,
+    noUsLabel: (names: string) => `No US label for ${names}.`,
+    droppedSections: (names: string[]) =>
+      `Dropped as not a label section: ${names.map((name) => name.toLowerCase()).join(", ")}.`,
+    widened: "None of those labels has the section, so the drug's other labels were searched too.",
+    range: (low: string, high: string) => `${low} to ${high}`,
+    searchedWith: (question: string) => `Searched with “${question}”.`,
+    bm25Title: "Score the passages by keywords",
+    bm25Line: "Code ranks the drug's passages by the words they share with the question (BM25).",
+    ranked: (count: number) => `${plural(count, "passage")} ranked.`,
+    closest: (count: number, range: string) =>
+      `The ${plural(count, "closest passage")} have a similarity of ${range}.`,
+    hybridToo: "A keyword search (BM25) ranked the passages as well.",
+    droppedBelow: (count: number, minimum: string) =>
+      `${plural(count, "passage")} below the minimum similarity of ${minimum} ${count === 1 ? "was" : "were"} dropped.`,
+    mergeTitle: (kept: number) => `Merge the rankings and keep the top ${kept}`,
+    mergeLine:
+      "Code merges the keyword and embedding rankings by place (rank fusion). No AI is asked.",
+    hybridOrder: "Hybrid search: the +0.15 only changed the order of the embedding ranking. ",
+    kept: (count: number) => `Kept ${plural(count, "passage")}.`,
+    noSectionGuessed: "No section was guessed, so no passage got the bonus.",
+    noneInSection: "None of the kept passages is in the guessed section.",
+    boosted: (count: number, bonus: string, moved: number) =>
+      `${plural(count, "passage")} got +${bonus}; ${moved === 0 ? "the order stayed the same" : `${plural(moved, "passage")} changed place`}.`,
+    boostTitle: (bonus: string, kept: number) => `Add the +${bonus} and keep the top ${kept}`,
+    withdrawnWrite: "The chat model wrote an answer, which was withdrawn.",
+    markerShowed:
+      "The marker showed up, so the answer was replaced with a fixed one before the marker reached you.",
+    withdrawnUnchecked: "A withdrawn answer isn't checked.",
+    markerNever: "The marker never showed up.",
+    noCitations: "Wrote the answer without citations.",
+    citing: (refs: string) => `Wrote the answer, citing ${refs}.`,
+    noCheckRecorded: "No check was recorded for this answer.",
+    checkFailed: "The check failed, so the answer is shown unchecked.",
+    noFacts: "The answer states no facts to check.",
+    bars: {
+      label: "Passages by score",
+      sectionAskedFor: (boost: string) => `+${boost}, section asked for`,
+      noBonus: "no bonus",
+      ordinal,
+      similarity: "Similarity, from the embedder",
+      bonus: "Section bonus, from the code",
+      scale: (top: string) => `Bars from 0 to ${top}`,
+    },
+  },
+  structure: {
+    inTarget: (drug: string, target: string) => `${drug} in ${target}`,
+    alone: "the molecule alone: no reviewed structure with its target",
+    hydrogenBonds: (count: number) => `${count} hydrogen ${count === 1 ? "bond" : "bonds"}`,
+    viewOf: (name: string) => `3D view of ${name}`,
+    noModel: (name: string) =>
+      `No 3D model: Molecula has them for small-molecule drugs only, and ${name} is too large.`,
+    modeSwitch: "What the 3D view shows",
+    modes: { molecule: "Molecule", site: "Binding site", protein: "Whole protein" },
+    inThreeD: (title: string) => `${title}, in 3D`,
+    fullScreen: "Full screen",
+    close: "Close",
+    replay: "Replay binding",
+    reset: "Reset view",
+    loading: "Loading the 3D structure…",
+    failed: "The 3D structure couldn't be loaded.",
+    tryAgain: "Try again",
+    atoms: (count: number) => plural(count, "atom"),
+    residues: (count: number) => plural(count, "residue"),
+    hBonds: (count: number) => plural(count, "H-bond"),
+    carbons: (name: string) => `${name} carbons`,
+    // Every element `LEGEND_ELEMENTS` in `components/structure/readout.ts` lists.
+    elements: {
+      H: "hydrogen",
+      Cl: "chlorine",
+      F: "fluorine",
+      I: "iodine",
+      N: "nitrogen",
+      O: "oxygen",
+      P: "phosphorus",
+      S: "sulfur",
+    } as Record<string, string>,
+    hydrogenBond: "hydrogen bond",
+    metalBond: "metal bond",
+    cofactor: "cofactor",
+    pocket: "residues within 4 Å",
+    backbone: "protein backbone",
+    controls: "Drag to turn · scroll to zoom",
+  },
+  print: {
+    label: "Printed conversation",
+    questions: (count: number) => (count === 1 ? "1 question" : `${count} questions`),
+    printedOn: (date: string) => `Printed on ${date}`,
+    structure: "3D structure",
+    structureOf: (name: string) => `3D structure of ${name}`,
+    pictureAlt: (title: string) => `${title}, as the 3D view first shows it`,
+    colours: "Colours",
+    pictureFailed: (name: string) => `The 3D picture of ${name} couldn't be drawn.`,
+    printFromMenu: (name: string) =>
+      `For the 3D picture of ${name}, print from the chat's export menu ("Print or save as PDF").`,
+    end: "End of the printed conversation",
+  },
 };
 
 export type Messages = typeof en;
+
+function plural(count: number, noun: string): string {
+  return `${count} ${count === 1 ? noun : `${noun}s`}`;
+}
+
+/** "1st", "2nd", "3rd", "4th", … */
+function ordinal(place: number): string {
+  const teen = place % 100 >= 11 && place % 100 <= 13;
+  const suffix = teen ? "th" : ({ 1: "st", 2: "nd", 3: "rd" }[place % 10] ?? "th");
+  return `${place}${suffix}`;
+}
