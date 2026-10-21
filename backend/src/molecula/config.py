@@ -100,7 +100,7 @@ class Settings(BaseSettings):
     offline: bool = False
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     # The GitHub release `ingest fetch` downloads the store from (#35); a new snapshot bumps it.
-    store_release: Annotated[str, Field(pattern=r"^store-\d{4}-\d{2}-\d{2}$")] = "store-2026-10-16"
+    store_release: Annotated[str, Field(pattern=r"^store-\d{4}-\d{2}-\d{2}$")] = "store-2026-10-21"
     data_dir: Path = REPO_ROOT / "data"
     cors_origins: list[str] = ["http://localhost:3000"]
     name_suggestion_cutoff: Annotated[float, Field(ge=0.0, le=1.0)] = 0.8
