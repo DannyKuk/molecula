@@ -17,6 +17,7 @@ import {
 } from "@/lib/evidence";
 import { structuresOf } from "@/lib/tool-cards";
 
+import { FlowTab } from "./answer-flow/flow-tab";
 import { OpenFdaCredit } from "./answer-sources";
 import { ProgressSteps } from "./progress-steps";
 import { StructurePanel } from "./structure/structure-panel";
@@ -39,7 +40,8 @@ const TAB =
 const NAV =
   "grid size-7 place-items-center rounded-md border border-rule-2 bg-card text-ink-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-ink-3 disabled:opacity-35";
 
-/** The 3D view, the sources and the steps of one answer, beside the chat or in a sheet. */
+/** The 3D view, the sources, the steps and the flow of one answer, beside the chat or in a
+ * sheet. */
 export function EvidencePanel({ turns, shown, onShow, backToLive, close }: EvidencePanelProps) {
   const index = shown.turn;
   const turn = turns[index];
@@ -106,6 +108,9 @@ export function EvidencePanel({ turns, shown, onShow, backToLive, close }: Evide
             Steps
             <Count>{steps.length}</Count>
           </Tabs.Tab>
+          <Tabs.Tab value="flow" className={TAB}>
+            Flow
+          </Tabs.Tab>
         </Tabs.List>
       </div>
       <div className="thin-scrollbar min-h-0 flex-1 overflow-y-auto p-4">
@@ -131,6 +136,9 @@ export function EvidencePanel({ turns, shown, onShow, backToLive, close }: Evide
               </Empty>
             )}
           </ShowStructure>
+        </Tabs.Panel>
+        <Tabs.Panel value="flow">
+          <FlowTab turn={turn} />
         </Tabs.Panel>
       </div>
     </Tabs.Root>

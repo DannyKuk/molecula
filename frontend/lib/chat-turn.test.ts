@@ -151,19 +151,23 @@ describe("applyEvent", () => {
     expect(turn.answer).toBe("Molecula stopped this answer.");
     expect(turn.steps).toEqual(streamed.steps);
     expect(turn.state).toBe("answering");
+    expect(turn.replaced).toBe(true);
   });
 
-  it("keeps what the answer used when it is done", () => {
+  it("keeps what the answer used and how the question was sorted when it is done", () => {
     const usage = { input_tokens: 900, output_tokens: 100, total_tokens: 1000, cost_usd: 0.002 };
 
     const turn = applyEvent(startTurn("How does imatinib work?"), {
       type: "done",
       usage,
       step_limit_reached: false,
+      category: "ok",
     });
 
     expect(turn.state).toBe("done");
     expect(turn.usage).toEqual(usage);
+    expect(turn.category).toBe("ok");
+    expect(turn.replaced).toBeUndefined();
   });
 
   it("keeps the sources when they arrive", () => {

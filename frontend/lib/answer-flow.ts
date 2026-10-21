@@ -17,14 +17,16 @@ export const WHO: Record<Who, { label: string; meaning: string }> = {
 
 /**
  * One step from a question to a checked answer, as the guide explains it. `id` is the step's
- * anchor on `/how-it-answers`; `onSteps` names what the Steps tab shows for it; `passes` is what
- * the step hands to the next one.
+ * anchor on `/how-it-answers`; `short` says what the step does for any question, for an answer's
+ * Flow tab; `onSteps` names what the Steps tab shows for it; `passes` is what the step hands to the
+ * next one.
  */
 export type FlowStep = {
   id: string;
   number: string;
   title: string;
   who: Who;
+  short: string;
   text: string;
   aside?: string;
   call?: string;
@@ -43,6 +45,8 @@ export const FLOW_STEPS: FlowStep[] = [
     number: "1",
     title: "Check the question",
     who: "model",
+    short:
+      "A short separate call sorts the message. Only medicine questions and possible overdoses go on to an answer.",
     text: "A short separate call sorts the message: a normal medicine question, a possible overdose (the answer then starts with emergency help), or something Molecula refuses, which gets a fixed answer. Only normal questions and overdose questions go on.",
     aside:
       "Online, Jev does this: a small model that only answers yes/no questions. Offline, as in this run, the chat model does it.",
@@ -54,6 +58,8 @@ export const FLOW_STEPS: FlowStep[] = [
     number: "2",
     title: "Decide what to look up",
     who: "model",
+    short:
+      "The chat model picks what to look up and fills in the call, before it has seen what the lookup returns.",
     text: "The chat model hasn't seen any label text yet. It decides to search the labels and fills in the search: which drug, and which part of the label it expects the answer in.",
     call: 'search_labels(drug="ibuprofen", section="interactions")',
     aside:
@@ -65,6 +71,7 @@ export const FLOW_STEPS: FlowStep[] = [
     number: "3",
     title: "Narrow the search to the drug",
     who: "code",
+    short: "Code looks the drug up in the store and searches only that drug's labels.",
     text: "The code looks the drug name up in our store, so “Gleevec” becomes imatinib, and only that drug's labels are searched (here, 2 ibuprofen labels). The section must be one of the label's real sections: a made-up name is sent back to the chat model as an error and never reaches the search.",
     aside: "Two drugs are searched one by one, and each keeps its own top 5.",
     passes: "ibuprofen's labels, cut into passages and tagged by section",
@@ -74,6 +81,8 @@ export const FLOW_STEPS: FlowStep[] = [
     number: "4",
     title: "Score the passages by meaning",
     who: "embedder",
+    short:
+      "The embedder scores the drug's passages by how close they are in meaning to the question.",
     text: "The embedder turns the question into numbers and compares it with every ibuprofen passage. Each passage gets a similarity, about 0 for unrelated and 1 for the same meaning. Two lists are taken: the 5 closest passages in the interactions section and the 5 closest in the whole label, up to 10 candidates together.",
     aside: "Similarity means “sounds like the question”. It doesn't mean “is the right answer”.",
     passes: "up to 10 candidates, each with a similarity",
@@ -83,6 +92,8 @@ export const FLOW_STEPS: FlowStep[] = [
     number: "5",
     title: "Add the +0.15 and keep the top 5",
     who: "code",
+    short:
+      "Code adds +0.15 to passages in the guessed section, sorts by the new score and keeps the top 5. No AI is asked.",
     text: "Each passage from the section guessed in step 2 gets +0.15 added to its score. Then the code sorts by the new score, keeps the top 5 and numbers them [1] to [5]. Plain arithmetic: no AI is asked anything here.",
     onSteps: "Searching the ibuprofen label, the rows with their bars",
     passes: "5 passages, numbered [1] to [5]",
@@ -92,6 +103,8 @@ export const FLOW_STEPS: FlowStep[] = [
     number: "6",
     title: "Write the answer",
     who: "model",
+    short:
+      "The chat model reads what the lookups returned and writes the answer, citing each source as [n].",
     text: "The chat model reads the 5 passages and writes the answer. Every fact gets the number of the passage it came from, like [3].",
     passes: "the answer with its [n] citations",
   },
@@ -100,6 +113,7 @@ export const FLOW_STEPS: FlowStep[] = [
     number: "6b",
     title: "Watch for a leaked system prompt",
     who: "code",
+    short: "While the answer streams, code watches for a hidden marker from the system prompt.",
     text: "While the answer streams out, the code looks for a hidden marker placed in the system prompt (the canary). If it shows up, the answer is replaced with a fixed one before the marker reaches you.",
     passes: "the finished answer",
   },
@@ -108,10 +122,18 @@ export const FLOW_STEPS: FlowStep[] = [
     number: "7",
     title: "Check the answer against the sources",
     who: "model",
+    short: "A separate call checks each claim in the answer against the source it cites.",
     text: "A separate call compares each claim in the answer with the passage it cites, and marks whether the passage really says that.",
     onSteps: "Checking the answer against the sources",
   },
 ];
+
+/** The guide's step with anchor `id`. */
+export function guideStep(id: string): FlowStep {
+  const step = FLOW_STEPS.find((candidate) => candidate.id === id);
+  if (!step) throw new Error(`No guide step ${id}`);
+  return step;
+}
 
 /** A passage a label search scored: its similarity, and whether it is in the section asked for. */
 export type ScoredPassage = { section: string; similarity: number; inSection: boolean };

@@ -1,3 +1,4 @@
+import type { InputCategory } from "./api";
 import {
   CHAT_FAILED,
   type ChatEvent,
@@ -16,8 +17,10 @@ import type { Usage } from "./usage";
  * cites them with. `sourceCheck` is the source check's verdict, which arrives after `sources`; a
  * fixed answer and a stopped one have none. A question asked while another chat's answer comes in
  * is `queued` until that answer ends. `askedAt` and `answeredAt` are epoch milliseconds; turns
- * saved before they existed have neither. `usage` is what the answer's model calls used, from its
- * `done` event.
+ * saved before they existed have neither. `usage` is what the answer's model calls used, and
+ * `category` how the input check sorted the question, both from its `done` event. `replaced` marks
+ * an answer the guard withdrew because it repeated the system prompt. Turns saved before
+ * `category` and `replaced` were kept have neither.
  */
 export type Turn = {
   question: string;
@@ -31,6 +34,8 @@ export type Turn = {
   askedAt?: number;
   answeredAt?: number;
   usage?: Usage;
+  category?: InputCategory;
+  replaced?: boolean;
 };
 
 export function startTurn(question: string): Turn {
@@ -58,7 +63,7 @@ export function applyEvent(turn: Turn, event: ChatEvent): Turn {
     case "token":
       return { ...turn, answer: turn.answer + event.text };
     case "replace_answer":
-      return { ...turn, answer: event.text, sources: null, sourceCheck: null };
+      return { ...turn, answer: event.text, sources: null, sourceCheck: null, replaced: true };
     case "tool_result": {
       const steps = withResult(turn.steps, event.id, event.result);
       return event.name === "search_labels"
@@ -72,7 +77,12 @@ export function applyEvent(turn: Turn, event: ChatEvent): Turn {
     case "source_check":
       return { ...turn, sourceCheck: { checked: event.checked, claims: event.claims } };
     case "done":
-      return { ...turn, state: "done", usage: event.usage };
+      return {
+        ...turn,
+        state: "done",
+        usage: event.usage,
+        ...(event.category && { category: event.category }),
+      };
     case "error":
       return failTurn(turn, event.message);
     default:
