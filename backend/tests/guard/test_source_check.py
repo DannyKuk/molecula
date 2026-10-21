@@ -268,3 +268,21 @@ def test_cited_sources_drop_ids_links_and_scores() -> None:
             "section": "adverse_reactions",
         }
     }
+
+
+def test_a_drugs_lookup_and_properties_under_one_ref_are_one_source() -> None:
+    lookup = {"ref": 1, "status": "found", "cid": 2244, "name": "aspirin"}
+    properties = {
+        "ref": 1,
+        "status": "found",
+        "compound": {"cid": 2244, "name": "aspirin", "formula": "C9H8O4", "xlogp": 1.2},
+    }
+
+    assert cited_sources([lookup, properties]) == {
+        1: {
+            "status": "found",
+            "cid": 2244,
+            "name": "aspirin",
+            "compound": {"cid": 2244, "name": "aspirin", "formula": "C9H8O4", "xlogp": 1.2},
+        }
+    }
