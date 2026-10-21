@@ -8,6 +8,8 @@ from molecula.config import Settings
 
 ENV_EXAMPLE = Path(__file__).resolve().parents[2] / ".env.example"
 ENV_KEYS = [name.upper() for name in Settings.model_fields]
+# Read by Docker Compose for the frontend, not by the backend.
+FRONTEND_KEYS = ["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "CLERK_SECRET_KEY"]
 # A setting as `KEY=value`, or as `# KEY=value` for one left at its default.
 SETTING_LINE = re.compile(r"^(# )?([A-Z_]+)=(\S*)$")
 
@@ -86,11 +88,16 @@ def test_copied_env_example_runs_the_local_model_from_docker(tmp_path: Path) -> 
 def test_env_example_names_every_setting_once() -> None:
     keys = [key for key, _, _ in example_settings()]
 
-    assert sorted(keys) == sorted(ENV_KEYS)
+    assert sorted(keys) == sorted(ENV_KEYS + FRONTEND_KEYS)
 
 
 @pytest.mark.parametrize(
-    ("key", "value"), [(key, value) for key, value, commented in example_settings() if commented]
+    ("key", "value"),
+    [
+        (key, value)
+        for key, value, commented in example_settings()
+        if commented and key not in FRONTEND_KEYS
+    ],
 )
 def test_env_example_shows_the_default_of_a_commented_setting(
     tmp_path: Path, key: str, value: str

@@ -33,6 +33,7 @@ export const de: Messages = {
       "Der Verlauf ist in diesem Browser aus, deshalb wird dieser Chat nicht gespeichert.",
     unavailable: "Der Chat ist gerade nicht verfügbar. Versuchen Sie es später noch einmal.",
     failed: "Beim Antworten ist etwas schiefgegangen. Versuchen Sie es noch einmal.",
+    signedOut: "Ihre Anmeldung ist abgelaufen. Laden Sie die Seite neu, um sich wieder anzumelden.",
   },
   composer: {
     label: "Zu einem Medikament fragen",

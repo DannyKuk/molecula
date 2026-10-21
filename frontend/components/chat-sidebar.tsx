@@ -35,6 +35,7 @@ import { useSidebarExpanded } from "@/lib/use-sidebar-expanded";
 
 import { HistoryRow } from "./history-row";
 import { LanguageSwitch } from "./language-switch";
+import { UserMenu } from "./login";
 import { McpDialog } from "./mcp-dialog";
 import { ModelSettings } from "./model-settings";
 
@@ -120,6 +121,7 @@ export function ChatSidebar(props: ChatListProps) {
         <ModelSettings trigger={<IconButton label={t.sidebar.settings} />}>
           <Settings />
         </ModelSettings>
+        <UserMenu />
       </nav>
     );
   }
@@ -328,6 +330,7 @@ function ChatList({
             {t.sidebar.settings}
           </ModelSettings>
           <LanguageSwitch className="shrink-0" />
+          <UserMenu />
         </div>
       </div>
     </>

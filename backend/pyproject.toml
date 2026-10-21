@@ -6,6 +6,7 @@ requires-python = ">=3.14,<3.15"
 dependencies = [
     "biotite>=1.7.1",
     "chromadb>=1.5.9",
+    "clerk-backend-api>=7.0.0",
     "fastapi>=0.115",
     "httpx2>=2.13.1",
     "huggingface-hub>=1.33.0",

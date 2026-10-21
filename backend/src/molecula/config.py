@@ -90,6 +90,9 @@ class Settings(BaseSettings):
     daily_cost_limit_usd: Annotated[float, Field(gt=0)] = 2.0
     # Read the client's IP from X-Forwarded-For, which only a proxy in front may set.
     trust_proxy: bool = False
+    # The Clerk instance's public key (PEM, one line is fine). Set, every route but /health needs
+    # a signed-in user, checked without a call to Clerk; empty, the login is off (#343).
+    clerk_jwt_key: str | None = None
     openfda_api_key: SecretStr | None = None
     # The backend updates the labels every day at this UTC hour, unless LABEL_UPDATE_SCHEDULE=0
     # (e.g. a store kept as the eval baseline) or OFFLINE=1 (#342).

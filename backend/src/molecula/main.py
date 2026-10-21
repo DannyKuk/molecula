@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.embeddings import Embeddings
@@ -31,6 +31,8 @@ from molecula.agent.llm import (
 )
 from molecula.agent.tool_registry import McpSessions, build_tools
 from molecula.api import chat, drugs, health, labels, retrieval, stats
+from molecula.api.dependencies import signed_in_user
+from molecula.api.login import ClerkLogin
 from molecula.config import Settings, get_settings
 from molecula.guard.chat import GuardedChat
 from molecula.guard.limits import ChatLimited, ChatLimits, DailyCostCap, RequestLimiter
@@ -350,6 +352,16 @@ async def served(
     return tools
 
 
+def open_login(settings: Settings) -> ClerkLogin | None:
+    """The Clerk login in front of every route but /health, or None while CLERK_JWT_KEY is
+    empty. The frontend's origins, CORS_ORIGINS, are the sites a token may be issued for."""
+    if settings.clerk_jwt_key is None:
+        logger.info("The login is off: CLERK_JWT_KEY is not set")
+        return None
+    logger.info("Every request needs a Clerk login from %s", ", ".join(settings.cors_origins))
+    return ClerkLogin(settings.clerk_jwt_key, settings.cors_origins)
+
+
 def log_api_keys(settings: Settings) -> None:
     """Which API keys the backend has, by name: a key's value never leaves its environment."""
     keys = {
@@ -365,6 +377,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     log_to_console(settings.log_level)
     log_api_keys(settings)
+    app.state.login = open_login(settings)
     app.state.chat_limits = open_chat_limits(settings)
     conn = open_store(settings)
     services = open_services(settings, conn)
@@ -450,8 +463,5 @@ app.add_middleware(
     expose_headers=["Retry-After"],
 )
 app.include_router(health.router)
-app.include_router(drugs.router)
-app.include_router(chat.router)
-app.include_router(stats.router)
-app.include_router(labels.router)
-app.include_router(retrieval.router)
+for router in (drugs.router, chat.router, stats.router, labels.router, retrieval.router):
+    app.include_router(router, dependencies=[Depends(signed_in_user)])

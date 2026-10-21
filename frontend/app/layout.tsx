@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter_Tight, JetBrains_Mono } from "next/font/google";
 
 import { DocumentLanguage } from "@/components/language-switch";
+import { LoginProvider } from "@/components/login-provider";
 
 import "./globals.css";
 
@@ -29,8 +30,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${interTight.variable} ${jetBrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <DocumentLanguage />
-        {children}
+        <LoginProvider>
+          <DocumentLanguage />
+          {children}
+        </LoginProvider>
       </body>
     </html>
   );

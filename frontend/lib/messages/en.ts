@@ -30,6 +30,7 @@ export const en = {
     historyOff: "History is off in this browser, so this chat isn't saved.",
     unavailable: "The chat is currently unavailable. Try again later.",
     failed: "Something went wrong while answering. Try again.",
+    signedOut: "Your login has expired. Reload the page to sign in again.",
   },
   composer: {
     label: "Ask about a medicine",

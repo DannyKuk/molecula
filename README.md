@@ -75,6 +75,20 @@ npm run dev                       # http://localhost:3000
 npm run format:check && npm run lint && npm test && npm run build
 ```
 
+### Login for a deployed app
+
+A deployed Molecula can sit behind a [Clerk](https://clerk.com) login, so only testers you approve use it, on your OpenRouter key ([#343](https://github.com/DannyKuk/molecula/issues/343)). Without the keys below the login is off, as for local development and the evals.
+
+1. Create an application in the [Clerk Dashboard](https://dashboard.clerk.com) with email sign-in. On its Restrictions page set the sign-up mode to **Waitlist**: a new person can only join the waitlist, and nobody gets in until you approve them.
+2. Put three values in `.env`. From API keys: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` for the frontend, and the **JWKS Public Key** as `CLERK_JWT_KEY` for the backend, on one line in double quotes. Set `CORS_ORIGINS` to the frontend's address, e.g. `["https://molecula.example.com"]`: the backend accepts only tokens issued for those sites.
+3. Rebuild the frontend (`docker compose up --build`): the publishable key is built into the page, so each Clerk instance (development or production) needs its own build.
+
+For production, Clerk needs a domain you own: `npx clerk@latest deploy` creates the production instance, and Clerk's Domains page lists the DNS records to add (on Cloudflare, set them to "DNS only"). The production keys replace the development ones in `.env`.
+
+**Approving people:** a tester opens the app, chooses "Join waitlist" and enters their email. In the Clerk Dashboard, Users → Waitlist lists them; **Invite** sends them an email to finish signing up, **Revoke** turns them down. A user is removed under Users.
+
+With the login on, every page needs a signed-in user, and every backend route but `/health` answers 401 without a valid session token. The backend checks the token with the public key, without a call to Clerk, so the check also works with `OFFLINE=1`. The chat's request limits count per user instead of per IP. The MCP server below has no login: keep its port off the internet.
+
 ### MCP server
 
 The agent's six tools (`resolve_drug`, `get_properties`, `get_targets`, `get_complex`, `search_labels`, `compare_drugs`) are also an MCP server, with the same descriptions and answers. It reads the same `.env` and store as the backend and takes about 30 seconds to start while it loads the embedding model. Every tool but `search_labels` reads only the store; each label search also makes one model call to read the filter from the question (Jev online, the local chat model with `OFFLINE=1`), as in the chat. The app shows the same setup under "MCP server" in the chat sidebar (#301).
