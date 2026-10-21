@@ -12,7 +12,7 @@ from molecula.mcp.server import build_server
 from molecula.schemas.chat import Source
 from molecula.schemas.labels import SectionGroup
 from molecula.schemas.retrieval import LabelFilter, LabelQuery
-from molecula.schemas.tools import CitedTarget, DrugNotSupported, DrugTargetList
+from molecula.schemas.tools import CitedTarget, DrugNotSupported, DrugTargetList, LabelPassages
 from tool_fakes import (
     ABL1,
     GLEEVEC_SUGGESTION,
@@ -116,11 +116,11 @@ def test_a_call_returns_what_the_service_found() -> None:
     result = call(build_server(agent_tools()), "get_targets", {"drug": "Gleevec"})
 
     assert not result.isError
-    assert result.structuredContent is None
     expected = DrugTargetList(
         query="Gleevec", cid=5291, name="imatinib", targets=[CitedTarget(**ABL1.model_dump())]
     )
     assert json.loads(text_of(result)) == expected.model_dump(mode="json")
+    assert result.structuredContent == expected.model_dump(mode="json")
 
 
 def test_a_label_search_returns_the_cited_passages_but_not_the_retrieval() -> None:
@@ -130,6 +130,17 @@ def test_a_label_search_returns_the_cited_passages_but_not_the_retrieval() -> No
     assert found["drugs"] == ["imatinib"]
     assert found["passages"] == [cited(IMATINIB_SIDE_EFFECTS, 1).model_dump(mode="json")]
     assert "retrieval" not in found
+
+
+def test_for_the_chat_a_label_searchs_structured_content_carries_the_retrieval() -> None:
+    result = call(build_server(agent_tools()), "search_labels", {"question": SIDE_EFFECTS})
+
+    assert result.structuredContent is not None
+    rebuilt = LabelPassages.model_validate(result.structuredContent)
+    assert rebuilt.model_dump(mode="json") == json.loads(text_of(result))
+    assert rebuilt.retrieval.question == SIDE_EFFECTS
+    assert rebuilt.retrieval.filter is not None
+    assert [drug.generic for drug in rebuilt.retrieval.filter.drugs] == ["imatinib"]
 
 
 def test_a_drug_molecula_doesnt_know_is_a_result_not_an_error() -> None:

@@ -1,5 +1,5 @@
 import logging
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import Any
 from weakref import WeakKeyDictionary
 
@@ -42,15 +42,15 @@ def build_server(
 
     With `number_sources`, for clients outside the backend (#299), each result's `ref`s are
     numbered per MCP session the way the chat numbers them per answer, and its sources also
-    come as `structuredContent`. The chat numbers its own, so it serves the tools without.
+    come as `structuredContent`. Without, for the chat's own session (AGENT_TOOLS=mcp), the
+    `structuredContent` is the whole typed result, the fields the model doesn't read included,
+    so the chat rebuilds it and numbers the sources itself (#316).
 
     `host` and `port` are where `run("streamable-http")` listens.
     """
     references: SessionReferences = WeakKeyDictionary()
-    served = [
-        numbering_sources(tool, references) if number_sources else to_fastmcp(tool)
-        for tool in tools
-    ]
+    structure = numbered(references) if number_sources else whole
+    served = [structured(tool, structure) for tool in tools]
     root = logging.getLogger()
     handlers, level = root.handlers[:], root.level
     server = FastMCP(
@@ -67,9 +67,29 @@ def build_server(
     return server
 
 
-def numbering_sources(tool: BaseTool, references: SessionReferences) -> Tool:
-    """`tool` served with its result renumbered by the calling session's `References` and its
-    sources in `structuredContent`, next to the result the model reads."""
+type Structure = Callable[[ToolResult, Context], tuple[ToolResult, dict[str, Any]]]
+
+
+def numbered(references: SessionReferences) -> Structure:
+    """The result renumbered by the calling session's `References`, and as structured content
+    with its sources added."""
+
+    def structure(result: ToolResult, ctx: Context) -> tuple[ToolResult, dict[str, Any]]:
+        session_references = references.setdefault(ctx.session, References())
+        result = result.renumbered(session_references.ref_of)
+        sources = [source.model_dump(mode="json") for source in result.sources()]
+        return result, {**result.model_dump(mode="json"), "sources": sources}
+
+    return structure
+
+
+def whole(result: ToolResult, ctx: Context) -> tuple[ToolResult, dict[str, Any]]:
+    return result, result.full_dump()
+
+
+def structured(tool: BaseTool, structure: Structure) -> Tool:
+    """`tool` served with the result `structure` gives as the JSON the model reads and the
+    structured content it gives next to it."""
 
     async def call(ctx: Context, **arguments: Any) -> CallToolResult:
         message: ToolMessage = await tool.ainvoke(
@@ -77,12 +97,10 @@ def numbering_sources(tool: BaseTool, references: SessionReferences) -> Tool:
         )
         if not isinstance(message.artifact, ToolResult):
             return CallToolResult(content=[TextContent(type="text", text=message.text)])
-        session_references = references.setdefault(ctx.session, References())
-        result = message.artifact.renumbered(session_references.ref_of)
-        sources = [source.model_dump(mode="json") for source in result.sources()]
+        result, structured_content = structure(message.artifact, ctx)
         return CallToolResult(
             content=[TextContent(type="text", text=result.model_dump_json())],
-            structuredContent={**result.model_dump(mode="json"), "sources": sources},
+            structuredContent=structured_content,
         )
 
     return to_fastmcp(tool).model_copy(update={"fn": call, "context_kwarg": "ctx"})

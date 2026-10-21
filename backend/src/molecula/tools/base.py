@@ -1,9 +1,9 @@
 import inspect
 from collections.abc import Callable
-from typing import Any
+from typing import Any, get_type_hints
 
 from langchain_core.tools import BaseTool, StructuredTool
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from molecula.schemas.compounds import Resolution
 from molecula.schemas.tools import DrugNotSupported, InvalidArguments, ToolResult
@@ -11,6 +11,7 @@ from molecula.schemas.tools import DrugNotSupported, InvalidArguments, ToolResul
 type Progress = Callable[[dict[str, Any]], str]
 
 PROGRESS = "progress"
+RESULT_TYPE = "result_type"
 
 
 def build_tool(
@@ -22,7 +23,8 @@ def build_tool(
     Arguments that fail `args_schema` come back as an `InvalidArguments` result, not an exception.
     `progress` writes the status line the user reads while the call runs, from the arguments
     as the model sent them (not yet validated). It is kept on the tool for the chat events and
-    never reaches the model.
+    never reaches the model. The type of `func`'s result is kept there too, for the chat to
+    rebuild a result that came over MCP.
     """
 
     def run(**arguments: Any) -> tuple[str, ToolResult]:
@@ -36,13 +38,18 @@ def build_tool(
         args_schema=args_schema,
         response_format="content_and_artifact",
         handle_validation_error=describe_invalid_arguments,
-        metadata={PROGRESS: progress},
+        metadata={PROGRESS: progress, RESULT_TYPE: TypeAdapter(get_type_hints(func)["return"])},
     )
 
 
 def progress_of(tool: BaseTool) -> Progress | None:
     """The progress text `build_tool` gave the tool, if it was built there."""
     return (tool.metadata or {}).get(PROGRESS)
+
+
+def result_type_of(tool: BaseTool) -> TypeAdapter[ToolResult] | None:
+    """The result type `build_tool` kept for the tool, if it was built there."""
+    return (tool.metadata or {}).get(RESULT_TYPE)
 
 
 def describe_invalid_arguments(error: ValidationError) -> str:

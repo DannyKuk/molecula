@@ -8,7 +8,8 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, Tool
 from fake_llm import CANARY, DEFAULT_COST, ScriptedChatModel, answer_message, tool_call_message
 from molecula import prompts
 from molecula.agent.agent import NO_ANSWER, ChatAgent
-from molecula.agent.tool_registry import build_tools
+from molecula.agent.tool_registry import build_tools, tools_over_mcp
+from molecula.mcp.server import build_server
 from molecula.schemas.chat import (
     ChatEvent,
     ChatMessage,
@@ -193,6 +194,50 @@ def test_done_counts_the_label_searches_filter_extraction_apart() -> None:
     assert isinstance(done, DoneEvent)
     assert done.usage_by_step["label_filter"] == extraction + extraction
     assert done.usage == done.usage_by_step["answer"] + extraction + extraction
+
+
+def test_over_mcp_an_answer_gives_the_same_events_as_with_local_tools() -> None:
+    extraction = Usage(input_tokens=200, output_tokens=10, total_tokens=210, cost_usd=0.00005)
+    extractor = FakeFilterExtractor()
+    extractor.filters[SIDE_EFFECTS] = LabelFilter(
+        extracted=LabelQuery(substances=["imatinib"]),
+        drugs=[drug_filter("imatinib", IMATINIB, ["gleevec"])],
+        extraction_usage=extraction,
+    )
+
+    def model() -> ScriptedChatModel:
+        return ScriptedChatModel(
+            script=[
+                tool_call_message("get_targets", {"drug": "imatinib"}, call_id="call_1"),
+                tool_call_message("search_labels", {"question": SIDE_EFFECTS}, call_id="call_2"),
+                answer_message("It targets ABL1 [1] and causes edema [2][3]."),
+            ]
+        )
+
+    local = build_tools(
+        FakeCompoundService(),
+        FakeTargetService(),
+        FakeComplexService(),
+        extractor,
+        label_retriever(),
+    )
+
+    async def over_mcp() -> list[ChatEvent]:
+        async with tools_over_mcp(build_server(local), local) as served:
+            chat = ChatAgent(model(), served, canary=CANARY, max_steps=5, timeout_seconds=10.0)
+            return [event async for event in chat.stream(QUESTION)]
+
+    events = asyncio.run(over_mcp())
+
+    assert events == run(
+        ChatAgent(model(), local, canary=CANARY, max_steps=5, timeout_seconds=10.0)
+    )
+    assert [e.type for e in events if e.type == "retrieval_trace"] == ["retrieval_trace"]
+    assert [source.ref for source in sources_event(events).sources] == [1, 2, 3]
+    assert sources_event(events).unknown_refs == []
+    done = events[-1]
+    assert isinstance(done, DoneEvent)
+    assert done.usage_by_step["label_filter"] == extraction
 
 
 def test_a_model_call_without_usage_leaves_the_answers_usage_unknown() -> None:

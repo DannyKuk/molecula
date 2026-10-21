@@ -9,15 +9,21 @@ from langchain_core.tools import BaseTool
 from fake_llm import ScriptedChatModel
 from molecula.agent.tool_registry import build_tools, tools_over_mcp
 from molecula.mcp.server import build_server
+from molecula.schemas.labels import SectionGroup
+from molecula.schemas.retrieval import LabelFilter, LabelQuery
 from molecula.schemas.tools import DrugTargetList, LabelPassages
+from molecula.schemas.usage import Usage
 from molecula.tools.base import progress_of
 from tool_fakes import (
+    IMATINIB,
+    IMATINIB_LOW_SCORE,
     FakeComplexService,
     FakeCompoundService,
     FakeFilterExtractor,
     FakeLabelRetriever,
     FakeTargetService,
     call_tool,
+    drug_filter,
 )
 
 TOOL_NAMES = [
@@ -30,12 +36,34 @@ TOOL_NAMES = [
 ]
 
 
-def tools(targets: FakeTargetService | None = None) -> list[BaseTool]:
+MECHANISM = "How does imatinib work?"
+EXTRACTION = Usage(input_tokens=200, output_tokens=10, total_tokens=210, cost_usd=0.00005)
+
+
+class FailingFilterExtractor:
+    def filter_for(
+        self, question: str, *, drug: str | None = None, section: SectionGroup | None = None
+    ) -> LabelFilter:
+        raise RuntimeError("the chat model is down")
+
+
+def extracting_with_usage() -> FakeFilterExtractor:
+    extractor = FakeFilterExtractor()
+    extractor.filters[MECHANISM] = LabelFilter(
+        extracted=LabelQuery(substances=["imatinib"], section_groups=["pharmacology"]),
+        drugs=[drug_filter("imatinib", IMATINIB, ["gleevec"])],
+        section_groups=["pharmacology"],
+        extraction_usage=EXTRACTION,
+    )
+    return extractor
+
+
+def tools(targets: FakeTargetService | None = None, extractor: Any = None) -> list[BaseTool]:
     return build_tools(
         FakeCompoundService(),
         targets or FakeTargetService(),
         FakeComplexService(),
-        FakeFilterExtractor(),
+        extractor or FakeFilterExtractor(),
         FakeLabelRetriever(),
     )
 
@@ -120,18 +148,69 @@ def test_tools_over_mcp_are_the_servers_tools_with_the_local_progress_texts() ->
     assert progress({"drug": "imatinib"}) == "Finding the targets of imatinib"
 
 
+def calls_over_mcp(local: list[BaseTool], *calls: tuple[str, dict[str, Any]]) -> list[ToolMessage]:
+    async def calling() -> list[ToolMessage]:
+        async with tools_over_mcp(build_server(local), local) as served:
+            return [
+                await named(served, name).ainvoke(
+                    {"type": "tool_call", "name": name, "args": args, "id": f"call_{n}"}
+                )
+                for n, (name, args) in enumerate(calls)
+            ]
+
+    return asyncio.run(calling())
+
+
 def test_a_tool_over_mcp_gives_the_model_the_same_json_as_the_local_tool() -> None:
     local = tools()
-    call = {"type": "tool_call", "name": "get_targets", "args": {"drug": "Gleevec"}, "id": "c1"}
+    args = {"drug": "Gleevec"}
 
-    async def call_over_mcp() -> ToolMessage:
-        async with tools_over_mcp(build_server(local), local) as served:
-            return await named(served, "get_targets").ainvoke(call)
-
-    message = asyncio.run(call_over_mcp())
+    [message] = calls_over_mcp(local, ("get_targets", args))
 
     assert message.status == "success"
     assert json.loads(message.text) == json.loads(
-        str(call_tool(named(local, "get_targets"), call["args"]).content)
+        str(call_tool(named(local, "get_targets"), args).content)
     )
+
+
+@pytest.mark.parametrize(
+    ("name", "args"),
+    [
+        ("resolve_drug", {"name": "Gleevec"}),
+        ("get_properties", {"drug": "Gleevek"}),
+        ("get_targets", {"drug": "Gleevec"}),
+        ("get_complex", {"drug": "imatinib"}),
+        ("compare_drugs", {"drugs": ["imatinib", "Gleevek"]}),
+        ("search_labels", {"question": MECHANISM, "drug": "imatinib"}),
+        ("search_labels", {"question": MECHANISM}),
+    ],
+)
+def test_a_tool_over_mcp_returns_the_local_tools_typed_result(
+    name: str, args: dict[str, Any]
+) -> None:
+    local = tools(extractor=extracting_with_usage())
+
+    [message] = calls_over_mcp(local, (name, args))
+
+    assert message.artifact == call_tool(named(local, name), args).artifact
+
+
+def test_a_label_search_over_mcp_keeps_the_retrieval_and_the_filters_usage() -> None:
+    [message] = calls_over_mcp(
+        tools(extractor=extracting_with_usage()), ("search_labels", {"question": MECHANISM})
+    )
+
+    assert isinstance(message.artifact, LabelPassages)
+    assert message.artifact.retrieval.dropped == [IMATINIB_LOW_SCORE]
+    label_filter = message.artifact.retrieval.filter
+    assert label_filter is not None
+    assert label_filter.extraction_usage == EXTRACTION
+
+
+def test_a_tool_that_fails_over_mcp_is_an_error_message_without_a_result() -> None:
+    [message] = calls_over_mcp(
+        tools(extractor=FailingFilterExtractor()), ("search_labels", {"question": MECHANISM})
+    )
+
+    assert message.status == "error"
     assert message.artifact is None
