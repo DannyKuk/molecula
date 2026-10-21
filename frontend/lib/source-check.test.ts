@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { CheckedClaim } from "./chat";
 import { applyEvent, startTurn, stopTurn } from "./chat-turn";
+import { de } from "./messages/de";
 import {
   CHECKING_ANSWER,
   checkingAnswer,
@@ -162,6 +163,30 @@ describe("checkSummary", () => {
       checkSummary({ checked: true, claims: [claim("Ask your doctor.", "not_a_claim")] }),
     ).toBeNull();
     expect(checkSummary({ checked: true, claims: [] })).toBeNull();
+  });
+});
+
+describe("checkSummary in German", () => {
+  it("counts the facts and the sentences the sources don't back", () => {
+    expect(
+      checkSummary(
+        { checked: true, claims: [claim("a", "supported"), claim("b", "unsupported")] },
+        de,
+      ),
+    ).toEqual({
+      kind: "unbacked",
+      title: "Anhand der Quellen geprüft",
+      detail: "1 von 2 Fakten belegt · 1 Satz steht nicht in Moleculas Quellen (unterstrichen).",
+    });
+    expect(checkSummary({ checked: false, claims: [] }, de)?.title).toBe(
+      "Nicht anhand der Quellen geprüft",
+    );
+  });
+
+  it("says why a claim has no reason of the check's own", () => {
+    expect(unbackedReason({ ...claim("a", "unsupported"), decided_by: "no_verdict" }, de)).toBe(
+      "Die Prüfung hat dazu kein Urteil abgegeben.",
+    );
   });
 });
 

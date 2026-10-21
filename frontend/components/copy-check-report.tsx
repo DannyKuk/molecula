@@ -5,11 +5,13 @@ import { useEffect, useState } from "react";
 
 import type { Turn } from "@/lib/chat-turn";
 import { checkReport } from "@/lib/check-report";
+import { useMessages } from "@/lib/messages";
 
 const SHOWN_MS = 2000;
 
 /** Copies the turn's answer, tool results and source-check verdicts as one report (#221). */
 export function CopyCheckReport({ turn }: { turn: Turn }) {
+  const t = useMessages();
   const [copied, setCopied] = useState<"copied" | "failed" | null>(null);
 
   useEffect(() => {
@@ -20,7 +22,7 @@ export function CopyCheckReport({ turn }: { turn: Turn }) {
 
   async function copy() {
     try {
-      await navigator.clipboard.writeText(checkReport(turn));
+      await navigator.clipboard.writeText(checkReport(turn, t));
       setCopied("copied");
     } catch {
       setCopied("failed");
@@ -36,7 +38,11 @@ export function CopyCheckReport({ turn }: { turn: Turn }) {
     >
       <Icon aria-hidden className="size-3.5" />
       <span aria-live="polite">
-        {copied === "copied" ? "Copied" : copied === "failed" ? "Copy failed" : "Copy details"}
+        {copied === "copied"
+          ? t.check.copied
+          : copied === "failed"
+            ? t.check.copyFailed
+            : t.check.copy}
       </span>
     </button>
   );

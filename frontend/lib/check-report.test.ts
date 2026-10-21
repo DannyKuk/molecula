@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ChatEvent } from "./chat";
 import { applyEvent, startTurn, type Turn } from "./chat-turn";
 import { checkReport } from "./check-report";
+import { de } from "./messages/de";
 
 const LONG_PASSAGE = `CLINICAL PHARMACOLOGY ${"Ibuprofen possesses analgesic and antipyretic activities. ".repeat(40)}Its mode of action may be related to prostaglandin synthetase inhibition.`;
 
@@ -109,5 +110,15 @@ describe("checkReport", () => {
     expect(report).toContain("## Source check\n\nNo check.");
     expect(report).toContain("## Sources\n\nNone.");
     expect(report).toContain("## Tool calls\n\nNone.");
+  });
+
+  it("writes its words in German for a German reader and keeps the verdicts as sent", () => {
+    const report = checkReport(turnOf("Wie wirkt Ibuprofen?", ANSWERED), de);
+
+    expect(report).toContain("# Molecula-Antwortbericht");
+    expect(report).toContain("## Frage\n\nWie wirkt Ibuprofen?");
+    expect(report).toContain("2. **unsupported** (Quellen keine, entschieden durch model)");
+    expect(report).toContain("   Begründung: No source gives a year.");
+    expect(report).toContain('## Werkzeugaufrufe\n\n### search_labels {"query":"ibuprofen"}');
   });
 });

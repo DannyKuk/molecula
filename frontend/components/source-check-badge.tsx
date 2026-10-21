@@ -1,7 +1,8 @@
 import { LoaderCircle, Shield, ShieldAlert, ShieldCheck } from "lucide-react";
 
 import type { SourceCheck } from "@/lib/chat";
-import { CHECKING_ANSWER, checkSummary, type CheckSummary } from "@/lib/source-check";
+import { useMessages } from "@/lib/messages";
+import { checkSummary, type CheckSummary } from "@/lib/source-check";
 
 const BADGE =
   "inline-flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-2xl border px-3 py-1 text-sm";
@@ -25,14 +26,15 @@ export function SourceCheckBadge({
   check: SourceCheck | null;
   checking: boolean;
 }) {
-  const summary = check && checkSummary(check);
+  const t = useMessages();
+  const summary = check && checkSummary(check, t);
   if (!checking && !summary) return null;
   return (
     <div role="status" data-source-check className="self-start">
       {checking || !summary ? (
         <p className={`${BADGE} ${TONES.checking}`}>
           <LoaderCircle aria-hidden className="size-4 shrink-0 animate-spin" />
-          {CHECKING_ANSWER}…
+          {t.progress.checkingAnswer}…
         </p>
       ) : (
         <Summary summary={summary} />

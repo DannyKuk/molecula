@@ -392,6 +392,37 @@ export const en = {
     cited: "cited",
     skipped: "Skipped",
   },
+  check: {
+    unchecked: "Not checked against the sources",
+    checked: "Checked against the sources",
+    allBacked: "Every fact is backed by the source it cites.",
+    allInSources: "Every fact is in Molecula's sources.",
+    someUnbacked: (backed: number, facts: number, unbacked: number) =>
+      `${backed} of ${facts} facts backed · ${unbacked === 1 ? "1 sentence isn't" : `${unbacked} sentences aren't`} in Molecula's sources (underlined).`,
+    notInSources: "Not in Molecula's sources",
+    unknownRefs: "It cites a source Molecula didn't look up.",
+    noVerdict: "The check gave no verdict on it.",
+    copy: "Copy details",
+    copied: "Copied",
+    copyFailed: "Copy failed",
+  },
+  report: {
+    title: "Molecula answer report",
+    question: "Question",
+    answer: "Answer",
+    sourceCheck: "Source check",
+    sources: "Sources",
+    toolCalls: "Tool calls",
+    noCheck: "No check.",
+    checkFailed: "Not checked: the check failed.",
+    noClaims: "No claims.",
+    refs: (refs: string) => `refs ${refs}`,
+    heldBy: (refs: string) => `held by ${refs}`,
+    decidedBy: (by: string) => `decided by ${by}`,
+    reason: (reason: string) => `Reason: ${reason}`,
+    noRefs: "none",
+    none: "None.",
+  },
 };
 
 export type Messages = typeof en;
