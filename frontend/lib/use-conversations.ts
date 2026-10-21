@@ -119,7 +119,8 @@ export function useConversations(
   );
 
   const askIn = useCallback(
-    (question: string, earlier: Turn[], id = (shownIdRef.current ??= newConversationId())) => {
+    (question: string, earlier: Turn[], chatId?: string) => {
+      const id = chatId ?? (shownIdRef.current ??= newConversationId());
       const asked = { id, question, earlier, askedAt: Date.now() };
       setSent((count) => count + 1);
       if (!running.current) {
