@@ -42,7 +42,7 @@ Rows after "Fixed answer" count the answers the agent wrote, without the guard's
 - **A German translation slip passes the check.** One Famotidin answer lists "Herzrasen" (racing heart) where the label passage it read says "night time heartburn" (Sodbrennen). The source check, reading the English passage, marked it held elsewhere. It judges whether the content is in the sources and can't tell a mistranslated word from a paraphrase. It was 1 of 45 German answers.
 - **The guard sorts a general German question as personal advice now and then.** "Dürfen Menschen mit schwerer Nierenerkrankung Metformin nehmen?" got the personal-advice text in 1 of 3 runs. Its English version never did. #114 saw the same kind of question refused, and #236 and #288 tuned the input check for it. It stays a gpt-oss-20b limit offline (Jev sorts online).
 - **German costs 2 seconds.** 22.9 s against 20.8 s per answer in the median.
-- **Found along the way:** the claim splitter cuts "1,8 Mio. Schwangerschaften" into two claims, because "Mio" isn't in its abbreviation list (`ABBREVIATIONS` in `guard/claims.py`). The source check then judges the fragment "Eine retrospektive Kohortenstudie mit 1,8 Mio." as not a claim. Filed as #365.
+- **Found along the way:** the claim splitter cuts "1,8 Mio. Schwangerschaften" into two claims, because "Mio" isn't in its abbreviation list (`ABBREVIATIONS` in `guard/claims.py`). The source check then judges the fragment "Eine retrospektive Kohortenstudie mit 1,8 Mio." as not a claim. Filed as #365 and fixed there: "Mio.", "Mrd." and "Tsd." no longer end a claim. The scores above were measured before the fix.
 
 ## Limits
 

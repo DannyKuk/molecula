@@ -128,6 +128,17 @@ def test_a_german_answer_is_split_at_its_sentences_not_its_abbreviations() -> No
     ]
 
 
+def test_german_number_words_dont_end_a_sentence() -> None:
+    answers = [
+        "Eine Studie mit 1,8 Mio. Schwangerschaften zeigte ein erhöhtes Risiko [1].",
+        "Die Behandlung kostete 2 Mrd. Euro im Jahr [2].",
+        "Etwa 40 Tsd. Patienten nahmen teil [3].",
+    ]
+
+    for answer in answers:
+        assert texts(answer) == [answer]
+
+
 def test_the_guards_emergency_line_is_left_out() -> None:
     emergency = fixed_answer("overdose_emergency")
     answer = f"{emergency}\n\nOverdose can cause drowsiness and vomiting [1]."
