@@ -7,10 +7,12 @@ import httpx2
 import pytest
 
 from molecula.config import Settings
+from molecula.services.usage import UsageLog
 from molecula.sources.http import SourceClient
 from molecula.sources.pubchem import PubChemClient
 from molecula.store.db import connect
 from molecula.store.http_cache import HttpCache
+from molecula.store.usage import UsageStore, connect_usage
 from pubchem_replay import Replay
 
 type Handler = Callable[[httpx2.Request], httpx2.Response]
@@ -37,6 +39,18 @@ def conn(tmp_path: Path) -> Iterator[sqlite3.Connection]:
     conn = connect(tmp_path / "molecula.db")
     yield conn
     conn.close()
+
+
+@pytest.fixture
+def usage_store(tmp_path: Path) -> Iterator[UsageStore]:
+    conn = connect_usage(tmp_path / "runtime" / "usage.db")
+    yield UsageStore(conn)
+    conn.close()
+
+
+@pytest.fixture
+def usage_log(usage_store: UsageStore) -> UsageLog:
+    return UsageLog(usage_store, "fake-model")
 
 
 @pytest.fixture

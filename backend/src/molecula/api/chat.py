@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from molecula.api.dependencies import ChatDep, ChatLimitsDep, ChatModelDep
+from molecula.api.dependencies import ChatDep, ChatLimitsDep, ChatModelDep, UsageLogDep
 from molecula.guard.limits import ChatLimited, ChatLimits
 from molecula.schemas.chat import ChatEvent, ChatModel, ChatRequest, DoneEvent, ErrorEvent
 
@@ -25,12 +25,14 @@ router = APIRouter()
         },
     },
 )
-async def chat(request: ChatRequest, limits: ChatLimitsDep, guarded: ChatDep) -> StreamingResponse:
+async def chat(
+    request: ChatRequest, limits: ChatLimitsDep, guarded: ChatDep, usage_log: UsageLogDep
+) -> StreamingResponse:
     """Answers the conversation's last message as server-sent events: each event's name is its
     `type` and its data the event as JSON (`schemas/chat.py`). The stream ends with `done` or
     `error`; `done` says how the guard sorted the question and what it cost."""
     return StreamingResponse(
-        server_sent(counted(guarded.stream(request.messages), limits)),
+        server_sent(counted(usage_log.recorded(guarded.stream(request.messages)), limits)),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache"},
     )
@@ -70,7 +72,11 @@ async def server_sent(events: AsyncIterator[ChatEvent]) -> AsyncIterator[str]:
     # as an event, or the client sees a broken stream.
     except Exception:
         logger.exception("The chat answer failed")
-        yield frame(ErrorEvent(message="Something went wrong while answering. Try again."))
+        yield frame(
+            ErrorEvent(
+                kind="server_error", message="Something went wrong while answering. Try again."
+            )
+        )
 
 
 def frame(event: ChatEvent) -> str:

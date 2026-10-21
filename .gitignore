@@ -36,6 +36,7 @@ htmlcov/
 data/raw/
 data/cache/
 data/build/
+data/runtime/
 *.log
 
 # Local models and vector stores pulled at runtime

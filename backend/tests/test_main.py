@@ -112,6 +112,24 @@ def test_routes_serve_the_built_store(settings: Settings) -> None:
     assert labels == {"cid": 5291, "labels": []}
 
 
+def test_stats_count_the_built_store_and_the_usage_log_lives_apart_from_it(
+    settings: Settings,
+) -> None:
+    conn = connect(settings.db_path)
+    CompoundStore(conn).save(IMATINIB, [], datetime(2026, 10, 11, tzinfo=UTC))
+    conn.close()
+    ConformerFiles(settings.conformers_dir).write(5291, SDF)
+
+    with TestClient(app) as client:
+        stats = client.get("/stats", params={"days": 7}).json()
+
+    assert stats["knowledge_base"]["drugs"] == 1
+    assert stats["knowledge_base"]["conformers"] == 1
+    assert len(stats["usage"]["days"]) == 7
+    assert settings.usage_db_path.exists()
+    assert not settings.usage_db_path.is_relative_to(settings.build_dir)
+
+
 def test_only_hero_drugs_have_a_complex_also_when_online(
     settings: Settings, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -82,6 +82,7 @@ class Settings(BaseSettings):
     trust_proxy: bool = False
     openfda_api_key: SecretStr | None = None
     offline: bool = False
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     # The GitHub release `ingest fetch` downloads the store from (#35); a new snapshot bumps it.
     store_release: Annotated[str, Field(pattern=r"^store-\d{4}-\d{2}-\d{2}$")] = "store-2026-10-16"
     data_dir: Path = REPO_ROOT / "data"
@@ -92,6 +93,12 @@ class Settings(BaseSettings):
     def build_dir(self) -> Path:
         """Where the ingest steps write the built store (SQLite, structures, index)."""
         return self.data_dir / "build"
+
+    @property
+    def usage_db_path(self) -> Path:
+        """The usage log (#334): what the app records while it runs, kept out of the built
+        store so a new snapshot replaces the store without touching it and never ships it."""
+        return self.data_dir / "runtime" / "usage.db"
 
     @property
     def scope_path(self) -> Path:

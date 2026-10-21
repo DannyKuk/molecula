@@ -212,10 +212,18 @@ class DoneEvent(BaseModel):
         return sum(self.usage_by_step.values(), Usage())
 
 
+type ErrorKind = Literal[
+    "input_check_failed", "model_error", "timeout", "no_answer", "server_error"
+]
+
+
 class ErrorEvent(BaseModel):
-    """The answer stopped; `message` is written for the user."""
+    """The answer stopped; `message` is written for the user. `kind` says why, for the usage
+    log: the input check gave no category, a model call failed, the answer ran out of time,
+    the model ended without answer text, or the server failed."""
 
     type: Literal["error"] = "error"
+    kind: ErrorKind
     message: str
 
 

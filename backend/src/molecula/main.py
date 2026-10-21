@@ -23,7 +23,7 @@ from molecula.agent.llm import (
     get_source_check_model,
 )
 from molecula.agent.tool_registry import build_tools, tools_over_mcp
-from molecula.api import chat, drugs, health
+from molecula.api import chat, drugs, health, stats
 from molecula.config import Settings, get_settings
 from molecula.guard.chat import GuardedChat
 from molecula.guard.limits import ChatLimited, ChatLimits, DailyCostCap, RequestLimiter
@@ -37,8 +37,10 @@ from molecula.rag.retriever import LabelRetriever
 from molecula.schemas.chat import ChatModel
 from molecula.services.complexes import ComplexService
 from molecula.services.compounds import CompoundService
+from molecula.services.knowledge_base import KnowledgeBase
 from molecula.services.labels import LabelService
 from molecula.services.targets import TargetService
+from molecula.services.usage import UsageLog
 from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
 from molecula.store.index import LabelIndex
@@ -46,19 +48,20 @@ from molecula.store.keywords import KeywordIndex
 from molecula.store.labels import LabelStore
 from molecula.store.structures import ComplexFiles, ConformerFiles
 from molecula.store.targets import TargetStore
+from molecula.store.usage import UsageStore, connect_usage
 
 logger = logging.getLogger(__name__)
 
 
-def log_to_console() -> None:
-    """Shows the app's INFO lines: uvicorn sets up only its own loggers, and Python prints
-    nothing below WARNING without a handler."""
+def log_to_console(level: str) -> None:
+    """Shows the app's lines from `level` up: uvicorn sets up only its own loggers, and Python
+    prints nothing below WARNING without a handler."""
     app_logger = logging.getLogger("molecula")
     if not app_logger.handlers:
         handler = logging.StreamHandler()
         handler.setFormatter(logging.Formatter("%(levelname)s:     %(name)s: %(message)s"))
         app_logger.addHandler(handler)
-        app_logger.setLevel(logging.INFO)
+    app_logger.setLevel(level)
 
 
 def open_store(settings: Settings) -> sqlite3.Connection:
@@ -207,7 +210,7 @@ def log_api_keys(settings: Settings) -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
-    log_to_console()
+    log_to_console(settings.log_level)
     log_api_keys(settings)
     app.state.chat_limits = open_chat_limits(settings)
     conn = open_store(settings)
@@ -222,6 +225,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.chat = None
     app.state.chat_model = None
     index = open_label_index(settings)
+    app.state.knowledge_base = KnowledgeBase(
+        conn, index, ConformerFiles(settings.conformers_dir), ComplexFiles(settings.complexes_dir)
+    )
     chat_model = open_chat_model(settings) if index is not None else None
     mcp_session = AsyncExitStack()
     if index is not None and chat_model is not None:
@@ -256,8 +262,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.chat_model = ChatModel(
             name=chat_model_name(settings), local=chat_model_is_local(settings)
         )
+    usage_conn = connect_usage(settings.usage_db_path)
+    app.state.usage_log = UsageLog(
+        UsageStore(usage_conn), app.state.chat_model.name if app.state.chat_model else None
+    )
     yield
     await mcp_session.aclose()
+    usage_conn.close()
     conn.close()
 
 
@@ -275,3 +286,4 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(drugs.router)
 app.include_router(chat.router)
+app.include_router(stats.router)

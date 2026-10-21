@@ -28,7 +28,7 @@ Known limits, and how the app handles them:
 | Sources in the UI | every chunk has `set_id`, `effective_time` and a DailyMed link | verified |
 | Hybrid search | BM25 next to embeddings: drug names, "QT prolongation", "CYP3A4" need exact matches | built, off by default: it found less than embeddings alone ([hybrid search](decisions/hybrid-search.md), #44) |
 | Tools as an MCP server | the data services exposed through FastMCP (§4) | built (#42) |
-| Remote MCP server | public PubChem MCP at `https://pubchem.caseyjhand.com/mcp` | verified (answered `initialize`); community-run, so the local tools stay the default |
+| Remote MCP server | public PubChem MCP at `https://pubchem.caseyjhand.com/mcp` | verified (answered `initialize`), then dropped: it would answer about drugs outside the store (#45) |
 | RAG evaluation and A/B tests | QA set generated from label sections; dense vs hybrid, query translation on/off | design decision |
 | Knowledge-base updates | openFDA `effective_time` filter; the bulk export is refreshed weekly | verified (latest export 2026-10-09) |
 | Multi-language | German query → English retrieval → German answer | design decision |

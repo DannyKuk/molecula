@@ -83,17 +83,18 @@ class ChatAgent:
                         yield event
         except TimeoutError:
             yield ErrorEvent(
+                kind="timeout",
                 message=f"The answer took longer than {self._timeout_seconds:g} seconds. "
-                "Try again, or ask a narrower question."
+                "Try again, or ask a narrower question.",
             )
             return
         except ChatModelError as error:
             logger.warning("Chat model call failed: %r", error)
-            yield ErrorEvent(message=describe_provider_error(error))
+            yield ErrorEvent(kind="model_error", message=describe_provider_error(error))
             return
         if not run.answer.strip():
             logger.warning("The model gave no answer text after %d calls", run.model_calls)
-            yield ErrorEvent(message=NO_ANSWER)
+            yield ErrorEvent(kind="no_answer", message=NO_ANSWER)
             return
         for event in run.finish():
             yield event

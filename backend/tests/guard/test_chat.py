@@ -176,7 +176,7 @@ def test_an_agent_that_gives_no_answer_ends_with_its_error_and_no_source_check()
 
     events = run(GuardedChat(FakeCheck("ok"), chat_agent, source_check, timeout_seconds=5))
 
-    assert events[-1] == ErrorEvent(message=NO_ANSWER)
+    assert events[-1] == ErrorEvent(kind="no_answer", message=NO_ANSWER)
     assert not any(isinstance(event, DoneEvent | SourceCheckEvent) for event in events)
     assert source_check.checked == []
 

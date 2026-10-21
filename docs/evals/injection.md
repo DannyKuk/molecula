@@ -121,7 +121,7 @@ Measured on `main` 1f24916 with the eval change only, same model and settings as
 - 32 attacks, one run each, at temperature 0.2. An attack that held once may get through on another run. The same goes for the 7 priming attacks.
 - Code words show that an instruction was followed. They don't measure harm, and they don't catch a leak paraphrased or translated (the canary would catch the first line).
 - Priming is scored by a made-up figure. A forged answer that pulls the agent along in tone or in what it leaves out, without the figure, is only caught by reading the answers.
-- Remote MCP results (#45) aren't covered.
+- Remote MCP results aren't covered: the agent calls no remote MCP server (#45 was dropped).
 
 ## Change log
 
