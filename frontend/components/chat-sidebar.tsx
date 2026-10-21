@@ -3,6 +3,7 @@
 import { cn } from "cn";
 import {
   ChartColumn,
+  Gauge,
   History,
   LoaderCircle,
   Menu,
@@ -86,6 +87,14 @@ export function ChatSidebar(props: ChatListProps) {
           className={cn(buttonVariants({ variant: "ghost", size: "icon-lg" }), ICON)}
         >
           <ChartColumn />
+        </Link>
+        <Link
+          href="/dashboard"
+          aria-label="Dashboard"
+          title="Dashboard"
+          className={cn(buttonVariants({ variant: "ghost", size: "icon-lg" }), ICON)}
+        >
+          <Gauge />
         </Link>
         <McpDialog trigger={<IconButton label="MCP server" />}>
           <Plug />
@@ -226,6 +235,10 @@ function ChatList({
         <Link href="/benchmarks" className={cn(LIST_LINK, "mt-1")}>
           <ChartColumn />
           Benchmarks
+        </Link>
+        <Link href="/dashboard" className={LIST_LINK}>
+          <Gauge />
+          Dashboard
         </Link>
         {withMcp && (
           // Connecting an assistant needs a checkout on a computer, so the phone drawer leaves it out.

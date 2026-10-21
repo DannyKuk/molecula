@@ -5,11 +5,13 @@ import {
   ApiError,
   getComplex,
   getDrugs,
+  getStats,
   getHealth,
   getStructure,
   resolveDrug,
 } from "./api";
 import { SMALL_COMPLEX } from "./test-complexes";
+import { STATS } from "./test-stats";
 
 function stubFetch(response: Response) {
   const fetchMock = vi.fn().mockResolvedValue(response);
@@ -127,5 +129,14 @@ describe("getComplex", () => {
 
     await expect(getComplex(5291)).resolves.toEqual(SMALL_COMPLEX);
     expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/drugs/5291/complex`, { signal: undefined });
+  });
+});
+
+describe("getStats", () => {
+  it("asks for the picked number of days", async () => {
+    const fetchMock = stubFetch(Response.json(STATS));
+
+    await expect(getStats(7)).resolves.toEqual(STATS);
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/stats?days=7`, { signal: undefined });
   });
 });

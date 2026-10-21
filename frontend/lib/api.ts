@@ -93,6 +93,54 @@ export type Complex = {
   source_url: string;
 };
 
+export type Outcome = "answered" | "error" | "stopped" | "limited";
+
+export type InputCategory =
+  | "ok"
+  | "overdose_emergency"
+  | "personal_medical_advice"
+  | "lethal_dose"
+  | "synthesis_or_misuse"
+  | "prompt_injection"
+  | "off_topic";
+
+export type ErrorKind =
+  "input_check_failed" | "model_error" | "timeout" | "no_answer" | "server_error";
+
+/** One UTC day of chat requests (`UsageDay` in `backend/src/molecula/schemas/stats.py`). */
+export type UsageDay = {
+  date: string;
+  requests: number;
+  outcomes: Partial<Record<Outcome, number>>;
+  latency_p50_ms: number | null;
+  latency_p95_ms: number | null;
+  input_tokens: number;
+  output_tokens: number;
+  cost_usd: number;
+};
+
+/** What the store holds and how the chat was used (`Stats` in `backend/src/molecula/schemas/stats.py`). */
+export type Stats = {
+  knowledge_base: {
+    drugs: number;
+    labels: number;
+    label_sections: number;
+    chunks: number;
+    targets: number;
+    conformers: number;
+    complexes: number;
+    schema_version: number;
+    labels_fetched_from: string | null;
+    labels_fetched_to: string | null;
+  };
+  usage: {
+    days: UsageDay[];
+    tool_calls: Record<string, number>;
+    categories: Partial<Record<InputCategory, number>>;
+    errors: Partial<Record<ErrorKind, number>>;
+  };
+};
+
 export class ApiError extends Error {
   constructor(
     readonly path: string,
@@ -142,4 +190,9 @@ export async function getStructure(cid: number, signal?: AbortSignal): Promise<s
 /** A drug's reviewed complex with its target; a 404 means it has none. */
 export function getComplex(cid: number, signal?: AbortSignal): Promise<Complex> {
   return getJson<Complex>(`/drugs/${cid}/complex`, signal);
+}
+
+/** What the store holds, and the chat's use over the last `days` UTC days (1–365). */
+export function getStats(days: number, signal?: AbortSignal): Promise<Stats> {
+  return getJson<Stats>(`/stats?days=${days}`, signal);
 }

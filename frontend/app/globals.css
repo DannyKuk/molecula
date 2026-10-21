@@ -31,6 +31,13 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --color-series-drug: var(--series-drug);
   --color-series-index: var(--series-index);
+  --color-outcome-answered: var(--outcome-answered);
+  --color-outcome-stopped: var(--outcome-stopped);
+  --color-outcome-limited: var(--outcome-limited);
+  --color-outcome-error: var(--outcome-error);
+  --color-usage-strong: var(--usage-strong);
+  --color-usage-light: var(--usage-light);
+  --color-usage-bar: var(--outcome-answered);
   --color-rank-first: var(--rank-first);
   --color-rank-top5: var(--rank-top5);
   --color-rank-top10: var(--rank-top10);
@@ -104,6 +111,15 @@
   --app-model-foreground: #075985;
   --evidence: #dbeafe;
   --evidence-foreground: #0c2d5a;
+  /* Dashboard charts (#335): how a request ended, as status colours checked for colour blindness
+     against the card in both themes (stopped is a neutral grey on purpose), and a two-step blue
+     for the median and slowest answers and for input and output tokens. */
+  --outcome-answered: #2a78d6;
+  --outcome-stopped: #9a9ea4;
+  --outcome-limited: #c98a00;
+  --outcome-error: #d4351c;
+  --usage-strong: #184f95;
+  --usage-light: #6fa3e6;
 }
 
 @media screen and (prefers-color-scheme: dark) {
@@ -130,6 +146,12 @@
     --app-model-foreground: #7dd3fc;
     --evidence: #1e3a6b;
     --evidence-foreground: #eaf2ff;
+    --outcome-answered: #3987e5;
+    --outcome-stopped: #71767c;
+    --outcome-limited: #bd8a10;
+    --outcome-error: #e54866;
+    --usage-strong: #9ec5f4;
+    --usage-light: #1c5cab;
   }
 }
 
