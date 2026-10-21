@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     openrouter_api_key: SecretStr | None = None
     # Measured against gpt-oss-20b and claude-haiku-5.5 in docs/decisions/chat-model.md (#98).
     llm_model: str | None = "openai/gpt-6-luna"
+    # More OpenRouter models a user may pick to write the answers, next to LLM_MODEL (#37).
+    llm_models: list[str] = []
     local_llm_base_url: str | None = None
     local_llm_model: str | None = None
     llm_temperature: float = 0.2

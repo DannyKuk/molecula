@@ -116,6 +116,7 @@ export const de: Messages = {
     dashboard: "Dashboard",
     howItAnswers: "So antwortet es",
     mcpServer: "MCP-Server",
+    settings: "Einstellungen",
     history: "Chatverlauf",
     historyAnswering: "Chatverlauf, eine Antwort kommt gerade",
     bookmarks: "Lesezeichen",
@@ -137,6 +138,26 @@ export const de: Messages = {
     historyOffTitle: "Der Verlauf ist in diesem Browser aus",
     historyOffText:
       "Der Browser lässt Molecula keine Chats speichern (ein privates Fenster, oder der Speicher ist voll). Der Chat funktioniert trotzdem; diese Unterhaltung ist weg, wenn Sie den Tab schließen.",
+  },
+  settings: {
+    title: "Einstellungen",
+    close: "Schließen",
+    model: "Modell, das die Antworten schreibt",
+    loading: "Die Modelle werden geladen…",
+    off: "Der Chat ist aus, deshalb gibt es kein Modell zur Auswahl.",
+    local: "lokal",
+    cloud: "Cloud",
+    tested: "getestet",
+    default: "Standard",
+    developedWith:
+      "Molecula wurde mit gpt-oss-20b entwickelt, das jeden Prompt, jede Sicherheitsregel und jede Auswertung durchlaufen hat, und gpt-6-luna wurde als Cloud-Modell gemessen. Ein anderes Modell kann hier schlechter abschneiden. Es kann ein Nachschlagen auslassen und aus dem Gedächtnis antworten oder die falsche Quelle zitieren.",
+    checksStay:
+      "Welches Modell Sie auch wählen, die Sicherheitsprüfung vor der Antwort und die Quellenprüfung danach bleiben bei den Modellen, mit denen sie getestet wurden.",
+    loadsFirst:
+      "Ein lokales Modell wird auf dem lokalen Server geladen, wenn es zum ersten Mal gefragt wird, was eine Minute dauern kann",
+    fitsNextTo: (model) => `, und es muss neben ${model} in den Speicher passen`,
+    context:
+      ". Laden Sie es mit mindestens 32k Tokens Kontext: Eine Antwort mit einer Suche in den Fachinformationen braucht schon etwa 9k, mehr als die 8k, die LM Studio vorgibt.",
   },
   historyRow: {
     answering: "Antwortet gerade",

@@ -676,6 +676,23 @@ describe("Chat sidebar", () => {
     expect(drawer.queryByRole("button", { name: "MCP server" })).toBeNull();
   });
 
+  it("opens the settings from the rail, the phone drawer and the expanded list", async () => {
+    await openPage(memoryHistory().history);
+
+    fireEvent.click(rail().getByRole("button", { name: "Settings" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open chats" }));
+    const drawer = within(await screen.findByRole("dialog", { name: "Chats" }));
+    fireEvent.click(drawer.getByRole("button", { name: "Settings" }));
+
+    expect(await screen.findByRole("dialog", { name: "Settings" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(drawer.getByRole("button", { name: "Close chats" }));
+
+    fireEvent.click(expandSidebar().getByRole("button", { name: "Settings" }));
+    expect(await screen.findByRole("dialog", { name: "Settings" })).toBeTruthy();
+  });
+
   it("opens the MCP server guide from the expanded list", async () => {
     await openPage(memoryHistory().history);
 

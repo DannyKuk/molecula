@@ -32,6 +32,7 @@ from tool_fakes import (
     FakeFilterExtractor,
     FakeLabelRetriever,
     FakeTargetService,
+    compound,
     drug_filter,
 )
 
@@ -47,6 +48,18 @@ IMATINIB_HEPATOTOXICITY = IMATINIB_SIDE_EFFECTS.model_copy(
         "text": "Hepatotoxicity, occasionally severe, may occur.",
         "section": "warnings_and_cautions",
         "section_group": "warnings",
+    }
+)
+SERTRALINE = compound(68617, "sertraline")
+SERTRALINE_SIDE_EFFECTS = IMATINIB_SIDE_EFFECTS.model_copy(
+    update={
+        "id": "zoloft:adverse_reactions:0",
+        "text": "The most common adverse reactions were nausea and diarrhea.",
+        "cid": SERTRALINE.cid,
+        "substance": "SERTRALINE HYDROCHLORIDE",
+        "brand": "Zoloft",
+        "set_id": "zoloft",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=zoloft",
     }
 )
 
@@ -438,6 +451,42 @@ def test_a_label_search_without_a_drug_traces_the_filter_the_model_extracted() -
     assert len(traces) == 1
     assert traces[0].filter_source == "model"
     assert traces[0].filter == extracted
+
+
+def test_a_german_question_is_searched_by_its_german_name_and_answered_in_german() -> None:
+    question = "Welche Nebenwirkungen hat Sertralin?"
+    answer_text = "Häufige Nebenwirkungen von Sertralin sind Übelkeit und Durchfall [1]."
+    extractor = FakeFilterExtractor()
+    extractor.filters[question] = LabelFilter(
+        extracted=LabelQuery(substances=["Sertralin"], section_groups=["adverse_reactions"]),
+        drugs=[drug_filter("Sertralin", SERTRALINE, ["zoloft"])],
+        section_groups=["adverse_reactions"],
+    )
+    retriever = FakeLabelRetriever()
+    retriever.chunks = [SERTRALINE_SIDE_EFFECTS]
+    model = ScriptedChatModel(
+        script=[
+            tool_call_message(
+                "search_labels",
+                {"question": question, "drug": "Sertralin", "section": "adverse_reactions"},
+            ),
+            answer_message(answer_text),
+        ]
+    )
+
+    events = run(
+        agent(model, extractor=extractor, retriever=retriever),
+        [ChatMessage(role="user", content=question)],
+    )
+
+    assert model.received[0][-1].text == question
+    calls = [e for e in events if isinstance(e, ToolCallEvent)]
+    assert [(c.name, c.args["drug"]) for c in calls] == [("search_labels", "Sertralin")]
+    assert extractor.asked == [(question, "Sertralin", "adverse_reactions")]
+    result = next(e for e in events if isinstance(e, ToolResultEvent))
+    assert (result.status, result.result["drugs"]) == ("found", ["sertraline"])
+    assert passage_refs(events) == [(1, SERTRALINE_SIDE_EFFECTS.id)]
+    assert answer(events) == answer_text
 
 
 def test_passages_keep_unique_numbers_across_two_label_searches() -> None:

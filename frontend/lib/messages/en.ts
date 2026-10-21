@@ -113,6 +113,7 @@ export const en = {
     dashboard: "Dashboard",
     howItAnswers: "How it answers",
     mcpServer: "MCP server",
+    settings: "Settings",
     history: "Chat history",
     historyAnswering: "Chat history, an answer is coming in",
     bookmarks: "Bookmarks",
@@ -134,6 +135,26 @@ export const en = {
     historyOffTitle: "History is off in this browser",
     historyOffText:
       "It doesn't let Molecula save chats (a private window, or storage is full). The chat still works; this conversation is gone when you close the tab.",
+  },
+  settings: {
+    title: "Settings",
+    close: "Close",
+    model: "Model that writes the answers",
+    loading: "Loading the models…",
+    off: "The chat is off, so there is no model to pick.",
+    local: "local",
+    cloud: "cloud",
+    tested: "tested",
+    default: "default",
+    developedWith:
+      "Molecula was developed with gpt-oss-20b, which ran every prompt, safety rule and eval, and gpt-6-luna was measured as the cloud model. Another model can do worse here. It may skip a lookup and answer from memory, or cite the wrong source.",
+    checksStay:
+      "Whichever model you pick, the safety check before the answer and the source check after it stay on the models they were tested with.",
+    loadsFirst:
+      "A local model loads on the local server when it is first asked, which can take a minute",
+    fitsNextTo: (model: string) => `, and it has to fit in memory next to ${model}`,
+    context:
+      ". Load it with at least 32k tokens of context: one answer with a label search already needs about 9k, more than LM Studio's default of 8k.",
   },
   historyRow: {
     answering: "Answering",

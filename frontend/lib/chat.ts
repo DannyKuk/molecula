@@ -61,15 +61,19 @@ export class ChatError extends Error {
   }
 }
 
-/** Sends the conversation to `POST /chat` and yields the answer's events as they arrive. */
+/**
+ * Sends the conversation to `POST /chat` and yields the answer's events as they arrive. `model`
+ * names the model that writes the answer; without it the backend's default does.
+ */
 export async function* streamChat(
   messages: ChatMessage[],
   signal?: AbortSignal,
+  model?: string | null,
 ): AsyncGenerator<ChatEvent> {
   const response = await fetch(`${API_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify(model ? { messages, model } : { messages }),
     signal,
   });
   if (!response.ok || !response.body) {
