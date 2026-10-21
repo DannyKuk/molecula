@@ -416,9 +416,21 @@ def test_with_mcp_agent_tools_the_chat_answers_through_the_mcp_server(
     assert answer == "It blocks the BCR-ABL kinase."
     assert by_name["source_check"]["checked"] is True
     assert by_name["done"]["category"] == "ok"
-    # Over MCP the tool result carries no typed artifact, so these stay empty (#42).
-    assert "retrieval_trace" not in by_name
-    assert by_name["sources"]["sources"] == []
+    assert by_name["retrieval_trace"]["filter"]["drugs"][0]["set_ids"] == ["gleevec"]
+    assert by_name["sources"] == {
+        "type": "sources",
+        "sources": [
+            {
+                "kind": "dailymed",
+                "name": "Gleevec",
+                "url": GLEEVEC.url,
+                "section": "mechanism_of_action",
+                "effective_time": "2026-07-13",
+                "ref": 1,
+            }
+        ],
+        "unknown_refs": [],
+    }
 
 
 def test_chat_describes_the_stored_complex_offline(

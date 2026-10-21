@@ -9,6 +9,7 @@ from pydantic import (
     StringConstraints,
     model_serializer,
 )
+from pydantic_core import to_jsonable_python
 
 from molecula.schemas.chat import Source
 from molecula.schemas.compounds import Compound, DrugName, MatchKind, Suggestion
@@ -73,6 +74,16 @@ class ToolResult(BaseModel):
 
     def sources(self) -> list[Source]:
         return []
+
+    def full_dump(self) -> dict[str, Any]:
+        """The result as JSON with the fields left out of what the model reads, such as a label
+        search's `retrieval`, so the whole result can be rebuilt from it."""
+        hidden = {
+            name: getattr(self, name)
+            for name, field in type(self).model_fields.items()
+            if field.exclude
+        }
+        return {**self.model_dump(mode="json"), **to_jsonable_python(hidden)}
 
 
 class RefFirst(BaseModel):
