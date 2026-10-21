@@ -66,6 +66,22 @@ describe("FlowTab", () => {
     ).toBeDefined();
   });
 
+  it("draws the bars without a bonus when the setup gives none", () => {
+    const steps = SEARCHED.steps.map((step) =>
+      step.tool
+        ? { ...step, tool: { ...step.tool, trace: { ...IMATINIB_TRACE, section_group_boost: 0 } } }
+        : step,
+    );
+    render(<FlowTab turn={{ ...SEARCHED, steps }} />);
+
+    const bars = within(stepItem("Keep the top 2")).getByRole("list", {
+      name: "Passages by score",
+    });
+    expect(within(bars).getAllByText("no bonus")).toHaveLength(2);
+    expect(within(bars).queryByText(/section asked for/)).toBeNull();
+    expect(screen.queryByText("Section bonus, from the code")).toBeNull();
+  });
+
   it("marks the lookup steps skipped when the answer looked nothing up", () => {
     render(
       <FlowTab

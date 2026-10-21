@@ -82,6 +82,18 @@ describe("HowItAnswers", () => {
   });
 });
 
+describe("HowItAnswers on the cloud setup", () => {
+  it("says the cloud setup gives no bonus, with its numbers and the decision doc", async () => {
+    await openPage();
+
+    const note = screen.getByText(/The cloud setup, for a server too small for bge-m3/);
+    expect(note.textContent).toContain("98% of the questions with no bonus and for 91% with +0.15");
+    expect(within(note).getByRole("link").getAttribute("href")).toBe(
+      "https://github.com/DannyKuk/molecula/blob/main/docs/decisions/embeddings.md",
+    );
+  });
+});
+
 describe("ordinal", () => {
   it.each([
     [1, "1st"],

@@ -567,6 +567,11 @@ export const en = {
     boosted: (count: number, bonus: string, moved: number) =>
       `${plural(count, "passage")} got +${bonus}; ${moved === 0 ? "the order stayed the same" : `${plural(moved, "passage")} changed place`}.`,
     boostTitle: (bonus: string, kept: number) => `Add the +${bonus} and keep the top ${kept}`,
+    keepTitle: (kept: number) => `Keep the top ${kept}`,
+    noBoostLine:
+      "This setup gives no section bonus, so the passages stay in order of similarity and code keeps the top 5. No AI is asked.",
+    noBoostSeveralLine:
+      "This setup gives no section bonus, so the passages stay in order of similarity and code keeps each drug's top 5. No AI is asked.",
     withdrawnWrite: "The chat model wrote an answer, which was withdrawn.",
     markerShowed:
       "The marker showed up, so the answer was replaced with a fixed one before the marker reached you.",

@@ -587,6 +587,11 @@ export const de: Messages = {
     boosted: (count, bonus, moved) =>
       `${passages(count)} ${count === 1 ? "bekam" : "bekamen"} +${bonus}; ${moved === 0 ? "die Reihenfolge blieb gleich" : `${passages(moved)} ${moved === 1 ? "hat" : "haben"} den Platz gewechselt`}.`,
     boostTitle: (bonus, kept) => `+${bonus} addieren und die besten ${kept} behalten`,
+    keepTitle: (kept) => `Die besten ${kept} behalten`,
+    noBoostLine:
+      "Diese Instanz vergibt keinen Abschnittsbonus, deshalb bleiben die Textstellen nach Ähnlichkeit geordnet, und Code behält die besten 5. Es wird keine KI gefragt.",
+    noBoostSeveralLine:
+      "Diese Instanz vergibt keinen Abschnittsbonus, deshalb bleiben die Textstellen nach Ähnlichkeit geordnet, und Code behält von jedem Medikament die besten 5. Es wird keine KI gefragt.",
     withdrawnWrite: "Das Chatmodell hat eine Antwort geschrieben, die zurückgezogen wurde.",
     markerShowed:
       "Die Markierung ist aufgetaucht, deshalb wurde die Antwort durch eine feste ersetzt, bevor die Markierung Sie erreichte.",

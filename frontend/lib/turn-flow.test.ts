@@ -156,6 +156,42 @@ describe("turnFlow", () => {
     ]);
   });
 
+  it("keeps the top passages by similarity when the setup gives no section bonus", () => {
+    const trace: RetrievalTrace = { ...IMATINIB_TRACE, section_group_boost: 0 };
+
+    const boost = step(turnFlow(answered([search({ trace })])), "boost");
+
+    expect(boost.title).toBe("Keep the top 2");
+    expect(boost.line).toBe(
+      "This setup gives no section bonus, so the passages stay in order of similarity and code keeps the top 5. No AI is asked.",
+    );
+    expect(boost.outcome).toBe(
+      "Kept 2 passages. 1 passage below the minimum similarity of 0.30 was dropped.",
+    );
+    expect(boost.ranking?.boost).toBe(0);
+    expect(
+      boost.ranking?.passages.map(({ section, score, before, after }) => [
+        section,
+        score,
+        before,
+        after,
+      ]),
+    ).toEqual([
+      ["Mechanism of action", 0.71, 1, 1],
+      ["Pharmacokinetics", 0.52, 2, 2],
+    ]);
+  });
+
+  it("says nothing of a bonus in a hybrid search when the setup gives none", () => {
+    const trace: RetrievalTrace = { ...IMATINIB_TRACE, mode: "hybrid", section_group_boost: 0 };
+
+    const boost = step(turnFlow(answered([search({ trace })])), "boost");
+
+    expect(boost.outcome).toBe(
+      "Kept 2 passages. 1 passage below the minimum similarity of 0.30 was dropped.",
+    );
+  });
+
   it("marks the lookup steps skipped when the chat model looked nothing up", () => {
     const flow = turnFlow(answered([], { answer: "Hello! Ask me about a medicine." }));
 
@@ -578,6 +614,15 @@ describe("turnFlow in German", () => {
       "Mechanism of action",
       "Pharmacokinetics",
     ]);
+  });
+
+  it("says in German that a setup without a section bonus keeps the top passages", () => {
+    const trace: RetrievalTrace = { ...IMATINIB_TRACE, section_group_boost: 0 };
+
+    const boost = step(turnFlow(answered([search({ trace })]), de), "boost");
+
+    expect(boost.title).toBe("Die besten 2 behalten");
+    expect(boost.line).toContain("Diese Instanz vergibt keinen Abschnittsbonus");
   });
 
   it("names why a question got a fixed answer in German", () => {
