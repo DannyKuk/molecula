@@ -7,15 +7,11 @@ from molecula.config import Settings
 from molecula.ingest.index import DrugIndexer
 from molecula.ingest.labels import canonical_labels
 from molecula.ingest.runner import StepReport, log_failures, run_step, store_and_sources
+from molecula.schemas.labels import UpdateOutcome
 from molecula.sources.errors import SourceError, SourceNotFound
 from molecula.sources.openfda import OpenFdaClient
 from molecula.store.compounds import CompoundRecord, CompoundStore
-from molecula.store.label_updates import (
-    LabelChange,
-    LabelUpdateRun,
-    LabelUpdateStore,
-    UpdateOutcome,
-)
+from molecula.store.label_updates import LabelChange, LabelUpdateRun, LabelUpdateStore
 from molecula.store.labels import LabelRecord, LabelStore
 
 logger = logging.getLogger(__name__)
@@ -158,6 +154,13 @@ def run(settings: Settings) -> int:
     if settings.offline:
         logger.error("OFFLINE=1: a label update needs openFDA, so nothing was checked or changed")
         return 1
+    result = update_store(settings, DrugIndexer(settings))
+    return 0 if result.outcome in ("complete", "nothing_new") else 1
+
+
+def update_store(settings: Settings, reindex: Reindex) -> LabelUpdateRun:
+    """Update the labels of the store in the settings, over a connection of its own, and log
+    what changed. The backend's nightly run calls it too, with a `reindex` over its own index."""
     with store_and_sources(settings) as (conn, http):
         compounds = CompoundStore(conn).all()
         result = update_labels(
@@ -165,10 +168,10 @@ def run(settings: Settings) -> int:
             OpenFdaClient(http, api_key=settings.openfda_api_key),
             LabelStore(conn),
             LabelUpdateStore(conn),
-            DrugIndexer(settings),
+            reindex,
         )
     log_summary(result, {compound.cid: compound.name for compound in compounds})
-    return 0 if result.outcome in ("complete", "nothing_new") else 1
+    return result
 
 
 def log_summary(run: LabelUpdateRun, names: dict[int, str]) -> None:

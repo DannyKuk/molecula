@@ -15,6 +15,7 @@ from molecula.main import (
     open_store,
 )
 from molecula.mcp.server import DEFAULT_PORT, build_server
+from molecula.rag.embeddings import get_embeddings
 
 NO_LABEL_SEARCH = (
     "The MCP server needs the label index and a chat model for search_labels: run "
@@ -35,7 +36,7 @@ def open_server(settings: Settings, conn: sqlite3.Connection, *, host: str, port
         services.targets,
         services.complexes,
         open_filter_extractor(settings, chat_model, services.compounds, services.labels),
-        open_label_retriever(settings, index),
+        open_label_retriever(settings, index, get_embeddings(settings)),
     )
     return build_server(tools, number_sources=True, host=host, port=port)
 

@@ -7,7 +7,8 @@ import pytest
 from langchain_core.embeddings import DeterministicFakeEmbedding
 
 from molecula.config import Settings
-from molecula.ingest.index import build_index, reindex_drug, run
+from molecula.ingest.index import DrugIndexer, build_index, reindex_drug, run
+from molecula.rag import embeddings as rag_embeddings
 from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
 from molecula.store.index import LabelIndex
@@ -160,3 +161,20 @@ def test_reindex_drug_leaves_a_missing_keyword_index_missing(tmp_path: Path) -> 
 
     assert not keywords.exists()
     assert {chunk.cid for chunk in index.chunks()} == {5291}
+
+
+def test_drug_indexer_uses_the_model_and_index_it_is_given(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def no_second_model(settings: Settings) -> None:
+        raise AssertionError("loaded the embedding model again")
+
+    monkeypatch.setattr(rag_embeddings, "get_embeddings", no_second_model)
+    monkeypatch.setattr(rag_embeddings, "load_chunk_tokenizer", lambda settings: FakeTokenizer())
+    index = LabelIndex(settings.index_dir)
+    index.rebuild([], [], "fake")
+    indexer = DrugIndexer(settings, embeddings=DeterministicFakeEmbedding(size=8), index=index)
+
+    indexer(5291, [GLEEVEC])
+
+    assert {chunk.set_id for chunk in index.chunks()} == {GLEEVEC.set_id}

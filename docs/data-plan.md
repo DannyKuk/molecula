@@ -268,7 +268,7 @@ The run logs the chosen labels of every drug with their `set_id` and size. Why l
 
 ### 5.6 Updates (`ingest update`)
 
-`python -m molecula.ingest update` (#341), with the backend stopped; the nightly run inside the backend is #342. Why it works this way: [decisions/label-update.md](decisions/label-update.md).
+`python -m molecula.ingest update` (#341), with the backend stopped, or the backend's own run every night and from the dashboard's Update now button (#342). Why it works this way: [decisions/label-update.md](decisions/label-update.md).
 
 1. One `count=set_id` for one stored label reads `meta.last_updated`. If it equals the last finished run's, the run ends here.
 2. `search=set_id:("…" "…" …)&count=set_id`, 50 stored labels per request: a label missing from the answer was withdrawn.

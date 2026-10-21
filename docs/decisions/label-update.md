@@ -44,7 +44,7 @@ A window can't be both cheap and complete. Because openFDA publishes labels week
 - **A changed drug is re-indexed before its label rows are replaced.** If the run stops in between, the stored label still reads as old, and the next run does both again.
 - **The store keeps every run** in `label_update` and `label_change` (schema version 7): when, openFDA's data date, drugs checked and fetched again, the outcome, and each label's old and new `set_id` and effective time. The snapshot carries them. `ingest fetch` now accepts a release of an older schema version, which the app upgrades when it opens the store.
 - **The store uses write-ahead logging**, so the app's reads don't wait while an update writes, and each drug's label rows change in one transaction.
-- **The command runs with the backend stopped.** The backend keeps the label index open, and a second process can't safely write to it. The nightly run inside the backend is #342.
+- **The command runs with the backend stopped.** The backend keeps the label index open, and a second process can't safely write to it. So the backend runs the same update itself, every night and from the dashboard's button, over its own index and embedding model (#342).
 
 ## Limits
 

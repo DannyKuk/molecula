@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
-import type { InputCategory, Stats } from "@/lib/api";
+import type { InputCategory, LabelUpdateStatus, Stats } from "@/lib/api";
 import { CATEGORY_LABELS, ERROR_LABELS, compact, longDate, ranked } from "@/lib/stats";
 import { cn } from "cn";
 
@@ -87,8 +87,18 @@ export function Errors({ counts }: { counts: Stats["usage"]["errors"] }) {
   );
 }
 
-/** What the store holds, in one line that wraps. */
-export function KnowledgeBase({ kb }: { kb: Stats["knowledge_base"] }) {
+/** What the store holds, in one line that wraps, with when the labels were last fetched and
+ * updated, and the Update now button when the backend allows it. */
+export function KnowledgeBase({
+  kb,
+  labelUpdate,
+  onUpdate,
+}: {
+  kb: Stats["knowledge_base"];
+  labelUpdate: LabelUpdateStatus;
+  onUpdate: () => Promise<void>;
+}) {
+  const [problem, setProblem] = useState(false);
   const items: [string, string][] = [
     [compact(kb.drugs), "drugs"],
     [compact(kb.labels), "labels"],
@@ -98,14 +108,33 @@ export function KnowledgeBase({ kb }: { kb: Stats["knowledge_base"] }) {
     [compact(kb.conformers), "3D drug shapes"],
     [compact(kb.complexes), "drug–target structures"],
   ];
+  const last = labelUpdate.last_run;
+
+  function update() {
+    setProblem(false);
+    onUpdate().catch(() => setProblem(true));
+  }
+
   return (
     <section
       aria-labelledby="knowledge-base"
       className="rounded-xl border border-rule bg-card px-4 py-3"
     >
-      <h2 id="knowledge-base" className="mb-1.5 text-sm font-semibold text-ink-2">
-        Knowledge base
-      </h2>
+      <div className="mb-1.5 flex items-center justify-between gap-3">
+        <h2 id="knowledge-base" className="text-sm font-semibold text-ink-2">
+          Knowledge base
+        </h2>
+        {labelUpdate.can_start && (
+          <button
+            type="button"
+            onClick={update}
+            disabled={labelUpdate.running}
+            className="rounded-md border border-rule px-2.5 py-1 text-xs text-ink-2 hover:text-foreground disabled:opacity-60 disabled:hover:text-ink-2"
+          >
+            {labelUpdate.running ? "Updating…" : "Update now"}
+          </button>
+        )}
+      </div>
       <ul className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-ink-2">
         {items.map(([value, label]) => (
           <li key={label}>
@@ -120,8 +149,36 @@ export function KnowledgeBase({ kb }: { kb: Stats["knowledge_base"] }) {
             ? longDate(kb.labels_fetched_to)
             : "not yet, the labels aren't built"}
         </li>
+        {labelUpdate.running ? (
+          <li role="status">Updating the labels…</li>
+        ) : (
+          last && (
+            <li>
+              Last label update {longDate(last.finished_at)}: {updateResult(last)}
+            </li>
+          )
+        )}
         <li>Store schema v{kb.schema_version}</li>
       </ul>
+      {problem && (
+        <p role="alert" className="mt-1.5 text-xs text-red-700 dark:text-red-400">
+          Could not start the update. Check that the backend is running.
+        </p>
+      )}
     </section>
   );
+}
+
+function updateResult(run: NonNullable<LabelUpdateStatus["last_run"]>): string {
+  const drugs = `${run.drugs_changed} ${run.drugs_changed === 1 ? "drug" : "drugs"} changed`;
+  switch (run.outcome) {
+    case "complete":
+      return run.drugs_changed ? drugs : "no label changed";
+    case "nothing_new":
+      return "nothing new on openFDA";
+    case "incomplete":
+      return `${drugs}, some drugs not checked (see the backend log)`;
+    case "failed":
+      return "failed (see the backend log)";
+  }
 }

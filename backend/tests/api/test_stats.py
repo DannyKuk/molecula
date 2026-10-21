@@ -10,8 +10,10 @@ from molecula.api import dependencies
 from molecula.main import app
 from molecula.schemas.stats import RequestRecord
 from molecula.services.knowledge_base import KnowledgeBase
+from molecula.services.label_updates import LabelUpdater
 from molecula.services.usage import UsageLog
 from molecula.store.compounds import CompoundStore
+from molecula.store.label_updates import LabelUpdateRun, LabelUpdateStore
 from molecula.store.structures import ComplexFiles, ConformerFiles
 from molecula.store.usage import UsageStore
 from store_records import IMATINIB
@@ -27,7 +29,9 @@ def client(
         conn, None, ConformerFiles(tmp_path / "compounds"), ComplexFiles(tmp_path / "complexes")
     )
     usage_log = UsageLog(usage_store, "openai/gpt-oss-20b", now=lambda: NOW)
+    updater = LabelUpdater(LabelUpdateStore(conn), None, button=False, off_reason="offline")
     app.dependency_overrides[dependencies.knowledge_base] = lambda: knowledge_base
+    app.dependency_overrides[dependencies.label_updater] = lambda: updater
     app.dependency_overrides[dependencies.usage_log] = lambda: usage_log
     yield TestClient(app)
     app.dependency_overrides.clear()
@@ -70,6 +74,31 @@ def test_an_empty_usage_log_gives_zeros(client: TestClient) -> None:
     assert {day["requests"] for day in stats["usage"]["days"]} == {0}
     assert stats["usage"]["errors"] == {}
     assert stats["knowledge_base"]["drugs"] == 0
+
+
+def test_stats_hold_the_last_label_update(client: TestClient, conn: sqlite3.Connection) -> None:
+    LabelUpdateStore(conn).add(
+        LabelUpdateRun(
+            started_at=NOW,
+            finished_at=NOW,
+            outcome="nothing_new",
+            source_updated=None,
+            drugs_checked=133,
+            drugs_rechecked=0,
+        )
+    )
+
+    label_update = client.get("/stats").json()["label_update"]
+
+    assert label_update == {
+        "last_run": {
+            "finished_at": "2026-10-21T12:00:00Z",
+            "outcome": "nothing_new",
+            "drugs_changed": 0,
+        },
+        "running": False,
+        "can_start": False,
+    }
 
 
 @pytest.mark.parametrize("days", [0, 366])

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import secrets
 import sqlite3
@@ -9,6 +10,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from langchain_core.embeddings import Embeddings
 from langchain_core.language_models import BaseChatModel
 
 from molecula.agent.agent import ChatAgent
@@ -23,13 +25,15 @@ from molecula.agent.llm import (
     get_source_check_model,
 )
 from molecula.agent.tool_registry import build_tools, tools_over_mcp
-from molecula.api import chat, drugs, health, stats
+from molecula.api import chat, drugs, health, labels, stats
 from molecula.config import Settings, get_settings
 from molecula.guard.chat import GuardedChat
 from molecula.guard.limits import ChatLimited, ChatLimits, DailyCostCap, RequestLimiter
 from molecula.guard.safety import ChatModelInputCheck, DecisionModelInputCheck, InputCheck
 from molecula.guard.source_check import ChatModelSourceCheck
 from molecula.guard.validation import readable_validation_error
+from molecula.ingest.index import DrugIndexer
+from molecula.ingest.update import update_store
 from molecula.mcp.server import build_server
 from molecula.rag.embeddings import embedding_model_id, get_embeddings
 from molecula.rag.filters import FilterExtractor
@@ -38,6 +42,7 @@ from molecula.schemas.chat import ChatModel
 from molecula.services.complexes import ComplexService
 from molecula.services.compounds import CompoundService
 from molecula.services.knowledge_base import KnowledgeBase
+from molecula.services.label_updates import LabelUpdater, update_nightly
 from molecula.services.labels import LabelService
 from molecula.services.targets import TargetService
 from molecula.services.usage import UsageLog
@@ -45,6 +50,7 @@ from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
 from molecula.store.index import LabelIndex
 from molecula.store.keywords import KeywordIndex
+from molecula.store.label_updates import LabelUpdateStore
 from molecula.store.labels import LabelStore
 from molecula.store.structures import ComplexFiles, ConformerFiles
 from molecula.store.targets import TargetStore
@@ -117,7 +123,9 @@ def open_label_index(settings: Settings) -> LabelIndex | None:
     return index
 
 
-def open_label_retriever(settings: Settings, index: LabelIndex) -> LabelRetriever:
+def open_label_retriever(
+    settings: Settings, index: LabelIndex, embeddings: Embeddings
+) -> LabelRetriever:
     """The label search in RETRIEVAL_MODE. Without the keyword index, which a store fetched
     before #44 lacks, it searches by embeddings alone until `ingest fetch` builds it."""
     keywords = KeywordIndex(settings.keyword_index_path)
@@ -132,13 +140,47 @@ def open_label_retriever(settings: Settings, index: LabelIndex) -> LabelRetrieve
         mode = "dense"
     return LabelRetriever(
         index,
-        get_embeddings(settings),
+        embeddings,
         top_k=settings.retrieval_top_k,
         min_score=settings.retrieval_min_score,
         section_group_boost=settings.retrieval_section_group_boost,
         mode=mode,
         keywords=keywords,
     )
+
+
+def open_label_updater(
+    settings: Settings,
+    conn: sqlite3.Connection,
+    index: LabelIndex | None,
+    embeddings: Embeddings | None,
+) -> LabelUpdater:
+    """The label update over the app's own index and embedding model: Chroma lets only one
+    process write to the index, and a second copy of the model would double the memory."""
+    runs = LabelUpdateStore(conn)
+    button = settings.label_update_button
+    if settings.offline:
+        reason = "OFFLINE=1: a label update needs openFDA."
+        return LabelUpdater(runs, None, button=button, off_reason=reason)
+    if index is None or not settings.db_path.exists():
+        reason = "There is no built store and label index to update yet."
+        return LabelUpdater(runs, None, button=button, off_reason=reason)
+    return LabelUpdater(
+        runs,
+        lambda: update_store(settings, DrugIndexer(settings, embeddings=embeddings, index=index)),
+        button=button,
+    )
+
+
+def schedule_label_updates(settings: Settings, updater: LabelUpdater) -> asyncio.Task[None] | None:
+    """The nightly label update, unless LABEL_UPDATE_SCHEDULE=0 or the backend can't update."""
+    if not settings.label_update_schedule:
+        return None
+    if not updater.can_run:
+        logger.info("No nightly label update: %s", updater.off_reason)
+        return None
+    logger.info("The labels are updated every day at %02d:00 UTC", settings.label_update_hour)
+    return asyncio.create_task(update_nightly(updater.start, settings.label_update_hour))
 
 
 def open_chat_model(settings: Settings) -> BaseChatModel | None:
@@ -229,9 +271,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         conn, index, ConformerFiles(settings.conformers_dir), ComplexFiles(settings.complexes_dir)
     )
     chat_model = open_chat_model(settings) if index is not None else None
+    embeddings = None
     mcp_session = AsyncExitStack()
     if index is not None and chat_model is not None:
-        app.state.label_retriever = open_label_retriever(settings, index)
+        embeddings = get_embeddings(settings)
+        app.state.label_retriever = open_label_retriever(settings, index, embeddings)
         app.state.filter_extractor = open_filter_extractor(
             settings, chat_model, services.compounds, services.labels
         )
@@ -266,7 +310,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.usage_log = UsageLog(
         UsageStore(usage_conn), app.state.chat_model.name if app.state.chat_model else None
     )
+    app.state.label_updater = open_label_updater(settings, conn, index, embeddings)
+    nightly = schedule_label_updates(settings, app.state.label_updater)
     yield
+    if nightly is not None:
+        nightly.cancel()
     await mcp_session.aclose()
     usage_conn.close()
     conn.close()
@@ -287,3 +335,4 @@ app.include_router(health.router)
 app.include_router(drugs.router)
 app.include_router(chat.router)
 app.include_router(stats.router)
+app.include_router(labels.router)

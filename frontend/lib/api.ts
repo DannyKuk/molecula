@@ -119,6 +119,18 @@ export type UsageDay = {
   cost_usd: number;
 };
 
+/** The label update (`LabelUpdateStatus` in `backend/src/molecula/schemas/stats.py`): the last run,
+ * whether one runs now, and whether the dashboard may start one. */
+export type LabelUpdateStatus = {
+  last_run: {
+    finished_at: string;
+    outcome: "complete" | "nothing_new" | "incomplete" | "failed";
+    drugs_changed: number;
+  } | null;
+  running: boolean;
+  can_start: boolean;
+};
+
 /** What the store holds and how the chat was used (`Stats` in `backend/src/molecula/schemas/stats.py`). */
 export type Stats = {
   knowledge_base: {
@@ -133,6 +145,7 @@ export type Stats = {
     labels_fetched_from: string | null;
     labels_fetched_to: string | null;
   };
+  label_update: LabelUpdateStatus;
   usage: {
     days: UsageDay[];
     tool_calls: Record<string, number>;
@@ -195,4 +208,14 @@ export function getComplex(cid: number, signal?: AbortSignal): Promise<Complex> 
 /** What the store holds, and the chat's use over the last `days` UTC days (1–365). */
 export function getStats(days: number, signal?: AbortSignal): Promise<Stats> {
   return getJson<Stats>(`/stats?days=${days}`, signal);
+}
+
+/** Start a label update; 409 while one runs, 404 while the button is off (`LABEL_UPDATE_BUTTON`). */
+export async function startLabelUpdate(): Promise<LabelUpdateStatus> {
+  const path = "/labels/update";
+  const response = await fetch(`${API_URL}${path}`, { method: "POST" });
+  if (!response.ok) {
+    throw new ApiError(path, response.status);
+  }
+  return (await response.json()) as LabelUpdateStatus;
 }
