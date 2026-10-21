@@ -311,6 +311,26 @@ describe("turnFlow", () => {
     expect(extracted.outcome).toBe("Drugs: imatinib. Sections: pharmacology.");
   });
 
+  it("says a search for two drugs searched each on its own", () => {
+    const [gleevec] = IMATINIB_TRACE.filter!.drugs;
+    const trace: RetrievalTrace = {
+      ...IMATINIB_TRACE,
+      filter_source: "model",
+      filter: {
+        ...IMATINIB_TRACE.filter!,
+        drugs: [
+          { ...gleevec, name: "imatinib" },
+          { name: "nilotinib", generic: "nilotinib", set_ids: ["a", "b"], narrowed: false },
+        ],
+      },
+    };
+    const flow = turnFlow(answered([search({ args: { section: "pharmacology" }, trace })]));
+
+    expect(step(flow, "narrow").title).toBe("Narrow the search to the drugs");
+    expect(step(flow, "narrow").outcome).toBe("Searched imatinib and nilotinib: 3 labels.");
+    expect(step(flow, "boost").line).toContain("keeps each drug's top 5");
+  });
+
   it("says a search the tool rejected never ran", () => {
     const rejected = { status: "invalid_arguments", errors: ["section: not a label section"] };
     const flow = turnFlow(answered([search({ result: rejected, trace: undefined })]));

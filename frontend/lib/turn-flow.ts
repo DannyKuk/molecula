@@ -335,7 +335,16 @@ function searchedSteps(tool: ToolRun, trace: RetrievalTrace | null, key: string)
   if (card.kind !== "labels") return [narrow, score, boost];
   const result = card.result;
   if (!trace) return untracedSteps(result, narrow, score, boost);
-  const narrowed = { ...narrow, state: "done" as const, outcome: narrowText(trace, result) };
+  const several = searchedDrugs(trace) > 1;
+  const narrowed: Draft = {
+    ...narrow,
+    ...(several && {
+      title: "Narrow the search to the drugs",
+      line: "Code looks the drugs up in the store and searches only their labels, one drug at a time.",
+    }),
+    state: "done",
+    outcome: narrowText(trace, result),
+  };
   if (trace.candidates.length === 0) {
     return [
       narrowed,
@@ -343,7 +352,21 @@ function searchedSteps(tool: ToolRun, trace: RetrievalTrace | null, key: string)
       { ...boost, state: "skipped" },
     ];
   }
-  return [narrowed, scoreStep(score, trace), boostStep(boost, trace)];
+  const ranked = boostStep(boost, trace);
+  return [
+    narrowed,
+    scoreStep(score, trace),
+    several && trace.mode === "dense"
+      ? {
+          ...ranked,
+          line: "Code adds +0.15 to passages in the guessed section, sorts by the new score and keeps each drug's top 5. No AI is asked.",
+        }
+      : ranked,
+  ];
+}
+
+function searchedDrugs(trace: RetrievalTrace): number {
+  return trace.filter?.drugs.filter((drug) => drug.set_ids.length > 0).length ?? 0;
 }
 
 const UNRECORDED = "Not recorded: this search was saved before searches kept their details.";
@@ -387,8 +410,6 @@ function narrowText(trace: RetrievalTrace, result: LabelPassages): string {
     );
     parts.push(`Searched ${names.join(" and ")}: ${count(labels, "label")}.`);
   }
-  if (searched.length > 1)
-    parts.push("Each drug is searched on its own and keeps its own best passages.");
   if (result.drugs_without_label.length > 0) {
     parts.push(`No US label for ${result.drugs_without_label.join(", ")}.`);
   }
