@@ -9,7 +9,6 @@ import {
   Menu,
   PanelLeft,
   Plug,
-  Plus,
   Settings,
   SquarePen,
   Workflow,
@@ -298,7 +297,7 @@ function ChatList({
           onClick={onNew}
           className={cn(LIST_LINK, newChatOpen && CURRENT)}
         >
-          <Plus />
+          <SquarePen />
           {t.sidebar.newChat}
         </button>
         {PAGES.map(({ href, label, icon }) => (
