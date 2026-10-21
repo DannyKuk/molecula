@@ -20,6 +20,7 @@ import { useFollowAnswer } from "@/lib/use-follow-answer";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { usePrintedPictures } from "@/lib/use-printed-pictures";
 
+import { Brand } from "./brand-mark";
 import { ChatComposer } from "./chat-composer";
 import { ChatDrawer, type ChatListProps, ChatSidebar } from "./chat-sidebar";
 import { ConversationTurn } from "./conversation-turn";
@@ -203,7 +204,10 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
         <header className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-4 sm:px-6 print:hidden">
           <div className="flex items-center gap-3">
             <ChatDrawer {...chatList} />
-            <h1 className="text-[17px] font-semibold tracking-tight">Molecula</h1>
+            {/* On a computer the sidebar shows the brand, so the heading is left for screen readers. */}
+            <h1 className="text-[17px] md:sr-only">
+              <Brand />
+            </h1>
             <ModelStatus />
             {usage && (
               // Each answer shows its own line, so a narrow chat leaves the total out of the header.

@@ -10,6 +10,7 @@ import type { Picture } from "@/lib/printed-pictures";
 import { structureSubtitle, structureTitle, type StructureTarget } from "@/lib/tool-cards";
 
 import { OpenFdaCredit } from "./answer-sources";
+import { Brand } from "./brand-mark";
 import { Disclaimer } from "./disclaimer";
 import { COLORS, type Palette } from "./structure/scene";
 
@@ -40,10 +41,7 @@ export function PrintedHeader({ title, questions }: { title: string; questions: 
   return (
     <section aria-label={t.print.label} className="hidden print:block">
       <div className="flex items-baseline justify-between gap-4">
-        <p className="flex items-center gap-1.5 text-[11pt] font-semibold tracking-tight">
-          <SignalLight />
-          Molecula
-        </p>
+        <Brand className="text-[11pt]" />
         <p className="font-mono text-[7.5pt] tracking-wider text-ink-2 uppercase tabular-nums">
           {t.print.questions(questions.length)} ·{" "}
           {t.print.printedOn(printedDate(new Date(), t.locale))}
@@ -56,16 +54,6 @@ export function PrintedHeader({ title, questions }: { title: string; questions: 
         </h2>
       )}
     </section>
-  );
-}
-
-/** The orange status light of the instrument look. It is drawn, not filled, because browsers leave
- * out background colours when printing unless asked to keep them. */
-function SignalLight() {
-  return (
-    <svg aria-hidden viewBox="0 0 6 6" className="size-[6px] text-signal">
-      <circle cx="3" cy="3" r="3" fill="currentColor" />
-    </svg>
   );
 }
 

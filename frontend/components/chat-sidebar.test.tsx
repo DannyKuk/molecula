@@ -629,6 +629,16 @@ describe("Chat sidebar", () => {
     expect(rail().getByRole("button", { name: "Show chats" })).toBeDefined();
   });
 
+  it("opens the list from the mark atop the rail and shows the name atop the list", async () => {
+    const { history } = memoryHistory();
+    await openPage(history);
+    expect(screen.getByRole("heading", { level: 1, name: "Molecula" })).toBeDefined();
+
+    const show = rail().getByRole("button", { name: "Show chats" });
+    expect(show.querySelector("svg polygon")).not.toBeNull();
+    expect(expandSidebar().getByText("Molecula")).toBeDefined();
+  });
+
   it("opens the list as a drawer on a phone and closes it when a chat is picked", async () => {
     const stream = stubChatStream();
     await openPage(memoryHistory().history);
