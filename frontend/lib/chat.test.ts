@@ -12,6 +12,7 @@ import {
   streamChat,
 } from "./chat";
 import { MAX_ANSWER_LENGTH, MAX_MESSAGE_LENGTH, MAX_MESSAGES } from "./chat-limits";
+import { de } from "./messages/de";
 import { chatFrame, DONE } from "./test-fixtures";
 
 const QUESTION: ChatMessage[] = [{ role: "user", content: "How does imatinib work?" }];
@@ -164,6 +165,12 @@ describe("questionProblem", () => {
   it("says by how much a question is too long", () => {
     expect(questionProblem("a".repeat(MAX_MESSAGE_LENGTH + 1))).toBe(
       "The question is too long: 4,001 of at most 4,000 characters.",
+    );
+  });
+
+  it("says it in German for a German reader", () => {
+    expect(questionProblem("a".repeat(MAX_MESSAGE_LENGTH + 1), de)).toBe(
+      "Die Frage ist zu lang: 4.001 von höchstens 4.000 Zeichen.",
     );
   });
 });

@@ -1,3 +1,4 @@
+import { useMessages } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
 type QuestionNavigatorProps = {
@@ -15,9 +16,10 @@ type QuestionNavigatorProps = {
  * only the dashes.
  */
 export function QuestionNavigator({ questions, read, live, onJump }: QuestionNavigatorProps) {
+  const t = useMessages();
   return (
     <nav
-      aria-label="Questions in this chat"
+      aria-label={t.navigator.label}
       className="group absolute top-1/2 right-1 z-20 -translate-y-1/2 py-2 pl-4 min-[900px]:right-3 print:hidden"
     >
       <ol className="flex flex-col items-end">
@@ -25,7 +27,7 @@ export function QuestionNavigator({ questions, read, live, onJump }: QuestionNav
           <li key={index}>
             <button
               type="button"
-              aria-label={`Question ${index + 1}: ${question}`}
+              aria-label={t.navigator.question(index + 1, question)}
               aria-current={index === read || undefined}
               data-live={index === live || undefined}
               onClick={() => onJump(index)}

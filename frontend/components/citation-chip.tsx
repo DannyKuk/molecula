@@ -14,6 +14,7 @@ import {
   sourceLabel,
   type Citations,
 } from "@/lib/citations";
+import { useMessages } from "@/lib/messages";
 
 /** The answer's sources and passages, or null while the answer is still streaming. */
 export const CitationsContext = createContext<Citations | null>(null);
@@ -41,6 +42,7 @@ export function CitationChip({
   found?: boolean;
   children: ReactNode;
 }) {
+  const t = useMessages();
   const citations = useContext(CitationsContext);
   const openSources = useContext(OpenCitedSources);
   if (!citations) return <>{children}</>;
@@ -61,7 +63,7 @@ export function CitationChip({
           openOnHover
           delay={150}
           onClick={() => openSources?.(refs)}
-          aria-label={`${found ? "Found by the source check" : "Sources"}: ${labels.join(", ")}`}
+          aria-label={`${found ? t.sources.found : t.sources.sources}: ${labels.join(", ")}`}
           className="mx-0.5 inline-flex max-w-full items-center gap-1.5 rounded-md bg-panel py-0.5 pr-2 pl-1.5 align-middle text-xs font-medium text-ink-2 hover:bg-ink hover:text-page focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3 print:hidden"
         >
           {sources[0].ref !== null && (
@@ -74,9 +76,7 @@ export function CitationChip({
         </PopoverTrigger>
         <PopoverContent align="start" className="max-h-96 w-80 gap-0 overflow-y-auto p-0">
           {found && (
-            <p className="px-3 pt-3 text-xs text-muted-foreground">
-              The answer didn&apos;t cite this; the source check found the sentence here.
-            </p>
+            <p className="px-3 pt-3 text-xs text-muted-foreground">{t.sources.foundNote}</p>
           )}
           <ol className="divide-y divide-border">
             {sources.map((source) => (
@@ -97,6 +97,7 @@ export function CitationChip({
 }
 
 function CitedPassage({ source, text }: { source: Source; text?: string }) {
+  const t = useMessages();
   return (
     <>
       <p className="font-medium">
@@ -104,7 +105,7 @@ function CitedPassage({ source, text }: { source: Source; text?: string }) {
       </p>
       {source.effective_time && (
         <p className="text-xs text-muted-foreground">
-          FDA label of {labelDate(source.effective_time)}
+          {t.sources.labelOf(labelDate(source.effective_time, t.locale))}
         </p>
       )}
       {text && <p className="border-l-2 border-signal pl-2 text-ink-2">{excerpt(text)}</p>}
@@ -114,13 +115,14 @@ function CitedPassage({ source, text }: { source: Source; text?: string }) {
         rel="noopener noreferrer"
         className="font-medium underline underline-offset-4"
       >
-        Open the label on DailyMed
+        {t.sources.openLabel}
       </a>
     </>
   );
 }
 
 function CitedPage({ source }: { source: Source }) {
+  const t = useMessages();
   return (
     <>
       <p className="font-medium">{sourceLabel(source)}</p>
@@ -130,7 +132,7 @@ function CitedPage({ source }: { source: Source }) {
         rel="noopener noreferrer"
         className="font-medium underline underline-offset-4"
       >
-        Open on {siteName(source)}
+        {t.sources.openOn(siteName(source))}
       </a>
     </>
   );

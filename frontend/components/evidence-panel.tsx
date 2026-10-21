@@ -15,6 +15,7 @@ import {
   sourceCards,
   structuresInChat,
 } from "@/lib/evidence";
+import { useMessages } from "@/lib/messages";
 import { structuresOf } from "@/lib/tool-cards";
 
 import { FlowTab } from "./answer-flow/flow-tab";
@@ -43,6 +44,7 @@ const NAV =
 /** The 3D view, the sources, the steps and the flow of one answer, beside the chat or in a
  * sheet. */
 export function EvidencePanel({ turns, shown, onShow, backToLive, close }: EvidencePanelProps) {
+  const t = useMessages();
   const index = shown.turn;
   const turn = turns[index];
   const steps = shownSteps(turn);
@@ -57,7 +59,7 @@ export function EvidencePanel({ turns, shown, onShow, backToLive, close }: Evide
       <div className="flex-none border-b border-rule px-4 pt-3">
         <div className="flex min-h-[30px] items-center gap-2">
           <h2 className="font-mono text-[11px] tracking-wider whitespace-nowrap text-signal uppercase">
-            Answer {index + 1} of {turns.length}
+            {t.evidence.answerOf(index + 1, turns.length)}
           </h2>
           <p className="min-w-0 flex-1 truncate text-sm text-ink">{turn.question}</p>
           {backToLive && (
@@ -67,12 +69,12 @@ export function EvidencePanel({ turns, shown, onShow, backToLive, close }: Evide
               className="inline-flex h-7 items-center gap-1.5 rounded-full border border-signal px-2.5 text-xs font-medium whitespace-nowrap text-signal hover:bg-signal-soft focus-visible:outline-2 focus-visible:outline-ink-3"
             >
               <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-signal" />
-              Live answer
+              {t.evidence.live}
             </button>
           )}
           <button
             type="button"
-            aria-label="Previous answer"
+            aria-label={t.evidence.previous}
             disabled={index === 0}
             onClick={() => show(index - 1)}
             className={NAV}
@@ -81,7 +83,7 @@ export function EvidencePanel({ turns, shown, onShow, backToLive, close }: Evide
           </button>
           <button
             type="button"
-            aria-label="Next answer"
+            aria-label={t.evidence.next}
             disabled={index === turns.length - 1}
             onClick={() => show(index + 1)}
             className={NAV}
@@ -90,26 +92,26 @@ export function EvidencePanel({ turns, shown, onShow, backToLive, close }: Evide
           </button>
           {close}
         </div>
-        <Tabs.List aria-label="Evidence" className="mt-2 flex gap-0.5">
+        <Tabs.List aria-label={t.chat.evidence} className="mt-2 flex gap-0.5">
           <Tabs.Tab value="3d" className={TAB}>
-            3D
+            {t.evidence.tab3d}
             {shown.fresh && (
               <>
                 <span aria-hidden className="size-1.5 rounded-full bg-signal" />
-                <span className="sr-only">, new</span>
+                <span className="sr-only">{t.evidence.fresh}</span>
               </>
             )}
           </Tabs.Tab>
           <Tabs.Tab value="sources" className={TAB}>
-            Sources
+            {t.evidence.tabSources}
             {turn.sources && <Count>{sourceCards(turn.sources).length}</Count>}
           </Tabs.Tab>
           <Tabs.Tab value="steps" className={TAB}>
-            Steps
+            {t.evidence.tabSteps}
             <Count>{steps.length}</Count>
           </Tabs.Tab>
           <Tabs.Tab value="flow" className={TAB}>
-            Flow
+            {t.evidence.tabFlow}
           </Tabs.Tab>
         </Tabs.List>
       </div>
@@ -131,8 +133,8 @@ export function EvidencePanel({ turns, shown, onShow, backToLive, close }: Evide
             ) : (
               <Empty>
                 {turn.state === "answering" || turn.state === "queued"
-                  ? "Thinking…"
-                  : "Molecula answered this without looking anything up."}
+                  ? t.evidence.thinking
+                  : t.evidence.noLookup}
               </Empty>
             )}
           </ShowStructure>
@@ -156,6 +158,7 @@ function StructureTab({
   cid?: number;
   onShow: (shown: Shown) => void;
 }) {
+  const t = useMessages();
   const turn = turns[index];
   const targets = structuresOf(turn.steps);
   const target = targets.find((candidate) => candidate.cid === cid) ?? targets[0];
@@ -165,7 +168,7 @@ function StructureTab({
       {targets.length > 1 && (
         <div
           role="group"
-          aria-label="Drug in 3D"
+          aria-label={t.evidence.drugIn3d}
           className="inline-flex self-start rounded-lg bg-card p-0.5"
         >
           {targets.map((option) => (
@@ -188,16 +191,12 @@ function StructureTab({
         // Keyed by answer, so each answer's view is built afresh and plays its binding.
         <StructurePanel key={`${index}:${target.cid}`} target={target} />
       ) : (
-        <Empty>
-          {turn.state === "answering"
-            ? "Looking things up… a structure shows here if this answer finds one."
-            : "This answer didn't look up a structure."}
-        </Empty>
+        <Empty>{turn.state === "answering" ? t.evidence.lookingUp : t.evidence.noStructure}</Empty>
       )}
       {inChat.length > 0 && (
-        <section aria-label="Structures in this chat" className="flex flex-col gap-2">
+        <section aria-label={t.evidence.structuresInChat} className="flex flex-col gap-2">
           <h3 className="font-mono text-[11px] tracking-wider text-ink-3 uppercase">
-            Structures in this chat
+            {t.evidence.structuresInChat}
           </h3>
           <ul className="flex flex-wrap gap-1.5">
             {inChat.map((structure) => {
@@ -217,7 +216,8 @@ function StructureTab({
                   >
                     {structure.target.name}
                     <span className="font-mono text-[11px] text-ink-3">
-                      {structure.target.complex?.pdb_id ?? "molecule"} · answer {structure.turn + 1}
+                      {structure.target.complex?.pdb_id ?? t.evidence.molecule} ·{" "}
+                      {t.evidence.answer(structure.turn + 1)}
                     </span>
                   </button>
                 </li>
@@ -231,6 +231,7 @@ function StructureTab({
 }
 
 function SourcesTab({ turn, highlighted }: { turn: Turn; highlighted: number[] }) {
+  const t = useMessages();
   const list = useRef<HTMLOListElement>(null);
   const highlightKey = highlighted.join(",");
   useEffect(() => {
@@ -244,17 +245,17 @@ function SourcesTab({ turn, highlighted }: { turn: Turn; highlighted: number[] }
     return (
       <Empty>
         {turn.state === "answering" || turn.state === "queued"
-          ? "The sources show here once the answer is written."
-          : "This answer has no sources."}
+          ? t.evidence.sourcesLater
+          : t.evidence.noSources}
       </Empty>
     );
   }
   const cards = sourceCards(turn.sources);
-  if (cards.length === 0) return <Empty>This answer used no sources.</Empty>;
+  if (cards.length === 0) return <Empty>{t.evidence.usedNoSources}</Empty>;
   const cited = new Set(citedRefs(turn.answer));
   return (
     <div className="flex flex-col gap-3">
-      <ol ref={list} aria-label="Sources of this answer" className="flex flex-col gap-2">
+      <ol ref={list} aria-label={t.evidence.sourcesOfAnswer} className="flex flex-col gap-2">
         {cards.map(({ source, refs }) => {
           const lit = refs.some((ref) => highlighted.includes(ref));
           const text = isLabel(source) ? turn.passages[refs[0]]?.text : undefined;
@@ -274,13 +275,13 @@ function SourcesTab({ turn, highlighted }: { turn: Turn; highlighted: number[] }
                 <span className="font-medium">{sourceLabel(source)}</span>
                 {refs.some((ref) => cited.has(ref)) && (
                   <span className="font-mono text-[10px] tracking-wider text-ink-3 uppercase">
-                    Cited
+                    {t.evidence.cited}
                   </span>
                 )}
               </p>
               {source.effective_time && (
                 <p className="text-xs text-ink-3">
-                  FDA label of {labelDate(source.effective_time)}
+                  {t.sources.labelOf(labelDate(source.effective_time, t.locale))}
                 </p>
               )}
               {text && <p className="border-l-2 border-signal pl-2 text-ink-2">{excerpt(text)}</p>}
@@ -290,7 +291,7 @@ function SourcesTab({ turn, highlighted }: { turn: Turn; highlighted: number[] }
                 rel="noopener noreferrer"
                 className="self-start text-[12.5px] font-medium underline underline-offset-4"
               >
-                {isLabel(source) ? "Open the label on DailyMed" : `Open on ${siteName(source)}`}
+                {isLabel(source) ? t.sources.openLabel : t.sources.openOn(siteName(source))}
               </a>
             </li>
           );

@@ -1,8 +1,10 @@
 import { cn } from "cn";
 
+import { CHAT_FAILED, CHAT_UNAVAILABLE } from "@/lib/chat";
 import type { Turn } from "@/lib/chat-turn";
 import { didYouMeanOf } from "@/lib/did-you-mean";
 import type { EvidenceTab } from "@/lib/evidence";
+import { type Messages, useMessages } from "@/lib/messages";
 import type { Pictures } from "@/lib/printed-pictures";
 import { checkingAnswer } from "@/lib/source-check";
 import { structuresOf } from "@/lib/tool-cards";
@@ -48,8 +50,9 @@ export function ConversationTurn({
   onRetry,
   pictures,
 }: ConversationTurnProps) {
+  const t = useMessages();
   const answering = turn.state === "answering";
-  const offers = answering ? [] : didYouMeanOf(turn.question, turn.steps);
+  const offers = answering ? [] : didYouMeanOf(turn.question, turn.steps, t.turn.whatIs);
   return (
     <li
       data-turn
@@ -68,7 +71,7 @@ export function ConversationTurn({
       </div>
       {turn.state === "queued" && (
         <p role="status" className="text-sm text-ink-2">
-          Waiting for the answer in another chat to finish…
+          {t.turn.waiting}
         </p>
       )}
       {turn.answer && (
@@ -92,7 +95,7 @@ export function ConversationTurn({
       )}
       {turn.usage && (
         <p className="font-mono text-[11px] text-ink-3 tabular-nums print:hidden">
-          {formatUsage(turn.usage)}
+          {formatUsage(turn.usage, t)}
         </p>
       )}
       {structuresOf(turn.steps).map((target) => (
@@ -104,20 +107,20 @@ export function ConversationTurn({
           <DidYouMeanButtons offers={offers} onAsk={onAsk} disabled={chatAnswering} />
         </div>
       )}
-      {turn.state === "stopped" && <p className="text-sm text-ink-2">Stopped.</p>}
+      {turn.state === "stopped" && <p className="text-sm text-ink-2">{t.turn.stopped}</p>}
       {turn.state === "failed" && (
         <div
           role="alert"
           className="flex flex-wrap items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
         >
-          <span>{turn.error}</span>
+          <span>{errorText(turn.error, t)}</span>
           {onRetry && (
             <button
               type="button"
               onClick={onRetry}
               className="font-medium underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 print:hidden"
             >
-              Try again
+              {t.turn.tryAgain}
             </button>
           )}
         </div>
@@ -137,6 +140,7 @@ function TurnLabel({
   active: boolean;
   askedAt?: number;
 }) {
+  const t = useMessages();
   return (
     <p
       data-turn-label
@@ -149,7 +153,7 @@ function TurnLabel({
         aria-hidden
         className={cn("size-[5px] rounded-full print:hidden", active ? "bg-signal" : "bg-rule-2")}
       />
-      Q-{String(number).padStart(2, "0")} · Query
+      Q-{String(number).padStart(2, "0")} · {t.turn.query}
       {askedAt !== undefined && (
         <span className="ml-auto hidden text-ink-3 tabular-nums print:inline">
           {askedTime(askedAt)}
@@ -157,4 +161,11 @@ function TurnLabel({
       )}
     </p>
   );
+}
+
+/** The app's own errors in the interface language; a message from the backend as it came. */
+function errorText(error: string | undefined, t: Messages): string | undefined {
+  if (error === CHAT_FAILED) return t.chat.failed;
+  if (error === CHAT_UNAVAILABLE) return t.chat.unavailable;
+  return error;
 }

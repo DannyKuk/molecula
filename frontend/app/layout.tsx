@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter_Tight, JetBrains_Mono } from "next/font/google";
 
+import { DocumentLanguage } from "@/components/language-switch";
+
 import "./globals.css";
 
 // next/font downloads both at build time and serves them with the app, so nothing is fetched at
@@ -26,7 +28,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${interTight.variable} ${jetBrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <DocumentLanguage />
+        {children}
+      </body>
     </html>
   );
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { startTurn } from "./chat-turn";
+import { de } from "./messages/de";
 import { conversationUsage, formatUsage, type Usage } from "./usage";
 
 const ANSWER: Usage = {
@@ -56,5 +57,15 @@ describe("formatUsage", () => {
     expect(
       formatUsage({ input_tokens: null, output_tokens: null, total_tokens: null, cost_usd: null }),
     ).toBe("tokens unknown · cost unknown");
+  });
+
+  it("writes German numbers and words for a German reader", () => {
+    expect(formatUsage(ANSWER, de)).toBe("3.210 Tokens · 0,0021\u00a0$");
+    expect(
+      formatUsage(
+        { input_tokens: null, output_tokens: null, total_tokens: null, cost_usd: null },
+        de,
+      ),
+    ).toBe("Tokens unbekannt · Kosten unbekannt");
   });
 });

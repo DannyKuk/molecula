@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { ChatModel } from "@/lib/api";
+import { useMessages } from "@/lib/messages";
 import { shortName, useModelChoices } from "@/lib/use-model-choices";
 
 // The models every prompt and eval was measured on: gpt-oss-20b locally, gpt-6-luna in the cloud
@@ -26,6 +27,7 @@ export function ModelSettings({
   trigger: ReactElement;
   children: ReactNode;
 }) {
+  const t = useMessages();
   const closeRef = useRef<HTMLButtonElement>(null);
 
   return (
@@ -37,9 +39,9 @@ export function ModelSettings({
         className="top-auto bottom-0 max-h-[90dvh] max-w-lg translate-y-0 gap-4 overflow-y-auto rounded-b-none bg-background p-4 sm:top-1/2 sm:bottom-auto sm:max-w-lg sm:-translate-y-1/2 sm:rounded-2xl sm:p-6"
       >
         <div className="flex items-center justify-between gap-4">
-          <DialogTitle className="text-lg font-semibold">Settings</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">{t.settings.title}</DialogTitle>
           <DialogClose ref={closeRef} render={<Button variant="ghost" />}>
-            Close
+            {t.settings.close}
           </DialogClose>
         </div>
         <ModelPicker />
@@ -49,17 +51,18 @@ export function ModelSettings({
 }
 
 export function ModelPicker() {
+  const t = useMessages();
   const { choices, answering, choose } = useModelChoices();
 
   return (
     <section className="flex min-w-0 flex-col gap-3 text-sm text-ink-2">
-      <h3 className="text-base font-semibold text-foreground">Model that writes the answers</h3>
-      {choices === null && <p>Loading the models…</p>}
-      {choices === false && <p>The chat is off, so there is no model to pick.</p>}
+      <h3 className="text-base font-semibold text-foreground">{t.settings.model}</h3>
+      {choices === null && <p>{t.settings.loading}</p>}
+      {choices === false && <p>{t.settings.off}</p>}
       {choices && answering && (
         <>
           <fieldset className="flex flex-col">
-            <legend className="sr-only">Model that writes the answers</legend>
+            <legend className="sr-only">{t.settings.model}</legend>
             {choices.models.map((model) => (
               <ModelOption
                 key={model.name}
@@ -88,6 +91,7 @@ function ModelOption({
   checked: boolean;
   onPick: () => void;
 }) {
+  const t = useMessages();
   return (
     <label
       className={cn(
@@ -105,9 +109,9 @@ function ModelOption({
       <span className="min-w-0 truncate font-mono text-[13px]">{shortName(model.name)}</span>
       <span className="ml-auto shrink-0 text-xs text-ink-3">
         {[
-          model.local ? "local" : "cloud",
-          TESTED_MODELS.includes(model.name) && "tested",
-          isDefault && "default",
+          model.local ? t.settings.local : t.settings.cloud,
+          TESTED_MODELS.includes(model.name) && t.settings.tested,
+          isDefault && t.settings.default,
         ]
           .filter(Boolean)
           .join(" · ")}
@@ -124,24 +128,16 @@ function Disclaimer({
   defaultModel: ChatModel;
   answering: ChatModel;
 }) {
+  const t = useMessages();
   return (
     <div className="flex flex-col gap-2 border-l-2 border-signal pl-3 text-[13px]">
-      <p>
-        Molecula was developed with gpt-oss-20b, which ran every prompt, safety rule and eval, and
-        gpt-6-luna was measured as the cloud model. Another model can do worse here. It may skip a
-        lookup and answer from memory, or cite the wrong source.
-      </p>
-      <p>
-        Whichever model you pick, the safety check before the answer and the source check after it
-        stay on the models they were tested with.
-      </p>
+      <p>{t.settings.developedWith}</p>
+      <p>{t.settings.checksStay}</p>
       {answering.local && answering.name !== defaultModel.name && (
         <p>
-          A local model loads on the local server when it is first asked, which can take a minute
-          {defaultModel.local &&
-            `, and it has to fit in memory next to ${shortName(defaultModel.name)}`}
-          . Load it with at least 32k tokens of context: one answer with a label search already
-          needs about 9k, more than LM Studio&apos;s default of 8k.
+          {t.settings.loadsFirst}
+          {defaultModel.local && t.settings.fitsNextTo(shortName(defaultModel.name))}
+          {t.settings.context}
         </p>
       )}
     </div>

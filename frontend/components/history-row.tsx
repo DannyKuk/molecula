@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ConversationSummary } from "@/lib/chat-history";
+import { useMessages } from "@/lib/messages";
 
 type HistoryRowProps = {
   conversation: ConversationSummary;
@@ -100,7 +101,8 @@ export function HistoryRow({
 
 /** A spinner while the chat's answer comes in, a clock while its question waits in line. */
 function ProgressMark({ progress }: { progress: "answering" | "queued" }) {
-  const label = progress === "answering" ? "Answering" : "Waiting for another answer";
+  const t = useMessages();
+  const label = progress === "answering" ? t.historyRow.answering : t.historyRow.waiting;
   return (
     <span role="img" aria-label={label} title={label} className="px-1 text-ink-3">
       {progress === "answering" ? (
@@ -119,7 +121,8 @@ type BookmarkButtonProps = { title: string; bookmarked: boolean; onToggle: () =>
 
 /** With a mouse it shows on hover and focus; on touch it is left out and the ⋯ menu bookmarks. */
 function BookmarkButton({ title, bookmarked, onToggle }: BookmarkButtonProps) {
-  const label = bookmarked ? `Remove bookmark: ${title}` : `Bookmark: ${title}`;
+  const t = useMessages();
+  const label = bookmarked ? t.historyRow.removeBookmark(title) : t.historyRow.bookmark(title);
   return (
     <Button
       variant="ghost"
@@ -152,6 +155,7 @@ function RowMenu({
   onToggleBookmark,
   onDelete,
 }: RowMenuProps) {
+  const t = useMessages();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -159,7 +163,7 @@ function RowMenu({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={`Options: ${title}`}
+            aria-label={t.historyRow.options(title)}
             className={cn(
               "mr-1 text-ink-2",
               !alwaysShown && [SHOWN_ON_HOVER, "pointer-fine:aria-expanded:opacity-100"],
@@ -172,16 +176,16 @@ function RowMenu({
       <DropdownMenuContent>
         <DropdownMenuItem onClick={onRename}>
           <Pencil />
-          Rename
+          {t.historyRow.rename}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onToggleBookmark}>
           {bookmarked ? <BookmarkX /> : <Bookmark />}
-          {bookmarked ? "Remove bookmark" : "Bookmark"}
+          {bookmarked ? t.historyRow.removeBookmarkItem : t.historyRow.bookmarkItem}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onClick={onDelete}>
           <Trash2 />
-          Delete
+          {t.historyRow.delete}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -190,6 +194,7 @@ function RowMenu({
 
 /** Enter or leaving the field saves the title, Esc keeps the old one. */
 function RenameField({ title, onDone }: { title: string; onDone: (title: string | null) => void }) {
+  const t = useMessages();
   const [draft, setDraft] = useState(title);
   const finished = useRef(false);
   const finish = (save: boolean) => {
@@ -201,7 +206,7 @@ function RenameField({ title, onDone }: { title: string; onDone: (title: string 
   return (
     <div className="flex flex-col gap-0.5 rounded-md bg-rule p-0.5">
       <input
-        aria-label="Chat title"
+        aria-label={t.historyRow.title}
         value={draft}
         autoFocus
         onFocus={(event) => event.target.select()}
@@ -217,7 +222,7 @@ function RenameField({ title, onDone }: { title: string; onDone: (title: string 
         }}
         className="w-full rounded-md border border-ink-3 bg-background px-2 py-1.25 text-sm outline-2 outline-ring/50"
       />
-      <span className="px-1 pb-0.5 text-[11px] text-ink-3">Enter saves · Esc cancels</span>
+      <span className="px-1 pb-0.5 text-[11px] text-ink-3">{t.historyRow.renameHint}</span>
     </div>
   );
 }
@@ -225,22 +230,23 @@ function RenameField({ title, onDone }: { title: string; onDone: (title: string 
 type DeleteConfirmProps = { title: string; onDelete: () => void; onCancel: () => void };
 
 function DeleteConfirm({ title, onDelete, onCancel }: DeleteConfirmProps) {
+  const t = useMessages();
   return (
     <div
       role="group"
-      aria-label="Delete chat"
+      aria-label={t.historyRow.deleteChat}
       className="flex flex-col gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2"
     >
       <p className="text-[13px] leading-4.5">
-        Delete this chat? It can&apos;t be undone.
+        {t.historyRow.deleteConfirm}
         <span className="block truncate text-ink-2">{title}</span>
       </p>
       <div className="flex gap-1.5">
         <Button variant="destructive" size="sm" onClick={onDelete}>
-          Delete
+          {t.historyRow.delete}
         </Button>
         <Button variant="ghost" size="sm" onClick={onCancel}>
-          Cancel
+          {t.historyRow.cancel}
         </Button>
       </div>
     </div>

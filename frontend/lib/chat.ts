@@ -1,5 +1,6 @@
 import { API_URL, type InputCategory } from "./api";
 import { MAX_ANSWER_LENGTH, MAX_MESSAGE_LENGTH, MAX_MESSAGES } from "./chat-limits";
+import { en, type Messages } from "./messages/en";
 import { readServerSentEvents } from "./sse";
 import type { RetrievalTrace } from "./tool-cards";
 import type { Usage } from "./usage";
@@ -117,11 +118,11 @@ export function requestMessages(conversation: ChatMessage[]): ChatMessage[] {
 }
 
 /** Why a question can't be sent, or null when it can. A blank question is never sent either. */
-export function questionProblem(question: string): string | null {
+export function questionProblem(question: string, t: Messages = en): string | null {
   const length = question.trim().length;
   if (length <= MAX_MESSAGE_LENGTH) return null;
-  return (
-    `The question is too long: ${length.toLocaleString("en-US")} of at most ` +
-    `${MAX_MESSAGE_LENGTH.toLocaleString("en-US")} characters.`
+  return t.composer.tooLong(
+    length.toLocaleString(t.locale),
+    MAX_MESSAGE_LENGTH.toLocaleString(t.locale),
   );
 }

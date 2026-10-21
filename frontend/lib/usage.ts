@@ -1,4 +1,5 @@
 import type { Turn } from "./chat-turn";
+import { en, type Messages } from "./messages/en";
 
 /**
  * What an answer's model calls used: tokens and cost in US dollars (`Usage` in
@@ -11,12 +12,6 @@ export type Usage = {
   total_tokens: number | null;
   cost_usd: number | null;
 };
-
-const COST = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumSignificantDigits: 2,
-});
 
 /** The usage of every answered turn added up; null when no turn has one. Turns saved before
  * usage was sent, and answers that stopped or failed, have none and count for nothing. */
@@ -36,11 +31,19 @@ function sum(left: number | null, right: number | null): number | null {
 }
 
 /** Tokens and cost as one line, such as "4,210 tokens · $0.0031". */
-export function formatUsage(usage: Usage): string {
+export function formatUsage(usage: Usage, t: Messages = en): string {
   const tokens =
     usage.total_tokens === null
-      ? "tokens unknown"
-      : `${usage.total_tokens.toLocaleString("en-US")} tokens`;
-  const cost = usage.cost_usd === null ? "cost unknown" : COST.format(usage.cost_usd);
+      ? t.usage.tokensUnknown
+      : t.usage.tokens(usage.total_tokens.toLocaleString(t.locale));
+  const cost = usage.cost_usd === null ? t.usage.costUnknown : costFormat(t).format(usage.cost_usd);
   return `${tokens} · ${cost}`;
+}
+
+function costFormat(t: Messages): Intl.NumberFormat {
+  return new Intl.NumberFormat(t.locale, {
+    style: "currency",
+    currency: "USD",
+    maximumSignificantDigits: 2,
+  });
 }

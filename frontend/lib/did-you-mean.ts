@@ -1,15 +1,20 @@
 import type { Suggestion } from "./api";
+import { en } from "./messages/en";
 import { cardOf, type DrugNotSupported, type Step } from "./tool-cards";
 
 /** A supported name offered for one the tools didn't find, and the question that asks with it. */
 export type DidYouMean = { suggestion: Suggestion; question: string };
 
 /** The suggestions the turn's tools returned for names they didn't find, once per question. */
-export function didYouMeanOf(question: string, steps: Step[]): DidYouMean[] {
+export function didYouMeanOf(
+  question: string,
+  steps: Step[],
+  whatIs: (name: string) => string = en.turn.whatIs,
+): DidYouMean[] {
   const offers = new Map<string, DidYouMean>();
   for (const drug of notFound(steps)) {
     for (const suggestion of drug.suggestions) {
-      const asked = withName(question, drug.query, suggestion.alias);
+      const asked = withName(question, drug.query, suggestion.alias, whatIs);
       if (!offers.has(asked)) offers.set(asked, { suggestion, question: asked });
     }
   }
@@ -38,15 +43,20 @@ function notFound(steps: Step[]): DrugNotSupported[] {
 /**
  * The question with the name, in any case and wherever it stands as a whole word, replaced by
  * the suggested one. The model may have passed the tool another spelling than the question has;
- * then the question asks about the suggested name on its own.
+ * then `whatIs` asks about the suggested name on its own.
  */
-export function withName(question: string, name: string, suggested: string): string {
+export function withName(
+  question: string,
+  name: string,
+  suggested: string,
+  whatIs: (name: string) => string = en.turn.whatIs,
+): string {
   const pattern = new RegExp(
     `(?<![\\p{L}\\p{N}])${escapeRegExp(name.trim())}(?![\\p{L}\\p{N}])`,
     "giu",
   );
   const asked = question.replace(pattern, () => suggested);
-  return asked === question ? `What is ${suggested}?` : asked;
+  return asked === question ? whatIs(suggested) : asked;
 }
 
 function escapeRegExp(text: string): string {

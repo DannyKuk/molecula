@@ -11,6 +11,7 @@ import { browserHistory } from "@/lib/chat-history-indexeddb";
 import { defaultTab, type Shown } from "@/lib/evidence";
 import { readTurn } from "@/lib/read-turn";
 import { structuresOf } from "@/lib/tool-cards";
+import { useMessages } from "@/lib/messages";
 import { conversationUsage, formatUsage } from "@/lib/usage";
 import { useChatHistory } from "@/lib/use-chat-history";
 import { useConversations } from "@/lib/use-conversations";
@@ -25,6 +26,7 @@ import { Disclaimer } from "./disclaimer";
 import { EvidencePanel } from "./evidence-panel";
 import { ExportMenu } from "./export-menu";
 import { HelpDialog, HelpGuide } from "./help-guide";
+import { LanguageSwitch } from "./language-switch";
 import { ModelStatus } from "./model-status";
 import { PrintedEnd, PrintedHeader } from "./printed-conversation";
 import { QuestionNavigator } from "./question-navigator";
@@ -44,6 +46,7 @@ type ChatProps = {
 
 /** The chat: the saved chats, the conversation so far, the question box and the help guide. */
 export function Chat({ initialQuestion, initialChatId, history = browserHistory }: ChatProps) {
+  const t = useMessages();
   const saved = useChatHistory(history);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const {
@@ -139,7 +142,7 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
       close={
         !wide && (
           <DialogClose
-            aria-label="Close"
+            aria-label={t.chat.close}
             className="grid size-7 place-items-center rounded-md border border-rule-2 bg-card text-ink-2"
           >
             <X aria-hidden className="size-4" />
@@ -194,28 +197,31 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
   return (
     <div className="flex h-dvh print:h-auto">
       <ChatSidebar {...chatList} />
-      <main className="flex min-w-0 flex-1 flex-col">
+      <main className="@container flex min-w-0 flex-1 flex-col">
         <header className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-4 sm:px-6 print:hidden">
           <div className="flex items-center gap-3">
             <ChatDrawer {...chatList} />
             <h1 className="text-[17px] font-semibold tracking-tight">Molecula</h1>
             <ModelStatus />
             {usage && (
-              // Each answer shows its own line, so a phone leaves the total out of the header.
-              <p className="hidden font-mono text-[11px] text-ink-3 tabular-nums sm:block">
-                This chat: {formatUsage(usage)}
+              // Each answer shows its own line, so a narrow chat leaves the total out of the header.
+              <p className="hidden font-mono text-[11px] whitespace-nowrap text-ink-3 tabular-nums @4xl:block">
+                {t.header.thisChat(formatUsage(usage, t))}
               </p>
             )}
           </div>
           <nav className="flex items-center gap-4 text-[13.5px] text-ink-2">
-            <Link href="/drugs" className="font-medium underline-offset-4 hover:underline">
-              Supported drugs
+            <Link
+              href="/drugs"
+              className="font-medium whitespace-nowrap underline-offset-4 hover:underline"
+            >
+              {t.header.supportedDrugs}
             </Link>
             <Link
               href="/benchmarks"
-              className="hidden font-medium underline-offset-4 hover:underline sm:inline"
+              className="hidden font-medium underline-offset-4 hover:underline @3xl:inline"
             >
-              Benchmarks
+              {t.header.benchmarks}
             </Link>
             {turns.length > 0 && (
               <ExportMenu
@@ -225,6 +231,8 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
                 onPreparePrint={printed.prepare}
               />
             )}
+            {/* A phone has it in the chats drawer instead. */}
+            <LanguageSwitch className="hidden @xl:inline-flex" />
             <HelpDialog onAsk={ask} />
           </nav>
         </header>
@@ -245,7 +253,7 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
                       // Keyed by conversation, so an opened chat doesn't keep the last one's open steps.
                       key={id}
                       ref={conversationRef}
-                      aria-label="Conversation"
+                      aria-label={t.chat.conversation}
                       className="flex flex-col gap-8"
                     >
                       {turns.map((turn, index) => (
@@ -272,9 +280,7 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
                 <div className="pointer-events-auto flex flex-col gap-2 pb-3">
                   <ChatComposer answering={pendingAnswer} onSend={ask} onStop={stop} />
                   {saved.available === false && (
-                    <p className="text-sm text-ink">
-                      History is off in this browser, so this chat isn&apos;t saved.
-                    </p>
+                    <p className="text-sm text-ink">{t.chat.historyOff}</p>
                   )}
                   <Disclaimer />
                 </div>
@@ -294,7 +300,7 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
       {wide && evidence && (
         <aside
           data-evidence
-          aria-label="Evidence"
+          aria-label={t.chat.evidence}
           className="sticky top-0 flex h-dvh w-[440px] flex-none flex-col self-start border-l border-rule bg-panel print:hidden"
         >
           {evidence}
@@ -303,7 +309,7 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
       {!wide && evidence && (
         <Dialog open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetContent side="bottom" className="top-auto h-[78dvh] rounded-t-2xl bg-panel">
-            <DialogTitle className="sr-only">Evidence</DialogTitle>
+            <DialogTitle className="sr-only">{t.chat.evidence}</DialogTitle>
             {evidence}
           </SheetContent>
         </Dialog>
@@ -313,11 +319,10 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
 }
 
 function EmptyState({ onAsk }: { onAsk: (question: string) => void }) {
+  const t = useMessages();
   return (
     <section className="flex flex-col gap-4">
-      <p className="text-ink-2">
-        Ask about medicines: what they are for, how they work and what they bind to.
-      </p>
+      <p className="text-ink-2">{t.chat.intro}</p>
       <HelpGuide onAsk={onAsk} />
     </section>
   );

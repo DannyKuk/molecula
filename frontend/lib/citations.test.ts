@@ -4,6 +4,7 @@ import {
   citedRefs,
   citedSources,
   CITATION_RUN,
+  labelDate,
   runRefs,
   sectionName,
   sourceLabel,
@@ -70,5 +71,12 @@ describe("sourceLines", () => {
     expect(sourceLines([{ ...IMATINIB_SOURCES[3], ref: null }])).toEqual([
       "PubChem – imatinib – https://pubchem.ncbi.nlm.nih.gov/compound/5291",
     ]);
+  });
+});
+
+describe("labelDate", () => {
+  it("writes the label's date in the reader's language", () => {
+    expect(labelDate("2026-07-13")).toBe("Jul 13, 2026");
+    expect(labelDate("2026-07-13", "de-DE")).toBe("13. Juli 2026");
   });
 });
