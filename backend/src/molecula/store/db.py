@@ -9,6 +9,8 @@ def connect(path: Path) -> sqlite3.Connection:
     path.parent.mkdir(parents=True, exist_ok=True)
     # FastAPI runs sync routes in a thread pool, so the connection is shared across threads.
     conn = sqlite3.connect(path, check_same_thread=False)
+    # SQLite's NOCASE and lower() fold only A to Z, so "östradiol" wouldn't find "Östradiol".
+    conn.create_function("casefold", 1, str.casefold, deterministic=True)
     conn.execute("PRAGMA foreign_keys = ON")
     # Readers see the last committed state while a label update writes, instead of waiting.
     conn.execute("PRAGMA journal_mode = WAL")
