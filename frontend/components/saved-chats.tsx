@@ -23,6 +23,7 @@ export function useSavedChats(history: ChatHistory = browserHistory): ChatListPr
     conversations: saved.conversations,
     bookmarks: saved.bookmarks,
     activeId: null,
+    newChatOpen: false,
     answeringId: null,
     queuedIds: [],
     removedBookmark,

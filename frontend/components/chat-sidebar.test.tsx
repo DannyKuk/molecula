@@ -226,6 +226,24 @@ describe("Chat history", () => {
     expect(listedTitles()).toEqual([SILDENAFIL, IMATINIB]);
   });
 
+  it("marks New chat as the current page while the chat is empty, then the chat's row", async () => {
+    const stream = stubChatStream();
+    await openPage(memoryHistory().history);
+    expect(rail().getByRole("button", { name: "New chat" }).getAttribute("aria-current")).toBe(
+      "page",
+    );
+
+    await askAndAnswer(stream, IMATINIB, "Imatinib blocks BCR-ABL.");
+
+    expect(
+      rail().getByRole("button", { name: "New chat" }).getAttribute("aria-current"),
+    ).toBeNull();
+    const list = expandSidebar();
+    expect(list.getByRole("button", { name: "New chat" }).getAttribute("aria-current")).toBeNull();
+    expect(list.getByRole("button", { name: IMATINIB }).getAttribute("aria-current")).toBe("page");
+    expect(list.getAllByRole("link").some((link) => link.hasAttribute("aria-current"))).toBe(false);
+  });
+
   it("renames a conversation with Enter and keeps the new title after a reload", async () => {
     const stream = stubChatStream();
     const { history } = memoryHistory();

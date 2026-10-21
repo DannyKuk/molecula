@@ -12,7 +12,6 @@ export const de: Messages = {
   header: {
     thisChat: (usage) => `Dieser Chat: ${usage}`,
     supportedDrugs: "Unterstützte Medikamente",
-    benchmarks: "Benchmarks",
   },
   chat: {
     intro: "Fragen Sie zu Medikamenten: wofür sie sind, wie sie wirken und woran sie binden.",

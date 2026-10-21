@@ -8,7 +8,7 @@ import { CLOUD_STATS, EMPTY_STATS, STATS } from "@/lib/test-stats";
 
 import { Dashboard } from "./dashboard";
 
-vi.mock("next/navigation", () => ({ useRouter: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: vi.fn(), usePathname: () => "/dashboard" }));
 vi.mock("@/lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/api")>()),
   getStats: vi.fn(),

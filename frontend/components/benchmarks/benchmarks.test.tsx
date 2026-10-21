@@ -8,7 +8,7 @@ import { memoryHistory } from "@/lib/test-fixtures";
 
 import { Benchmarks } from "./benchmarks";
 
-vi.mock("next/navigation", () => ({ useRouter: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: vi.fn(), usePathname: () => "/benchmarks" }));
 vi.mock("@/lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/api")>()),
   getEmbeddingSetup: vi.fn(),
@@ -56,6 +56,28 @@ describe("Benchmarks page", () => {
     fireEvent.click(sidebar.getByRole("button", { name: "Imatinib" }));
 
     expect(push).toHaveBeenCalledWith("/?chat=c0");
+  });
+
+  it("marks Benchmarks as the current page on the rail and in the sidebar", async () => {
+    await openPage();
+    const rail = within(screen.getByRole("navigation", { name: "Chats" }));
+    expect(rail.getByRole("link", { name: "Benchmarks" }).getAttribute("aria-current")).toBe(
+      "page",
+    );
+    expect(rail.getByRole("button", { name: "New chat" }).getAttribute("aria-current")).toBeNull();
+
+    fireEvent.click(rail.getByRole("button", { name: "Show chats" }));
+    const sidebar = within(screen.getByRole("complementary", { name: "Chat history" }));
+
+    expect(sidebar.getByRole("link", { name: "Benchmarks" }).getAttribute("aria-current")).toBe(
+      "page",
+    );
+    expect(
+      sidebar.getByRole("link", { name: "Dashboard" }).getAttribute("aria-current"),
+    ).toBeNull();
+    expect(
+      sidebar.getByRole("button", { name: "Imatinib" }).getAttribute("aria-current"),
+    ).toBeNull();
   });
 
   it("starts a new chat in the chat from the rail", async () => {

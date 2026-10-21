@@ -26,7 +26,6 @@ import { Disclaimer } from "./disclaimer";
 import { EvidencePanel } from "./evidence-panel";
 import { ExportMenu } from "./export-menu";
 import { HelpDialog, HelpGuide } from "./help-guide";
-import { LanguageSwitch } from "./language-switch";
 import { ModelStatus } from "./model-status";
 import { PrintedEnd, PrintedHeader } from "./printed-conversation";
 import { QuestionNavigator } from "./question-navigator";
@@ -178,6 +177,7 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
     conversations: saved.conversations,
     bookmarks: saved.bookmarks,
     activeId: id,
+    newChatOpen: turns.length === 0,
     answeringId,
     queuedIds,
     removedBookmark,
@@ -217,12 +217,6 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
             >
               {t.header.supportedDrugs}
             </Link>
-            <Link
-              href="/benchmarks"
-              className="hidden font-medium underline-offset-4 hover:underline @3xl:inline"
-            >
-              {t.header.benchmarks}
-            </Link>
             {turns.length > 0 && (
               <ExportMenu
                 title={title}
@@ -231,8 +225,6 @@ export function Chat({ initialQuestion, initialChatId, history = browserHistory 
                 onPreparePrint={printed.prepare}
               />
             )}
-            {/* A phone has it in the chats drawer instead. */}
-            <LanguageSwitch className="hidden @xl:inline-flex" />
             <HelpDialog onAsk={ask} />
           </nav>
         </header>

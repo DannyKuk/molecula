@@ -43,7 +43,10 @@ export function ModelSettings({
       >
         <div className="flex items-center justify-between gap-4">
           <DialogTitle className="text-lg font-semibold">{t.settings.title}</DialogTitle>
-          <DialogClose ref={closeRef} render={<Button variant="ghost" />}>
+          <DialogClose
+            ref={closeRef}
+            render={<Button variant="ghost" className="hover:bg-rule dark:hover:bg-rule" />}
+          >
             {t.settings.close}
           </DialogClose>
         </div>
@@ -160,8 +163,8 @@ function Choice({
   return (
     <label
       className={cn(
-        "flex cursor-pointer items-baseline gap-2.5 border-l-2 py-1.5 pl-3 hover:text-foreground",
-        checked ? "border-ink text-foreground" : "border-rule",
+        "flex cursor-pointer items-baseline gap-2.5 rounded-r-md border-l-2 py-1.5 pr-2 pl-3 hover:bg-rule hover:text-foreground",
+        checked ? "border-ink text-foreground" : "border-rule hover:border-ink-3",
       )}
     >
       <input

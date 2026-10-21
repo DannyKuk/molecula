@@ -72,8 +72,8 @@ export function HistoryRow({
   return (
     <li
       className={cn(
-        "group flex items-center rounded-md text-sm hover:bg-rule",
-        active && "bg-card hover:bg-card",
+        "group flex items-center rounded-lg border border-transparent text-sm hover:bg-rule",
+        active && "border-rule-2 bg-card hover:bg-card",
       )}
     >
       <button
