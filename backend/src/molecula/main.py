@@ -143,7 +143,7 @@ def open_label_retriever(
         embeddings,
         top_k=settings.retrieval_top_k,
         min_score=settings.retrieval_min_score,
-        section_group_boost=settings.retrieval_section_group_boost,
+        section_group_boost=settings.section_group_boost,
         mode=mode,
         keywords=keywords,
     )

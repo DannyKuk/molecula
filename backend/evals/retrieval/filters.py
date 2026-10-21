@@ -35,7 +35,7 @@ def main() -> int:
         get_embeddings(settings),
         top_k=TOP_K,
         min_score=-1.0,
-        section_group_boost=settings.retrieval_section_group_boost,
+        section_group_boost=settings.section_group_boost,
         mode=settings.retrieval_mode,
         keywords=KeywordIndex(settings.keyword_index_path),
     )
