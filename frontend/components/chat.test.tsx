@@ -24,6 +24,7 @@ import {
   TYLENOLL_NOT_SUPPORTED,
 } from "@/lib/test-tool-results";
 import type { StructureTarget } from "@/lib/tool-cards";
+import { chooseModel } from "@/lib/use-chosen-model";
 
 import { Chat } from "./chat";
 
@@ -659,6 +660,18 @@ describe("Chat", () => {
       { role: "assistant", content: "It blocks BCR-ABL." },
       { role: "user", content: "What else does it bind?" },
     ]);
+  });
+
+  it("sends the model picked in the settings with the question", async () => {
+    const stream = stubChatStream();
+    chooseModel("google/gemma-4-31b");
+    render(<Chat />);
+
+    askQuestion("How does Gleevec work?");
+
+    const body = JSON.parse(stream.fetchMock.mock.calls[0][1].body as string);
+    expect(body.model).toBe("google/gemma-4-31b");
+    chooseModel(null);
   });
 
   it("does not send an empty question", () => {
