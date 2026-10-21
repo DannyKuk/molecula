@@ -81,11 +81,15 @@ export function turnFlow(turn: Turn): TurnFlowPart[] {
   const tools = turn.steps.filter((step): step is ToolStep => step.tool !== undefined);
   const searches = tools.filter((step) => step.tool.name === "search_labels");
   const fixed = isFixedAnswer(turn, tools);
-  const answering = turn.answer !== "" || turn.state === "done";
+  // Only an ended answer shows that no lookup is coming: a live one may still call a tool, and an
+  // overdose answer's emergency line streams before the chat model has decided anything.
+  const answered =
+    turn.state === "done" ||
+    ((turn.state === "stopped" || turn.state === "failed") && turn.answer !== "");
 
   const parts: DraftPart[] = [{ title: null, steps: [checkStep(turn, tools, fixed)] }];
   if (tools.length === 0) {
-    parts.push({ title: null, steps: noLookupSteps(fixed, answering) });
+    parts.push({ title: null, steps: noLookupSteps(fixed, answered) });
   }
   for (const step of tools) {
     if (step.tool.name === "search_labels") {
@@ -153,9 +157,9 @@ function checkOutcome(category: InputCategory | undefined, fixed: boolean): stri
 }
 
 /** Steps 2 to 5 of an answer that looked nothing up. */
-function noLookupSteps(fixed: boolean, answering: boolean): Draft[] {
+function noLookupSteps(fixed: boolean, answered: boolean): Draft[] {
   const decide = fromGuide("decide-what-to-look-up", "decide");
-  if (!fixed && !answering) return [decide];
+  if (!fixed && !answered) return [decide];
   const lookups = ["narrow-to-the-drug", "score-by-meaning", "boost-and-keep-five"].map((id) =>
     fromGuide(id, id, { state: "skipped" }),
   );
@@ -169,10 +173,10 @@ function noLookupSteps(fixed: boolean, answering: boolean): Draft[] {
   ];
 }
 
-/** The call as the chat model wrote it. A label search leaves out its question, which the
- * search step shows, unless it has no other argument. */
+/** The call as the chat model wrote it, without the arguments it left empty. A label search
+ * leaves out its question, which the search step shows, unless it has no other argument. */
 export function callText(tool: ToolRun): string {
-  const entries = Object.entries(tool.args);
+  const entries = Object.entries(tool.args).filter(([, value]) => value !== null);
   const shown =
     tool.name === "search_labels" && entries.length > 1
       ? entries.filter(([name]) => name !== "question")

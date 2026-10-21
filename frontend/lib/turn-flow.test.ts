@@ -406,6 +406,22 @@ describe("turnFlow", () => {
     expect(step(flow, "1").outcome).toBe(failed.error);
     expect(step(flow, "7").state).toBe("not_reached");
   });
+
+  it("keeps the lookup undecided while a live answer has only its emergency line", () => {
+    const live: Turn = {
+      ...startTurn("I took 20 ibuprofen, what happens?"),
+      steps: [CHECKING],
+      answer: "If you or someone else may have taken too much, call 911 now.\n\n",
+    };
+
+    expect(states(turnFlow(live))).toEqual([
+      "1 done",
+      "2 running",
+      "6 waiting",
+      "6b waiting",
+      "7 waiting",
+    ]);
+  });
 });
 
 describe("callText", () => {
@@ -413,5 +429,15 @@ describe("callText", () => {
     expect(
       callText({ id: "1", name: "compare_drugs", args: { drugs: ["ibuprofen", "naproxen"] } }),
     ).toBe('compare_drugs(drugs=["ibuprofen","naproxen"])');
+  });
+
+  it("leaves out the arguments the chat model left empty", () => {
+    expect(
+      callText({
+        id: "1",
+        name: "search_labels",
+        args: { question: "Is imatinib safe in pregnancy?", drug: "imatinib", section: null },
+      }),
+    ).toBe('search_labels(drug="imatinib")');
   });
 });
