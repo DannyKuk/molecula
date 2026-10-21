@@ -1,9 +1,8 @@
-import sqlite3
 from dataclasses import dataclass
 from datetime import date, datetime
-from threading import Lock
 
 from molecula.schemas.labels import ProductType, SectionGroup
+from molecula.store.db import StoreConnection
 from molecula.store.sources import OPENFDA
 
 LABEL_COLUMNS = ["set_id", "substance", "brand", "product_type", "effective_time", "url"]
@@ -49,9 +48,9 @@ class LabelStore:
     A save that changes nothing leaves the rows untouched.
     """
 
-    def __init__(self, conn: sqlite3.Connection) -> None:
+    def __init__(self, conn: StoreConnection) -> None:
         self._conn = conn
-        self._lock = Lock()
+        self._lock = conn.lock
 
     def get(self, cid: int) -> tuple[LabelRecord, ...]:
         """The compound's labels, prescription first."""

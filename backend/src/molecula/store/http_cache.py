@@ -1,7 +1,7 @@
-import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from threading import Lock
+
+from molecula.store.db import StoreConnection
 
 
 @dataclass(frozen=True)
@@ -14,9 +14,9 @@ class CachedResponse:
 class HttpCache:
     """Raw source responses by request, so re-running an ingest step doesn't download again."""
 
-    def __init__(self, conn: sqlite3.Connection) -> None:
+    def __init__(self, conn: StoreConnection) -> None:
         self._conn = conn
-        self._lock = Lock()
+        self._lock = conn.lock
 
     def get(self, key: str) -> CachedResponse | None:
         with self._lock:

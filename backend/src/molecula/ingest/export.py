@@ -10,6 +10,7 @@ from pathlib import Path
 
 from molecula.config import Settings
 from molecula.schemas.store import StoreManifest
+from molecula.store.db import StoreConnection
 from molecula.store.index import LabelIndex
 from molecula.store.label_updates import LabelUpdateStore
 from molecula.store.schema import SCHEMA_VERSION, ensure_schema
@@ -44,7 +45,7 @@ def export_store(settings: Settings, out_dir: Path, built_at: datetime) -> Store
         db_copy = Path(staging) / DB_FILE
         copy_without_raw_cache(settings.db_path, db_copy)
         row_counts = count_rows(db_copy)
-        with closing(sqlite3.connect(db_copy)) as conn:
+        with closing(sqlite3.connect(db_copy, factory=StoreConnection)) as conn:
             last_run = LabelUpdateStore(conn).current_since()
         staged_archive = Path(staging) / ARCHIVE
         write_archive(staged_archive, db_copy, settings.build_dir)

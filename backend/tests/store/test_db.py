@@ -1,10 +1,44 @@
 import sqlite3
+import subprocess
+import sys
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 
+from molecula.store.compounds import CompoundStore, Synonym
 from molecula.store.db import connect
 from molecula.store.schema import MIGRATIONS, SCHEMA_VERSION, SchemaVersionError
+from molecula.store.targets import DrugTargets, TargetStore
+from store_records import ABL1, IMATINIB
+
+# Two stores over one connection, each queried in a loop from its own thread, as the agent's
+# parallel tool calls do. Run in a child process: a deadlock holds the GIL, so it would hang pytest.
+TWO_STORES_IN_TWO_THREADS = """
+import sys, threading, time
+from pathlib import Path
+from molecula.store.compounds import CompoundStore
+from molecula.store.db import connect
+from molecula.store.targets import TargetStore
+
+conn = connect(Path(sys.argv[1]))
+compounds, targets = CompoundStore(conn), TargetStore(conn)
+stop = time.monotonic() + 1.0
+
+def find() -> None:
+    while time.monotonic() < stop:
+        compounds.find("Imatinib")
+
+def get() -> None:
+    while time.monotonic() < stop:
+        targets.get(5291)
+
+threads = [threading.Thread(target=find), threading.Thread(target=get)]
+for thread in threads:
+    thread.start()
+for thread in threads:
+    thread.join()
+"""
 
 
 def test_first_open_creates_file_and_schema(tmp_path: Path) -> None:
@@ -168,3 +202,22 @@ def test_the_store_uses_write_ahead_logging(tmp_path: Path) -> None:
 
     assert conn.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
     conn.close()
+
+
+def test_two_stores_over_one_connection_dont_deadlock_across_threads(tmp_path: Path) -> None:
+    path = tmp_path / "molecula.db"
+    with connect(path) as conn:
+        # Enough synonyms that each `find` spends a while in the `casefold` SQL function (#389).
+        synonyms = [Synonym(f"imatinib synonym {n}", "pubchem") for n in range(2000)]
+        CompoundStore(conn).save(IMATINIB, synonyms, datetime(2026, 10, 21, tzinfo=UTC))
+        TargetStore(conn).save(IMATINIB.cid, DrugTargets(targets=(ABL1,)), datetime.now(UTC))
+    conn.close()
+
+    run = subprocess.run(
+        [sys.executable, "-c", TWO_STORES_IN_TWO_THREADS, str(path)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+    assert run.returncode == 0, run.stderr

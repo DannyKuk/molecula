@@ -1,6 +1,5 @@
-import sqlite3
-
 from molecula.schemas.stats import KnowledgeBaseStats
+from molecula.store.db import StoreConnection
 from molecula.store.index import LabelIndex
 from molecula.store.structures import ComplexFiles, ConformerFiles
 from molecula.store.summary import count_store
@@ -11,7 +10,7 @@ class KnowledgeBase:
 
     def __init__(
         self,
-        conn: sqlite3.Connection,
+        conn: StoreConnection,
         index: LabelIndex | None,
         conformers: ConformerFiles,
         complexes: ComplexFiles,
