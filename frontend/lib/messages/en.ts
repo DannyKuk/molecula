@@ -423,6 +423,186 @@ export const en = {
     noRefs: "none",
     none: "None.",
   },
+  flow: {
+    intro: "The steps this answer ran, in order. The tag on each says who did it.",
+    guideLink: "How Molecula answers",
+    guideAfter: "follows one question through every step.",
+    steps: "Steps",
+    states: {
+      skipped: "Skipped",
+      running: "Running",
+      waiting: "Not yet",
+      stopped: "Stopped",
+      failed: "Failed",
+      not_reached: "Not reached",
+    },
+    whatThisMeans: "What this step means",
+    who: { model: "Chat model", embedder: "Embedder", code: "Code" },
+    eitherModel: "Jev or chat model",
+    guide: {
+      "check-the-question": {
+        title: "Check the question",
+        short:
+          "A short separate call sorts the message. Only medicine questions and possible overdoses go on to an answer.",
+      },
+      "decide-what-to-look-up": {
+        title: "Decide what to look up",
+        short:
+          "The chat model picks what to look up and fills in the call, before it has seen what the lookup returns.",
+      },
+      "narrow-to-the-drug": {
+        title: "Narrow the search to the drug",
+        short: "Code looks the drug up in the store and searches only that drug's labels.",
+      },
+      "score-by-meaning": {
+        title: "Score the passages by meaning",
+        short:
+          "The embedder scores the drug's passages by how close they are in meaning to the question.",
+      },
+      "boost-and-keep-five": {
+        title: "Add the +0.15 and keep the top 5",
+        short:
+          "Code adds +0.15 to passages in the guessed section, sorts by the new score and keeps the top 5. No AI is asked.",
+      },
+      "write-the-answer": {
+        title: "Write the answer",
+        short:
+          "The chat model reads what the lookups returned and writes the answer, citing each source as [n].",
+      },
+      "watch-for-a-leak": {
+        title: "Watch for a leaked system prompt",
+        short: "While the answer streams, code watches for a hidden marker from the system prompt.",
+      },
+      "check-the-sources": {
+        title: "Check the answer against the sources",
+        short: "A separate call checks each claim in the answer against the source it cites.",
+      },
+    },
+    categories: {
+      ok: "medicine question",
+      off_topic: "off topic",
+      personal_medical_advice: "personal advice",
+      overdose_emergency: "overdose emergency",
+      lethal_dose: "lethal dose",
+      synthesis_or_misuse: "synthesis or misuse",
+      prompt_injection: "prompt injection",
+    },
+    searchOf: (number: number, total: number, line: string) =>
+      `Search ${number} of ${total} · ${line}`,
+    overdose: "Sorted as a possible overdose, so the answer starts with emergency help.",
+    sortedFixed: (category: string) =>
+      `Sorted as ${category}, so Molecula gave a fixed answer and nothing else ran.`,
+    fixed: "Molecula gave a fixed answer, so nothing else ran.",
+    sortedOk: "Sorted as a medicine question, so it went on.",
+    passed: "Passed, so it went on.",
+    answeredWithoutLookup: "The chat model answered without looking anything up.",
+    lookupTitle: "Look it up in the store",
+    lookupLine: "Code reads the answer from Molecula's own store. No AI is asked.",
+    done: "Done.",
+    rejected: (errors: string) => `Rejected and sent back to the chat model as an error: ${errors}`,
+    notInStore: (names: string) => `Not in the store: ${names}.`,
+    isInStore: (query: string, name: string) => `“${query}” is ${name} in the store.`,
+    sideBySide: (names: string) => `The properties of ${names}, side by side.`,
+    noMechanism: (name: string) => `ChEMBL lists no mechanism for ${name}.`,
+    targets: (count: number, shown: string, more: number) =>
+      `${plural(count, "target")}: ${shown}${more > 0 ? ` and ${more} more` : ""}.`,
+    complexFound: (title: string, subtitle: string) =>
+      `A reviewed structure: ${title}, ${subtitle}.`,
+    noComplex: (name: string) => `No reviewed structure of ${name} with its target.`,
+    passagesFound: (count: number) => `${plural(count, "passage")} found.`,
+    show3dTitle: "Show it in 3D",
+    show3dLine:
+      "The 3D tab loads the structure from Molecula's own store and your browser draws it. No AI is asked and nothing is fetched from outside.",
+    shows3d: (title: string) => `The 3D tab shows ${title}.`,
+    showsMolecule: "The 3D tab shows the molecule alone, from its stored 3D shape.",
+    extractTitle: "Read the drugs from the question",
+    extractLine:
+      "The call named no drug, so one more small call reads the drugs and the parts of the label from the question.",
+    noDrugFoundEveryLabel: "No drug found, so every label was searched.",
+    searchRejected: (errors: string) =>
+      `Rejected and sent back to the chat model as an error, so nothing was searched: ${errors}`,
+    noneInStore: (names: string) =>
+      `None of the names is in the store (${names}), so nothing was searched.`,
+    narrowSeveralTitle: "Narrow the search to the drugs",
+    narrowSeveralLine:
+      "Code looks the drugs up in the store and searches only their labels, one drug at a time.",
+    noPassageToScore: "No passage to score.",
+    boostSeveralLine:
+      "Code adds +0.15 to passages in the guessed section, sorts by the new score and keeps each drug's top 5. No AI is asked.",
+    unrecorded: "Not recorded: this search was saved before searches kept their details.",
+    noPassageMatched: "No passage matched the question.",
+    keptNumbered: (count: number, range: string) =>
+      `Kept ${plural(count, "passage")}, numbered ${range}.`,
+    refRange: (first: number, last: number) => `[${first}] to [${last}]`,
+    noDrugNamed: "No drug named, so every label was searched.",
+    drugs: (names: string[]) => `Drugs: ${names.join(", ")}.`,
+    noDrug: "No drug found.",
+    sections: (names: string[]) =>
+      `Sections: ${names.map((name) => name.toLowerCase()).join(", ")}.`,
+    noSection: "No section.",
+    searchedAs: (name: string, generic: string) => `“${name}” as ${generic}`,
+    searched: (names: string[], labels: number) =>
+      `Searched ${names.join(" and ")}: ${plural(labels, "label")}.`,
+    noUsLabel: (names: string) => `No US label for ${names}.`,
+    droppedSections: (names: string[]) =>
+      `Dropped as not a label section: ${names.map((name) => name.toLowerCase()).join(", ")}.`,
+    widened: "None of those labels has the section, so the drug's other labels were searched too.",
+    range: (low: string, high: string) => `${low} to ${high}`,
+    searchedWith: (question: string) => `Searched with “${question}”.`,
+    bm25Title: "Score the passages by keywords",
+    bm25Line: "Code ranks the drug's passages by the words they share with the question (BM25).",
+    ranked: (count: number) => `${plural(count, "passage")} ranked.`,
+    closest: (count: number, range: string) =>
+      `The ${plural(count, "closest passage")} have a similarity of ${range}.`,
+    hybridToo: "A keyword search (BM25) ranked the passages as well.",
+    droppedBelow: (count: number, minimum: string) =>
+      `${plural(count, "passage")} below the minimum similarity of ${minimum} ${count === 1 ? "was" : "were"} dropped.`,
+    mergeTitle: (kept: number) => `Merge the rankings and keep the top ${kept}`,
+    mergeLine:
+      "Code merges the keyword and embedding rankings by place (rank fusion). No AI is asked.",
+    hybridOrder: "Hybrid search: the +0.15 only changed the order of the embedding ranking. ",
+    kept: (count: number) => `Kept ${plural(count, "passage")}.`,
+    noSectionGuessed: "No section was guessed, so no passage got the bonus.",
+    noneInSection: "None of the kept passages is in the guessed section.",
+    boosted: (count: number, bonus: string, moved: number) =>
+      `${plural(count, "passage")} got +${bonus}; ${moved === 0 ? "the order stayed the same" : `${plural(moved, "passage")} changed place`}.`,
+    boostTitle: (bonus: string, kept: number) => `Add the +${bonus} and keep the top ${kept}`,
+    withdrawnWrite: "The chat model wrote an answer, which was withdrawn.",
+    markerShowed:
+      "The marker showed up, so the answer was replaced with a fixed one before the marker reached you.",
+    withdrawnUnchecked: "A withdrawn answer isn't checked.",
+    markerNever: "The marker never showed up.",
+    noCitations: "Wrote the answer without citations.",
+    citing: (refs: string) => `Wrote the answer, citing ${refs}.`,
+    noCheckRecorded: "No check was recorded for this answer.",
+    checkFailed: "The check failed, so the answer is shown unchecked.",
+    noFacts: "The answer states no facts to check.",
+    bars: {
+      label: "Passages by score",
+      sectionAskedFor: (boost: string) => `+${boost}, section asked for`,
+      noBonus: "no bonus",
+      ordinal,
+      similarity: "Similarity, from the embedder",
+      bonus: "Section bonus, from the code",
+      scale: (top: string) => `Bars from 0 to ${top}`,
+    },
+  },
+  structure: {
+    inTarget: (drug: string, target: string) => `${drug} in ${target}`,
+    alone: "the molecule alone: no reviewed structure with its target",
+    hydrogenBonds: (count: number) => `${count} hydrogen ${count === 1 ? "bond" : "bonds"}`,
+  },
 };
 
 export type Messages = typeof en;
+
+function plural(count: number, noun: string): string {
+  return `${count} ${count === 1 ? noun : `${noun}s`}`;
+}
+
+/** "1st", "2nd", "3rd", "4th", … */
+function ordinal(place: number): string {
+  const teen = place % 100 >= 11 && place % 100 <= 13;
+  const suffix = teen ? "th" : ({ 1: "st", 2: "nd", 3: "rd" }[place % 10] ?? "th");
+  return `${place}${suffix}`;
+}

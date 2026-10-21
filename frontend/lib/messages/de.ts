@@ -435,4 +435,190 @@ export const de: Messages = {
     noRefs: "keine",
     none: "Keine.",
   },
+  flow: {
+    intro:
+      "Die Schritte, die diese Antwort durchlaufen hat, der Reihe nach. Das Schild an jedem nennt, wer ihn ausgeführt hat.",
+    guideLink: "So antwortet Molecula",
+    guideAfter: "verfolgt eine Frage durch jeden Schritt (auf Englisch).",
+    steps: "Schritte",
+    states: {
+      skipped: "Übersprungen",
+      running: "Läuft",
+      waiting: "Noch nicht",
+      stopped: "Gestoppt",
+      failed: "Fehlgeschlagen",
+      not_reached: "Nicht erreicht",
+    },
+    whatThisMeans: "Was dieser Schritt bedeutet",
+    who: { model: "Chatmodell", embedder: "Embedder", code: "Code" },
+    eitherModel: "Jev oder Chatmodell",
+    guide: {
+      "check-the-question": {
+        title: "Die Frage prüfen",
+        short:
+          "Ein kurzer eigener Aufruf ordnet die Nachricht ein. Nur Medikamentenfragen und mögliche Überdosen gehen weiter zu einer Antwort.",
+      },
+      "decide-what-to-look-up": {
+        title: "Entscheiden, was nachgeschlagen wird",
+        short:
+          "Das Chatmodell wählt, was nachgeschlagen wird, und füllt den Aufruf aus, bevor es gesehen hat, was die Suche liefert.",
+      },
+      "narrow-to-the-drug": {
+        title: "Die Suche auf das Medikament eingrenzen",
+        short:
+          "Code schlägt das Medikament im Datenbestand nach und durchsucht nur die Fachinformationen dieses Medikaments.",
+      },
+      "score-by-meaning": {
+        title: "Die Textstellen nach Bedeutung bewerten",
+        short:
+          "Der Embedder bewertet die Textstellen des Medikaments danach, wie nah sie der Frage in der Bedeutung sind.",
+      },
+      "boost-and-keep-five": {
+        title: "+0.15 addieren und die besten 5 behalten",
+        short:
+          "Code addiert +0.15 zu Textstellen im vermuteten Abschnitt, sortiert nach der neuen Punktzahl und behält die besten 5. Es wird keine KI gefragt.",
+      },
+      "write-the-answer": {
+        title: "Die Antwort schreiben",
+        short:
+          "Das Chatmodell liest, was die Suchen geliefert haben, und schreibt die Antwort; jede Quelle zitiert es als [n].",
+      },
+      "watch-for-a-leak": {
+        title: "Auf einen verratenen System-Prompt achten",
+        short:
+          "Während die Antwort hereinkommt, achtet Code auf eine versteckte Markierung aus dem System-Prompt.",
+      },
+      "check-the-sources": {
+        title: "Die Antwort anhand der Quellen prüfen",
+        short:
+          "Ein eigener Aufruf prüft jede Aussage der Antwort anhand der Quelle, die sie zitiert.",
+      },
+    },
+    categories: {
+      ok: "Medikamentenfrage",
+      off_topic: "Frage außerhalb des Themas",
+      personal_medical_advice: "Bitte um persönliche Beratung",
+      overdose_emergency: "möglicher Überdosis-Notfall",
+      lethal_dose: "Frage nach einer tödlichen Dosis",
+      synthesis_or_misuse: "Frage nach Herstellung oder Missbrauch",
+      prompt_injection: "Prompt-Injection",
+    },
+    searchOf: (number, total, line) => `Suche ${number} von ${total} · ${line}`,
+    overdose: "Als mögliche Überdosis eingeordnet, deshalb beginnt die Antwort mit Notfallhilfe.",
+    sortedFixed: (category) =>
+      `Als ${category} eingeordnet, deshalb gab Molecula eine feste Antwort und sonst lief nichts.`,
+    fixed: "Molecula gab eine feste Antwort, deshalb lief sonst nichts.",
+    sortedOk: "Als Medikamentenfrage eingeordnet, deshalb ging es weiter.",
+    passed: "Bestanden, deshalb ging es weiter.",
+    answeredWithoutLookup: "Das Chatmodell hat geantwortet, ohne etwas nachzuschlagen.",
+    lookupTitle: "Im Datenbestand nachschlagen",
+    lookupLine:
+      "Code liest die Antwort aus Moleculas eigenem Datenbestand. Es wird keine KI gefragt.",
+    done: "Erledigt.",
+    rejected: (errors) => `Abgelehnt und als Fehler an das Chatmodell zurückgeschickt: ${errors}`,
+    notInStore: (names) => `Nicht im Datenbestand: ${names}.`,
+    isInStore: (query, name) => `„${query}“ ist ${name} im Datenbestand.`,
+    sideBySide: (names) => `Die Eigenschaften von ${names}, nebeneinander.`,
+    noMechanism: (name) => `ChEMBL nennt keinen Wirkmechanismus für ${name}.`,
+    targets: (count, shown, more) =>
+      `${plural(count, "Zielprotein", "Zielproteine")}: ${shown}${more > 0 ? ` und ${more} weitere` : ""}.`,
+    complexFound: (title, subtitle) => `Eine geprüfte Struktur: ${title}, ${subtitle}.`,
+    noComplex: (name) => `Keine geprüfte Struktur von ${name} an seinem Zielprotein.`,
+    passagesFound: (count) => `${passages(count)} gefunden.`,
+    show3dTitle: "In 3D zeigen",
+    show3dLine:
+      "Der 3D-Tab lädt die Struktur aus Moleculas eigenem Datenbestand, und Ihr Browser zeichnet sie. Es wird keine KI gefragt und nichts von außen geholt.",
+    shows3d: (title) => `Der 3D-Tab zeigt ${title}.`,
+    showsMolecule: "Der 3D-Tab zeigt das Molekül allein, aus seiner gespeicherten 3D-Form.",
+    extractTitle: "Die Medikamente aus der Frage lesen",
+    extractLine:
+      "Der Aufruf nannte kein Medikament, deshalb liest ein weiterer kleiner Aufruf die Medikamente und die Teile der Fachinformation aus der Frage.",
+    noDrugFoundEveryLabel:
+      "Kein Medikament gefunden, deshalb wurden alle Fachinformationen durchsucht.",
+    searchRejected: (errors) =>
+      `Abgelehnt und als Fehler an das Chatmodell zurückgeschickt, deshalb wurde nichts durchsucht: ${errors}`,
+    noneInStore: (names) =>
+      `Keiner der Namen ist im Datenbestand (${names}), deshalb wurde nichts durchsucht.`,
+    narrowSeveralTitle: "Die Suche auf die Medikamente eingrenzen",
+    narrowSeveralLine:
+      "Code schlägt die Medikamente im Datenbestand nach und durchsucht nur ihre Fachinformationen, ein Medikament nach dem anderen.",
+    noPassageToScore: "Keine Textstelle zum Bewerten.",
+    boostSeveralLine:
+      "Code addiert +0.15 zu Textstellen im vermuteten Abschnitt, sortiert nach der neuen Punktzahl und behält von jedem Medikament die besten 5. Es wird keine KI gefragt.",
+    unrecorded:
+      "Nicht aufgezeichnet: Diese Suche wurde gespeichert, bevor Suchen ihre Details behielten.",
+    noPassageMatched: "Keine Textstelle passte zur Frage.",
+    keptNumbered: (count, range) => `${passages(count)} behalten, nummeriert ${range}.`,
+    refRange: (first, last) => `[${first}] bis [${last}]`,
+    noDrugNamed: "Kein Medikament genannt, deshalb wurden alle Fachinformationen durchsucht.",
+    drugs: (names) => `Medikamente: ${names.join(", ")}.`,
+    noDrug: "Kein Medikament gefunden.",
+    sections: (names) => `Abschnitte: ${names.join(", ")}.`,
+    noSection: "Kein Abschnitt.",
+    searchedAs: (name, generic) => `„${name}“ als ${generic}`,
+    searched: (names, labels) =>
+      `Durchsucht: ${names.join(" und ")}, ${plural(labels, "Fachinformation", "Fachinformationen")}.`,
+    noUsLabel: (names) => `Keine US-Fachinformation für ${names}.`,
+    droppedSections: (names) =>
+      `Verworfen, weil kein Abschnitt der Fachinformation: ${names.join(", ")}.`,
+    widened:
+      "Keine dieser Fachinformationen hat den Abschnitt, deshalb wurden auch die anderen Fachinformationen des Medikaments durchsucht.",
+    range: (low, high) => `${low} bis ${high}`,
+    searchedWith: (question) => `Gesucht mit „${question}“.`,
+    bm25Title: "Die Textstellen nach Stichwörtern bewerten",
+    bm25Line:
+      "Code ordnet die Textstellen des Medikaments nach den Wörtern, die sie mit der Frage teilen (BM25).",
+    ranked: (count) => `${passages(count)} eingeordnet.`,
+    closest: (count, range) =>
+      count === 1
+        ? `Die nächste Textstelle hat eine Ähnlichkeit von ${range}.`
+        : `Die ${count} nächsten Textstellen haben eine Ähnlichkeit von ${range}.`,
+    hybridToo: "Eine Stichwortsuche (BM25) hat die Textstellen ebenfalls eingeordnet.",
+    droppedBelow: (count, minimum) =>
+      `${passages(count)} unter der Mindestähnlichkeit von ${minimum} ${count === 1 ? "wurde" : "wurden"} verworfen.`,
+    mergeTitle: (kept) => `Die Rangfolgen zusammenführen und die besten ${kept} behalten`,
+    mergeLine:
+      "Code führt die Stichwort- und die Embedding-Rangfolge nach Plätzen zusammen (Rank Fusion). Es wird keine KI gefragt.",
+    hybridOrder:
+      "Hybride Suche: Die +0.15 haben nur die Reihenfolge der Embedding-Rangfolge geändert. ",
+    kept: (count) => `${passages(count)} behalten.`,
+    noSectionGuessed: "Es wurde kein Abschnitt vermutet, deshalb bekam keine Textstelle den Bonus.",
+    noneInSection: "Keine der behaltenen Textstellen liegt im vermuteten Abschnitt.",
+    boosted: (count, bonus, moved) =>
+      `${passages(count)} ${count === 1 ? "bekam" : "bekamen"} +${bonus}; ${moved === 0 ? "die Reihenfolge blieb gleich" : `${passages(moved)} ${moved === 1 ? "hat" : "haben"} den Platz gewechselt`}.`,
+    boostTitle: (bonus, kept) => `+${bonus} addieren und die besten ${kept} behalten`,
+    withdrawnWrite: "Das Chatmodell hat eine Antwort geschrieben, die zurückgezogen wurde.",
+    markerShowed:
+      "Die Markierung ist aufgetaucht, deshalb wurde die Antwort durch eine feste ersetzt, bevor die Markierung Sie erreichte.",
+    withdrawnUnchecked: "Eine zurückgezogene Antwort wird nicht geprüft.",
+    markerNever: "Die Markierung ist nie aufgetaucht.",
+    noCitations: "Hat die Antwort ohne Zitate geschrieben.",
+    citing: (refs) => `Hat die Antwort geschrieben und ${refs} zitiert.`,
+    noCheckRecorded: "Für diese Antwort wurde keine Prüfung aufgezeichnet.",
+    checkFailed: "Die Prüfung ist fehlgeschlagen, deshalb wird die Antwort ungeprüft gezeigt.",
+    noFacts: "Die Antwort nennt keine Fakten zum Prüfen.",
+    bars: {
+      label: "Textstellen nach Punktzahl",
+      sectionAskedFor: (boost) => `+${boost}, gesuchter Abschnitt`,
+      noBonus: "kein Bonus",
+      ordinal: (place) => `${place}.`,
+      similarity: "Ähnlichkeit, vom Embedder",
+      bonus: "Abschnittsbonus, vom Code",
+      scale: (top) => `Balken von 0 bis ${top}`,
+    },
+  },
+  structure: {
+    inTarget: (drug, target) => `${drug} an ${target}`,
+    alone: "das Molekül allein: keine geprüfte Struktur mit seinem Zielprotein",
+    hydrogenBonds: (count) =>
+      `${count} ${count === 1 ? "Wasserstoffbrücke" : "Wasserstoffbrücken"}`,
+  },
 };
+
+function plural(count: number, one: string, many: string): string {
+  return `${count} ${count === 1 ? one : many}`;
+}
+
+function passages(count: number): string {
+  return plural(count, "Textstelle", "Textstellen");
+}

@@ -1,7 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { startTurn, type Turn } from "@/lib/chat-turn";
+import { LANGUAGE_KEY } from "@/lib/language";
 import { CHECKING_ANSWER } from "@/lib/source-check";
 import { IMATINIB_LABELS, IMATINIB_TRACE } from "@/lib/test-tool-results";
 
@@ -94,5 +95,41 @@ describe("FlowTab", () => {
 
     expect(within(stepItem("Check the question")).getByText("Running")).toBeDefined();
     expect(within(stepItem("Write the answer")).getByText("Not yet")).toBeDefined();
+  });
+});
+
+describe("FlowTab in German", () => {
+  afterEach(() => localStorage.clear());
+
+  it("writes the steps, tags, states and bars in German", () => {
+    localStorage.setItem(LANGUAGE_KEY, "de");
+    render(<FlowTab turn={SEARCHED} />);
+
+    expect(screen.getByRole("link", { name: "So antwortet Molecula" })).toBeDefined();
+    expect(within(stepItem("Die Frage prüfen")).getByText("Jev oder Chatmodell")).toBeDefined();
+    expect(within(stepItem("nach Bedeutung bewerten")).getByText("Embedder")).toBeDefined();
+    expect(screen.getAllByRole("link", { name: "Was dieser Schritt bedeutet" })).toHaveLength(8);
+    const search = screen.getByRole("list", { name: "Durchsuche die Fachinformation von Gleevec" });
+    expect(search.children).toHaveLength(4);
+    const boost = stepItem("die besten 2 behalten");
+    expect(within(boost).getByText("Code")).toBeDefined();
+    const bars = within(boost).getByRole("list", { name: "Textstellen nach Punktzahl" });
+    expect(within(bars).getAllByText("+0.15, gesuchter Abschnitt")).toHaveLength(2);
+    expect(within(boost).getByText("Balken von 0 bis 0.9")).toBeDefined();
+  });
+
+  it("marks a running step and those still to come in German", () => {
+    localStorage.setItem(LANGUAGE_KEY, "de");
+    render(
+      <FlowTab
+        turn={{
+          ...startTurn("Wie wirkt Imatinib?"),
+          steps: [{ text: "Checking the question" }],
+        }}
+      />,
+    );
+
+    expect(within(stepItem("Die Frage prüfen")).getByText("Läuft")).toBeDefined();
+    expect(within(stepItem("Die Antwort schreiben")).getByText("Noch nicht")).toBeDefined();
   });
 });

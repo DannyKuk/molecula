@@ -6,10 +6,12 @@ import {
   type Who,
 } from "./answer-flow";
 import type { InputCategory } from "./api";
+import { errorText } from "./chat";
 import type { Turn } from "./chat-turn";
 import { citedRefs, sectionName } from "./citations";
+import { en, type Messages } from "./messages/en";
 import { CHECKING_ANSWER, checkSummary } from "./source-check";
-import { CATEGORY_LABELS } from "./stats";
+import { stepLine } from "./step-line";
 import {
   type Card,
   cardOf,
@@ -67,8 +69,8 @@ type DraftPart = { title: string | null; steps: Draft[] };
 
 // The input check and the label filter's extra call run on Jev online and on the chat model
 // offline, and no chat event says which (`open_input_check` and `open_filter_extractor` in
-// `backend/src/molecula/main.py`).
-const EITHER_MODEL = "Jev or chat model";
+// `backend/src/molecula/main.py`), so their steps are tagged `eitherModel`.
+type Flow = Messages["flow"];
 
 const REFUSED: InputCategory[] = [
   "personal_medical_advice",
@@ -86,9 +88,11 @@ type ToolStep = Step & { tool: ToolRun };
  * guide's call, filter, scoring and ranking steps from its arguments, its result and its
  * `retrieval_trace`; any other tool shows the call and the store lookup, and a structure lookup
  * the 3D view as well. Steps that haven't concluded take their state from the
- * turn: the first one running, stopped or failed, the others waiting or not reached.
+ * turn: the first one running, stopped or failed, the others waiting or not reached. The text is
+ * in the language of `t`; what the tools and models returned stays as they wrote it.
  */
-export function turnFlow(turn: Turn): TurnFlowPart[] {
+export function turnFlow(turn: Turn, t: Messages = en): TurnFlowPart[] {
+  const f = t.flow;
   const tools = turn.steps.filter((step): step is ToolStep => step.tool !== undefined);
   const searches = tools.filter((step) => step.tool.name === "search_labels");
   const fixed = isFixedAnswer(turn, tools);
@@ -98,24 +102,22 @@ export function turnFlow(turn: Turn): TurnFlowPart[] {
     turn.state === "done" ||
     ((turn.state === "stopped" || turn.state === "failed") && turn.answer !== "");
 
-  const parts: DraftPart[] = [{ title: null, steps: [checkStep(turn, tools, fixed)] }];
+  const parts: DraftPart[] = [{ title: null, steps: [checkStep(turn, tools, fixed, f)] }];
   if (tools.length === 0) {
-    parts.push({ title: null, steps: noLookupSteps(fixed, answered) });
+    parts.push({ title: null, steps: noLookupSteps(fixed, answered, f) });
   }
   for (const step of tools) {
+    const line = stepLine(step, t);
     if (step.tool.name === "search_labels") {
       const index = searches.indexOf(step);
-      const title =
-        searches.length > 1
-          ? `Search ${index + 1} of ${searches.length} · ${step.text}`
-          : step.text;
-      parts.push({ title, steps: searchSteps(step.tool, String(index)) });
+      const title = searches.length > 1 ? f.searchOf(index + 1, searches.length, line) : line;
+      parts.push({ title, steps: searchSteps(step.tool, String(index), f) });
     } else {
-      parts.push({ title: step.text, steps: lookupSteps(step.tool) });
+      parts.push({ title: line, steps: lookupSteps(step.tool, t) });
     }
   }
-  parts.push({ title: null, steps: answerSteps(turn, fixed) });
-  return settle(parts, turn);
+  parts.push({ title: null, steps: answerSteps(turn, fixed, t) });
+  return settle(parts, turn, t);
 }
 
 /**
@@ -134,53 +136,51 @@ function isFixedAnswer(turn: Turn, tools: ToolStep[]): boolean {
   );
 }
 
-function fromGuide(id: string, key: string, changes: Partial<Draft> = {}): Draft {
+/** The guide's step `id`, with its title and line in the language of `f`. */
+function fromGuide(
+  id: keyof Flow["guide"],
+  key: string,
+  f: Flow,
+  changes: Partial<Draft> = {},
+): Draft {
   const step: FlowStep = guideStep(id);
   return {
     key,
     guide: step.id,
-    title: step.title,
+    title: f.guide[id].title,
     who: step.who,
-    line: step.short,
+    line: f.guide[id].short,
     state: "pending",
     ...changes,
   };
 }
 
-function checkStep(turn: Turn, tools: ToolStep[], fixed: boolean): Draft {
-  const step = fromGuide("check-the-question", "check", { whoLabel: EITHER_MODEL });
+function checkStep(turn: Turn, tools: ToolStep[], fixed: boolean, f: Flow): Draft {
+  const step = fromGuide("check-the-question", "check", f, { whoLabel: f.eitherModel });
   const passed = tools.length > 0 || turn.answer !== "" || turn.state === "done";
   if (!passed) return step;
-  return { ...step, state: "done", outcome: checkOutcome(turn.category, fixed) };
+  return { ...step, state: "done", outcome: checkOutcome(turn.category, fixed, f) };
 }
 
-function checkOutcome(category: InputCategory | undefined, fixed: boolean): string {
-  if (category === "overdose_emergency") {
-    return "Sorted as a possible overdose, so the answer starts with emergency help.";
-  }
-  if (category && fixed) {
-    return `Sorted as ${CATEGORY_LABELS[category].toLowerCase()}, so Molecula gave a fixed answer and nothing else ran.`;
-  }
-  if (fixed) return "Molecula gave a fixed answer, so nothing else ran.";
-  if (category === "ok") return "Sorted as a medicine question, so it went on.";
-  return "Passed, so it went on.";
+function checkOutcome(category: InputCategory | undefined, fixed: boolean, f: Flow): string {
+  if (category === "overdose_emergency") return f.overdose;
+  if (category && fixed) return f.sortedFixed(f.categories[category]);
+  if (fixed) return f.fixed;
+  if (category === "ok") return f.sortedOk;
+  return f.passed;
 }
 
 /** The lookup steps of an answer that looked nothing up. */
-function noLookupSteps(fixed: boolean, answered: boolean): Draft[] {
-  const decide = fromGuide("decide-what-to-look-up", "decide");
+function noLookupSteps(fixed: boolean, answered: boolean, f: Flow): Draft[] {
+  const decide = fromGuide("decide-what-to-look-up", "decide", f);
   if (!fixed && !answered) return [decide];
   const lookups = [
-    fromGuide("narrow-to-the-drug", "narrow", { state: "skipped" }),
-    fromGuide("score-by-meaning", "score", { state: "skipped" }),
-    fromGuide("boost-and-keep-five", "boost", { state: "skipped" }),
+    fromGuide("narrow-to-the-drug", "narrow", f, { state: "skipped" }),
+    fromGuide("score-by-meaning", "score", f, { state: "skipped" }),
+    fromGuide("boost-and-keep-five", "boost", f, { state: "skipped" }),
   ];
   return [
-    {
-      ...decide,
-      state: "skipped",
-      outcome: fixed ? undefined : "The chat model answered without looking anything up.",
-    },
+    { ...decide, state: "skipped", outcome: fixed ? undefined : f.answeredWithoutLookup },
     ...lookups,
   ];
 }
@@ -197,56 +197,60 @@ export function callText(tool: ToolRun): string {
   return `${tool.name}(${args.join(", ")})`;
 }
 
-function lookupSteps(tool: ToolRun): Draft[] {
+function lookupSteps(tool: ToolRun, t: Messages): Draft[] {
+  const f = t.flow;
   const key = tool.id;
-  const decide = fromGuide("decide-what-to-look-up", `${key}:decide`, {
+  const decide = fromGuide("decide-what-to-look-up", `${key}:decide`, f, {
     state: "done",
     call: callText(tool),
   });
   const lookup: Draft = {
     key: `${key}:lookup`,
     guide: null,
-    title: "Look it up in the store",
+    title: f.lookupTitle,
     who: "code",
-    line: "Code reads the answer from Molecula's own store. No AI is asked.",
+    line: f.lookupLine,
     state: "pending",
   };
   const card = cardOf(tool);
-  const outcome = lookupOutcome(tool, card);
+  const outcome = lookupOutcome(tool, card, t);
   const shown =
-    card?.kind === "complex" || card?.kind === "no_complex" ? [showIn3d(card, key)] : [];
+    card?.kind === "complex" || card?.kind === "no_complex" ? [showIn3d(card, key, t)] : [];
   return [decide, outcome ? { ...lookup, state: "done", outcome } : lookup, ...shown];
 }
 
-function lookupOutcome(tool: ToolRun, card: Card | null): string | null {
-  if (card === null) return tool.result === undefined ? null : "Done.";
+function lookupOutcome(tool: ToolRun, card: Card | null, t: Messages): string | null {
+  const f = t.flow;
+  if (card === null) return tool.result === undefined ? null : f.done;
   switch (card.kind) {
     case "pending":
       return null;
     case "invalid":
-      return `Rejected and sent back to the chat model as an error: ${card.errors.join("; ")}`;
+      return f.rejected(card.errors.join("; "));
     case "not_supported":
-      return notInStore(card.drugs);
+      return notInStore(card.drugs, f);
     case "drug":
-      return `“${card.result.query}” is ${card.result.name} in the store.`;
+      return f.isInStore(card.result.query, card.result.name);
     case "properties":
-      return propertiesOutcome(card.drugs);
+      return propertiesOutcome(card.drugs, f);
     case "targets":
-      return targetsOutcome(card.result);
-    case "complex":
-      return `A reviewed structure: ${structureTitle(complexTarget(card.result))}, ${structureSubtitle(complexTarget(card.result))}.`;
+      return targetsOutcome(card.result, f);
+    case "complex": {
+      const target = complexTarget(card.result);
+      return f.complexFound(structureTitle(target, t), structureSubtitle(target, t));
+    }
     case "no_complex":
-      return `No reviewed structure of ${card.result.name} with its target.`;
+      return f.noComplex(card.result.name);
     case "labels":
-      return `${count(card.result.passages.length, "passage")} found.`;
+      return f.passagesFound(card.result.passages.length);
   }
 }
 
-function notInStore(drugs: DrugNotSupported[]): string {
-  return `Not in the store: ${drugs.map((drug) => drug.query).join(", ")}.`;
+function notInStore(drugs: DrugNotSupported[], f: Flow): string {
+  return f.notInStore(drugs.map((drug) => drug.query).join(", "));
 }
 
-function propertiesOutcome(drugs: (DrugProperties | DrugNotSupported)[]): string {
+function propertiesOutcome(drugs: (DrugProperties | DrugNotSupported)[], f: Flow): string {
   const found = drugs.filter((drug): drug is DrugProperties => drug.status === "found");
   const missing = drugs.filter((drug): drug is DrugNotSupported => drug.status !== "found");
   const parts =
@@ -255,18 +259,16 @@ function propertiesOutcome(drugs: (DrugProperties | DrugNotSupported)[]): string
           `${found[0].compound.name}: ${found[0].compound.formula}, ${found[0].compound.molecular_weight} g/mol.`,
         ]
       : found.length > 1
-        ? [`The properties of ${found.map((drug) => drug.compound.name).join(", ")}, side by side.`]
+        ? [f.sideBySide(found.map((drug) => drug.compound.name).join(", "))]
         : [];
-  if (missing.length > 0) parts.push(notInStore(missing));
+  if (missing.length > 0) parts.push(notInStore(missing, f));
   return parts.join(" ");
 }
 
-function targetsOutcome(result: DrugTargetList): string {
+function targetsOutcome(result: DrugTargetList, f: Flow): string {
   const names = result.targets.map((target) => target.name);
-  if (names.length === 0) return `ChEMBL lists no mechanism for ${result.name}.`;
-  const shown = names.slice(0, 3).join(", ");
-  const more = names.length > 3 ? ` and ${names.length - 3} more` : "";
-  return `${count(names.length, "target")}: ${shown}${more}.`;
+  if (names.length === 0) return f.noMechanism(result.name);
+  return f.targets(names.length, names.slice(0, 3).join(", "), Math.max(0, names.length - 3));
 }
 
 function complexTarget(complex: DrugComplex): StructureTarget {
@@ -276,24 +278,29 @@ function complexTarget(complex: DrugComplex): StructureTarget {
 /** What the 3D panel does with a structure the answer looked up: it loads it from the backend,
  * which reads it from the store (`get_drug_complex` and `get_drug_structure` in `api/drugs.py`),
  * and the browser draws it. */
-function showIn3d(card: Extract<Card, { kind: "complex" | "no_complex" }>, key: string): Draft {
+function showIn3d(
+  card: Extract<Card, { kind: "complex" | "no_complex" }>,
+  key: string,
+  t: Messages,
+): Draft {
+  const f = t.flow;
   return {
     key: `${key}:3d`,
     guide: null,
-    title: "Show it in 3D",
+    title: f.show3dTitle,
     who: "code",
-    line: "The 3D tab loads the structure from Molecula's own store and your browser draws it. No AI is asked and nothing is fetched from outside.",
+    line: f.show3dLine,
     state: "done",
     outcome:
       card.kind === "complex"
-        ? `The 3D tab shows ${structureTitle(complexTarget(card.result))}.`
-        : "The 3D tab shows the molecule alone, from its stored 3D shape.",
+        ? f.shows3d(structureTitle(complexTarget(card.result), t))
+        : f.showsMolecule,
   };
 }
 
-function searchSteps(tool: ToolRun, index: string): Draft[] {
+function searchSteps(tool: ToolRun, index: string, f: Flow): Draft[] {
   const key = `${tool.id || index}`;
-  const decide = fromGuide("decide-what-to-look-up", `${key}:decide`, {
+  const decide = fromGuide("decide-what-to-look-up", `${key}:decide`, f, {
     state: "done",
     call: callText(tool),
   });
@@ -301,67 +308,56 @@ function searchSteps(tool: ToolRun, index: string): Draft[] {
   const extracted =
     trace?.filter_source === "model"
       ? [
-          fromGuide("decide-what-to-look-up", `${key}:extract`, {
-            title: "Read the drugs from the question",
-            whoLabel: EITHER_MODEL,
-            line: "The call named no drug, so one more small call reads the drugs and the parts of the label from the question.",
+          fromGuide("decide-what-to-look-up", `${key}:extract`, f, {
+            title: f.extractTitle,
+            whoLabel: f.eitherModel,
+            line: f.extractLine,
             state: "done",
-            outcome: trace.filter
-              ? filterText(trace)
-              : "No drug found, so every label was searched.",
+            outcome: trace.filter ? filterText(trace, f) : f.noDrugFoundEveryLabel,
           }),
         ]
       : [];
-  return [decide, ...extracted, ...searchedSteps(tool, trace, key)];
+  return [decide, ...extracted, ...searchedSteps(tool, trace, key, f)];
 }
 
 /** The filter, scoring and ranking steps of one label search. */
-function searchedSteps(tool: ToolRun, trace: RetrievalTrace | null, key: string): Draft[] {
-  const narrow = fromGuide("narrow-to-the-drug", `${key}:narrow`);
-  const score = fromGuide("score-by-meaning", `${key}:score`);
-  const boost = fromGuide("boost-and-keep-five", `${key}:boost`);
+function searchedSteps(tool: ToolRun, trace: RetrievalTrace | null, key: string, f: Flow): Draft[] {
+  const narrow = fromGuide("narrow-to-the-drug", `${key}:narrow`, f);
+  const score = fromGuide("score-by-meaning", `${key}:score`, f);
+  const boost = fromGuide("boost-and-keep-five", `${key}:boost`, f);
   const card = cardOf(tool);
   if (card === null || card.kind === "pending") return [narrow, score, boost];
   const skipped = [score, boost].map((step): Draft => ({ ...step, state: "skipped" }));
   if (card.kind === "invalid") {
-    const outcome = `Rejected and sent back to the chat model as an error, so nothing was searched: ${card.errors.join("; ")}`;
+    const outcome = f.searchRejected(card.errors.join("; "));
     return [{ ...narrow, state: "done", outcome }, ...skipped];
   }
   if (card.kind === "not_supported") {
-    const names = card.drugs.map((drug) => drug.query).join(", ");
-    const outcome = `None of the names is in the store (${names}), so nothing was searched.`;
+    const outcome = f.noneInStore(card.drugs.map((drug) => drug.query).join(", "));
     return [{ ...narrow, state: "done", outcome }, ...skipped];
   }
   if (card.kind !== "labels") return [narrow, score, boost];
   const result = card.result;
-  if (!trace) return untracedSteps(result, narrow, score, boost);
+  if (!trace) return untracedSteps(result, narrow, score, boost, f);
   const several = searchedDrugs(trace) > 1;
   const narrowed: Draft = {
     ...narrow,
-    ...(several && {
-      title: "Narrow the search to the drugs",
-      line: "Code looks the drugs up in the store and searches only their labels, one drug at a time.",
-    }),
+    ...(several && { title: f.narrowSeveralTitle, line: f.narrowSeveralLine }),
     state: "done",
-    outcome: narrowText(trace, result),
+    outcome: narrowText(trace, result, f),
   };
   if (trace.candidates.length === 0) {
     return [
       narrowed,
-      { ...score, state: "skipped", outcome: "No passage to score." },
+      { ...score, state: "skipped", outcome: f.noPassageToScore },
       { ...boost, state: "skipped" },
     ];
   }
-  const ranked = boostStep(boost, trace);
+  const ranked = boostStep(boost, trace, f);
   return [
     narrowed,
-    scoreStep(score, trace),
-    several && trace.mode === "dense"
-      ? {
-          ...ranked,
-          line: "Code adds +0.15 to passages in the guessed section, sorts by the new score and keeps each drug's top 5. No AI is asked.",
-        }
-      : ranked,
+    scoreStep(score, trace, f),
+    several && trace.mode === "dense" ? { ...ranked, line: f.boostSeveralLine } : ranked,
   ];
 }
 
@@ -369,36 +365,37 @@ function searchedDrugs(trace: RetrievalTrace): number {
   return trace.filter?.drugs.filter((drug) => drug.set_ids.length > 0).length ?? 0;
 }
 
-const UNRECORDED = "Not recorded: this search was saved before searches kept their details.";
-
-function untracedSteps(result: LabelPassages, narrow: Draft, score: Draft, boost: Draft): Draft[] {
+function untracedSteps(
+  result: LabelPassages,
+  narrow: Draft,
+  score: Draft,
+  boost: Draft,
+  f: Flow,
+): Draft[] {
   const kept = result.passages.length;
   const refs = result.passages.map((passage) => passage.ref);
-  const outcome =
-    kept === 0
-      ? "No passage matched the question."
-      : `Kept ${count(kept, "passage")}, numbered ${refRange(refs)}.`;
+  const outcome = kept === 0 ? f.noPassageMatched : f.keptNumbered(kept, refRange(refs, f));
   return [
-    { ...narrow, state: "done", outcome: UNRECORDED },
-    { ...score, state: "done", outcome: UNRECORDED },
+    { ...narrow, state: "done", outcome: f.unrecorded },
+    { ...score, state: "done", outcome: f.unrecorded },
     { ...boost, state: "done", outcome },
   ];
 }
 
-function filterText(trace: RetrievalTrace): string {
+function filterText(trace: RetrievalTrace, f: Flow): string {
   const filter = trace.filter;
-  if (!filter) return "No drug named, so every label was searched.";
+  if (!filter) return f.noDrugNamed;
   const drugs = filter.drugs.map((drug) => drug.generic);
-  const sections = filter.section_groups.map((group) => sectionName(group).toLowerCase());
+  const sections = filter.section_groups.map(sectionName);
   return [
-    drugs.length > 0 ? `Drugs: ${drugs.join(", ")}.` : "No drug found.",
-    sections.length > 0 ? `Sections: ${sections.join(", ")}.` : "No section.",
+    drugs.length > 0 ? f.drugs(drugs) : f.noDrug,
+    sections.length > 0 ? f.sections(sections) : f.noSection,
   ].join(" ");
 }
 
-function narrowText(trace: RetrievalTrace, result: LabelPassages): string {
+function narrowText(trace: RetrievalTrace, result: LabelPassages, f: Flow): string {
   const filter = trace.filter;
-  if (!filter) return "No drug named, so every label was searched.";
+  if (!filter) return f.noDrugNamed;
   const parts: string[] = [];
   const searched = filter.drugs.filter((drug) => drug.set_ids.length > 0);
   if (searched.length > 0) {
@@ -406,67 +403,56 @@ function narrowText(trace: RetrievalTrace, result: LabelPassages): string {
     const names = searched.map((drug) =>
       drug.name.toLowerCase() === drug.generic.toLowerCase()
         ? drug.generic
-        : `“${drug.name}” as ${drug.generic}`,
+        : f.searchedAs(drug.name, drug.generic),
     );
-    parts.push(`Searched ${names.join(" and ")}: ${count(labels, "label")}.`);
+    parts.push(f.searched(names, labels));
   }
   if (result.drugs_without_label.length > 0) {
-    parts.push(`No US label for ${result.drugs_without_label.join(", ")}.`);
+    parts.push(f.noUsLabel(result.drugs_without_label.join(", ")));
   }
   if (filter.unsupported.length > 0) {
-    parts.push(`Not in the store: ${filter.unsupported.map((drug) => drug.query).join(", ")}.`);
+    parts.push(f.notInStore(filter.unsupported.map((drug) => drug.query).join(", ")));
   }
   if (filter.ignored_section_groups.length > 0) {
-    const ignored = filter.ignored_section_groups.map((group) => sectionName(group).toLowerCase());
-    parts.push(`Dropped as not a label section: ${ignored.join(", ")}.`);
+    parts.push(f.droppedSections(filter.ignored_section_groups.map(sectionName)));
   }
-  if (trace.widened.length > 0) {
-    parts.push(
-      "None of those labels has the section, so the drug's other labels were searched too.",
-    );
-  }
-  return parts.join(" ") || "No drug named, so every label was searched.";
+  if (trace.widened.length > 0) parts.push(f.widened);
+  return parts.join(" ") || f.noDrugNamed;
 }
 
-function scoreStep(score: Draft, trace: RetrievalTrace): Draft {
+function scoreStep(score: Draft, trace: RetrievalTrace, f: Flow): Draft {
   const similarities = trace.candidates.map((candidate) => candidate.score);
-  const range = `${Math.min(...similarities).toFixed(2)} to ${Math.max(...similarities).toFixed(2)}`;
-  const searched = `Searched with “${trace.question}”.`;
+  const range = f.range(Math.min(...similarities).toFixed(2), Math.max(...similarities).toFixed(2));
+  const searched = f.searchedWith(trace.question);
   if (trace.mode === "bm25") {
     return {
       ...score,
-      title: "Score the passages by keywords",
+      title: f.bm25Title,
       who: "code",
-      line: "Code ranks the drug's passages by the words they share with the question (BM25).",
+      line: f.bm25Line,
       state: "done",
-      outcome: `${searched} ${count(trace.candidates.length, "passage")} ranked.`,
+      outcome: `${searched} ${f.ranked(trace.candidates.length)}`,
     };
   }
-  const closest = `${searched} The ${count(trace.candidates.length, "closest passage")} have a similarity of ${range}.`;
+  const closest = `${searched} ${f.closest(trace.candidates.length, range)}`;
   return {
     ...score,
     state: "done",
-    outcome:
-      trace.mode === "hybrid"
-        ? `${closest} A keyword search (BM25) ranked the passages as well.`
-        : closest,
+    outcome: trace.mode === "hybrid" ? `${closest} ${f.hybridToo}` : closest,
   };
 }
 
-function boostStep(boost: Draft, trace: RetrievalTrace): Draft {
+function boostStep(boost: Draft, trace: RetrievalTrace, f: Flow): Draft {
   const kept = trace.candidates.filter((candidate) => candidate.kept);
   const dropped = trace.candidates.length - kept.length;
-  const droppedText =
-    dropped > 0
-      ? ` ${count(dropped, "passage")} below the minimum similarity of ${trace.min_score.toFixed(2)} ${dropped === 1 ? "was" : "were"} dropped.`
-      : "";
+  const droppedText = dropped > 0 ? ` ${f.droppedBelow(dropped, trace.min_score.toFixed(2))}` : "";
   if (trace.mode !== "dense") {
     return {
       ...boost,
-      title: `Merge the rankings and keep the top ${kept.length}`,
-      line: "Code merges the keyword and embedding rankings by place (rank fusion). No AI is asked.",
+      title: f.mergeTitle(kept.length),
+      line: f.mergeLine,
       state: "done",
-      outcome: `${trace.mode === "hybrid" ? "Hybrid search: the +0.15 only changed the order of the embedding ranking. " : ""}Kept ${count(kept.length, "passage")}.${droppedText}`,
+      outcome: `${trace.mode === "hybrid" ? f.hybridOrder : ""}${f.kept(kept.length)}${droppedText}`,
     };
   }
   const passages = boostedRanking(
@@ -482,77 +468,65 @@ function boostStep(boost: Draft, trace: RetrievalTrace): Draft {
   const moved = passages.filter((passage) => passage.before !== passage.after).length;
   const bonusText =
     trace.filter?.section_groups.length === 0 || !trace.filter
-      ? "No section was guessed, so no passage got the bonus."
+      ? f.noSectionGuessed
       : boosted === 0
-        ? "None of the kept passages is in the guessed section."
-        : `${count(boosted, "passage")} got +${bonus}; ${moved === 0 ? "the order stayed the same" : `${count(moved, "passage")} changed place`}.`;
+        ? f.noneInSection
+        : f.boosted(boosted, bonus, moved);
   return {
     ...boost,
-    title: `Add the +${bonus} and keep the top ${kept.length}`,
+    title: f.boostTitle(bonus, kept.length),
     state: "done",
     outcome: `${bonusText}${droppedText}`,
     ranking: { passages, boost: trace.section_group_boost },
   };
 }
 
-function answerSteps(turn: Turn, fixed: boolean): Draft[] {
-  const write = fromGuide("write-the-answer", "write");
-  const watch = fromGuide("watch-for-a-leak", "watch");
-  const check = fromGuide("check-the-sources", "check-sources");
+function answerSteps(turn: Turn, fixed: boolean, t: Messages): Draft[] {
+  const f = t.flow;
+  const write = fromGuide("write-the-answer", "write", f);
+  const watch = fromGuide("watch-for-a-leak", "watch", f);
+  const check = fromGuide("check-the-sources", "check-sources", f);
   if (fixed) {
     return [write, watch, check].map((step) => ({ ...step, state: "skipped" }));
   }
   if (turn.replaced) {
     return [
-      { ...write, state: "done", outcome: "The chat model wrote an answer, which was withdrawn." },
-      {
-        ...watch,
-        state: "done",
-        outcome:
-          "The marker showed up, so the answer was replaced with a fixed one before the marker reached you.",
-      },
-      { ...check, state: "skipped", outcome: "A withdrawn answer isn't checked." },
+      { ...write, state: "done", outcome: f.withdrawnWrite },
+      { ...watch, state: "done", outcome: f.markerShowed },
+      { ...check, state: "skipped", outcome: f.withdrawnUnchecked },
     ];
   }
   if (turn.state !== "done") return [write, watch, check];
   return [
-    { ...write, state: "done", outcome: writeOutcome(turn.answer) },
-    { ...watch, state: "done", outcome: "The marker never showed up." },
-    checkSourcesStep(check, turn),
+    { ...write, state: "done", outcome: writeOutcome(turn.answer, f) },
+    { ...watch, state: "done", outcome: f.markerNever },
+    checkSourcesStep(check, turn, t),
   ];
 }
 
-function writeOutcome(answer: string): string {
+function writeOutcome(answer: string, f: Flow): string {
   const refs = citedRefs(answer);
-  if (refs.length === 0) return "Wrote the answer without citations.";
-  return `Wrote the answer, citing ${refs.map((ref) => `[${ref}]`).join(", ")}.`;
+  if (refs.length === 0) return f.noCitations;
+  return f.citing(refs.map((ref) => `[${ref}]`).join(", "));
 }
 
-function checkSourcesStep(check: Draft, turn: Turn): Draft {
+function checkSourcesStep(check: Draft, turn: Turn, t: Messages): Draft {
   const verdict = turn.sourceCheck;
   if (verdict === null) {
-    return { ...check, state: "skipped", outcome: "No check was recorded for this answer." };
+    return { ...check, state: "skipped", outcome: t.flow.noCheckRecorded };
   }
   if (!verdict.checked) {
-    return {
-      ...check,
-      state: "failed",
-      outcome: "The check failed, so the answer is shown unchecked.",
-    };
+    return { ...check, state: "failed", outcome: t.flow.checkFailed };
   }
-  const summary = checkSummary(verdict);
-  return {
-    ...check,
-    state: "done",
-    outcome: summary?.detail ?? "The answer states no facts to check.",
-  };
+  const summary = checkSummary(verdict, t);
+  return { ...check, state: "done", outcome: summary?.detail ?? t.flow.noFacts };
 }
 
 /**
  * The steps numbered in the order the answer ran them, and the pending ones' states from the
  * turn: the first pending step is where the answer is, or where it ended.
  */
-function settle(parts: DraftPart[], turn: Turn): TurnFlowPart[] {
+function settle(parts: DraftPart[], turn: Turn, t: Messages): TurnFlowPart[] {
   let number = 0;
   let first = true;
   const settled = (draft: Draft): TurnStep => {
@@ -570,7 +544,7 @@ function settle(parts: DraftPart[], turn: Turn): TurnFlowPart[] {
         return { ...step, state: wasFirst ? "stopped" : "not_reached" };
       case "failed":
         return wasFirst
-          ? { ...step, state: "failed", outcome: turn.error }
+          ? { ...step, state: "failed", outcome: errorText(turn.error, t) }
           : { ...step, state: "not_reached" };
       case "done":
         return { ...step, state: "not_reached" };
@@ -579,11 +553,7 @@ function settle(parts: DraftPart[], turn: Turn): TurnFlowPart[] {
   return parts.map((part) => ({ ...part, steps: part.steps.map(settled) }));
 }
 
-function count(n: number, noun: string): string {
-  return `${n} ${n === 1 ? noun : `${noun}s`}`;
-}
-
-function refRange(refs: number[]): string {
+function refRange(refs: number[], f: Flow): string {
   if (refs.length === 1) return `[${refs[0]}]`;
-  return `[${Math.min(...refs)}] to [${Math.max(...refs)}]`;
+  return f.refRange(Math.min(...refs), Math.max(...refs));
 }
