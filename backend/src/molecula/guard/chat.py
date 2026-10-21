@@ -62,19 +62,19 @@ class GuardedChat:
             async with asyncio.timeout(self._timeout_seconds):
                 verdict = await self._check.check(conversation)
         except TimeoutError:
-            yield ErrorEvent(message=CHECK_FAILED)
+            yield ErrorEvent(kind="input_check_failed", message=CHECK_FAILED)
             return
         except ChatModelError as error:
             logger.warning("Input check failed: %r", error)
-            yield ErrorEvent(message=describe_provider_error(error))
+            yield ErrorEvent(kind="model_error", message=describe_provider_error(error))
             return
         except InputCheckFailed as error:
             logger.warning("Input check gave no category: %s", error)
-            yield ErrorEvent(message=CHECK_FAILED)
+            yield ErrorEvent(kind="input_check_failed", message=CHECK_FAILED)
             return
         except DecisionModelError as error:
             logger.warning("Input check's decision model failed: %r", error)
-            yield ErrorEvent(message=CHECK_FAILED)
+            yield ErrorEvent(kind="input_check_failed", message=CHECK_FAILED)
             return
         if verdict.category in REFUSED:
             for event in fixed(verdict):

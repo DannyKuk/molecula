@@ -53,7 +53,7 @@ def test_an_answer_shorter_than_the_canary_is_sent_whole_when_it_ends() -> None:
 
 def test_the_held_end_goes_out_before_an_error() -> None:
     watch = CanaryWatch(CANARY)
-    error = ErrorEvent(message="The answer took longer than 10 seconds.")
+    error = ErrorEvent(kind="timeout", message="The answer took longer than 10 seconds.")
 
     watch.passed(TokenEvent(text="Imatinib blocks"))
 

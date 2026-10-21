@@ -101,6 +101,12 @@ class LabelIndex:
                 "Rebuild it with `python -m molecula.ingest index`."
             )
 
+    def count(self) -> int:
+        """How many chunks the index holds; 0 before the first build."""
+        if not self._exists():
+            return 0
+        return self._client.get_collection(COLLECTION, embedding_function=None).count()
+
     def chunks(self) -> list[Chunk]:
         """Every stored chunk, ordered by ID; empty before the first build."""
         if not self._exists():

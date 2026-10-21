@@ -3,12 +3,14 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, Request
 
 from molecula.guard.chat import GuardedChat
-from molecula.guard.limits import ChatLimits
+from molecula.guard.limits import ChatLimited, ChatLimits
 from molecula.schemas.chat import ChatModel
 from molecula.services.complexes import ComplexService
 from molecula.services.compounds import CompoundService
+from molecula.services.knowledge_base import KnowledgeBase
 from molecula.services.labels import LabelService
 from molecula.services.targets import TargetService
+from molecula.services.usage import UsageLog
 
 
 def compound_service(request: Request) -> CompoundService:
@@ -43,6 +45,22 @@ def complex_service(request: Request) -> ComplexService:
 ComplexServiceDep = Annotated[ComplexService, Depends(complex_service)]
 
 
+def usage_log(request: Request) -> UsageLog:
+    """The app's usage log, opened at startup. Tests replace it with an override."""
+    return request.app.state.usage_log
+
+
+UsageLogDep = Annotated[UsageLog, Depends(usage_log)]
+
+
+def knowledge_base(request: Request) -> KnowledgeBase:
+    """What the app's store holds, opened at startup. Tests replace it with an override."""
+    return request.app.state.knowledge_base
+
+
+KnowledgeBaseDep = Annotated[KnowledgeBase, Depends(knowledge_base)]
+
+
 def chat(request: Request) -> GuardedChat:
     """The app's chat, the agent behind the guard, built at startup. Without a chat model or a
     label index there is none, and the chat answers 503."""
@@ -70,11 +88,16 @@ def chat_model(request: Request) -> ChatModel:
 ChatModelDep = Annotated[ChatModel, Depends(chat_model)]
 
 
-def chat_limits(request: Request) -> ChatLimits:
+def chat_limits(request: Request, usage_log: UsageLogDep) -> ChatLimits:
     """The app's chat limits, built at startup, once they have counted this request; raises
-    ChatLimited when they turn it away. Tests replace it with an override."""
+    ChatLimited when they turn it away, and the usage log records that. Tests replace it with
+    an override."""
     limits: ChatLimits = request.app.state.chat_limits
-    limits.admit(client_ip(request, trust_proxy=limits.trust_proxy))
+    try:
+        limits.admit(client_ip(request, trust_proxy=limits.trust_proxy))
+    except ChatLimited:
+        usage_log.limited()
+        raise
     return limits
 
 

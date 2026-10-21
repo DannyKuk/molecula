@@ -92,7 +92,7 @@ def build_store(settings: Settings, *, with_index: bool = True) -> None:
         settings.models_dir / "models--BAAI--bge-m3" / "weights.bin",
         settings.build_dir / "eval" / "run.json",
         settings.build_dir / "complex_candidates.md",
-        settings.data_dir / "runtime" / "usage.db",
+        settings.usage_db_path,
     ):
         local_only.parent.mkdir(parents=True, exist_ok=True)
         local_only.write_bytes(b"local only")

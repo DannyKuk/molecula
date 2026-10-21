@@ -1,4 +1,6 @@
 from collections.abc import AsyncIterator, Iterator, Sequence
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -10,6 +12,7 @@ from fake_llm import CANARY, ScriptedChatModel, answer_message, tool_call_messag
 from guard_fakes import FakeCheck, FakeSourceCheck
 from molecula.agent.agent import ChatAgent
 from molecula.agent.tool_registry import build_tools
+from molecula.api import dependencies
 from molecula.api.dependencies import chat, chat_limits
 from molecula.guard.chat import GuardedChat
 from molecula.guard.limits import ChatLimits, RequestLimiter
@@ -23,6 +26,8 @@ from molecula.schemas.chat import (
     ChatMessage,
     ChatModel,
 )
+from molecula.services.usage import UsageLog
+from molecula.store.usage import UsageStore
 from sse import server_sent_events
 from tool_fakes import (
     FakeComplexService,
@@ -54,8 +59,9 @@ def agent(script: list[Any], check: FakeCheck | None = None) -> GuardedChat:
 
 
 @pytest.fixture
-def client() -> Iterator[TestClient]:
+def client(usage_log: UsageLog) -> Iterator[TestClient]:
     app.dependency_overrides[chat_limits] = lambda: NO_LIMITS
+    app.dependency_overrides[dependencies.usage_log] = lambda: usage_log
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -88,6 +94,34 @@ def test_chat_streams_the_agents_events_as_server_sent_events(client: TestClient
     assert events[-1][1]["category"] == "ok"
 
 
+def test_a_chat_request_writes_one_usage_row_without_message_text(
+    client: TestClient, usage_store: UsageStore, tmp_path: Path
+) -> None:
+    use(
+        agent(
+            [
+                tool_call_message("get_targets", {"drug": "imatinib"}),
+                answer_message("It blocks ABL1."),
+            ]
+        )
+    )
+
+    response = client.post("/chat", json=QUESTION)
+
+    done = dict(server_sent_events(response.text))["done"]
+    [record] = usage_store.since(datetime(2026, 1, 1, tzinfo=UTC))
+    assert record.model == "fake-model"
+    assert record.outcome == "answered"
+    assert record.tools == ["get_targets"]
+    assert record.category == "ok"
+    assert record.step_limit_reached is False
+    assert record.input_tokens == done["usage"]["input_tokens"]
+    assert record.cost_usd == done["usage"]["cost_usd"]
+    stored = b"".join(path.read_bytes() for path in (tmp_path / "runtime").iterdir())
+    for text in (b"What does", b"imatinib", b"ABL1"):
+        assert text not in stored
+
+
 def test_a_provider_error_arrives_as_an_error_event(client: TestClient) -> None:
     response_429 = httpx.Response(429, request=httpx.Request("POST", "http://llm.test"))
     use(agent([openai.RateLimitError("slow down", response=response_429, body=None)]))
@@ -112,7 +146,14 @@ def test_an_unexpected_failure_ends_the_stream_with_an_error_event(client: TestC
     response = client.post("/chat", json=QUESTION)
 
     assert server_sent_events(response.text) == [
-        ("error", {"type": "error", "message": "Something went wrong while answering. Try again."})
+        (
+            "error",
+            {
+                "type": "error",
+                "kind": "server_error",
+                "message": "Something went wrong while answering. Try again.",
+            },
+        )
     ]
 
 

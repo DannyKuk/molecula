@@ -350,7 +350,7 @@ def test_an_empty_answer_before_the_step_limit_ends_with_an_error_too() -> None:
 
     events = run(agent(model))
 
-    assert events[-1] == ErrorEvent(message=NO_ANSWER)
+    assert events[-1] == ErrorEvent(kind="no_answer", message=NO_ANSWER)
     assert not any(isinstance(event, DoneEvent | SourcesEvent) for event in events)
 
 

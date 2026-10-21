@@ -29,6 +29,9 @@ class CidFiles:
         self._directory.mkdir(parents=True, exist_ok=True)
         self.path(cid).write_text(text, encoding="utf-8", newline="")
 
+    def count(self) -> int:
+        return sum(1 for _ in self._directory.glob(f"*{self.suffix}"))
+
     def remove(self, cid: int) -> None:
         self.path(cid).unlink(missing_ok=True)
 

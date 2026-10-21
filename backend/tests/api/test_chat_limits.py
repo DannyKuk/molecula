@@ -1,4 +1,5 @@
 from collections.abc import Callable, Iterator
+from datetime import UTC, datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -7,11 +8,14 @@ from fake_llm import CANARY, ScriptedChatModel, answer_message
 from guard_fakes import FakeCheck, FakeSourceCheck
 from molecula.agent.agent import ChatAgent
 from molecula.agent.tool_registry import build_tools
+from molecula.api import dependencies
 from molecula.api.dependencies import chat
 from molecula.config import Settings
 from molecula.guard.chat import GuardedChat
 from molecula.guard.limits import ChatLimits, DailyCostCap, RequestLimiter
 from molecula.main import app, open_chat_limits
+from molecula.services.usage import UsageLog
+from molecula.store.usage import UsageStore
 from tool_fakes import (
     FakeComplexService,
     FakeCompoundService,
@@ -39,7 +43,7 @@ def guarded(answers: int) -> GuardedChat:
 
 
 @pytest.fixture
-def limited() -> Iterator[Callable[..., ChatLimits]]:
+def limited(usage_log: UsageLog) -> Iterator[Callable[..., ChatLimits]]:
     """Puts limits on the app's chat, in front of a scripted agent."""
 
     def limit(
@@ -50,6 +54,7 @@ def limited() -> Iterator[Callable[..., ChatLimits]]:
         return limits
 
     app.dependency_overrides[chat] = lambda: guarded(answers=10)
+    app.dependency_overrides[dependencies.usage_log] = lambda: usage_log
     yield limit
     app.dependency_overrides.clear()
     del app.state.chat_limits
@@ -60,7 +65,7 @@ def ask(client: TestClient, **headers: str) -> int:
 
 
 def test_the_request_over_the_limit_gets_429_with_retry_after(
-    limited: Callable[..., ChatLimits],
+    limited: Callable[..., ChatLimits], usage_store: UsageStore
 ) -> None:
     limited(per_minute=2)
     client = TestClient(app, client=CLIENT)
@@ -69,6 +74,8 @@ def test_the_request_over_the_limit_gets_429_with_retry_after(
     response = client.post("/chat", json=QUESTION)
 
     assert response.status_code == 429
+    outcomes = [r.outcome for r in usage_store.since(datetime(2026, 1, 1, tzinfo=UTC))]
+    assert sorted(outcomes) == ["answered", "answered", "limited"]
     assert response.headers["retry-after"] == "60"
     assert response.json()["retry_after"] == 60
     assert "Try again in 1 minute" in response.json()["detail"]
