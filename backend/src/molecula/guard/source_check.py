@@ -121,7 +121,8 @@ def _judged(claim: Claim, judgement: ClaimJudgement, sources: dict[int, Any]) ->
 
 def cited_sources(results: Sequence[Any]) -> dict[int, dict[str, Any]]:
     """Every result an answer can cite, by its `ref`, without the fields no claim states. A
-    ChEMBL target is named with the drug it belongs to, which its parent result holds."""
+    ChEMBL target is named with the drug it belongs to, which its parent result holds. Results
+    that share a ref, like a drug's lookup and its properties, are merged into one source."""
     sources: dict[int, dict[str, Any]] = {}
 
     def visit(value: Any, drug: str | None) -> None:
@@ -131,7 +132,9 @@ def cited_sources(results: Sequence[Any]) -> dict[int, dict[str, Any]]:
                 source = _stated(value)
                 if drug is not None and "targets" not in value and "compound" not in value:
                     source.setdefault("drug", drug)
-                sources.setdefault(value["ref"], source)
+                merged = sources.setdefault(value["ref"], {})
+                for key, child in source.items():
+                    merged.setdefault(key, child)
                 return
             for child in value.values():
                 visit(child, name or drug)
