@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Awaitable, Callable, Sequence
 
 from molecula.schemas.chat import ChatModel, Checker, CheckerId
@@ -9,7 +10,8 @@ class ModelChoices[Chat]:
 
     The default comes first, then the models the local server lists, then the cloud models. The
     local list is read again each time, so a model downloaded in LM Studio shows up without a
-    restart. A name the local server and OpenRouter share is the local model.
+    restart. A name the local server and OpenRouter share is the local model. Chats are built
+    one at a time, so two requests that pick the same pair at once share one chat.
     """
 
     def __init__(
@@ -21,7 +23,7 @@ class ModelChoices[Chat]:
         local_names: Callable[[], Awaitable[list[str]]],
         checkers: Sequence[Checker],
         default_checker: CheckerId,
-        build: Callable[[ChatModel, CheckerId], Chat],
+        build: Callable[[ChatModel, CheckerId], Awaitable[Chat]],
     ) -> None:
         self.default = default
         self.checkers = list(checkers)
@@ -32,6 +34,7 @@ class ModelChoices[Chat]:
         self._cloud = cloud
         self._local_names = local_names
         self._build = build
+        self._building = asyncio.Lock()
 
     async def models(self) -> list[ChatModel]:
         local = [ChatModel(name=name, local=True) for name in await self._local_names()]
@@ -56,6 +59,7 @@ class ModelChoices[Chat]:
                 return None
             model = found
         key = (model, checker or self.default_checker)
-        if key not in self._chats:
-            self._chats[key] = self._build(*key)
+        async with self._building:
+            if key not in self._chats:
+                self._chats[key] = await self._build(*key)
         return model, self._chats[key]

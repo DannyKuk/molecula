@@ -2,12 +2,13 @@ import asyncio
 import json
 from typing import Any
 
+import anyio
 import pytest
 from langchain_core.messages import ToolMessage
 from langchain_core.tools import BaseTool
 
 from fake_llm import ScriptedChatModel
-from molecula.agent.tool_registry import build_tools, tools_over_mcp
+from molecula.agent.tool_registry import McpSessions, build_tools, tools_over_mcp
 from molecula.mcp.server import build_server
 from molecula.schemas.labels import SectionGroup
 from molecula.schemas.retrieval import LabelFilter, LabelQuery
@@ -214,3 +215,38 @@ def test_a_tool_that_fails_over_mcp_is_an_error_message_without_a_result() -> No
 
     assert message.status == "error"
     assert message.artifact is None
+
+
+def test_mcp_sessions_stay_open_until_closed_then_close_every_one() -> None:
+    local = tools()
+
+    async def open_two_then_close() -> list[ToolMessage]:
+        sessions = McpSessions()
+        held = [await sessions.open(build_server(local), local) for _ in range(2)]
+        while_open = [
+            await named(served, "get_targets").ainvoke(
+                {"type": "tool_call", "name": "get_targets", "args": {"drug": "Gleevec"}, "id": "c"}
+            )
+            for served in held
+        ]
+        await sessions.aclose()
+        for served in held:
+            with pytest.raises(anyio.ClosedResourceError):
+                await named(served, "get_targets").ainvoke({"drug": "Gleevec"})
+        return while_open
+
+    while_open = asyncio.run(open_two_then_close())
+
+    assert all(isinstance(message.artifact, DrugTargetList) for message in while_open)
+
+
+def test_a_session_that_fails_to_open_raises_where_it_was_opened() -> None:
+    async def open_without_a_server() -> None:
+        sessions = McpSessions()
+        try:
+            await sessions.open(object(), tools())  # type: ignore[arg-type]
+        finally:
+            await sessions.aclose()
+
+    with pytest.RaisesGroup(AttributeError):
+        asyncio.run(open_without_a_server())

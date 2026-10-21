@@ -15,6 +15,10 @@ def picked(
     return asyncio.run(choices.chat(name, checker))
 
 
+async def no_local_models() -> list[str]:
+    return []
+
+
 def built_chats(choices_built: list[tuple[ChatModel, CheckerId]]) -> ModelChoices[str]:
     def build(model: ChatModel, checker: CheckerId) -> str:
         choices_built.append((model, checker))
@@ -90,11 +94,41 @@ def test_the_answering_model_is_always_offered_and_only_the_listed_checkers_besi
     assert not offline.offers("decision")
 
 
+def test_two_requests_that_pick_the_same_model_at_once_share_one_chat() -> None:
+    built: list[ChatModel] = []
+
+    async def build(model: ChatModel, checker: CheckerId) -> str:
+        built.append(model)
+        await asyncio.sleep(0)
+        return f"chat {len(built)}"
+
+    choices = ModelChoices(
+        DEFAULT_MODEL,
+        "default chat",
+        cloud=[ChatModel(name="openai/gpt-6", local=False)],
+        local_names=no_local_models,
+        checkers=[GPT_OSS],
+        default_checker="local",
+        build=build,
+    )
+
+    async def pick_twice() -> list[tuple[ChatModel, str] | None]:
+        return await asyncio.gather(choices.chat("openai/gpt-6"), choices.chat("openai/gpt-6"))
+
+    first, second = asyncio.run(pick_twice())
+
+    assert first == second
+    assert len(built) == 1
+
+
 def test_the_local_list_is_read_again_so_a_new_download_shows_up() -> None:
     lists = [["google/gemma-4-31b"], ["google/gemma-4-31b", "qwen/qwen3.8-27b"]]
 
     async def local_names() -> list[str]:
         return lists.pop(0)
+
+    async def build(model: ChatModel, checker: CheckerId) -> str:
+        return model.name
 
     choices = ModelChoices(
         DEFAULT_MODEL,
@@ -103,7 +137,7 @@ def test_the_local_list_is_read_again_so_a_new_download_shows_up() -> None:
         local_names=local_names,
         checkers=[GPT_OSS],
         default_checker="local",
-        build=lambda model, checker: model.name,
+        build=build,
     )
 
     assert len(listed(choices)) == 2

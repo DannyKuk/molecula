@@ -2,8 +2,8 @@ import asyncio
 import logging
 import secrets
 import sqlite3
-from collections.abc import AsyncIterator, Callable, Sequence
-from contextlib import AsyncExitStack, asynccontextmanager
+from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
@@ -29,7 +29,7 @@ from molecula.agent.llm import (
     get_source_check_model,
     local_model_names,
 )
-from molecula.agent.tool_registry import build_tools, tools_over_mcp
+from molecula.agent.tool_registry import McpSessions, build_tools
 from molecula.api import chat, drugs, health, labels, retrieval, stats
 from molecula.config import Settings, get_settings
 from molecula.guard.chat import GuardedChat
@@ -266,7 +266,7 @@ def open_model_choices(
     default_chat: GuardedChat,
     guarded: Callable[[ChatAgent], GuardedChat],
     tools: Sequence[BaseTool],
-    checked_by: Callable[[ChatModel, ChatModel], GuardedChat],
+    checked_by: Callable[[ChatModel, ChatModel], Awaitable[GuardedChat]],
     canary: str,
 ) -> ModelChoices[GuardedChat]:
     """The models a user may pick to write the answers (#37) and to check the messages (#363).
@@ -275,14 +275,15 @@ def open_model_choices(
     answering model, that model runs all three checks."""
     checkers, default_checker = open_checkers(settings)
 
-    def build(model: ChatModel, checker: CheckerId) -> GuardedChat:
+    async def build(model: ChatModel, checker: CheckerId) -> GuardedChat:
         match checker:
             case "decision":
                 return guarded(open_agent(settings, tools, canary, model))
             case "local":
-                return checked_by(model, ChatModel(name=settings.local_llm_model or "", local=True))
+                local = ChatModel(name=settings.local_llm_model or "", local=True)
+                return await checked_by(model, local)
             case "answer":
-                return checked_by(model, model)
+                return await checked_by(model, model)
 
     return ModelChoices(
         ChatModel(name=chat_model_name(settings), local=chat_model_is_local(settings)),
@@ -311,22 +312,25 @@ def open_checkers(settings: Settings) -> tuple[list[Checker], CheckerId]:
     return checkers, "local" if chat_model_is_local(settings) else "answer"
 
 
-def open_chat_checked_by(
+async def open_chat_checked_by(
     settings: Settings,
     model: ChatModel,
     checks_model: ChatModel,
     services: Services,
     retriever: LabelRetriever,
+    sessions: McpSessions,
     canary: str,
 ) -> GuardedChat:
     """A chat in which `model` writes the answer and `checks_model` sorts the message, extracts
     the label filters and checks the answer, so a local pick of both makes no cloud call (#363).
-    Its tools are called directly even with AGENT_TOOLS=mcp: the MCP session is opened once at
-    startup, over the tools whose label filter the configured models extract."""
+    Its label filter needs tools of its own, so with AGENT_TOOLS=mcp it opens an MCP session of
+    its own too (#380)."""
     checker = get_chat_model(settings, checks_model)
     extractor = FilterExtractor(checker, services.compounds, services.labels)
-    tools = build_tools(
-        services.compounds, services.targets, services.complexes, extractor, retriever
+    tools = await served(
+        settings,
+        build_tools(services.compounds, services.targets, services.complexes, extractor, retriever),
+        sessions,
     )
     return GuardedChat(
         ChatModelInputCheck(checker),
@@ -334,6 +338,16 @@ def open_chat_checked_by(
         source_check=ChatModelSourceCheck(get_source_check_model(settings, checks_model)),
         timeout_seconds=settings.llm_timeout_seconds,
     )
+
+
+async def served(
+    settings: Settings, tools: list[BaseTool], sessions: McpSessions
+) -> list[BaseTool]:
+    """The tools, or with AGENT_TOOLS=mcp the same tools over an in-memory session of the MCP
+    server built from them (#42)."""
+    if settings.agent_tools == "mcp":
+        return await sessions.open(build_server(tools), tools)
+    return tools
 
 
 def log_api_keys(settings: Settings) -> None:
@@ -371,24 +385,24 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     )
     chat_model = open_chat_model(settings) if index is not None else None
     embeddings = None
-    mcp_session = AsyncExitStack()
+    mcp_sessions = McpSessions()
     if index is not None and chat_model is not None:
         embeddings = get_embeddings(settings)
         app.state.label_retriever = open_label_retriever(settings, index, embeddings)
         app.state.filter_extractor = open_filter_extractor(
             settings, chat_model, services.compounds, services.labels
         )
-        tools = build_tools(
-            services.compounds,
-            services.targets,
-            services.complexes,
-            app.state.filter_extractor,
-            app.state.label_retriever,
+        tools = await served(
+            settings,
+            build_tools(
+                services.compounds,
+                services.targets,
+                services.complexes,
+                app.state.filter_extractor,
+                app.state.label_retriever,
+            ),
+            mcp_sessions,
         )
-        if settings.agent_tools == "mcp":
-            tools = await mcp_session.enter_async_context(
-                tools_over_mcp(build_server(tools), tools)
-            )
         canary = secrets.token_hex(16)
         guarded = partial(
             GuardedChat,
@@ -403,6 +417,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             settings,
             services=services,
             retriever=app.state.label_retriever,
+            sessions=mcp_sessions,
             canary=canary,
         )
         app.state.model_choices = open_model_choices(
@@ -418,7 +433,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
     if nightly is not None:
         nightly.cancel()
-    await mcp_session.aclose()
+    await mcp_sessions.aclose()
     usage_conn.close()
     conn.close()
 

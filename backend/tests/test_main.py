@@ -13,6 +13,8 @@ from fastapi.testclient import TestClient
 from langchain_core.embeddings import Embeddings, FakeEmbeddings
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage
+from langchain_core.tools import BaseTool
+from mcp.server.fastmcp import FastMCP
 from pydantic import SecretStr
 
 from fake_llm import ScriptedChatModel, answer_message, tool_call_message
@@ -26,6 +28,7 @@ from molecula.guard.chat import GuardedChat
 from molecula.guard.safety import ChatModelInputCheck, DecisionModelInputCheck
 from molecula.ingest.index import DrugIndexer
 from molecula.main import app
+from molecula.mcp.server import build_server
 from molecula.rag import embeddings as rag_embeddings
 from molecula.rag.embeddings import embedding_model_id
 from molecula.rag.filters import FilterExtractor
@@ -393,17 +396,31 @@ def test_chat_answers_from_the_stored_labels_offline(
     assert [c["label"] for c in events["source_check"]["claims"]] == ["supported"]
 
 
-def test_with_mcp_agent_tools_the_chat_answers_through_the_mcp_server(
+def mcp_servers_built(monkeypatch: pytest.MonkeyPatch) -> list[FastMCP]:
+    """Records each MCP server the backend builds for its chats."""
+    servers: list[FastMCP] = []
+
+    def build(tools: list[BaseTool]) -> FastMCP:
+        servers.append(build_server(tools))
+        return servers[-1]
+
+    monkeypatch.setattr(main, "build_server", build)
+    return servers
+
+
+def test_by_default_the_chat_answers_through_the_mcp_server(
     settings: Settings, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(settings, "offline", True)
-    monkeypatch.setattr(settings, "agent_tools", "mcp")
+    servers = mcp_servers_built(monkeypatch)
     store_the_mechanism_label(settings)
     use_models(monkeypatch, search_the_mechanism_then_answer())
 
     with TestClient(app) as client:
         response = client.post("/chat", json=QUESTION)
 
+    assert settings.agent_tools == "mcp"
+    assert len(servers) == 1
     events = list(server_sent_events(response.text))
     by_name = dict(events)
     assert by_name["tool_call"]["name"] == "search_labels"
@@ -559,13 +576,15 @@ def checked_by_gpt_oss() -> tuple[ScriptedChatModel, ScriptedChatModel]:
 
 
 @pytest.mark.parametrize(
-    ("checker", "agent_tools"), [("answer", "local"), ("answer", "mcp"), ("local", "local")]
+    ("checker", "agent_tools"),
+    [("answer", "local"), ("answer", "mcp"), ("local", "local"), ("local", "mcp")],
 )
 def test_online_a_local_pick_checked_locally_makes_no_openrouter_or_jev_call(
     settings: Settings, monkeypatch: pytest.MonkeyPatch, checker: str, agent_tools: str
 ) -> None:
     monkeypatch.setattr(settings, "openrouter_api_key", SecretStr("sk-or-test"))
     monkeypatch.setattr(settings, "agent_tools", agent_tools)
+    servers = mcp_servers_built(monkeypatch)
     use_gpt_oss_locally(settings, monkeypatch)
     store_the_mechanism_label(settings)
     tested = ScriptedChatModel(script=[])
@@ -605,6 +624,8 @@ def test_online_a_local_pick_checked_locally_makes_no_openrouter_or_jev_call(
     assert len(gemma.received) + len(gpt_oss.received) == 5
     assert tested.received == []
     assert jev_calls == []
+    # With mcp the default chat and the picked one each get a server and a session.
+    assert len(servers) == (2 if agent_tools == "mcp" else 0)
 
 
 def test_online_jev_and_gpt_oss_may_check_and_jev_is_the_default(
