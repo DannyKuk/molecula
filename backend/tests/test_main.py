@@ -741,6 +741,33 @@ def test_no_response_or_log_line_contains_a_key_value(
             assert key not in str(response.headers)
 
 
+@pytest.mark.parametrize(
+    ("key", "expected"),
+    [
+        (None, "The answers come from openai/gpt-oss-20b at http://host.docker.internal:1234/v1"),
+        ("sk-or-test", "The answers come from openai/gpt-6-luna at OpenRouter"),
+    ],
+)
+def test_the_log_says_which_model_writes_the_answers_and_where(
+    make_settings: Callable[..., Settings],
+    caplog: pytest.LogCaptureFixture,
+    key: str | None,
+    expected: str,
+) -> None:
+    settings = make_settings(
+        offline=False,
+        openrouter_api_key=key,
+        llm_model="openai/gpt-6-luna",
+        local_llm_base_url="http://host.docker.internal:1234/v1",
+        local_llm_model="openai/gpt-oss-20b",
+    )
+    caplog.set_level(logging.INFO)
+
+    main.open_chat_model(settings)
+
+    assert expected in caplog.text
+
+
 def test_retry_after_is_readable_across_origins() -> None:
     response = TestClient(app).get("/health", headers={"Origin": "http://localhost:3000"})
 
