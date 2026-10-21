@@ -11,6 +11,7 @@ import {
   Plug,
   Plus,
   SquarePen,
+  Workflow,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -95,6 +96,14 @@ export function ChatSidebar(props: ChatListProps) {
           className={cn(buttonVariants({ variant: "ghost", size: "icon-lg" }), ICON)}
         >
           <Gauge />
+        </Link>
+        <Link
+          href="/how-it-answers"
+          aria-label="How it answers"
+          title="How it answers"
+          className={cn(buttonVariants({ variant: "ghost", size: "icon-lg" }), ICON)}
+        >
+          <Workflow />
         </Link>
         <McpDialog trigger={<IconButton label="MCP server" />}>
           <Plug />
@@ -216,7 +225,7 @@ export function ChatDrawer(props: ChatListProps) {
 }
 
 /**
- * "New chat", the benchmarks link, the MCP server guide when `withMcp`, the bookmarked chats, the
+ * "New chat", the benchmarks, dashboard and how-it-answers links, the MCP server guide when `withMcp`, the bookmarked chats, the
  * others by day, newest first, and what to know about where they are kept.
  */
 function ChatList({
@@ -239,6 +248,10 @@ function ChatList({
         <Link href="/dashboard" className={LIST_LINK}>
           <Gauge />
           Dashboard
+        </Link>
+        <Link href="/how-it-answers" className={LIST_LINK}>
+          <Workflow />
+          How it answers
         </Link>
         {withMcp && (
           // Connecting an assistant needs a checkout on a computer, so the phone drawer leaves it out.
