@@ -2,7 +2,17 @@ import { describe, expect, it } from "vitest";
 
 import { startTurn, type Turn } from "./chat-turn";
 import { CHECKING_ANSWER } from "./source-check";
-import { IMATINIB_LABELS, IMATINIB_TRACE, METFORMIN_TARGETS } from "./test-tool-results";
+import {
+  ACETAMINOPHEN_NO_COMPLEX,
+  COMPARISON_WITH_UNSUPPORTED,
+  GLEEVEC_FOUND,
+  IMATINIB_COMPLEX,
+  IMATINIB_LABELS,
+  IMATINIB_TRACE,
+  METFORMIN_PROPERTIES,
+  METFORMIN_TARGETS,
+  TYLENOLL_NOT_SUPPORTED,
+} from "./test-tool-results";
 import type { RetrievalTrace, Step, ToolRun } from "./tool-cards";
 import { callText, type TurnFlowPart, type TurnStep, turnFlow } from "./turn-flow";
 
@@ -34,6 +44,10 @@ function targets(): Step {
       result: METFORMIN_TARGETS,
     },
   };
+}
+
+function tool(name: string, result: unknown): Step {
+  return { text: `Running ${name}`, tool: { id: `call_${name}`, name, args: {}, result } };
 }
 
 function answered(steps: Step[], changes: Partial<Turn> = {}): Turn {
@@ -165,8 +179,52 @@ describe("turnFlow", () => {
     expect(step(flow, "2").call).toBe('get_targets(drug="metformin")');
     expect(step(flow, "3").title).toBe("Look it up in the store");
     expect(step(flow, "3").outcome).toBe(
-      "Found in the store. The Steps tab shows what it returned.",
+      "2 targets: Mitochondrial complex I (NADH dehydrogenase), Glycerol-3-phosphate dehydrogenase, mitochondrial.",
     );
+  });
+
+  it("says what each store lookup found", () => {
+    const lookup = (name: string, result: unknown) =>
+      step(turnFlow(answered([tool(name, result)])), "3").outcome;
+
+    expect(lookup("resolve_drug", GLEEVEC_FOUND)).toBe("“Gleevec” is imatinib in the store.");
+    expect(lookup("resolve_drug", TYLENOLL_NOT_SUPPORTED)).toBe("Not in the store: Tylenoll.");
+    expect(lookup("get_properties", METFORMIN_PROPERTIES)).toBe(
+      "metformin: C4H11N5, 129.16 g/mol.",
+    );
+    expect(lookup("compare_drugs", COMPARISON_WITH_UNSUPPORTED)).toMatch(
+      /^The properties of .+, side by side\. Not in the store: /,
+    );
+  });
+
+  it("adds the 3D view after a structure lookup, drawn by code from the store", () => {
+    const flow = turnFlow(answered([tool("get_complex", IMATINIB_COMPLEX)]));
+
+    expect(flow[1].steps.map(({ number, who, guide }) => [number, who, guide])).toEqual([
+      ["2", "model", "decide-what-to-look-up"],
+      ["3", "code", null],
+      ["4", "code", null],
+    ]);
+    expect(step(flow, "3").outcome).toMatch(
+      /^A reviewed structure: Imatinib in ABL1 \(BCR-ABL\), PDB 2HYY · Homo sapiens · \d+ hydrogen bonds\.$/,
+    );
+    expect(step(flow, "4").title).toBe("Show it in 3D");
+    expect(step(flow, "4").outcome).toBe("The 3D tab shows Imatinib in ABL1 (BCR-ABL).");
+  });
+
+  it("shows the molecule alone in 3D when the drug has no reviewed structure", () => {
+    const flow = turnFlow(answered([tool("get_complex", ACETAMINOPHEN_NO_COMPLEX)]));
+
+    expect(step(flow, "3").outcome).toBe("No reviewed structure of acetaminophen with its target.");
+    expect(step(flow, "4").outcome).toBe(
+      "The 3D tab shows the molecule alone, from its stored 3D shape.",
+    );
+  });
+
+  it("adds no 3D view for a structure lookup that found no drug", () => {
+    const flow = turnFlow(answered([tool("get_complex", TYLENOLL_NOT_SUPPORTED)]));
+
+    expect(flow[1].steps.map(({ number }) => number)).toEqual(["2", "3"]);
   });
 
   it("numbers two label searches", () => {

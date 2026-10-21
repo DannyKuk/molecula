@@ -11,10 +11,18 @@ import { citedRefs, sectionName } from "./citations";
 import { CHECKING_ANSWER, checkSummary } from "./source-check";
 import { CATEGORY_LABELS } from "./stats";
 import {
+  type Card,
   cardOf,
+  type DrugComplex,
+  type DrugNotSupported,
+  type DrugProperties,
+  type DrugTargetList,
   type LabelPassages,
   type RetrievalTrace,
   type Step,
+  structureSubtitle,
+  type StructureTarget,
+  structureTitle,
   type ToolRun,
 } from "./tool-cards";
 
@@ -200,12 +208,14 @@ function lookupSteps(tool: ToolRun): Draft[] {
     line: "Code reads the answer from Molecula's own store. No AI is asked.",
     state: "pending",
   };
-  const outcome = lookupOutcome(tool);
-  return [decide, outcome ? { ...lookup, state: "done", outcome } : lookup];
+  const card = cardOf(tool);
+  const outcome = lookupOutcome(tool, card);
+  const shown =
+    card?.kind === "complex" || card?.kind === "no_complex" ? [showIn3d(card, key)] : [];
+  return [decide, outcome ? { ...lookup, state: "done", outcome } : lookup, ...shown];
 }
 
-function lookupOutcome(tool: ToolRun): string | null {
-  const card = cardOf(tool);
+function lookupOutcome(tool: ToolRun, card: Card | null): string | null {
   if (card === null) return tool.result === undefined ? null : "Done.";
   switch (card.kind) {
     case "pending":
@@ -213,10 +223,70 @@ function lookupOutcome(tool: ToolRun): string | null {
     case "invalid":
       return `Rejected and sent back to the chat model as an error: ${card.errors.join("; ")}`;
     case "not_supported":
-      return `Not in the store: ${card.drugs.map((drug) => drug.query).join(", ")}.`;
-    default:
-      return "Found in the store. The Steps tab shows what it returned.";
+      return notInStore(card.drugs);
+    case "drug":
+      return `“${card.result.query}” is ${card.result.name} in the store.`;
+    case "properties":
+      return propertiesOutcome(card.drugs);
+    case "targets":
+      return targetsOutcome(card.result);
+    case "complex":
+      return `A reviewed structure: ${structureTitle(complexTarget(card.result))}, ${structureSubtitle(complexTarget(card.result))}.`;
+    case "no_complex":
+      return `No reviewed structure of ${card.result.name} with its target.`;
+    case "labels":
+      return `${count(card.result.passages.length, "passage")} found.`;
   }
+}
+
+function notInStore(drugs: DrugNotSupported[]): string {
+  return `Not in the store: ${drugs.map((drug) => drug.query).join(", ")}.`;
+}
+
+function propertiesOutcome(drugs: (DrugProperties | DrugNotSupported)[]): string {
+  const found = drugs.filter((drug): drug is DrugProperties => drug.status === "found");
+  const missing = drugs.filter((drug): drug is DrugNotSupported => drug.status !== "found");
+  const parts =
+    found.length === 1
+      ? [
+          `${found[0].compound.name}: ${found[0].compound.formula}, ${found[0].compound.molecular_weight} g/mol.`,
+        ]
+      : found.length > 1
+        ? [`The properties of ${found.map((drug) => drug.compound.name).join(", ")}, side by side.`]
+        : [];
+  if (missing.length > 0) parts.push(notInStore(missing));
+  return parts.join(" ");
+}
+
+function targetsOutcome(result: DrugTargetList): string {
+  const names = result.targets.map((target) => target.name);
+  if (names.length === 0) return `ChEMBL lists no mechanism for ${result.name}.`;
+  const shown = names.slice(0, 3).join(", ");
+  const more = names.length > 3 ? ` and ${names.length - 3} more` : "";
+  return `${count(names.length, "target")}: ${shown}${more}.`;
+}
+
+function complexTarget(complex: DrugComplex): StructureTarget {
+  return { cid: complex.cid, name: complex.name, complex };
+}
+
+/** What the 3D panel does with a structure the answer looked up: it loads it from the backend,
+ * which reads it from the store (`get_drug_complex` and `get_drug_structure` in `api/drugs.py`),
+ * and the browser draws it. */
+function showIn3d(card: Extract<Card, { kind: "complex" | "no_complex" }>, key: string): Draft {
+  return {
+    key: `${key}:3d`,
+    guide: null,
+    number: "4",
+    title: "Show it in 3D",
+    who: "code",
+    line: "The 3D tab loads the structure from Molecula's own store and your browser draws it. No AI is asked and nothing is fetched from outside.",
+    state: "done",
+    outcome:
+      card.kind === "complex"
+        ? `The 3D tab shows ${structureTitle(complexTarget(card.result))}.`
+        : "The 3D tab shows the molecule alone, from its stored 3D shape.",
+  };
 }
 
 function searchSteps(tool: ToolRun, index: string): Draft[] {
