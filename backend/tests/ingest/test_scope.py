@@ -81,3 +81,21 @@ def test_the_repo_scope_file_is_valid_and_complete() -> None:
     assert 100 <= len(drugs) <= 150
     assert HERO_CANDIDATES - {drug.name for drug in drugs if drug.hero} == set()
     assert MOLECULE_ONLY - names == set()
+
+
+@pytest.mark.parametrize(
+    ("german", "name"),
+    [
+        ("Sertralin", "sertraline"),
+        ("Methylphenidat", "methylphenidate"),
+        ("Paracetamol", "acetaminophen"),
+        ("Salbutamol", "albuterol"),
+        ("Acetylsalicylsäure", "aspirin"),
+        ("Valproinsäure", "valproic acid"),
+    ],
+)
+def test_the_repo_scope_file_has_the_german_spellings(german: str, name: str) -> None:
+    drugs = load_scope(REPO_ROOT / "data" / "scope.yaml").drugs
+    owners = {alias.casefold(): drug.name for drug in drugs for alias in drug.aliases}
+
+    assert owners[german.casefold()] == name

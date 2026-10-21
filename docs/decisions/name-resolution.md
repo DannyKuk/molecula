@@ -23,6 +23,7 @@ People type brands (Gleevec, Tylenol), non-US names (paracetamol, Ibuflam), the 
 | Gleevec | US brand | imatinib | scope alias |
 | Tylenol / paracetamol | US brand / non-US name | acetaminophen | scope alias |
 | Ibuflam | German brand, unknown to PubChem (404) | ibuprofen | scope alias |
+| Sertralin / Methylphenidat | German generic name | sertraline / methylphenidate | scope alias (#355) |
 | imatinib mesylate | salt name | imatinib | name without salt words |
 | metformin hydrochloride | salt name | metformin | name without salt words |
 | Doxycycline hyclate | salt name | doxycycline | PubChem synonym |
@@ -71,7 +72,7 @@ People type brands (Gleevec, Tylenol), non-US names (paracetamol, Ibuflam), the 
 - **Salt words:** "phosphate" and "succinate" are in, so "dexamethasone sodium phosphate" finds dexamethasone. "Acetate" is out, because medroxyprogesterone acetate is a different molecule from medroxyprogesterone. A name without salt words counts only if it matches a stored name exactly (PR #49).
 - **Plain "insulin" stays unsupported.** Mapping it to insulin glargine would be wrong (PR #49).
 - **Misspellings are not aliases.** "Trapentadol" from a hand-written list was read as tapentadol, not added (PR #32).
-- **Suggestions come from the 323 scope names and aliases only**, best first, at most three; where two drugs share a spelling, the scope name wins. They are matched on the name without salt words (PR #78).
+- **Suggestions come from the scope names and aliases only** (323 on 2026-10-12, 380 after #355), best first, at most three; where two drugs share a spelling, the scope name wins. They are matched on the name without salt words (PR #78).
 - **The cutoff is a setting**, `NAME_SUGGESTION_CUTOFF` (default 0.8); a value outside 0–1 stops the app at startup (PR #78).
 - **The chat answers an unknown name with "I couldn't find it" and offers the suggestions by the spelling they were found under**, with the drug's name in brackets ("Did you mean Tylenol (acetaminophen)?"), or asks which drug is meant when there are none. It never says Molecula has no data on the drug, since a typo says nothing about it, and the agent passes names to the tools as the user typed them. A button under the answer sends the question again with the suggestion (#189). Measured on 30 answers: 4 → 24 pass ([not-found eval](../evals/not-found-2026-10-16.md), #190).
 - **No live PubChem lookup for unknown names.** Besides the reasons in [local store](local-store.md), every typo sent to PubChem would become a cached 404 (#30 comment).
@@ -79,7 +80,8 @@ People type brands (Gleevec, Tylenol), non-US names (paracetamol, Ibuflam), the 
 ## Limits
 
 - **No phonetic matching** (out of scope in #51).
-- **German spellings exist only for the drugs on the hand-written list** (PR #32); the rest of the scope has none yet.
+- **German generic names are aliases for every drug whose German spelling differs** (#355, taken from the German Wikipedia article of each drug, 2026-10-21), except Esomeprazol and Lansoprazol: they score 0.90 against Omeprazol and 0.82 against Pantoprazol, above the 0.8 cutoff, so they are left to their PubChem synonyms. They still resolve, and `find_names` reads them in a question as a near spelling of the US name, but they are never offered as a suggestion. German brands are only the hand-written ones (PR #32).
+- **Case is ignored only for ASCII letters** in the lookup (SQLite `NOCASE`): "östradiol" isn't found as Östradiol and gets it as a suggestion instead (#355, fix in #359).
 - **The agent can still correct a typo itself** before any lookup, and then the user sees no suggestion: 2 of 30 answers in the [not-found eval](../evals/not-found-2026-10-16.md) after #190, 10 of 30 before. Only the prompt stops it; no code checks that a tool got the name as the user typed it.
 - **A combination brand gets a bare "not supported"**, without saying that it is a combination Molecula doesn't cover (#30 comment).
 - **The cutoff was checked on one store and a short list of typos.** A new scope entry can bring a new look-alike pair; the look-alike tests in `tests/services/test_compounds.py` use the store's real names.

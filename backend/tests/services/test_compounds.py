@@ -22,7 +22,8 @@ from store_records import compound_record
 FETCHED_AT = datetime(2026, 10, 11, tzinfo=UTC)
 SDF = "5291\n  stored conformer\n$$$$\n"
 SUGGESTION_CUTOFF = 0.8
-# Copied from the built store (2026-10-13). Citalopram, hydroxyzine and hydralazine aren't in it.
+# Copied from the built store (2026-10-13; sertraline and methylphenidate with their German
+# spellings 2026-10-21). Citalopram, hydroxyzine and hydralazine aren't in it.
 SCOPE = [
     (3672, "ibuprofen", ["Advil", "Motrin", "Nurofen", "Ibuflam"]),
     (1983, "acetaminophen", ["paracetamol", "Tylenol", "Panadol", "ben-u-ron"]),
@@ -44,6 +45,8 @@ SCOPE = [
     (3883, "lansoprazole", ["Prevacid"]),
     (3111, "metamizole", ["Metamizol", "dipyrone", "Novalgin", "Novaminsulfon"]),
     (1986, "acetazolamide", ["Diamox"]),
+    (68617, "sertraline", ["Sertralin", "Zoloft"]),
+    (4158, "methylphenidate", ["Methylphenidat", "Ritalin", "Concerta"]),
 ]
 
 
@@ -186,6 +189,35 @@ def test_suggestion_never_changes_the_status(scope_service: CompoundService) -> 
         None,
     )
     assert [suggestion.name for suggestion in resolution.suggestions] == ["ibuprofen"]
+
+
+@pytest.mark.parametrize(
+    ("name", "alias", "generic"),
+    [
+        ("Sertralin", "Sertralin", "sertraline"),
+        ("methylphenidat", "Methylphenidat", "methylphenidate"),
+        ("Paracetamol", "paracetamol", "acetaminophen"),
+    ],
+)
+def test_german_spelling_resolves_to_the_us_generic(
+    scope_service: CompoundService, name: str, alias: str, generic: str
+) -> None:
+    resolution = scope_service.resolve(name)
+
+    assert resolution.status == "found"
+    assert resolution.compound is not None
+    assert resolution.compound.name == generic
+    assert (resolution.matched_alias, resolution.match_kind) == (alias, "alias")
+
+
+def test_german_name_of_a_drug_outside_the_scope_is_not_supported(
+    scope_service: CompoundService,
+) -> None:
+    resolution = scope_service.resolve("Amitriptylin")
+
+    assert resolution.status == "not_supported"
+    assert resolution.compound is None
+    assert resolution.suggestions == []
 
 
 @pytest.mark.parametrize("name", ["Celexa", "hydroxizine", "xyz"])

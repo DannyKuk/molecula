@@ -11,6 +11,7 @@ drugs:
     aliases: [Sprycel]
     hero: true
   - name: caffeine
+    aliases: [Coffein, Koffein]
     hero: true
   - name: atorvastatin
     aliases: [Lipitor, Sortis]
@@ -28,7 +29,7 @@ drugs:
     aliases: [Aleve, Naprosyn, Miranax]
     hero: true
   - name: methotrexate
-    aliases: [Trexall]
+    aliases: [Methotrexat, Trexall]
     hero: true
   - name: donepezil
     aliases: [Aricept]
@@ -46,7 +47,7 @@ drugs:
     aliases: [Prinivil, Zestril]
     hero: true
   - name: acetazolamide
-    aliases: [Diamox]
+    aliases: [Acetazolamid, Diamox]
     hero: true
   - name: oseltamivir
     aliases: [Tamiflu]
@@ -72,7 +73,7 @@ drugs:
     aliases: [Isentress]
     hero: true
   - name: aspirin
-    aliases: [acetylsalicylic acid, ASA, ASS]
+    aliases: [acetylsalicylic acid, Acetylsalicylsäure, ASA, ASS]
     hero: true
     note: acetylates a COX serine; structures hold salicylate plus the acetylated serine
 
@@ -82,7 +83,7 @@ drugs:
   - name: metformin
     aliases: [Glucophage]
   - name: cetirizine
-    aliases: [Zyrtec]
+    aliases: [Cetirizin, Zyrtec]
   - name: omeprazole
     aliases: [Omeprazol, Prilosec]
 
@@ -100,9 +101,9 @@ drugs:
   - name: gabapentin
     aliases: [Neurontin]
   - name: hydrochlorothiazide
-    aliases: [HCTZ]
+    aliases: [Hydrochlorothiazid, HCTZ]
   - name: sertraline
-    aliases: [Zoloft]
+    aliases: [Sertralin, Zoloft]
   - name: simvastatin
     aliases: [Zocor]
   - name: montelukast
@@ -114,26 +115,27 @@ drugs:
   - name: bupropion
     aliases: [Wellbutrin, Zyban]
   - name: furosemide
-    aliases: [Lasix, frusemide]
+    aliases: [Furosemid, Lasix, frusemide]
   - name: pantoprazole
     aliases: [Pantoprazol, Protonix, Pantozol]
   - name: trazodone
-    aliases: [Desyrel]
+    aliases: [Trazodon, Desyrel]
   - name: fluticasone
-    aliases: [Flonase, Flovent]
+    aliases: [Fluticason, Flonase, Flovent]
   - name: tamsulosin
     aliases: [Flomax]
   - name: fluoxetine
-    aliases: [Prozac]
+    aliases: [Fluoxetin, Prozac]
   - name: carvedilol
     aliases: [Coreg]
   - name: duloxetine
-    aliases: [Cymbalta]
+    aliases: [Duloxetin, Cymbalta]
   - name: meloxicam
     aliases: [Mobic]
   - name: clopidogrel
     aliases: [Plavix]
   - name: prednisone
+    aliases: [Prednison]
   - name: tramadol
     aliases: [Ultram]
   - name: alprazolam
@@ -141,39 +143,39 @@ drugs:
   - name: amoxicillin
     aliases: [Amoxil]
   - name: methylphenidate
-    aliases: [Ritalin, Concerta]
+    aliases: [Methylphenidat, Ritalin, Concerta]
   - name: allopurinol
     aliases: [Zyloprim]
   - name: venlafaxine
-    aliases: [Effexor]
+    aliases: [Venlafaxin, Effexor]
   - name: clonazepam
     aliases: [Klonopin, Rivotril]
   - name: zolpidem
     aliases: [Ambien]
   - name: spironolactone
-    aliases: [Aldactone]
+    aliases: [Spironolacton, Aldactone]
   - name: propranolol
     aliases: [Inderal]
   - name: ondansetron
     aliases: [Zofran]
   - name: estradiol
-    aliases: [Estrace]
+    aliases: [Östradiol, Estrace]
   - name: lamotrigine
-    aliases: [Lamictal]
+    aliases: [Lamotrigin, Lamictal]
   - name: quetiapine
-    aliases: [Seroquel]
+    aliases: [Quetiapin, Seroquel]
   - name: famotidine
-    aliases: [Pepcid]
+    aliases: [Famotidin, Pepcid]
   - name: topiramate
-    aliases: [Topamax]
+    aliases: [Topiramat, Topamax]
   - name: diltiazem
     aliases: [Cardizem]
   - name: oxycodone
-    aliases: [OxyContin, Roxicodone]
+    aliases: [Oxycodon, OxyContin, Roxicodone]
   - name: sumatriptan
     aliases: [Imitrex]
   - name: finasteride
-    aliases: [Proscar, Propecia]
+    aliases: [Finasterid, Proscar, Propecia]
   - name: pregabalin
     aliases: [Lyrica]
   - name: apixaban
@@ -185,21 +187,21 @@ drugs:
   - name: dapagliflozin
     aliases: [Farxiga, Forxiga]
   - name: semaglutide
-    aliases: [Ozempic, Wegovy, Rybelsus]
+    aliases: [Semaglutid, Ozempic, Wegovy, Rybelsus]
     note: peptide; no small-molecule 3D
   - name: insulin glargine
-    aliases: [Lantus]
+    aliases: [Insulin glargin, Lantus]
     note: peptide; no small-molecule 3D
   - name: glimepiride
-    aliases: [Amaryl]
+    aliases: [Glimepirid, Amaryl]
   - name: pioglitazone
-    aliases: [Actos]
+    aliases: [Pioglitazon, Actos]
   - name: ezetimibe
-    aliases: [Zetia]
+    aliases: [Ezetimib, Zetia]
   - name: clonidine
-    aliases: [Catapres]
+    aliases: [Clonidin, Catapres]
   - name: doxycycline
-    aliases: [Vibramycin]
+    aliases: [Doxycyclin, Vibramycin]
   - name: azithromycin
     aliases: [Zithromax]
   - name: ciprofloxacin
@@ -209,39 +211,39 @@ drugs:
   - name: nitrofurantoin
     aliases: [Macrobid]
   - name: fluconazole
-    aliases: [Diflucan]
+    aliases: [Fluconazol, Diflucan]
   - name: valacyclovir
     aliases: [valaciclovir, Valtrex]
   - name: acyclovir
     aliases: [aciclovir, Zovirax]
   - name: dexamethasone
-    aliases: [Decadron]
+    aliases: [Dexamethason, Decadron]
   - name: budesonide
-    aliases: [Pulmicort, Entocort]
+    aliases: [Budesonid, Pulmicort, Entocort]
   - name: mirtazapine
-    aliases: [Remeron]
+    aliases: [Mirtazapin, Remeron]
   - name: aripiprazole
-    aliases: [Abilify]
+    aliases: [Aripiprazol, Abilify]
   - name: risperidone
-    aliases: [Risperdal]
+    aliases: [Risperidon, Risperdal]
   - name: olanzapine
-    aliases: [Zyprexa]
+    aliases: [Olanzapin, Zyprexa]
   - name: levetiracetam
     aliases: [Keppra]
   - name: carbamazepine
-    aliases: [Tegretol]
+    aliases: [Carbamazepin, Tegretol]
   - name: phenytoin
     aliases: [Dilantin]
   - name: valproic acid
-    aliases: [valproate, Depakene]
+    aliases: [Valproinsäure, valproate, Depakene]
   - name: baclofen
     aliases: [Lioresal]
   - name: morphine
-    aliases: [MS Contin]
+    aliases: [Morphin, Morphium, MS Contin]
   - name: buprenorphine
-    aliases: [Subutex, Butrans]
+    aliases: [Buprenorphin, Subutex, Butrans]
   - name: naloxone
-    aliases: [Narcan]
+    aliases: [Naloxon, Narcan]
   - name: tadalafil
     aliases: [Cialis]
   - name: esomeprazole
@@ -249,25 +251,25 @@ drugs:
   - name: digoxin
     aliases: [Lanoxin]
   - name: amiodarone
-    aliases: [Cordarone]
+    aliases: [Amiodaron, Cordarone]
   - name: colchicine
-    aliases: [Colcrys]
+    aliases: [Colchicin, Colcrys]
   - name: memantine
-    aliases: [Namenda]
+    aliases: [Memantin, Namenda]
   - name: haloperidol
     aliases: [Haldol]
   - name: metoclopramide
-    aliases: [Reglan]
+    aliases: [Metoclopramid, Reglan]
   - name: hydroxychloroquine
-    aliases: [Plaquenil]
+    aliases: [Hydroxychloroquin, Plaquenil]
   - name: letrozole
-    aliases: [Femara]
+    aliases: [Letrozol, Femara]
   - name: anastrozole
-    aliases: [Arimidex]
+    aliases: [Anastrozol, Arimidex]
   - name: dolutegravir
     aliases: [Tivicay]
   - name: tenofovir disoproxil
-    aliases: [Viread]
+    aliases: [Tenofovirdisoproxil, Viread]
   - name: ramipril
     aliases: [Altace, Delix]
   - name: bisoprolol
@@ -279,25 +281,26 @@ drugs:
 
   # Common OTC
   - name: loratadine
-    aliases: [Claritin]
+    aliases: [Loratadin, Claritin]
   - name: fexofenadine
-    aliases: [Allegra, Telfast]
+    aliases: [Fexofenadin, Allegra, Telfast]
   - name: diphenhydramine
-    aliases: [Benadryl]
+    aliases: [Diphenhydramin, Benadryl]
   - name: loperamide
-    aliases: [Imodium]
+    aliases: [Loperamid, Imodium]
   - name: pseudoephedrine
-    aliases: [Sudafed]
+    aliases: [Pseudoephedrin, Sudafed]
   - name: guaifenesin
     aliases: [Mucinex]
   - name: dextromethorphan
     aliases: [Delsym, DXM]
   - name: nicotine
-    aliases: [Nicorette, NicoDerm]
+    aliases: [Nicotin, Nikotin, Nicorette, NicoDerm]
   - name: minoxidil
     aliases: [Rogaine, Regaine]
   - name: hydrocortisone
+    aliases: [Hydrocortison]
   - name: clotrimazole
-    aliases: [Lotrimin, Canesten]
+    aliases: [Clotrimazol, Lotrimin, Canesten]
   - name: lansoprazole
     aliases: [Prevacid]
