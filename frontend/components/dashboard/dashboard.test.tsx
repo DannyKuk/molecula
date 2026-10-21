@@ -50,7 +50,7 @@ describe("Dashboard page", () => {
     expect(kb.textContent).toContain("133 drugs");
     expect(kb.textContent).toContain("7,012 label passages");
     expect(kb.textContent).toContain("Labels fetched 12 Oct 2026");
-    expect(kb.textContent).toContain("Last label update: none has run yet");
+    expect(kb.textContent).not.toContain("Last label update");
     expect(usageNumber("Requests")).toBe("Requests5last 30 days");
     expect(usageNumber("Answered")).toBe("Answered60%3 of 5");
     expect(usageNumber("Typical wait")).toBe("Typical wait13.0 smedian answer time");

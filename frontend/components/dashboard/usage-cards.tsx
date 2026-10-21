@@ -120,7 +120,6 @@ export function KnowledgeBase({ kb }: { kb: Stats["knowledge_base"] }) {
             ? longDate(kb.labels_fetched_to)
             : "not yet, the labels aren't built"}
         </li>
-        <li>Last label update: none has run yet</li>
         <li>Store schema v{kb.schema_version}</li>
       </ul>
     </section>
