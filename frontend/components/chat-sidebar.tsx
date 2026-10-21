@@ -69,8 +69,10 @@ const CURRENT = "border-rule-2 bg-card text-foreground hover:bg-card";
 const ICON =
   "text-ink-2 hover:bg-rule hover:text-foreground [&_svg:not([class*='size-'])]:size-4.5";
 
+// The rows are as tall as the rail's buttons, with their icons where the rail's are, so nothing
+// moves when the sidebar opens or closes.
 const LIST_LINK =
-  "flex w-full items-center gap-2 rounded-lg border border-transparent px-2.5 py-2 text-sm text-ink-2 hover:bg-rule hover:text-foreground [&_svg]:size-4";
+  "flex h-9 w-full items-center gap-2.5 rounded-lg border border-transparent px-2 text-sm text-ink-2 hover:bg-rule hover:text-foreground [&_svg]:size-4.5";
 
 const SIDEBAR_CLASSES =
   "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-rule bg-panel md:flex print:hidden";
@@ -90,11 +92,9 @@ export function ChatSidebar(props: ChatListProps) {
         aria-label={t.sidebar.chats}
         className={`${SIDEBAR_CLASSES} w-14 items-center gap-1 py-3`}
       >
-        <div className="grid h-10 place-items-center">
-          <BrandMark label="Molecula" className="size-6" />
-        </div>
-        <IconButton label={t.sidebar.show} onClick={() => setExpanded(true)}>
-          <PanelLeft />
+        <IconButton label={t.sidebar.show} onClick={() => setExpanded(true)} className="group">
+          <BrandMark className="size-6 group-hover:hidden group-focus-visible:hidden" />
+          <PanelLeft className="hidden group-hover:block group-focus-visible:block" />
         </IconButton>
         <IconButton
           label={t.sidebar.newChat}
@@ -131,8 +131,8 @@ export function ChatSidebar(props: ChatListProps) {
   }
   return (
     <aside aria-label={t.sidebar.history} className={`${SIDEBAR_CLASSES} w-65`}>
-      <div className="flex min-h-9 items-center justify-between gap-1 px-3 pt-3">
-        <Brand className="pl-2 text-[17px]" />
+      <div className="mt-3 flex h-9 shrink-0 items-center justify-between px-2.5">
+        <Brand className="pl-1.5 text-[17px]" markClassName="size-6" />
         <IconButton label={t.sidebar.hide} onClick={() => setExpanded(false)}>
           <PanelLeft />
         </IconButton>
@@ -291,7 +291,7 @@ function ChatList({
   const pathname = usePathname();
   return (
     <>
-      <div className="px-3 pt-2 pb-2">
+      <div className="flex flex-col gap-1 px-2.5 pt-1 pb-2">
         <button
           type="button"
           aria-current={newChatOpen ? "page" : undefined}
@@ -320,7 +320,7 @@ function ChatList({
       {props.available !== false && (
         <p className="border-t border-rule px-4 py-3 text-xs text-ink-3">{t.sidebar.savedHere}</p>
       )}
-      <div className="border-t border-rule px-3 py-2">
+      <div className="flex flex-col gap-1 border-t border-rule px-2.5 pt-2 pb-3">
         {withMcp && (
           // Connecting an assistant needs a checkout on a computer, so the phone drawer leaves it out.
           <McpDialog trigger={<button type="button" className={LIST_LINK} />}>
