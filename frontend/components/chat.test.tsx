@@ -24,7 +24,7 @@ import {
   TYLENOLL_NOT_SUPPORTED,
 } from "@/lib/test-tool-results";
 import type { StructureTarget } from "@/lib/tool-cards";
-import { chooseChecks, chooseModel } from "@/lib/use-chosen-model";
+import { chooseChecker, chooseModel } from "@/lib/use-chosen-model";
 
 import { Chat } from "./chat";
 
@@ -671,22 +671,22 @@ describe("Chat", () => {
 
     const body = JSON.parse(stream.fetchMock.mock.calls[0][1].body as string);
     expect(body.model).toBe("google/gemma-4-31b");
-    expect(body).not.toHaveProperty("checks");
+    expect(body).not.toHaveProperty("checker");
     chooseModel(null);
   });
 
-  it("sends the checks choice from the settings with the picked model", async () => {
+  it("sends the checker picked in the settings with the question", async () => {
     const stream = stubChatStream();
     chooseModel("google/gemma-4-31b");
-    chooseChecks("picked");
+    chooseChecker("answer");
     render(<Chat />);
 
     askQuestion("How does Gleevec work?");
 
     const body = JSON.parse(stream.fetchMock.mock.calls[0][1].body as string);
-    expect(body).toMatchObject({ model: "google/gemma-4-31b", checks: "picked" });
+    expect(body).toMatchObject({ model: "google/gemma-4-31b", checker: "answer" });
     chooseModel(null);
-    chooseChecks("tested");
+    chooseChecker(null);
   });
 
   it("does not send an empty question", () => {

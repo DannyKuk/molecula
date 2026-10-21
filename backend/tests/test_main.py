@@ -460,15 +460,26 @@ def test_chat_describes_the_stored_complex_offline(
     assert "disclaimer" not in events["sources"]
 
 
-@pytest.mark.parametrize("checks", [{}, {"checks": "tested"}])
-def test_a_picked_model_writes_the_answer_and_the_default_sorts_and_checks_it(
-    settings: Settings, monkeypatch: pytest.MonkeyPatch, checks: dict[str, str]
+def use_gpt_oss_locally(settings: Settings, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "local_llm_base_url", "http://localhost:1234/v1")
+    monkeypatch.setattr(settings, "local_llm_model", "openai/gpt-oss-20b")
+
+    async def local_names(settings: Settings) -> list[str]:
+        return ["google/gemma-4-31b"]
+
+    monkeypatch.setattr(main, "local_model_names", local_names)
+
+
+@pytest.mark.parametrize("checker", [{}, {"checker": "local"}])
+def test_offline_a_picked_model_writes_the_answer_and_gpt_oss_sorts_and_checks_it(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch, checker: dict[str, str]
 ) -> None:
     monkeypatch.setattr(settings, "offline", True)
+    use_gpt_oss_locally(settings, monkeypatch)
     LabelIndex(settings.index_dir).rebuild(
         [MECHANISM], [[1.0, 0.0, 0.0]], embedding_model_id(settings)
     )
-    default = ScriptedChatModel(
+    gpt_oss = ScriptedChatModel(
         script=[tool_call_message("SortedMessage", {"category": "ok"}), judged_supported()]
     )
     gemma = ScriptedChatModel(script=[answer_message("Gemma writes this answer.")])
@@ -476,18 +487,14 @@ def test_a_picked_model_writes_the_answer_and_the_default_sorts_and_checks_it(
 
     def answer_model(settings: Settings, model: ChatModel | None = None) -> BaseChatModel:
         asked_for.append(model)
-        return default if model is None else gemma
+        return gpt_oss if model is None else gemma
 
-    async def local_names(settings: Settings) -> list[str]:
-        return ["google/gemma-4-31b"]
-
-    use_models(monkeypatch, default)
+    use_models(monkeypatch, gpt_oss)
     monkeypatch.setattr(main, "get_answer_model", answer_model)
-    monkeypatch.setattr(main, "local_model_names", local_names)
 
     with TestClient(app) as client:
         listed = client.get("/models").json()
-        response = client.post("/chat", json=QUESTION | {"model": "google/gemma-4-31b"} | checks)
+        response = client.post("/chat", json=QUESTION | {"model": "google/gemma-4-31b"} | checker)
 
     gemma_model = ChatModel(name="google/gemma-4-31b", local=True)
     assert gemma_model.model_dump() in listed["models"]
@@ -513,19 +520,45 @@ def search_by_question_then_answer() -> ScriptedChatModel:
     )
 
 
-@pytest.mark.parametrize("agent_tools", ["local", "mcp"])
-def test_a_local_pick_with_the_picked_checks_makes_no_openrouter_or_jev_call(
-    settings: Settings, monkeypatch: pytest.MonkeyPatch, agent_tools: str
+def checked_by_gpt_oss() -> tuple[ScriptedChatModel, ScriptedChatModel]:
+    """gemma searches and answers; gpt-oss sorts, extracts the filter and checks the answer."""
+    gemma = ScriptedChatModel(
+        script=[
+            tool_call_message("search_labels", {"question": "How does imatinib work?"}),
+            answer_message("It blocks the BCR-ABL kinase [1]."),
+        ]
+    )
+    gpt_oss = ScriptedChatModel(
+        script=[
+            tool_call_message("SortedMessage", {"category": "ok"}),
+            tool_call_message("LabelQuery", {"substances": ["imatinib"]}),
+            judged_supported(),
+        ]
+    )
+    return gemma, gpt_oss
+
+
+@pytest.mark.parametrize(
+    ("checker", "agent_tools"), [("answer", "local"), ("answer", "mcp"), ("local", "local")]
+)
+def test_online_a_local_pick_checked_locally_makes_no_openrouter_or_jev_call(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch, checker: str, agent_tools: str
 ) -> None:
     monkeypatch.setattr(settings, "openrouter_api_key", SecretStr("sk-or-test"))
     monkeypatch.setattr(settings, "agent_tools", agent_tools)
+    use_gpt_oss_locally(settings, monkeypatch)
     store_the_mechanism_label(settings)
     tested = ScriptedChatModel(script=[])
-    gemma = search_by_question_then_answer()
+    if checker == "answer":
+        gemma, gpt_oss = search_by_question_then_answer(), ScriptedChatModel(script=[])
+    else:
+        gemma, gpt_oss = checked_by_gpt_oss()
     jev_calls: list[httpx2.Request] = []
 
     def model_for(settings: Settings, model: ChatModel | None = None) -> BaseChatModel:
-        return tested if model is None else gemma
+        if model is None:
+            return tested
+        return gpt_oss if model.name == "openai/gpt-oss-20b" else gemma
 
     def jev(settings: Settings) -> DecisionModel:
         def answer(request: httpx2.Request) -> httpx2.Response:
@@ -534,18 +567,14 @@ def test_a_local_pick_with_the_picked_checks_makes_no_openrouter_or_jev_call(
 
         return get_decision_model(settings, transport=httpx2.MockTransport(answer))
 
-    async def local_names(settings: Settings) -> list[str]:
-        return ["google/gemma-4-31b"]
-
     monkeypatch.setattr(main, "get_embeddings", lambda settings: UnitEmbeddings())
     for getter in ("get_chat_model", "get_answer_model", "get_source_check_model"):
         monkeypatch.setattr(main, getter, model_for)
     monkeypatch.setattr(main, "get_decision_model", jev)
-    monkeypatch.setattr(main, "local_model_names", local_names)
 
     with TestClient(app) as client:
         response = client.post(
-            "/chat", json=QUESTION | {"model": "google/gemma-4-31b", "checks": "picked"}
+            "/chat", json=QUESTION | {"model": "google/gemma-4-31b", "checker": checker}
         )
 
     events = dict(server_sent_events(response.text))
@@ -553,37 +582,52 @@ def test_a_local_pick_with_the_picked_checks_makes_no_openrouter_or_jev_call(
     assert events["retrieval_trace"]["filter_source"] == "model"
     assert events["retrieval_trace"]["filter"]["drugs"][0]["set_ids"] == ["gleevec"]
     assert [c["label"] for c in events["source_check"]["claims"]] == ["supported"]
-    assert len(gemma.received) == 5
+    assert len(gemma.received) + len(gpt_oss.received) == 5
     assert tested.received == []
     assert jev_calls == []
 
 
-def test_offline_no_cloud_model_is_offered_and_a_cloud_name_answers_422(
+def test_online_jev_and_gpt_oss_may_check_and_jev_is_the_default(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch, loaded_models: list[str]
+) -> None:
+    monkeypatch.setattr(settings, "openrouter_api_key", SecretStr("sk-or-test"))
+    use_gpt_oss_locally(settings, monkeypatch)
+    build_index(settings, embedding_model_id(settings))
+
+    with TestClient(app) as client:
+        listed = client.get("/models").json()
+
+    assert listed["checkers"] == [
+        {"id": "decision", "name": "jev-1.13", "local": False},
+        {"id": "local", "name": "openai/gpt-oss-20b", "local": True},
+    ]
+    assert listed["default_checker"] == "decision"
+
+
+def test_offline_no_cloud_model_or_jev_is_offered_and_asking_for_one_answers_422(
     settings: Settings, monkeypatch: pytest.MonkeyPatch, loaded_models: list[str]
 ) -> None:
     monkeypatch.setattr(settings, "offline", True)
     monkeypatch.setattr(settings, "openrouter_api_key", SecretStr("sk-or-test"))
     monkeypatch.setattr(settings, "llm_models", ["openai/gpt-6-luna"])
-    monkeypatch.setattr(settings, "local_llm_base_url", "http://localhost:1234/v1")
-    monkeypatch.setattr(settings, "local_llm_model", "openai/gpt-oss-20b")
-
-    async def local_names(settings: Settings) -> list[str]:
-        return ["google/gemma-4-31b"]
-
-    monkeypatch.setattr(main, "local_model_names", local_names)
+    use_gpt_oss_locally(settings, monkeypatch)
     build_index(settings, embedding_model_id(settings))
 
     with TestClient(app) as client:
         listed = client.get("/models").json()
-        response = client.post(
-            "/chat", json=QUESTION | {"model": "openai/gpt-6-luna", "checks": "picked"}
+        cloud = client.post(
+            "/chat", json=QUESTION | {"model": "openai/gpt-6-luna", "checker": "answer"}
         )
+        jev = client.post("/chat", json=QUESTION | {"checker": "decision"})
 
     assert listed["models"] == [
         {"name": "openai/gpt-oss-20b", "local": True},
         {"name": "google/gemma-4-31b", "local": True},
     ]
-    assert response.status_code == 422
+    assert listed["checkers"] == [{"id": "local", "name": "openai/gpt-oss-20b", "local": True}]
+    assert listed["default_checker"] == "local"
+    assert cloud.status_code == 422
+    assert jev.status_code == 422
 
 
 def test_without_a_local_server_only_the_configured_model_is_offered(

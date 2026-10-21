@@ -11,15 +11,27 @@ export type ChatModel = {
 };
 
 /**
- * Which models run the checks around a picked model's answer: the tested ones, or the picked model
- * itself (`ChecksChoice` in `backend/src/molecula/schemas/chat.py`, #363).
+ * Who checks the messages (#363): the decision model (Jev), LOCAL_LLM_MODEL (gpt-oss-20b), or the
+ * model that writes the answer (`CheckerId` in `backend/src/molecula/schemas/chat.py`).
  */
-export type ChecksChoice = "tested" | "picked";
+export type CheckerId = "decision" | "local" | "answer";
 
-/** The models a user may pick to write the answers, the default first (`ModelChoicesResponse`). */
+/** A tested model that may check the messages (`Checker`). */
+export type Checker = {
+  id: Exclude<CheckerId, "answer">;
+  name: string;
+  local: boolean;
+};
+
+/**
+ * The models a user may pick to write the answers and the tested models that may check the
+ * messages, each default first (`ModelChoicesResponse`).
+ */
 export type ModelChoices = {
   models: ChatModel[];
   default: string;
+  checkers: Checker[];
+  default_checker: CheckerId;
 };
 
 export type Drug = {

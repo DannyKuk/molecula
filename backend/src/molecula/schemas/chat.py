@@ -57,27 +57,43 @@ class ChatModel(BaseModel):
     local: bool
 
 
+type CheckerId = Literal["decision", "local", "answer"]
+
+
+class Checker(BaseModel):
+    """A tested model that may check the messages (#363). `decision` is the decision model
+    (Jev): it sorts the message and extracts the label filter, and the configured chat model
+    checks the answer against its sources. `local` is LOCAL_LLM_MODEL (gpt-oss-20b), which runs
+    all three checks. `answer`, the model that writes the answer, is always a choice and has no
+    entry."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: Literal["decision", "local"]
+    name: str
+    local: bool
+
+
 class ModelChoicesResponse(BaseModel):
-    """The models a user may pick to write the answers (#37), the default first."""
+    """The models a user may pick to write the answers (#37), the default first, and the tested
+    models that may check the messages (#363), the default checker first."""
 
     models: list[ChatModel]
     default: str
-
-
-type ChecksChoice = Literal["tested", "picked"]
+    checkers: list[Checker]
+    default_checker: CheckerId
 
 
 class ChatRequest(BaseModel):
     """The conversation so far, oldest first, ending with the user's new message. A longer
     conversation is sent as its latest messages. `model` is the name of one of the models
-    `GET /models` lists; without it the default writes the answer. `checks` says which models
-    run the input check, the label filter and the source check around a picked model's answer:
-    the tested ones, or the picked model itself (#363). With the default model it changes
-    nothing."""
+    `GET /models` lists; without it the default writes the answer. `checker` is one of the
+    checkers it lists, or `answer` for the model that writes the answer: it runs the input check,
+    the label filter and the source check (#363). Without it the default checker does."""
 
     messages: list[ChatMessage]
     model: Annotated[str, StringConstraints(min_length=1, max_length=200)] | None = None
-    checks: ChecksChoice = "tested"
+    checker: CheckerId | None = None
 
     @field_validator("messages", mode="before")
     @classmethod

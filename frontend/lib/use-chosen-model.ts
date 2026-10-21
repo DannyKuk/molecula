@@ -1,9 +1,11 @@
 import { useSyncExternalStore } from "react";
 
-import type { ChecksChoice } from "./api";
+import type { CheckerId } from "./api";
 
 export const MODEL_KEY = "molecula:model";
-export const CHECKS_KEY = "molecula:checks";
+export const CHECKER_KEY = "molecula:checker";
+
+const CHECKERS: CheckerId[] = ["decision", "local", "answer"];
 
 const listeners = new Set<() => void>();
 const unsaved = new Map<string, string>();
@@ -18,13 +20,11 @@ export function useChosenModel(): [string | null, (name: string | null) => void]
   return [chosen, chooseModel];
 }
 
-/**
- * Whether the checks around a picked model's answer run on the tested models or on the picked
- * model itself (#363), kept like the model. With the default model it changes nothing.
- */
-export function useChosenChecks(): [ChecksChoice, (checks: ChecksChoice) => void] {
-  const chosen = useSyncExternalStore(subscribe, chosenChecks, () => "tested" as const);
-  return [chosen, chooseChecks];
+/** The model the user picked to check the messages (#363), kept like the model; null for the
+ * backend's default checker. */
+export function useChosenChecker(): [CheckerId | null, (checker: CheckerId | null) => void] {
+  const chosen = useSyncExternalStore(subscribe, chosenChecker, () => null);
+  return [chosen, chooseChecker];
 }
 
 function subscribe(onChange: () => void) {
@@ -41,13 +41,14 @@ export function chooseModel(name: string | null) {
   store(MODEL_KEY, name);
 }
 
-/** The checks choice, read when a question is sent. */
-export function chosenChecks(): ChecksChoice {
-  return stored(CHECKS_KEY) === "picked" ? "picked" : "tested";
+/** The picked checker, read when a question is sent; null for the default. */
+export function chosenChecker(): CheckerId | null {
+  const checker = stored(CHECKER_KEY);
+  return CHECKERS.find((id) => id === checker) ?? null;
 }
 
-export function chooseChecks(checks: ChecksChoice) {
-  store(CHECKS_KEY, checks === "picked" ? checks : null);
+export function chooseChecker(checker: CheckerId | null) {
+  store(CHECKER_KEY, checker);
 }
 
 function stored(key: string): string | null {

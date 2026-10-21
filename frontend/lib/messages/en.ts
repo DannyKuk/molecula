@@ -148,13 +148,14 @@ export const en = {
     default: "default",
     developedWith:
       "Molecula was developed with gpt-oss-20b, which ran every prompt, safety rule and eval, and gpt-6-luna was measured as the cloud model. Another model can do worse here. It may skip a lookup and answer from memory, or cite the wrong source.",
-    checksOn: "Run the checks on",
-    checksTested: "the tested models",
-    checksPicked: "the picked model, ",
+    checker: "Model that checks the message",
+    checkerAbout:
+      "It sorts each question before the answer, so unsafe ones are refused, and picks the part of the label to search.",
+    checkerAnswer: "The model that writes the answer",
     checksStay:
       "The safety check before the answer and the source check after it stay on the models they were tested with.",
-    checksOnPicked: (model: string) =>
-      `${model} then also runs the safety check before the answer and the source check after it, and they are unmeasured too: the safety check that refuses lethal-dose and synthesis questions was measured only on gpt-oss-20b and Jev.`,
+    checksByAnswer: (model: string) =>
+      `${model} then also checks the message before the answer and the answer against its sources, and it wasn't measured for that: the safety check that refuses lethal-dose and synthesis questions was measured only on gpt-oss-20b and Jev.`,
     loadsFirst:
       "A local model loads on the local server when it is first asked, which can take a minute",
     fitsNextTo: (model: string) => `, and it has to fit in memory next to ${model}`,

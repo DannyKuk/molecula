@@ -11,9 +11,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import type { ChatModel, ChecksChoice } from "@/lib/api";
+import type { ChatModel } from "@/lib/api";
 import { useMessages } from "@/lib/messages";
-import { useChosenChecks } from "@/lib/use-chosen-model";
 import { shortName, useModelChoices } from "@/lib/use-model-choices";
 
 // The models every prompt and eval was measured on: gpt-oss-20b locally, gpt-6-luna in the cloud
@@ -21,8 +20,8 @@ import { shortName, useModelChoices } from "@/lib/use-model-choices";
 export const TESTED_MODELS = ["openai/gpt-oss-20b", "openai/gpt-6-luna"];
 
 /**
- * The settings over the chat, opened by `trigger`: which model writes the answers (#37), and which
- * models run the checks around a picked model's answer (#363).
+ * The settings over the chat, opened by `trigger`: which model checks the messages (#363) and
+ * which model writes the answers (#37).
  */
 export function ModelSettings({
   trigger,
@@ -56,93 +55,94 @@ export function ModelSettings({
 
 export function ModelPicker() {
   const t = useMessages();
-  const { choices, answering, choose } = useModelChoices();
-  const [checks, chooseChecks] = useChosenChecks();
-  const picked = choices && answering && answering.name !== choices.default ? answering : null;
+  const { choices, answering, choose, checking, chooseChecker } = useModelChoices();
 
+  if (choices === null) return <p className="text-sm text-ink-2">{t.settings.loading}</p>;
+  if (choices === false || !answering || !checking) {
+    return <p className="text-sm text-ink-2">{t.settings.off}</p>;
+  }
   return (
-    <section className="flex min-w-0 flex-col gap-3 text-sm text-ink-2">
-      <h3 className="text-base font-semibold text-foreground">{t.settings.model}</h3>
-      {choices === null && <p>{t.settings.loading}</p>}
-      {choices === false && <p>{t.settings.off}</p>}
-      {choices && answering && (
-        <>
-          <fieldset className="flex flex-col">
-            <legend className="sr-only">{t.settings.model}</legend>
-            {choices.models.map((model) => (
-              <ModelOption
-                key={model.name}
-                model={model}
-                isDefault={model.name === choices.default}
-                checked={model.name === answering.name}
-                onPick={() => choose(model.name === choices.default ? null : model.name)}
+    <div className="flex min-w-0 flex-col gap-5 text-sm text-ink-2">
+      <Group title={t.settings.checker}>
+        <p className="text-[13px]">{t.settings.checkerAbout}</p>
+        <fieldset className="flex flex-col">
+          <legend className="sr-only">{t.settings.checker}</legend>
+          {choices.checkers.map((checker) => (
+            <Choice
+              key={checker.id}
+              name="checker"
+              checked={checking === checker.id}
+              onPick={() => chooseChecker(checker.id)}
+            >
+              <ModelName name={checker.name} />
+              <Tags
+                tags={[
+                  checker.local ? t.settings.local : t.settings.cloud,
+                  t.settings.tested,
+                  checker.id === choices.default_checker && t.settings.default,
+                ]}
               />
-            ))}
-          </fieldset>
-          {picked && <ChecksPicker picked={picked} checks={checks} onPick={chooseChecks} />}
-          <Disclaimer
-            defaultModel={choices.models[0]}
-            answering={answering}
-            checksOnPicked={picked !== null && checks === "picked"}
-          />
-        </>
-      )}
+            </Choice>
+          ))}
+          <Choice
+            name="checker"
+            checked={checking === "answer"}
+            onPick={() => chooseChecker("answer")}
+          >
+            <span>{t.settings.checkerAnswer}</span>
+            <Tags tags={[choices.default_checker === "answer" && t.settings.default]} />
+          </Choice>
+        </fieldset>
+      </Group>
+      <Group title={t.settings.model}>
+        <fieldset className="flex flex-col">
+          <legend className="sr-only">{t.settings.model}</legend>
+          {choices.models.map((model) => (
+            <Choice
+              key={model.name}
+              name="model"
+              checked={model.name === answering.name}
+              onPick={() => choose(model.name === choices.default ? null : model.name)}
+            >
+              <ModelName name={model.name} />
+              <Tags
+                tags={[
+                  model.local ? t.settings.local : t.settings.cloud,
+                  TESTED_MODELS.includes(model.name) && t.settings.tested,
+                  model.name === choices.default && t.settings.default,
+                ]}
+              />
+            </Choice>
+          ))}
+        </fieldset>
+      </Group>
+      <Disclaimer
+        defaultModel={choices.models[0]}
+        answering={answering}
+        checkedByAnswer={
+          checking === "answer" && !choices.checkers.some(({ name }) => name === answering.name)
+        }
+      />
+    </div>
+  );
+}
+
+function Group({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="flex flex-col gap-3">
+      <h3 className="text-base font-semibold text-foreground">{title}</h3>
+      {children}
     </section>
   );
 }
 
-function ModelOption({
-  model,
-  isDefault,
-  checked,
-  onPick,
-}: {
-  model: ChatModel;
-  isDefault: boolean;
-  checked: boolean;
-  onPick: () => void;
-}) {
-  const t = useMessages();
-  return (
-    <Choice name="model" checked={checked} onPick={onPick}>
-      <span className="min-w-0 truncate font-mono text-[13px]">{shortName(model.name)}</span>
-      <span className="ml-auto shrink-0 text-xs text-ink-3">
-        {[
-          model.local ? t.settings.local : t.settings.cloud,
-          TESTED_MODELS.includes(model.name) && t.settings.tested,
-          isDefault && t.settings.default,
-        ]
-          .filter(Boolean)
-          .join(" · ")}
-      </span>
-    </Choice>
-  );
+function ModelName({ name }: { name: string }) {
+  return <span className="min-w-0 truncate font-mono text-[13px]">{shortName(name)}</span>;
 }
 
-/** Whether the tested models or the picked model run the checks around its answer (#363). */
-function ChecksPicker({
-  picked,
-  checks,
-  onPick,
-}: {
-  picked: ChatModel;
-  checks: ChecksChoice;
-  onPick: (checks: ChecksChoice) => void;
-}) {
-  const t = useMessages();
+function Tags({ tags }: { tags: (string | false)[] }) {
   return (
-    <fieldset className="flex flex-col">
-      <legend className="pb-1.5 font-semibold text-foreground">{t.settings.checksOn}</legend>
-      <Choice name="checks" checked={checks === "tested"} onPick={() => onPick("tested")}>
-        {t.settings.checksTested}
-      </Choice>
-      <Choice name="checks" checked={checks === "picked"} onPick={() => onPick("picked")}>
-        <span>
-          {t.settings.checksPicked}
-          <span className="font-mono text-[13px]">{shortName(picked.name)}</span>
-        </span>
-      </Choice>
-    </fieldset>
+    <span className="ml-auto shrink-0 text-xs text-ink-3">{tags.filter(Boolean).join(" · ")}</span>
   );
 }
 
@@ -180,19 +180,19 @@ function Choice({
 function Disclaimer({
   defaultModel,
   answering,
-  checksOnPicked,
+  checkedByAnswer,
 }: {
   defaultModel: ChatModel;
   answering: ChatModel;
-  checksOnPicked: boolean;
+  checkedByAnswer: boolean;
 }) {
   const t = useMessages();
   return (
     <div className="flex flex-col gap-2 border-l-2 border-signal pl-3 text-[13px]">
       <p>{t.settings.developedWith}</p>
       <p>
-        {checksOnPicked
-          ? t.settings.checksOnPicked(shortName(answering.name))
+        {checkedByAnswer
+          ? t.settings.checksByAnswer(shortName(answering.name))
           : t.settings.checksStay}
       </p>
       {answering.local && answering.name !== defaultModel.name && (

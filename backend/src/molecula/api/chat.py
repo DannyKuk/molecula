@@ -30,7 +30,10 @@ router = APIRouter()
     response_class=StreamingResponse,
     responses={
         200: {"content": {"text/event-stream": {}}, "description": "The answer, as it happens"},
-        422: {"description": "The conversation is invalid, or `model` isn't one /models lists"},
+        422: {
+            "description": "The conversation is invalid, or `model` or `checker` isn't one "
+            "/models lists"
+        },
         429: {"description": "The client asked too many questions; see Retry-After"},
         503: {
             "description": "Chat is off (no chat model or no label index), or the day's cost "
@@ -44,7 +47,13 @@ async def chat(
     """Answers the conversation's last message as server-sent events: each event's name is its
     `type` and its data the event as JSON (`schemas/chat.py`). The stream ends with `done` or
     `error`; `done` says how the guard sorted the question and what it cost."""
-    picked = await choices.chat(request.model, request.checks)
+    if request.checker is not None and not choices.offers(request.checker):
+        raise HTTPException(
+            status_code=422,
+            detail=f"Molecula can't check messages with {request.checker} here. "
+            "Pick a checker from the settings.",
+        )
+    picked = await choices.chat(request.model, request.checker)
     if picked is None:
         raise HTTPException(
             status_code=422,
@@ -69,8 +78,15 @@ def model(chat_model: ChatModelDep) -> ChatModel:
 @router.get("/models", responses={503: {"description": "Chat is off"}})
 async def models(choices: ModelChoicesDep) -> ModelChoicesResponse:
     """The models a user may pick to write the answers, the default first: the configured
-    model, the models the local server has and the OpenRouter models in LLM_MODELS (#37)."""
-    return ModelChoicesResponse(models=await choices.models(), default=choices.default.name)
+    model, the models the local server has and the OpenRouter models in LLM_MODELS (#37). And
+    the tested models that may check the messages instead of the model that writes the answer:
+    the decision model online, LOCAL_LLM_MODEL with a local server (#363)."""
+    return ModelChoicesResponse(
+        models=await choices.models(),
+        default=choices.default.name,
+        checkers=choices.checkers,
+        default_checker=choices.default_checker,
+    )
 
 
 async def counted(events: AsyncIterator[ChatEvent], limits: ChatLimits) -> AsyncIterator[ChatEvent]:
