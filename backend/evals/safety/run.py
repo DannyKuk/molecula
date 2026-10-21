@@ -32,7 +32,7 @@ from typing import Any, Literal
 import httpx
 import yaml
 from evals.chat_model.citations import chat_label, tool_descriptions
-from evals.no_limits import without_chat_limits
+from evals.no_limits import for_evals
 from evals.safety.dataset import EXPECTED, InputCheckItem, load_items
 from pydantic import BaseModel
 
@@ -141,7 +141,7 @@ async def ask_all(
         cache = cache_path(settings, model_name, tool_descriptions(app))
         answers = read_cache(cache)
         cache.parent.mkdir(parents=True, exist_ok=True)
-        without_chat_limits(app)
+        for_evals(app)
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://eval") as client:
             for number, item in enumerate(items, start=1):

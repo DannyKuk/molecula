@@ -1,5 +1,6 @@
 import logging
 import math
+import sqlite3
 import time
 import uuid
 from collections import Counter
@@ -83,8 +84,13 @@ class UsageLog:
         )
 
     def add(self, record: RequestRecord) -> None:
+        """Logs the request and stores it. A request the usage log can't store is only logged:
+        recording it must never stop an answer."""
         logger.info("%s", record.model_dump_json())
-        self._store.add(record)
+        try:
+            self._store.add(record)
+        except sqlite3.Error:
+            logger.exception("The usage log could not store request %s", record.id)
 
     def stats(self, days: int) -> UsageStats:
         """The last `days` UTC days, today included."""

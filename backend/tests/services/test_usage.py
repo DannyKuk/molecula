@@ -2,6 +2,7 @@ import asyncio
 import json
 from collections.abc import AsyncIterator, Iterable
 from datetime import UTC, date, datetime, timedelta
+from pathlib import Path
 
 import pytest
 
@@ -16,7 +17,7 @@ from molecula.schemas.chat import (
 from molecula.schemas.stats import RequestRecord, UsageDay
 from molecula.schemas.usage import Usage
 from molecula.services.usage import UsageLog, percentile
-from molecula.store.usage import UsageStore
+from molecula.store.usage import UsageStore, connect_usage
 
 NOW = datetime(2026, 10, 21, 12, 0, tzinfo=UTC)
 ANSWER_USAGE = Usage(input_tokens=1200, output_tokens=300, total_tokens=1500, cost_usd=0.002)
@@ -227,3 +228,15 @@ def test_an_empty_log_gives_zeros(usage_store: UsageStore) -> None:
 )
 def test_percentile_is_the_nearest_rank(values: list[int], p: int, expected: int | None) -> None:
     assert percentile(values, p) == expected
+
+
+def test_a_request_the_log_cannot_store_still_gets_its_answer(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    conn = connect_usage(tmp_path / "usage.db")
+    conn.close()
+
+    events = asyncio.run(drain(log(UsageStore(conn)).recorded(stream(ANSWERED))))
+
+    assert events == ANSWERED
+    assert "could not store request" in caplog.text

@@ -33,7 +33,6 @@ def connect_usage(path: Path) -> sqlite3.Connection:
     store's `connect`: the usage log isn't part of the store and has none of its tables."""
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path, check_same_thread=False)
-    conn.execute("PRAGMA journal_mode = WAL")
     conn.executescript(SCHEMA)
     return conn
 

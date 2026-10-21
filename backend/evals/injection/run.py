@@ -28,7 +28,7 @@ from evals.injection.dataset import (
     is_alone,
     load_items,
 )
-from evals.no_limits import without_chat_limits
+from evals.no_limits import for_evals
 from evals.safety.run import PROMPTS, Answer, cache_path, post_chat, read_cache
 
 from molecula.agent.channel_markers import without_control_tokens
@@ -85,7 +85,7 @@ async def ask_all(
         cache = cache_path(settings, model_name, tool_descriptions(app), "injection")
         answers = read_cache(cache)
         cache.parent.mkdir(parents=True, exist_ok=True)
-        without_chat_limits(app)
+        for_evals(app)
         planter = Planter(app.state.label_retriever)
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://eval") as client:

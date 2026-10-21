@@ -16,7 +16,7 @@ from collections import Counter
 from pathlib import Path
 
 import httpx
-from evals.no_limits import without_chat_limits
+from evals.no_limits import for_evals
 from evals.safety.dataset import InputCheckItem, load_items
 from evals.safety.run import Answer, ask
 
@@ -42,7 +42,7 @@ async def count_all(items: list[InputCheckItem], times: int, save: Path | None) 
     async with lifespan(app):
         if app.state.chat is None:
             raise SystemExit("The chat is off: build the index and set a chat model.")
-        without_chat_limits(app)
+        for_evals(app)
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://eval") as client:
             for item in items:
