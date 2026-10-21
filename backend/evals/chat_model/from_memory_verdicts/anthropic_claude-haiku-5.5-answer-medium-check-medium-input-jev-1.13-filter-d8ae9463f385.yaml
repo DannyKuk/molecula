@@ -1,0 +1,222 @@
+# anthropic/claude-haiku-5.5 on OpenRouter, ANSWER_REASONING_EFFORT=medium, main at 774776c (#386). Judged against
+# RULES in no_label.py by two subagents; every flag and close call re-read with the full passages. A
+# sentence that Molecula's data don't cover something counts as a denial when the store holds it or
+# names drugs never searched, not when the label really lacks it.
+
+- id: zolpidem-abuse-dependence#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Zolpidem 40 mg similar but not identical to diazepam 20 mg, 10 mg hard to tell from placebo,
+    is in [2]; dependence risk rising with dose and duration is in [1] (the answer says "abuse
+    and dependence", a loose merge of two sentences in [1], backed by the dose finding in [2]).
+    Valium really returned not_supported.
+- id: bupropion-abuse-dependence#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Inhalation of crushed tablets, seizures and deaths with intranasal or parenteral use, and
+    oral use only are quoted from [1]; not a controlled substance is [2]. Aplenzin is named in
+    [3].
+- id: atorvastatin-common-side-effects#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Most common reactions (nasopharyngitis, arthralgia, diarrhea, pain in extremity, UTI) and
+    the serious ones (myopathy/rhabdomyolysis, hepatic dysfunction, HbA1c/glucose rise) are in
+    [2]; myalgia, dyspepsia, nausea, muscle spasms, insomnia and placebo rates are in Table 1
+    [1]; 0.7% persistent transaminase rise is in [4].
+- id: ondansetron-adverse-reactions#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Headache 11% at 24 mg [2], 24% vs 13% at 8 mg twice daily [3], 9% vs 5% at 16 mg
+    postoperative [1], and radiation-induced headache [1] are all in the passages. "The link to
+    ondansetron is unclear for most of these reactions" is cited to [3], but the matching
+    statement ("unclear in many cases") is in [2]; wrong citation.
+- id: omeprazole-clinical-studies#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Two uncontrolled studies [2]; 75% (9/12) in ages 1 to 2, 60% (9/15) and 59% (58/98) in ages
+    2 to 16, 44% healed on the starting dose, most of the rest on a higher dose after 3 more
+    months, 51/57 (90%) are all in [1] with the right age bands. Calling 1-to-2-year-olds
+    "infants" is loose wording, not a different figure.
+- id: risperidone-clinical-studies#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Two 8-week placebo-controlled trials in ages 5 to 16 and the ABC-I description are in [1];
+    both better than placebo is in [2]; high dose effective, low dose not, and lower relapse in
+    the withdrawal phase are in [4]. The third trial's 6-week length and ages 5 to 17 are in
+    [2], cited to [4].
+- id: lisinopril-angioedema#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    The contraindication for prior ACE-inhibitor angioedema is quoted from [1]. Angioedema of
+    lips, tongue, glottis/larynx with fatal cases under ACE inhibitors including lisinopril is
+    in [6] but cited to [3]; wrong citation. "Qbrelis, an oral lisinopril product" comes from
+    the label's brand field; "oral" is product framing.
+- id: acetazolamide-contraindications#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Hypersensitivity contraindication and possible cross-sensitivity as a sulfonamide derivative
+    are in [1]; sensitization may recur and stop on hypersensitivity are in [4]; anaphylaxis,
+    SJS and TEN are in [4] and [2].
+- id: atorvastatin-starting-dose#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    10 to 20 mg once daily, range 10 to 80 mg, 40 mg for LDL-C reduction over 45%, and LDL-C
+    check at 4 weeks are in [1]; the 20 mg cap with clarithromycin or itraconazole is in [2].
+- id: lamotrigine-dosing#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    500 mg/day in 2 divided doses for conversion to monotherapy, and not exceeding the starting
+    dose and escalations because of rash, are in [1]. "The data doesn't cover how to start
+    lamotrigine as a single medicine" is accurate: the label gives monotherapy only as a
+    conversion from another antiepileptic, so not a denial.
+- id: omeprazole-indications#1
+  from_memory: false
+  denies_data: true
+  note: >-
+    EE established for 1 month to under 1 year, symptomatic GERD not established under 1 year,
+    nothing established under 1 month, and the juvenile-rat esomeprazole finding are in [1]; up
+    to 6 weeks is in [4]. But "The label has no further details on infants, and I can't say more
+    than that" denies what [1] returned: "Otitis media was frequently reported in the 1 month to
+    <1 year age group."
+- id: ciprofloxacin-indications#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Plague treatment (pneumonic, septicemic, Y. pestis) and prophylaxis from birth to 17 years,
+    and the animal-only efficacy basis, are in [1]; [2] lists plague in adult and pediatric
+    patients.
+- id: acetaminophen-warfarin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Ask a doctor or pharmacist before use with warfarin is in [1] and [2]; the product name and
+    OTC status come from the passages' brand/product_type fields. "Molecula's label search found
+    no other information ... so I can't say whether other blood thinners interact" describes
+    this search, not Molecula's data as a whole.
+- id: clopidogrel-omeprazole#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Avoid with omeprazole, CYP2C19 conversion to the active metabolite, reduced antiplatelet
+    activity together or 12 hours apart, and esomeprazole similar are in [1] and [3];
+    dexlansoprazole, lansoprazole and pantoprazole with less effect are in [2]. "Blood thinner"
+    and "heartburn medicines" are plain glosses of antiplatelet and PPI.
+- id: pseudoephedrine-antidepressants#1
+  from_memory: false
+  denies_data: true
+  note: >-
+    The MAOI warning, the 2-week wait and the ask-a-pharmacist line are in [1][2]; calling an
+    MAOI "a type of antidepressant" glosses "certain drugs for depression". But "Molecula's data
+    doesn't say whether other antidepressant types are affected" is a claim about the whole
+    store, not about the label.
+- id: diclofenac-otc-consumer#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Not known whether the gel works or is safe under 18, and being under 18 as a reason to ask a
+    doctor, are in [8]; the uses are [6]. "Molecula's data doesn't show that the gel is studied
+    or approved for teenagers" is accurate, since the gel's label says it isn't known, so not a
+    denial (as in claude-haiku-5.5's 2026-10-16 verdict). ZIPSOR's 12-17 data is kept apart
+    correctly.
+- id: diclofenac-overdosage#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    The overdose symptoms (lethargy, drowsiness, nausea, vomiting, epigastric pain, GI bleeding,
+    and the rare hypertension, acute renal failure, respiratory depression and coma) and the
+    supportive care all match [1]. "NSAIDs (this class includes diclofenac)" is backed by [3]
+    ("This product contains an NSAID"). The emergency line is required framing.
+- id: spironolactone-overdosage#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    The signs (drowsiness, confusion, maculopapular/erythematous rash, nausea, vomiting,
+    dizziness, diarrhea), the rare hyponatremia/hyperkalemia/hepatic coma that are unlikely in
+    acute overdose, and hyperkalemia with impaired kidneys all match [1]. It leaves out the
+    label's "in patients with severe liver disease" qualifier, which is an omission, not an
+    added claim. "Molecula can't advise for a specific person" is framing.
+- id: risperidone-patient-information#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    15-25 C (59-77 F) and protection from freezing are in [1] and [3]; protection from light and
+    keeping it out of children's reach are in [3].
+- id: valacyclovir-patient-information#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    "Does not cure genital herpes" and spread despite safer sex are in [3]; treatment,
+    suppression and reduction of transmission in immunocompetent adults are in [1][3]; no data
+    on suppression beyond 1 year in healthy patients is in [5]. The gloss of suppressive therapy
+    as taking it regularly to cut recurrences restates [1]/[3] ("control outbreaks").
+- id: ibuprofen-mechanism#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Cyclooxygenase inhibitor is [1] (ChEMBL); analgesic and antipyretic activity and
+    prostaglandin synthetase inhibition are [2], the menstrual-pain mechanism [3]. "An enzyme
+    the body uses to make prostaglandins, chemical messengers involved in pain and inflammation"
+    glosses "prostaglandin synthetase", as luna's answer to the same question was judged.
+    "Doesn't explain in detail how this reduces fever" is accurate: the label says the mode of
+    action is not completely understood.
+- id: oseltamivir-pharmacology#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    "The label excerpts I found don't describe a different dose" is scoped to the passages.
+    Dosing by age, weight and kidney function is in [6][7][8], and 75 mg twice daily for 5 days
+    is in [8]. The pregnancy data (no adequate studies, more than 5,000 / more than 1,000 first-
+    trimester women, no rise in malformations, limits, higher flu-complication risk) all match
+    [1].
+- id: gabapentin-product#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    The strengths 300/450/600/750/900 mg are in [1][3]; the distinct colours and debossing and
+    the bottles of 60 or 90 are in [2].
+- id: levothyroxine-product#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    The 1 mL white non-transparent unit-dose ampule, the colored labels, the box of 30 and the
+    pouch of 5 are in [1]; the 13-200 mcg/mL range is in [2]; keeping ampules in the pouch so
+    information isn't lost, 20-25 C storage and use within 3 months of opening are in [4].
+    "Aluminum pouch" comes from [5], not [4], a minor citation slip.
+- id: ondansetron-specific-populations#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    The Medicaid cohort RR 1.24 (1.03-1.48) for oral use with no association for IV use, the
+    case-control ORs 1.6 and 0.5, and palate formation at weeks 6-9 are in [1]; the
+    methodological limits and no link to major malformations in aggregate analyses are in [2].
+- id: morphine-specific-populations#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    The altered pharmacokinetics in cirrhosis, the lower starting dose, slow titration and
+    watching for respiratory depression, sedation and hypotension are in [1] (glossed plainly).
+    Telling the provider about liver, kidney or thyroid problems is in the Medication Guide [5].
+- id: dextromethorphan-warnings#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    The MAOI do-not-use warning, the 2-week wait and asking a doctor or pharmacist if unsure are
+    in [1][2]; "a type of antidepressant" glosses "certain drugs for depression".
+- id: celecoxib-warnings#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Every rate checks against [1]: 1% at 3-6 months, 2-4% at one year, one in five symptomatic,
+    CLASS 0.78% / 2.19% with low-dose ASA, 1.40% / 3.06% at 65 and older. The risk factors and
+    the more than 10-fold risk are also in [1]. The CLASS figures are celecoxib-specific but are
+    listed under "rates for NSAIDs in general", which is a framing slip, not an added fact.

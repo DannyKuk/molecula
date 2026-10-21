@@ -1,0 +1,179 @@
+# Hand verdicts for docs/decisions/chat-model.md (#386): whether each answer states a drug fact no tool
+# result of that answer holds (from_memory), or says Molecula has no data it never searched
+# (denies_data). Judged by a subagent against the from-memory eval's RULES, flags re-read by hand.
+# "Cyclooxygenase makes prostaglandins" is a gloss of the enzyme's name; tying it to pain or
+# inflammation without a result that does counts. The comparisons eval doesn't read this file.
+
+- id: typo-3d-ibuprofen-aspirin#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    "PTGS2 — the enzyme cyclooxygenase-2, a protein that helps make the signalling molecules
+    behind pain and inflammation": only get_complex and compare_drugs ran, and neither names
+    prostaglandins, pain or inflammation. Contacts, H-bonds (2.44/2.71/2.85 Å), mouse and every
+    table cell match.
+- id: typo-3d-ibuprofen-aspirin#2
+  from_memory: true
+  denies_data: false
+  note: >-
+    "PTGS2 (prostaglandin G/H synthase 2, an enzyme that helps make inflammation-signalling
+    molecules)": the name expansion is a gloss, but no result of this answer (get_complex,
+    compare_drugs) mentions inflammation. Structure and table values match.
+- id: typo-3d-ibuprofen-aspirin#3
+  from_memory: true
+  denies_data: false
+  note: >-
+    "cyclooxygenase-2, the enzyme that makes prostaglandins, the signalling molecules behind
+    pain and inflammation": only get_complex and compare_drugs ran, neither names
+    prostaglandins, pain or inflammation. H-bonds, contacts and table values match.
+- id: 3d-ibuprofen-aspirin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Mouse PTGS2, IBP, the three H-bonds (2.44/2.71/2.85 Å), the closest contacts and every table
+    cell match get_complex and compare_drugs; the hydrogen-bond and residue lines are glosses.
+- id: 3d-ibuprofen-aspirin#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Structure (mouse PTGS2, H-bonds to TYR356/ARG121 in chain B, contacts within 4 Å) and table
+    values match; "an enzyme, a protein that speeds up a chemical reaction" is a generic gloss.
+    Close call: "I can't tell you from Molecula's data how the two compare in how they work,
+    what they're used for or how they behave in the body" without any label or target search,
+    but it adds "that would need label searches", so it points to the data rather than denying
+    it.
+- id: 3d-ibuprofen-aspirin#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    O1/O2 H-bonds to TYR356 and ARG121 with distances, the other contacts, mouse PTGS2 and every
+    table cell match get_complex and compare_drugs; the enzyme and H-bond lines are glosses.
+- id: compare-ibuprofen-naproxen#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    NSAIDs and COX from [3][5][6] (the prostaglandin/pain/inflammation gloss is backed by [6]),
+    ibuprofen uses [13], naproxen properties [6], half-lives 1.8-2.0 h [9] and about 15 h [12],
+    the aspirin warning [7][11], properties match. Close call: "Molecula's data doesn't cover a
+    head-to-head comparison of their pain-relief strength or side-effect rates" is unsearched,
+    but labels hold no head-to-head trial of the two.
+- id: compare-ibuprofen-naproxen#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    NSAID class and the reduce pain/inflammation/fever gloss from [6][8][10], COX and
+    prostaglandins from [1][10], uses [4][7][9][11], naproxen allergy, stomach bleeding and
+    heart warnings [13], aspirin warning [12]; properties match. "Molecula's data here doesn't
+    cover a direct head-to-head comparison" is about the returned results (no half-life passage
+    here).
+- id: compare-ibuprofen-naproxen#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Mechanisms from [4][5] (COX-1/COX-2 and prostaglandins as inflammation mediators), ChEMBL
+    [13], uses [5][12], aspirin warning [6][10], half-lives [8][11] and the table all match.
+    Close call: "doesn't cover a head-to-head comparison of their effectiveness or side effects"
+    is unsearched but true of the labels.
+- id: diff-metformin-glimepiride#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Mechanisms [7][11] and ChEMBL [1][2][3], glimepiride indication [16], metformin common side
+    effects and diarrhea 53% vs 12% [21], glimepiride common side effects [19], weight gain and
+    hypoglycemia 19.7% vs 3.2% [17], MW and XLogP match. The head-to-head line is a close call
+    left unflagged.
+- id: diff-metformin-glimepiride#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Mechanisms [6][12] and targets [1]-[3]; severe hypoglycemia with impaired concentration,
+    unconsciousness, convulsions, brain impairment or death [22]; metformin hypoglycemia only in
+    combination [16][17]; lactic acidosis risk factors [18]; hypersensitivity, hemolytic anemia
+    and cardiovascular mortality [22][23]. "Used in type 2 diabetes" is backed by [6] and the
+    type 2 patients in [11][13].
+- id: diff-metformin-glimepiride#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Mechanisms from [6] and [12] (sulfonylurea named there), ChEMBL targets [3][4][5], MW and
+    XLogP from [1][2]; "use its own insulin better" glosses improved insulin sensitivity.
+- id: de-ibuprofen-paracetamol#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Table, COX/FAAH/TRPV1 [13]-[15], uses [3][4][8][11] and the prostaglandin gloss (backed by
+    [9] pain and inflammation) match. Close call: "Was Moleculas Daten nicht abdecken: einen
+    direkten Vergleich der Nebenwirkungen, Warnhinweise oder Wechselwirkungen beider Mittel
+    untereinander" came after an indications-only search, but it is the head-to-head framing
+    left unflagged elsewhere; the labels hold each drug's warnings, not a side-by-side.
+- id: de-ibuprofen-paracetamol#2
+  from_memory: true
+  denies_data: false
+  note: >-
+    "der Vanilloid-Rezeptor TRPV1, ein Ionenkanal, der an der Schmerzwahrnehmung beteiligt ist":
+    ChEMBL [3] gives only "cation channel" and "Vanilloid receptor opener"; no result ties TRPV1
+    to pain perception (close call, a target-function gloss). Uses, warnings [9][10][14][15],
+    nausea/vomiting [8] and properties match.
+- id: de-ibuprofen-paracetamol#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Table, ChEMBL targets, uses [9][11][13], platelet result [14] and the aspirin interaction
+    [6] match. Close call: "Prostaglandinen ... die Schmerz und Fieber vermitteln" read as a
+    gloss backed by [7] (analgesic, antipyretic, prostaglandin synthetase inhibition).
+- id: diff-omeprazole-famotidine#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Acid pump and final step [7], H2 antagonism and acid concentration/volume [11], uses
+    [6][8][10] and properties match. "A docking site that histamine uses to trigger acid
+    release" and "blocks one of the signals" read as glosses of the receptor (close call, as in
+    luna's run).
+- id: diff-omeprazole-famotidine#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Mechanisms [12][6], ChEMBL [1][4], uses [5][11][13] and properties [2][3] match; the H2
+    docking-site line and the GERD gloss are term glosses.
+- id: diff-omeprazole-famotidine#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Mechanisms [7][11], ChEMBL [3][4], uses [6][8][10] including Zollinger-Ellison, and
+    properties match; "more water-soluble (negative XLogP)" compares two result values.
+- id: control-use-ibuprofen#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Rx indications [1], OTC uses [2], NSAID [4] and prostaglandin synthesis [3]; the pain-and-
+    inflammation gloss of prostaglandins is backed by [3][4].
+- id: control-use-ibuprofen#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Rx indications [1], OTC uses and fever [2], analgesic and antipyretic activity [4]; no extra
+    drug facts.
+- id: control-use-ibuprofen#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Rx and OTC uses [1][2], NSAID and prostaglandin synthesis [3][4]; the gloss that
+    prostaglandins contribute to pain, fever and inflammation is backed by [4].
+- id: control-3d-aspirin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    3N8Y, SAL, sheep PTGS1, the Ser530 caption, both H-bonds (2.89/3.23 Å), the five other
+    contacts and the PubChem values all match.
+- id: control-3d-aspirin#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    "Prostaglandin G/H synthase 1" expands the PTGS1 name with no function claim; caption, atom
+    pairs, contacts and XLogP/TPSA match.
+- id: control-3d-aspirin#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Same structure facts as #2 (PTGS1 name expansion, caption, O1'/O2 H-bonds, six contacts) and
+    formula, MW, heavy atoms and rotatable bonds all match.
