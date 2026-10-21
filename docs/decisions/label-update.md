@@ -8,7 +8,7 @@ FDA labels are the only data in the store that changes after the build. #25 plan
 
 ## What we tried
 
-All against openFDA on 2026-10-21, without a VPN: the query checks without an API key, the update runs with the configured key, which changes nothing in the answers. On the store whose labels were fetched on 2026-10-12 (133 drugs, 156 labels). The query shapes were checked first in #340.
+All against openFDA on 2026-10-21, without a VPN: the query checks without an API key, the update runs with the configured key, which changes nothing in the answers. The store's labels were fetched on 2026-10-12 (133 drugs, 156 labels). The query shapes were checked first in #340.
 
 - **A window on `effective_time`.** One `count` on `openfda.generic_name.exact` per 30 drug names, over `effective_time:[since TO *]`, keeping the generic names of one ingredient (no `,`, `/`, `AND` or `WITH`; combination labels are never chosen). A drug whose name appears in one is marked, and a marked drug's label pages in the store's HTTP cache give the size of fetching it again.
 - **How late openFDA publishes.** The data updated on 2026-10-20 holds no ibuprofen label newer than 2026-09-09, and only two labels under acetaminophen, ibuprofen and imatinib from 2026-09-15 on, both combinations. A window that starts at the last run misses a label that is published weeks after its effective date, so it needs a margin of at least six weeks.
