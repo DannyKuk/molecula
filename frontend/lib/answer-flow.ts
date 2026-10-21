@@ -59,7 +59,7 @@ export const FLOW_STEPS: FlowStep[] = [
     title: "Decide what to look up",
     who: "model",
     short:
-      "Before it has read any label text, the chat model picks what to look up and fills in the call.",
+      "The chat model picks what to look up and fills in the call, before it has seen what the lookup returns.",
     text: "The chat model hasn't seen any label text yet. It decides to search the labels and fills in the search: which drug, and which part of the label it expects the answer in.",
     call: 'search_labels(drug="ibuprofen", section="interactions")',
     aside:
@@ -104,7 +104,7 @@ export const FLOW_STEPS: FlowStep[] = [
     title: "Write the answer",
     who: "model",
     short:
-      "The chat model reads what the lookups returned and writes the answer, citing passages as [n].",
+      "The chat model reads what the lookups returned and writes the answer, citing each source as [n].",
     text: "The chat model reads the 5 passages and writes the answer. Every fact gets the number of the passage it came from, like [3].",
     passes: "the answer with its [n] citations",
   },
