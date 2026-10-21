@@ -1,8 +1,9 @@
 from evals.no_limits import for_evals
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
-from molecula.api.dependencies import UsageLogDep
+from clerk_tokens import clerk_login
+from molecula.api.dependencies import UsageLogDep, signed_in_user
 
 
 def test_an_eval_records_its_requests_in_memory_only() -> None:
@@ -16,3 +17,16 @@ def test_an_eval_records_its_requests_in_memory_only() -> None:
     for_evals(app)
 
     assert TestClient(app).get("/stored").json() == 1
+
+
+def test_an_eval_asks_without_a_login_even_when_the_app_has_one() -> None:
+    app = FastAPI()
+    app.state.login = clerk_login()
+
+    @app.get("/asked", dependencies=[Depends(signed_in_user)])
+    def asked() -> str:
+        return "answered"
+
+    for_evals(app)
+
+    assert TestClient(app).get("/asked").status_code == 200
