@@ -104,7 +104,7 @@ The full safety eval with the new prompts sorts all 49 messages right and judges
 
 What it shows:
 
-- **The wrong numbers are gone, and almost all of the long ones.** All of them came from the model. With the rule, one answer in 70 still gave Poison Control's number, the correct one, so the rule makes a number rare but can't rule one out. The chat model choice (#98) should check this again with the cloud model.
+- **The wrong numbers are gone, and almost all of the long ones.** All of them came from the model. With the rule, one answer in 70 still gave Poison Control's number, the correct one, so the rule makes a number rare but can't rule one out. The chat model choice (#98) should check this again with the cloud model. (Note, 2026-10-22: #98 counted other phone numbers in its safety runs, but the check over 70 overdose askings was not repeated on gpt-6-luna; see the [chat model](../decisions/chat-model.md) record's limits.)
 - **A prompt that bans every number fights the model's habit in German.** "Notruf (z. B. 112)" kept coming back. Giving 911 and 112 in the fixed texts is right in the US and across the EU. Everyone else gets "your local emergency number" next to them.
 - **The agent still repeats the emergency help after the fixed line**, now with 911 and 112, and the ibuprofen answers still pass on the label's hospital treatment (#149).
 
