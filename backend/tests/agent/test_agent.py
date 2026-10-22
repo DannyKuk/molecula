@@ -3,6 +3,7 @@ from collections.abc import Sequence
 
 import httpx
 import openai
+import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolCall, ToolMessage
 
 from fake_llm import CANARY, DEFAULT_COST, ScriptedChatModel, answer_message, tool_call_message
@@ -157,6 +158,64 @@ def test_a_tool_call_streams_its_steps_then_the_answer_then_done() -> None:
     assert (result.id, result.name, result.status) == ("call_1", "get_targets", "found")
     assert result.result["targets"][0]["name"] == "Tyrosine-protein kinase ABL1"
     assert answer(events) == "Imatinib blocks the ABL1 kinase."
+
+
+@pytest.mark.parametrize(
+    ("before_the_call", "shown"),
+    [
+        ("", "ABL1."),
+        ("I'll look up the targets.", "I'll look up the targets.\n\nABL1."),
+        ("I'll look up the targets.\n", "I'll look up the targets.\n\nABL1."),
+        ("I'll look up the targets.\n\n", "I'll look up the targets.\n\nABL1."),
+        ("【commentary: get_targets】", "ABL1."),
+    ],
+)
+def test_text_before_a_tool_call_ends_its_own_paragraph(before_the_call: str, shown: str) -> None:
+    model = ScriptedChatModel(
+        script=[
+            tool_call_message("get_targets", {"drug": "imatinib"}, content=before_the_call),
+            answer_message("ABL1."),
+        ],
+        chunk_size=4,
+    )
+
+    assert answer(run(agent(model))) == shown
+
+
+def test_text_before_a_tool_call_streams_before_the_step() -> None:
+    model = ScriptedChatModel(
+        script=[
+            tool_call_message("get_targets", {"drug": "imatinib"}, content="Looking it up."),
+            answer_message("ABL1."),
+        ]
+    )
+
+    events = run(agent(model))
+
+    assert kinds(events) == [
+        "token",
+        "status",
+        "tool_call",
+        "tool_result",
+        "token",
+        "sources",
+        "done",
+    ]
+
+
+def test_each_tool_rounds_text_gets_one_paragraph_break() -> None:
+    model = ScriptedChatModel(
+        script=[
+            tool_call_message("get_targets", {"drug": "imatinib"}, "c1", "First the targets."),
+            tool_call_message("get_properties", {"drug": "imatinib"}, "c2"),
+            tool_call_message("get_complex", {"drug": "imatinib"}, "c3", "Now the structure."),
+            answer_message("Imatinib blocks ABL1."),
+        ]
+    )
+
+    events = run(agent(model, max_steps=5))
+
+    assert answer(events) == "First the targets.\n\nNow the structure.\n\nImatinib blocks ABL1."
 
 
 def test_done_carries_the_usage_of_every_model_call() -> None:
