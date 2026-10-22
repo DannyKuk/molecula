@@ -1,6 +1,7 @@
 import re
+from collections.abc import Iterable
+from dataclasses import dataclass
 from difflib import get_close_matches
-from functools import cached_property
 
 from molecula.schemas.compounds import (
     Compound,
@@ -154,21 +155,25 @@ class CompoundService:
                 )
         return spellings
 
-    def _brand_spellings(self) -> dict[str, Suggestion]:
+    def _brand_spellings(self, scope: dict[str, Suggestion]) -> dict[str, Suggestion]:
         """The label brands that aren't also a scope name or alias, by `spelling_key`."""
-        scope = {spelling_key(spelling) for spelling in self._scope_spellings()}
-        names = {record.cid: record.name for record in self._store.all()}
+        scope_keys = {spelling_key(spelling) for spelling in scope}
+        names = {suggestion.cid: suggestion.name for suggestion in scope.values()}
         spellings: dict[str, Suggestion] = {}
         for cid, brands in self._store.label_brands().items():
             for brand in brands:
                 key = spelling_key(brand)
-                if key not in scope and cid in names:
+                if key not in scope_keys and cid in names:
                     spellings.setdefault(key, Suggestion(alias=brand, cid=cid, name=names[cid]))
         return spellings
 
-    def _mention_spellings(self) -> dict[str, Suggestion]:
-        scope = {spelling_key(s.alias): s for s in self._scope_spellings().values()}
-        return scope | self._brand_spellings()
+    def _mention_index(self) -> MentionIndex:
+        """The mention spellings and their pattern, read from the store on every call so that a
+        label update's new and dropped brands count at once (#418)."""
+        scope = self._scope_spellings()
+        brands = self._brand_spellings(scope)
+        spellings = {spelling_key(s.alias): s for s in scope.values()} | brands
+        return MentionIndex(spellings, mention_pattern(scope.values(), brands.values()))
 
     def find_mentions(self, text: str) -> list[DrugMention]:
         """The supported drugs a text names by scope name, alias or label brand, in the order
@@ -178,10 +183,12 @@ class CompoundService:
         acid"). PubChem synonyms are left out: they include codes and fragments that would match
         ordinary words.
         """
-        spellings = self._mention_spellings()
+        return self._find_mentions(text, self._mention_index())
+
+    def _find_mentions(self, text: str, index: MentionIndex) -> list[DrugMention]:
         mentions = []
-        for match in self._mention_pattern.finditer(text):
-            drug = spellings[spelling_key(match.group())]
+        for match in index.pattern.finditer(text):
+            drug = index.spellings[spelling_key(match.group())]
             mentions.append(
                 DrugMention(
                     text=match.group(),
@@ -198,8 +205,9 @@ class CompoundService:
         drug, then each other word close to one of their spellings ("Gleevc", "Cetirizin").
         Resolving them is left to `resolve`, which suggests a drug for a misspelling rather than
         taking it for that drug."""
-        mentions = self.find_mentions(text)
-        spellings = list(self._mention_spellings())
+        index = self._mention_index()
+        mentions = self._find_mentions(text, index)
+        spellings = list(index.spellings)
         near = [
             word.group()
             for word in re.finditer(rf"\w{{{MIN_NEAR_NAME_LENGTH},}}", text)
@@ -207,19 +215,6 @@ class CompoundService:
             and get_close_matches(spelling_key(word.group()), spellings, n=1, cutoff=NEAR_CUTOFF)
         ]
         return list(dict.fromkeys([*(mention.text for mention in mentions), *near]))
-
-    @cached_property
-    def _mention_pattern(self) -> re.Pattern[str]:
-        # Abbreviations match only in capitals: "ASS" is aspirin in German, "ass" an English word.
-        # A label brand matches only with a capital first letter, because some brands are
-        # ordinary words ("Stay Awake", "anti-diarrheal").
-        scope = [
-            (spelling, re.escape(spelling) if spelling.isupper() else f"(?i:{re.escape(spelling)})")
-            for spelling in (suggestion.alias for suggestion in self._scope_spellings().values())
-        ]
-        brands = [(s.alias, brand_pattern(s.alias)) for s in self._brand_spellings().values()]
-        alternatives = sorted([*scope, *brands], key=lambda pair: len(pair[0]), reverse=True)
-        return re.compile(rf"(?<!\w)(?:{'|'.join(pattern for _, pattern in alternatives)})(?!\w)")
 
     def get_compound(self, cid: int) -> Compound | None:
         record = self._store.get(cid)
@@ -247,6 +242,31 @@ class CompoundService:
             )
             for record in self._store.all()
         ]
+
+
+@dataclass(frozen=True)
+class MentionIndex:
+    """The spellings a text can name a supported drug by, with the pattern that finds them, built
+    from one read of the store so the two always agree."""
+
+    spellings: dict[str, Suggestion]
+    pattern: re.Pattern[str]
+
+
+def mention_pattern(scope: Iterable[Suggestion], brands: Iterable[Suggestion]) -> re.Pattern[str]:
+    """Whole-word matches of the scope names, aliases and label brands, longest first."""
+    # Abbreviations match only in capitals: "ASS" is aspirin in German, "ass" an English word.
+    # A label brand matches only with a capital first letter, because some brands are ordinary
+    # words ("Stay Awake", "anti-diarrheal").
+    alternatives = [
+        *(
+            (s.alias, re.escape(s.alias) if s.alias.isupper() else f"(?i:{re.escape(s.alias)})")
+            for s in scope
+        ),
+        *((s.alias, brand_pattern(s.alias)) for s in brands),
+    ]
+    alternatives.sort(key=lambda pair: len(pair[0]), reverse=True)
+    return re.compile(rf"(?<!\w)(?:{'|'.join(pattern for _, pattern in alternatives)})(?!\w)")
 
 
 def name_candidates(query: str) -> list[str]:
