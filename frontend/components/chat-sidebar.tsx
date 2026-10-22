@@ -30,6 +30,7 @@ import { SheetContent } from "@/components/ui/sheet";
 import { bookmarkedOf, type ConversationSummary, groupChats } from "@/lib/chat-history";
 import { useLanguage } from "@/lib/language";
 import { useMessages } from "@/lib/messages";
+import { THEMES, useTheme } from "@/lib/theme";
 import { useSidebarExpanded } from "@/lib/use-sidebar-expanded";
 
 import { Brand, BrandMark } from "./brand-mark";
@@ -38,6 +39,7 @@ import { LanguageSwitch } from "./language-switch";
 import { UserMenu } from "./login";
 import { McpDialog } from "./mcp-dialog";
 import { ModelSettings } from "./model-settings";
+import { THEME_ICONS, ThemeSwitch } from "./theme-switch";
 
 export type ChatListProps = {
   /** Null until the history has loaded, false when the browser doesn't keep it. */
@@ -120,6 +122,7 @@ export function ChatSidebar(props: ChatListProps) {
         <McpDialog trigger={<IconButton label={t.sidebar.mcpServer} className="mt-auto" />}>
           <Plug />
         </McpDialog>
+        <RailTheme />
         <RailLanguage />
         <ModelSettings trigger={<IconButton label={t.sidebar.settings} />}>
           <Settings />
@@ -243,6 +246,21 @@ function RailLanguage() {
   );
 }
 
+/** The rail's theme button: it shows the picked theme and moves on to the next one. */
+function RailTheme() {
+  const t = useMessages();
+  const [theme, setTheme] = useTheme();
+  const Icon = THEME_ICONS[theme];
+  return (
+    <IconButton
+      label={`${t.theme.switch}: ${t.theme[theme]}`}
+      onClick={() => setTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length])}
+    >
+      <Icon />
+    </IconButton>
+  );
+}
+
 /** The chats on a phone: a drawer opened from ☰ in the header, closed by picking a chat. */
 export function ChatDrawer(props: ChatListProps) {
   const t = useMessages();
@@ -277,7 +295,7 @@ export function ChatDrawer(props: ChatListProps) {
 /**
  * "New chat", the links to the other pages, the bookmarked chats, the others by day, newest
  * first, what to know about where the chats are kept, the MCP server guide when `withMcp`, the
- * language and the settings. The current page is outlined.
+ * theme, the language and the settings. The current page is outlined.
  */
 function ChatList({
   onNew,
@@ -320,13 +338,16 @@ function ChatList({
         <p className="border-t border-rule px-4 py-3 text-xs text-ink-3">{t.sidebar.savedHere}</p>
       )}
       <div className="flex flex-col gap-1 border-t border-rule px-2.5 pt-2 pb-3">
-        {withMcp && (
-          // Connecting an assistant needs a checkout on a computer, so the phone drawer leaves it out.
-          <McpDialog trigger={<button type="button" className={LIST_LINK} />}>
-            <Plug />
-            {t.sidebar.mcpServer}
-          </McpDialog>
-        )}
+        <div className="flex items-center justify-end gap-2">
+          {withMcp && (
+            // Connecting an assistant needs a checkout on a computer, so the phone drawer leaves it out.
+            <McpDialog trigger={<button type="button" className={cn(LIST_LINK, "flex-1")} />}>
+              <Plug />
+              {t.sidebar.mcpServer}
+            </McpDialog>
+          )}
+          <ThemeSwitch className="shrink-0" />
+        </div>
         <div className="flex items-center gap-2">
           <ModelSettings trigger={<button type="button" className={cn(LIST_LINK, "flex-1")} />}>
             <Settings />

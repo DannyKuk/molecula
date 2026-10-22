@@ -9,6 +9,12 @@ export const de: Messages = {
     en: "English",
     de: "Deutsch",
   },
+  theme: {
+    switch: "Darstellung",
+    system: "System",
+    light: "Hell",
+    dark: "Dunkel",
+  },
   header: {
     thisChat: (usage) => `Dieser Chat: ${usage}`,
     supportedDrugs: "Unterstützte Medikamente",

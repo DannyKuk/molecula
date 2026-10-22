@@ -3,6 +3,8 @@ import { Inter_Tight, JetBrains_Mono } from "next/font/google";
 
 import { DocumentLanguage } from "@/components/language-switch";
 import { LoginProvider } from "@/components/login-provider";
+import { DocumentTheme } from "@/components/theme-switch";
+import { THEME_SCRIPT } from "@/lib/theme-script";
 
 import "./globals.css";
 
@@ -25,13 +27,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    // The inline script sets data-theme before React hydrates, which React would report as a mismatch.
     <html
       lang="en"
       className={`${interTight.variable} ${jetBrainsMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <LoginProvider>
           <DocumentLanguage />
+          <DocumentTheme />
           {children}
         </LoginProvider>
       </body>
