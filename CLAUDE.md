@@ -40,7 +40,7 @@ Dependencies point one way: `api` → `guard` → `agent` → `tools` → `rag` 
 
 ## Prompts: one structure, no exceptions
 
-- **Every prompt is a `.md` file under `backend/src/molecula/prompts/`**, grouped by area (`agent/system.md`, `rag/query_translation.md`, `guard/injection_check.md`, …). No prompt text in Python: no f-string prompts, no prompt constants, no prompt fragments assembled in code.
+- **Every prompt is a `.md` file under `backend/src/molecula/prompts/`**, grouped by area (`agent/system.md`, `rag/translate_query.md`, `guard/input_check/question.md`, …). No prompt text in Python: no f-string prompts, no prompt constants, no prompt fragments assembled in code.
 - Load them only through `prompts.load("agent/system", **variables)`. Variables use `{name}` placeholders; the loader fails on a missing or unused variable. Literal braces (JSON examples) are written `{{` and `}}`; anything else in braces fails to load.
 - Tool descriptions are the tool function's docstring, because LangChain reads them from there. That's the only LLM-facing text outside `prompts/`.
 - A test loads every prompt file and checks its placeholders.
