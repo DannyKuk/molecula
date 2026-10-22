@@ -40,6 +40,7 @@ from typing import Any, Literal
 
 import yaml
 from evals.chat_model.citations import answer_label, tool_descriptions
+from evals.jsonl import append, jsonl_lines
 from fastapi import FastAPI
 from pydantic import BaseModel
 
@@ -280,17 +281,6 @@ def check_cache_path(settings: Settings, answers_cache: Path) -> Path:
 
 def cache_key(answer: Asked) -> str:
     return hashlib.sha256(json.dumps(answer.events).encode()).hexdigest()[:16]
-
-
-def append(path: Path, entry: dict[str, Any]) -> None:
-    with path.open("a", encoding="utf-8") as file:
-        file.write(json.dumps(entry, ensure_ascii=False) + "\n")
-
-
-def jsonl_lines(path: Path) -> list[str]:
-    """The file's lines, split only at newlines: an answer may hold a Unicode line separator,
-    which `splitlines` would split at."""
-    return [line for line in path.read_text("utf-8").split("\n") if line]
 
 
 def read_answers(path: Path) -> defaultdict[str, list[Asked]]:

@@ -34,6 +34,7 @@ from evals.chat_model.filters import (
     services,
     typo_report,
 )
+from evals.jsonl import append, jsonl_lines
 from evals.retrieval.dataset import Question, load_questions, load_typos
 from evals.retrieval.filters import labels_by_drug, mrr, recall
 
@@ -159,8 +160,7 @@ async def decide_all(
             question.id, question.question, answers, await model.decide(state, choice), seconds
         )
         cached[question.id] = decided
-        with cache.open("a", encoding="utf-8") as file:
-            file.write(json.dumps(to_json(decided), ensure_ascii=False) + "\n")
+        append(cache, to_json(decided))
         print(f"{number}/{len(questions)} {question.id}: {seconds:.2f} s", flush=True)
     return [cached[question.id] for question in questions]
 
@@ -169,7 +169,7 @@ def read_cache(cache: Path) -> dict[str, Decided]:
     if not cache.exists():
         return {}
     decided = {}
-    for line in cache.read_text("utf-8").splitlines():
+    for line in jsonl_lines(cache):
         entry = json.loads(line)
         decided[entry["id"]] = Decided(
             id=entry["id"],

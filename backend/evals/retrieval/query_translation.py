@@ -21,6 +21,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 import yaml
+from evals.jsonl import jsonl_lines
 from evals.retrieval.dataset import Question, load_questions
 from evals.retrieval.filters import first_hit_rank, gold_filter, labels_by_drug, mrr, recall
 from langchain_core.language_models import BaseChatModel
@@ -142,7 +143,7 @@ def ask_all(
 ) -> dict[str, ModelOutputs]:
     outputs = {}
     if cache.exists():
-        for line in cache.read_text("utf-8").splitlines():
+        for line in jsonl_lines(cache):
             output = ModelOutputs.model_validate_json(line)
             outputs[output.id] = output
     cache.parent.mkdir(parents=True, exist_ok=True)
