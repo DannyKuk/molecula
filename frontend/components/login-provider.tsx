@@ -12,7 +12,16 @@ import { LOGIN_ON } from "@/lib/login";
 // colorBorder to a few percent, hence the !important.
 const RULE = "inset 0 0 0 1px var(--rule-2) !important";
 
+// Clerk's root box is fit-content and caps the card at 100vw - 2.5rem, so on a phone the form
+// shrank to its text and sat at the left of the column. The login pages fill their column instead.
+const FILL_COLUMN = {
+  elements: { rootBox: { width: "100%" }, cardBox: { maxWidth: "none" } },
+};
+
 const appearance = {
+  signIn: FILL_COLUMN,
+  signUp: FILL_COLUMN,
+  waitlist: FILL_COLUMN,
   variables: {
     colorPrimary: "var(--signal)",
     colorPrimaryForeground: "#ffffff",
@@ -34,11 +43,20 @@ const appearance = {
   },
   elements: {
     cardBox: { boxShadow: "none", border: "none", width: "100%" },
-    card: { background: "transparent", boxShadow: "none", border: "none", padding: "0" },
+    // Clerk sets the card 1px wider than its box on each side, which clipped the outlines.
+    card: {
+      background: "transparent",
+      boxShadow: "none",
+      border: "none",
+      padding: "0",
+      margin: "0",
+    },
     header: { alignItems: "flex-start", textAlign: "left" },
     headerTitle: { fontSize: "20px", fontWeight: 600 },
     headerSubtitle: { color: "var(--ink-2)" },
     socialButtonsBlockButton: { background: "transparent", boxShadow: RULE },
+    // Clerk hangs the badge past the button's corner, outside the card, which cuts it off.
+    lastAuthenticationStrategyBadge: { right: "0", transform: "translateY(-50%)" },
     dividerLine: { background: "var(--rule)" },
     formFieldInput: { boxShadow: RULE },
     formButtonPrimary: {
