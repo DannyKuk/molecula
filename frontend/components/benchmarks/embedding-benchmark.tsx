@@ -20,6 +20,7 @@ import {
   percent,
   showcaseQuestion,
 } from "@/lib/embedding-benchmark";
+import { useFetched } from "@/lib/use-fetched";
 import { useMediaQuery } from "@/lib/use-media-query";
 
 import { RankLegend } from "./dots";
@@ -39,15 +40,9 @@ const MUTED = "text-ink-2";
 
 /** The embedding comparison, with the model this instance embeds with marked as the app's. */
 export function EmbeddingBenchmark({ run }: { run: EmbeddingRun }) {
-  const [instance, setInstance] = useState<InstanceModel>(LOCAL_SETUP);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    getEmbeddingSetup(controller.signal)
-      .then(setInstance)
-      .catch(() => {});
-    return () => controller.abort();
-  }, []);
+  const setup = useFetched(getEmbeddingSetup, []);
+  // Until the backend answers, or when it doesn't, the page shows the local setup.
+  const instance = setup.kind === "loaded" ? setup.value : LOCAL_SETUP;
 
   // Keyed so that another model opens on its own showcase question.
   return <BenchmarkView key={instance.embedding_model} run={run} instance={instance} />;

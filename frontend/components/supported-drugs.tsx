@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 
 import { type Drug, type Resolution, resolveDrug, type Suggestion } from "@/lib/api";
 import { byLetter, type DrugGroup, filterDrugs, namesToOffer } from "@/lib/drug-search";
 import { type Messages, useMessages } from "@/lib/messages";
+import { useFetched } from "@/lib/use-fetched";
 
 /** How long typing has to pause before a name the list doesn't match is sent to the backend. */
 const RESOLVE_DELAY_MS = 300;
@@ -72,24 +73,31 @@ export function SupportedDrugs({ drugs, onAsk }: SupportedDrugsProps) {
 
 /** The backend's resolution of a name once typing has paused; null before that, or on failure. */
 function useResolution(name: string): Resolution | null {
-  const [resolved, setResolved] = useState<{ name: string; resolution: Resolution } | null>(null);
+  const lookup = useFetched(
+    async (signal) => {
+      if (!name) return null;
+      await pause(RESOLVE_DELAY_MS, signal);
+      return resolveDrug(name, signal);
+    },
+    [name],
+  );
+  // A failed lookup leaves the plain "not supported" message.
+  return lookup.kind === "loaded" ? lookup.value : null;
+}
 
-  useEffect(() => {
-    if (!name) return;
-    const controller = new AbortController();
-    const timer = setTimeout(() => {
-      resolveDrug(name, controller.signal)
-        .then((resolution) => setResolved({ name, resolution }))
-        // A failed lookup leaves the plain "not supported" message.
-        .catch(() => {});
-    }, RESOLVE_DELAY_MS);
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-    };
-  }, [name]);
-
-  return name && resolved?.name === name ? resolved.resolution : null;
+/** Waits `ms`, or rejects as soon as `signal` aborts. */
+function pause(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer);
+        reject(signal.reason);
+      },
+      { once: true },
+    );
+  });
 }
 
 function SuggestionLine({

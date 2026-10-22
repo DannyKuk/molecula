@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { type ChatModel, type CheckerId, getModels, type ModelChoices } from "./api";
 import { useChosenChecker, useChosenModel } from "./use-chosen-model";
+import { type Fetched, useFetched } from "./use-fetched";
 
 type Choices = {
   /** Null while the list loads, false when the chat is off. */
@@ -21,19 +22,9 @@ type Choices = {
  * choice the backend refuses.
  */
 export function useModelChoices(): Choices {
-  const [choices, setChoices] = useState<ModelChoices | null | false>(null);
+  const choices = offeredChoices(useFetched(getModels, []));
   const [chosen, choose] = useChosenModel();
   const [chosenChecker, chooseChecker] = useChosenChecker();
-
-  useEffect(() => {
-    const controller = new AbortController();
-    getModels(controller.signal)
-      .then(setChoices)
-      .catch(() => {
-        if (!controller.signal.aborted) setChoices(false);
-      });
-    return () => controller.abort();
-  }, []);
 
   const listed = choices ? choices.models : [];
   const picked = listed.find(({ name }) => name === chosen);
@@ -57,6 +48,12 @@ export function useModelChoices(): Choices {
     checking: offered ? chosenChecker : defaultChecker,
     chooseChecker: (checker) => chooseChecker(checker === defaultChecker ? null : checker),
   };
+}
+
+function offeredChoices(fetched: Fetched<ModelChoices>): ModelChoices | null | false {
+  if (fetched.kind === "loading") return null;
+  if (fetched.kind === "failed") return false;
+  return fetched.value;
 }
 
 /** "gpt-oss-20b": a model's id without its provider. */

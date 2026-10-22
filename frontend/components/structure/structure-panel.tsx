@@ -4,7 +4,6 @@ import { cn } from "cn";
 import { Maximize2, Play, RotateCcw, X } from "lucide-react";
 import {
   useCallback,
-  useEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -18,6 +17,7 @@ import { ApiError, getComplex, getStructure } from "@/lib/api";
 import { coordinationBonds } from "@/lib/complex-scene";
 import { type Messages, useMessages } from "@/lib/messages";
 import { structureSubtitle, structureTitle, type StructureTarget } from "@/lib/tool-cards";
+import { type Fetched, useFetched } from "@/lib/use-fetched";
 import { useMediaQuery } from "@/lib/use-media-query";
 
 import { legendElements, readout } from "./readout";
@@ -45,8 +45,8 @@ const TOOL = `${ON_SCREEN} inline-flex size-8 items-center justify-center`;
 export function StructurePanel({ target }: { target: StructureTarget }) {
   const t = useMessages();
   const s = t.structure;
-  const [loaded, setLoaded] = useState<Loaded>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
+  const [drawFailed, setDrawFailed] = useState(false);
   const [mode, setMode] = useState<ViewMode>(target.complex ? "site" : "molecule");
   const [fullScreen, setFullScreen] = useState(false);
   const viewer = useRef<StructureViewerHandle>(null);
@@ -55,25 +55,13 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
   const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const failed = useCallback(() => {
     setFullScreen(false);
-    setLoaded({ status: "failed" });
+    setDrawFailed(true);
   }, []);
-
-  useEffect(() => {
-    const abort = new AbortController();
-    const load: Promise<SceneData> = hasComplex
-      ? getComplex(target.cid, abort.signal).then((complex) => ({ kind: "complex", complex }))
-      : getStructure(target.cid, abort.signal).then((sdf) => ({ kind: "molecule", sdf }));
-    load.then(
-      (data) => setLoaded({ status: "ready", data }),
-      (error: unknown) => {
-        if (abort.signal.aborted) return;
-        // A drug the tool found a complex for always has one, so only a missing conformer is "missing".
-        const missing = !hasComplex && error instanceof ApiError && error.status === 404;
-        setLoaded({ status: missing ? "missing" : "failed" });
-      },
-    );
-    return () => abort.abort();
-  }, [target.cid, hasComplex, attempt]);
+  const scene = useFetched(
+    (signal) => loadScene(target.cid, hasComplex, signal),
+    [target.cid, hasComplex, attempt],
+  );
+  const loaded = loadedFrom(scene, drawFailed);
 
   const title = structureTitle(target, t);
   const subtitle = structureSubtitle(target, t);
@@ -231,7 +219,7 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
             loaded={loaded}
             t={t}
             onRetry={() => {
-              setLoaded({ status: "loading" });
+              setDrawFailed(false);
               setAttempt((n) => n + 1);
             }}
           />
@@ -272,6 +260,28 @@ export function StructurePanel({ target }: { target: StructureTarget }) {
       )}
     </section>
   );
+}
+
+/** The drug in its complex, or the molecule alone; null when the drug has no 3D structure. */
+async function loadScene(
+  cid: number,
+  hasComplex: boolean,
+  signal: AbortSignal,
+): Promise<SceneData | null> {
+  if (hasComplex) return { kind: "complex", complex: await getComplex(cid, signal) };
+  try {
+    return { kind: "molecule", sdf: await getStructure(cid, signal) };
+  } catch (error) {
+    // A drug the tool found a complex for always has one, so only a missing conformer is "missing".
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
+}
+
+function loadedFrom(scene: Fetched<SceneData | null>, drawFailed: boolean): Loaded {
+  if (drawFailed || scene.kind === "failed") return { status: "failed" };
+  if (scene.kind === "loading") return { status: "loading" };
+  return scene.value ? { status: "ready", data: scene.value } : { status: "missing" };
 }
 
 /** The dark screen: the view fills it, with the title and tools along the top and the switch and
