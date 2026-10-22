@@ -76,10 +76,7 @@ export function TradeoffTable({ benchmark }: { benchmark: Benchmark }) {
                         <span className="inline-flex items-center gap-2">
                           <span
                             style={{ width: Math.max(2, Math.round(((recall - 0.7) / 0.3) * 64)) }}
-                            className={cn(
-                              "h-2 rounded-r",
-                              m.isApp ? "bg-series-drug" : "bg-rule-2",
-                            )}
+                            className={cn("h-2 rounded-r", m.isApp ? "bg-signal" : "bg-rule-2")}
                           />
                           {percent(recall)}
                         </span>
