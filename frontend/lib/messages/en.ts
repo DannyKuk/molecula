@@ -225,8 +225,10 @@ export const en = {
     localAfter:
       "and store. It has no login and answers only requests addressed to localhost, so a Molecula running somewhere else can't be connected to.",
     copy: "Copy",
+  },
+  copy: {
     copied: "Copied",
-    copyFailed: "Copy failed",
+    failed: "Copy failed",
   },
   drugs: {
     title: "Supported drugs",
@@ -416,8 +418,6 @@ export const en = {
     unknownRefs: "It cites a source Molecula didn't look up.",
     noVerdict: "The check gave no verdict on it.",
     copy: "Copy details",
-    copied: "Copied",
-    copyFailed: "Copy failed",
   },
   report: {
     title: "Molecula answer report",

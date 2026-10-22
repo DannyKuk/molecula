@@ -12,6 +12,7 @@ import {
 } from "@/lib/api";
 import type { ChatHistory } from "@/lib/chat-history";
 import { OUTCOMES, RANGES, compact, seconds, typicalWaitMs, usageTotals, usd } from "@/lib/stats";
+import { useFetched } from "@/lib/use-fetched";
 import { cn } from "cn";
 
 import { ChatDrawer, ChatSidebar } from "../chat-sidebar";
@@ -69,7 +70,6 @@ export function Dashboard({ history }: { history?: ChatHistory }) {
   const chats = useSavedChats(history);
   const [days, setDays] = useState<number>(30);
   const [state, setState] = useState<LoadState>({ kind: "loading" });
-  const [model, setModel] = useState<ChatModel | null>(null);
   const [reloads, setReloads] = useState(0);
 
   useEffect(() => {
@@ -102,13 +102,8 @@ export function Dashboard({ history }: { history?: ChatHistory }) {
     }
   }
 
-  useEffect(() => {
-    const controller = new AbortController();
-    getChatModel(controller.signal)
-      .then(setModel)
-      .catch(() => {});
-    return () => controller.abort();
-  }, []);
+  const chatModel = useFetched(getChatModel, []);
+  const model = chatModel.kind === "loaded" ? chatModel.value : null;
 
   return (
     <div className="flex flex-1">

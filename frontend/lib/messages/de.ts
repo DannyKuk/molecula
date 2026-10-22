@@ -229,8 +229,10 @@ export const de: Messages = {
     localAfter:
       "und demselben Datenbestand. Er hat keine Anmeldung und beantwortet nur Anfragen an localhost, deshalb lässt sich ein Molecula, das woanders läuft, nicht verbinden.",
     copy: "Kopieren",
+  },
+  copy: {
     copied: "Kopiert",
-    copyFailed: "Kopieren fehlgeschlagen",
+    failed: "Kopieren fehlgeschlagen",
   },
   drugs: {
     title: "Unterstützte Medikamente",
@@ -428,8 +430,6 @@ export const de: Messages = {
     unknownRefs: "Der Satz zitiert eine Quelle, die Molecula nicht nachgeschlagen hat.",
     noVerdict: "Die Prüfung hat dazu kein Urteil abgegeben.",
     copy: "Details kopieren",
-    copied: "Kopiert",
-    copyFailed: "Kopieren fehlgeschlagen",
   },
   report: {
     title: "Molecula-Antwortbericht",

@@ -1,28 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-import { type Drug, getDrugs } from "@/lib/api";
+import { getDrugs } from "@/lib/api";
 import { useMessages } from "@/lib/messages";
+import { useFetched } from "@/lib/use-fetched";
 
 import { SupportedDrugs } from "./supported-drugs";
-
-type LoadState = { kind: "loading" } | { kind: "failed" } | { kind: "loaded"; drugs: Drug[] };
 
 /** Fetches the supported drugs from the backend and shows them as a searchable list. */
 export function SupportedDrugsLoader({ onAsk }: { onAsk: (question: string) => void }) {
   const t = useMessages();
-  const [state, setState] = useState<LoadState>({ kind: "loading" });
-
-  useEffect(() => {
-    const controller = new AbortController();
-    getDrugs(controller.signal)
-      .then((drugs) => setState({ kind: "loaded", drugs }))
-      .catch(() => {
-        if (!controller.signal.aborted) setState({ kind: "failed" });
-      });
-    return () => controller.abort();
-  }, []);
+  const state = useFetched(getDrugs, []);
 
   if (state.kind === "loading") {
     return (
@@ -38,5 +25,5 @@ export function SupportedDrugsLoader({ onAsk }: { onAsk: (question: string) => v
       </p>
     );
   }
-  return <SupportedDrugs drugs={state.drugs} onAsk={onAsk} />;
+  return <SupportedDrugs drugs={state.value} onAsk={onAsk} />;
 }

@@ -1,13 +1,10 @@
 "use client";
 
 import { cn } from "cn";
-import { ArrowLeft, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import { useState } from "react";
 
 import { AnswerMarkdown } from "@/components/answer-markdown";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogClose, DialogTitle } from "@/components/ui/dialog";
-import { SheetContent } from "@/components/ui/sheet";
 import {
   type Answer,
   type ChatModel,
@@ -26,13 +23,12 @@ import {
   runCost,
   verdictOf,
 } from "@/lib/chat-model-benchmark";
-import { useMediaQuery } from "@/lib/use-media-query";
 
+import { DetailLayout, MUTED, decisionUrl, useDetailPanel } from "./detail-layout";
 import { VerdictDot, VerdictLegend } from "./dots";
 import { TabSwitch } from "./tab-switch";
 
-const DOC_URL = "https://github.com/DannyKuk/molecula/blob/main/docs/decisions/chat-model.md";
-const MUTED = "text-ink-2";
+const DOC_URL = decisionUrl("chat-model.md");
 const LEGEND: Verdict[] = ["clean", "memory", "denies", "both", "failed"];
 const KIND_SHORT: Record<ComparisonKind, string> = {
   comparison: "compare",
@@ -48,23 +44,12 @@ type View =
  * answer as a dot under its question, and the answer, its tools and its verdict beside them. */
 export function ChatModelBenchmark({ run }: { run: ChatModelRun }) {
   const [evalName, setEvalName] = useState<EvalName>("from_memory");
-  const [view, setView] = useState<View>(() => ({
+  const panel = useDetailPanel<View>(() => ({
     kind: "model",
     model: (run.models.find((m) => m.default) ?? run.models[0]).id,
   }));
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const wide = useMediaQuery("(min-width: 1024px)");
-  const panelRef = useRef<HTMLElement>(null);
+  const { view, show } = panel;
   const model = run.models.find((m) => m.id === view.model)!;
-
-  useEffect(() => {
-    if (panelRef.current) panelRef.current.scrollTop = 0;
-  }, [view]);
-
-  function show(next: View) {
-    setView(next);
-    if (!wide) setSheetOpen(true);
-  }
 
   const detail =
     view.kind === "model" ? (
@@ -104,50 +89,27 @@ export function ChatModelBenchmark({ run }: { run: ChatModelRun }) {
         onModel={(id) => show({ kind: "model", model: id })}
       />
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <div className="flex min-w-0 flex-col gap-3">
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-            <h2 className="text-xl font-semibold tracking-tight">Every answer</h2>
-            <TabSwitch label="Eval" options={EVALS} value={evalName} onChange={setEvalName} />
-          </div>
-          <p className={cn("text-[0.8125rem]", MUTED)}>
-            {evalName === "from_memory"
-              ? "One answer per model to each question about one drug's label."
-              : "Three answers per model to each question about two drugs; the controls ask about one."}{" "}
-            Click a dot to read that answer, the tools it called and why it was flagged.
-          </p>
-          <VerdictLegend verdicts={LEGEND} />
-          <AnswerGrid
-            run={run}
-            evalName={evalName}
-            selected={view.kind === "answer" ? view : null}
-            onAnswer={(modelId, answer) =>
-              show({ kind: "answer", model: modelId, eval: evalName, answer })
-            }
-          />
+      <DetailLayout panel={panel} detail={detail} title={model.name}>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <h2 className="text-xl font-semibold tracking-tight">Every answer</h2>
+          <TabSwitch label="Eval" options={EVALS} value={evalName} onChange={setEvalName} />
         </div>
-        <aside
-          ref={panelRef}
-          aria-label="Details"
-          className="sticky top-4 hidden max-h-[calc(100vh-2rem)] overflow-auto border-l border-rule-2 pl-5 lg:block"
-        >
-          {detail}
-        </aside>
-      </div>
-
-      <Dialog open={sheetOpen && !wide} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="bg-background">
-          <header className="flex items-center gap-2 border-b px-4 py-2.5">
-            <DialogClose render={<Button variant="outline" size="icon-sm" aria-label="Close" />}>
-              <X />
-            </DialogClose>
-            <DialogTitle className="min-w-0 flex-1 truncate text-sm font-semibold">
-              {model.name}
-            </DialogTitle>
-          </header>
-          <div className="flex-1 overflow-auto p-4">{detail}</div>
-        </SheetContent>
-      </Dialog>
+        <p className={cn("text-[0.8125rem]", MUTED)}>
+          {evalName === "from_memory"
+            ? "One answer per model to each question about one drug's label."
+            : "Three answers per model to each question about two drugs; the controls ask about one."}{" "}
+          Click a dot to read that answer, the tools it called and why it was flagged.
+        </p>
+        <VerdictLegend verdicts={LEGEND} />
+        <AnswerGrid
+          run={run}
+          evalName={evalName}
+          selected={view.kind === "answer" ? view : null}
+          onAnswer={(modelId, answer) =>
+            show({ kind: "answer", model: modelId, eval: evalName, answer })
+          }
+        />
+      </DetailLayout>
 
       <section className="flex flex-col gap-3 border-t pt-7">
         <h2 className="text-xl font-semibold tracking-tight">How this was measured</h2>

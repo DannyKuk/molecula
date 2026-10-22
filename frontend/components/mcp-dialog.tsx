@@ -1,7 +1,6 @@
 "use client";
 
-import { Check, Copy } from "lucide-react";
-import { type ReactElement, type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactElement, type ReactNode, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +11,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useMessages } from "@/lib/messages";
+
+import { CopyButton } from "./copy-button";
 
 export const CHECKOUT_PLACEHOLDER = "/path/to/molecula";
 
@@ -43,8 +44,6 @@ export const TOOLS = [
   { name: "search_labels" },
   { name: "compare_drugs" },
 ] as const;
-
-const SHOWN_MS = 2000;
 
 /** What Molecula's MCP server gives another AI assistant and how to connect one to it (#301). */
 export function McpGuide() {
@@ -101,6 +100,7 @@ function Placeholder() {
 }
 
 function CodeBlock({ text, copyLabel }: { text: string; copyLabel: string }) {
+  const t = useMessages();
   const [before, ...after] = text.split(CHECKOUT_PLACEHOLDER);
   return (
     <div className="relative">
@@ -115,45 +115,13 @@ function CodeBlock({ text, copyLabel }: { text: string; copyLabel: string }) {
           </span>
         ))}
       </pre>
-      <CopyButton text={text} label={copyLabel} />
+      <CopyButton
+        text={() => text}
+        label={t.mcp.copy}
+        ariaLabel={copyLabel}
+        className="absolute top-1.5 right-1.5 border border-white/15 bg-white/5 px-2 text-screen-ink hover:bg-white/15"
+      />
     </div>
-  );
-}
-
-function CopyButton({ text, label }: { text: string; label: string }) {
-  const t = useMessages();
-  const [copied, setCopied] = useState<"copied" | "failed" | null>(null);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = setTimeout(() => setCopied(null), SHOWN_MS);
-    return () => clearTimeout(timer);
-  }, [copied]);
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied("copied");
-    } catch {
-      setCopied("failed");
-    }
-  }
-
-  const Icon = copied === "copied" ? Check : Copy;
-  return (
-    <button
-      type="button"
-      onClick={copy}
-      aria-label={
-        copied === "copied" ? t.mcp.copied : copied === "failed" ? t.mcp.copyFailed : label
-      }
-      className="absolute top-1.5 right-1.5 inline-flex items-center gap-1 rounded-md border border-white/15 bg-white/5 px-2 py-0.5 text-xs text-screen-ink hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-3"
-    >
-      <Icon aria-hidden className="size-3.5" />
-      <span aria-live="polite">
-        {copied === "copied" ? t.mcp.copied : copied === "failed" ? t.mcp.copyFailed : t.mcp.copy}
-      </span>
-    </button>
   );
 }
 

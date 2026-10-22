@@ -1,12 +1,10 @@
 "use client";
 
 import { cn } from "cn";
-import { ArrowLeft, ArrowRight, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogClose, DialogTitle } from "@/components/ui/dialog";
-import { SheetContent } from "@/components/ui/sheet";
 import { getEmbeddingSetup } from "@/lib/api";
 import {
   type Benchmark,
@@ -20,8 +18,9 @@ import {
   percent,
   showcaseQuestion,
 } from "@/lib/embedding-benchmark";
-import { useMediaQuery } from "@/lib/use-media-query";
+import { useFetched } from "@/lib/use-fetched";
 
+import { DetailLayout, MUTED, decisionUrl, useDetailPanel } from "./detail-layout";
 import { RankLegend } from "./dots";
 import { HitGrid } from "./hit-grid";
 import { ModelView } from "./model-view";
@@ -30,24 +29,16 @@ import { ModelRecall, RecallLegend } from "./recall-chart";
 import { TabSwitch } from "./tab-switch";
 import { TradeoffTable } from "./tradeoff-table";
 
-const DOC_URL = "https://github.com/DannyKuk/molecula/blob/main/docs/decisions/embeddings.md";
+const DOC_URL = decisionUrl("embeddings.md");
 
 type View =
   { kind: "question"; question: number; model: string | null } | { kind: "model"; label: string };
 
-const MUTED = "text-ink-2";
-
 /** The embedding comparison, with the model this instance embeds with marked as the app's. */
 export function EmbeddingBenchmark({ run }: { run: EmbeddingRun }) {
-  const [instance, setInstance] = useState<InstanceModel>(LOCAL_SETUP);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    getEmbeddingSetup(controller.signal)
-      .then(setInstance)
-      .catch(() => {});
-    return () => controller.abort();
-  }, []);
+  const setup = useFetched(getEmbeddingSetup, []);
+  // Until the backend answers, or when it doesn't, the page shows the local setup.
+  const instance = setup.kind === "loaded" ? setup.value : LOCAL_SETUP;
 
   // Keyed so that another model opens on its own showcase question.
   return <BenchmarkView key={instance.embedding_model} run={run} instance={instance} />;
@@ -95,24 +86,13 @@ function BenchmarkView({ run, instance }: { run: EmbeddingRun; instance: Instanc
   const benchmark = useMemo(() => loadBenchmark(run, instance), [run, instance]);
   const order = benchmark.sections.flatMap((s) => s.questions.map((q) => q.index));
   const [scope, setScope] = useState<Scope>("in_drug");
-  const [view, setView] = useState<View>(() => ({
+  const panel = useDetailPanel<View>(() => ({
     kind: "question",
     question: showcaseQuestion(benchmark),
     model: null,
   }));
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const wide = useMediaQuery("(min-width: 1024px)");
+  const { view, show } = panel;
   const hubRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (panelRef.current) panelRef.current.scrollTop = 0;
-  }, [view]);
-
-  function show(next: View) {
-    setView(next);
-    if (!wide) setSheetOpen(true);
-  }
 
   function step(by: number) {
     if (view.kind !== "question") return;
@@ -168,57 +148,38 @@ function BenchmarkView({ run, instance }: { run: EmbeddingRun; instance: Instanc
         </p>
       </div>
 
-      <div
+      <DetailLayout
+        panel={panel}
+        detail={detail}
+        title={
+          view.kind === "question"
+            ? benchmark.questions[view.question].drug
+            : benchmark.models.find((m) => m.label === view.label)!.name
+        }
+        steps={steps}
         ref={hubRef}
-        className="grid scroll-mt-4 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_420px]"
+        className="scroll-mt-4"
       >
-        <div className="flex min-w-0 flex-col gap-3">
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-            <h2 className="text-xl font-semibold tracking-tight">
-              {benchmark.questions.length} questions × {benchmark.models.length} models
-            </h2>
-            <TabSwitch label="Search" options={SCOPES} value={scope} onChange={setScope} />
-          </div>
-          <p className={cn("text-[0.8125rem]", MUTED)}>
-            Click a question for what each model found. Click a model&apos;s name for its scores and
-            the questions it missed. The number in a group&apos;s row is how many of its questions
-            the model got in the top 5.
-          </p>
-          <RankLegend />
-          <HitGrid
-            benchmark={benchmark}
-            scope={scope}
-            selected={view.kind === "question" ? view : null}
-            onQuestion={(question, model) => show({ kind: "question", question, model })}
-            onModel={(label) => show({ kind: "model", label })}
-          />
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <h2 className="text-xl font-semibold tracking-tight">
+            {benchmark.questions.length} questions × {benchmark.models.length} models
+          </h2>
+          <TabSwitch label="Search" options={SCOPES} value={scope} onChange={setScope} />
         </div>
-        <aside
-          ref={panelRef}
-          aria-label="Details"
-          className="sticky top-4 hidden max-h-[calc(100vh-2rem)] overflow-auto border-l border-rule-2 pl-5 lg:block"
-        >
-          <div className="mb-2 flex justify-end">{steps}</div>
-          {detail}
-        </aside>
-      </div>
-
-      <Dialog open={sheetOpen && !wide} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="bg-background">
-          <header className="flex items-center gap-2 border-b px-4 py-2.5">
-            <DialogClose render={<Button variant="outline" size="icon-sm" aria-label="Close" />}>
-              <X />
-            </DialogClose>
-            <DialogTitle className="min-w-0 flex-1 truncate text-sm font-semibold">
-              {view.kind === "question"
-                ? benchmark.questions[view.question].drug
-                : benchmark.models.find((m) => m.label === view.label)!.name}
-            </DialogTitle>
-            {steps}
-          </header>
-          <div className="flex-1 overflow-auto p-4">{detail}</div>
-        </SheetContent>
-      </Dialog>
+        <p className={cn("text-[0.8125rem]", MUTED)}>
+          Click a question for what each model found. Click a model&apos;s name for its scores and
+          the questions it missed. The number in a group&apos;s row is how many of its questions the
+          model got in the top 5.
+        </p>
+        <RankLegend />
+        <HitGrid
+          benchmark={benchmark}
+          scope={scope}
+          selected={view.kind === "question" ? view : null}
+          onQuestion={(question, model) => show({ kind: "question", question, model })}
+          onModel={(label) => show({ kind: "model", label })}
+        />
+      </DetailLayout>
 
       <section className="flex flex-col gap-3 border-t pt-7">
         <h2 className="text-xl font-semibold tracking-tight">Recall at every k, model by model</h2>
@@ -243,7 +204,7 @@ function BenchmarkView({ run, instance }: { run: EmbeddingRun; instance: Instanc
                     aria-label={`${m.name}: open details`}
                     onClick={() => {
                       show({ kind: "model", label: m.label });
-                      if (wide) hubRef.current?.scrollIntoView({ behavior: "smooth" });
+                      if (panel.wide) hubRef.current?.scrollIntoView({ behavior: "smooth" });
                     }}
                     className={cn(
                       "flex min-w-0 flex-col gap-0.5 border-l-2 border-rule-2 pt-1 pl-2.5 text-left hover:border-ink-3 hover:bg-panel",
