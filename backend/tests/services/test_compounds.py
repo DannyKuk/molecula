@@ -520,6 +520,28 @@ def test_find_mentions_matches_label_brands_only_with_a_capital_first_letter(
     assert mentioned(branded_service, text) == mentions
 
 
+def test_a_brand_a_label_update_drops_is_no_longer_a_mention(
+    conn: sqlite3.Connection, branded_service: CompoundService
+) -> None:
+    assert mentioned(branded_service, "Is Stay Awake safe?") == [("Stay Awake", "caffeine")]
+
+    LabelStore(conn).save(2519, (), FETCHED_AT)
+
+    assert mentioned(branded_service, "Is Stay Awake safe?") == []
+    assert branded_service.find_names("Is Stay Awake safe?") == []
+
+
+def test_a_brand_a_label_update_adds_is_found_without_a_restart(
+    conn: sqlite3.Connection, branded_service: CompoundService
+) -> None:
+    assert mentioned(branded_service, "Is Vivarin safe?") == []
+
+    LabelStore(conn).save(2519, (brand_label("Vivarin"),), FETCHED_AT)
+
+    assert mentioned(branded_service, "Is Vivarin safe?") == [("Vivarin", "caffeine")]
+    assert branded_service.find_names("Is Vivarin safe?") == ["Vivarin"]
+
+
 @pytest.mark.parametrize(
     ("name", "cid", "alias", "kind"),
     [
