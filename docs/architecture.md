@@ -91,7 +91,7 @@ One line each; the full reasoning, numbers and issues are on the design page nam
 - **The search is filtered to the drug and ranked by the part of the label**: the drug filter is hard, the section groups only add 0.15 to a chunk's similarity, because a wrong group as a hard filter hid the answer.
 - **A brand is a name of its drug and narrows the search to its label**; a label without the asked-for section widens it again.
 - **A search for several drugs searches each one** and keeps 5 passages per drug, so one drug can't take every slot.
-- **Measured and left out by default**: query translation and multi-query, and hybrid BM25 search (each a setting, off), and a score threshold ([hybrid search](decisions/hybrid-search.md), [query translation](evals/query-translation-2026-10-16.md)).
+- **Measured and left out by default**: query translation, multi-query and hybrid BM25 search, each a setting that is off, and a score threshold ([hybrid search](decisions/hybrid-search.md), [query translation](evals/query-translation-2026-10-16.md)).
 
 **Agent, models and tools** ([details](design/agent.md))
 - **One service layer for routes, tools and MCP**, so all three answer the same way and none reaches a source.
