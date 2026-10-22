@@ -26,7 +26,7 @@ from evals.retrieval.dataset import Question, load_questions
 from evals.retrieval.filters import first_hit_rank, gold_filter, labels_by_drug, mrr, recall
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 from molecula import prompts
 from molecula.agent.llm import chat_model_name, get_chat_model
@@ -34,19 +34,13 @@ from molecula.config import Settings, get_settings
 from molecula.rag.embeddings import embedding_model_id, get_embeddings
 from molecula.rag.fusion import reciprocal_rank_fusion
 from molecula.rag.retriever import LabelRetriever
-from molecula.schemas.retrieval import LabelFilter, RetrievedChunk
+from molecula.schemas.retrieval import LabelFilter, RetrievedChunk, Rewrites
 from molecula.store.index import LabelIndex
 from molecula.store.keywords import KeywordIndex
 
 GERMAN = Path(__file__).resolve().parents[1] / "datasets" / "retrieval_questions_de.yaml"
 TOP_K = 10
 FILTERS = ["whole index", "drug"]
-
-
-class Rewrites(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    rewrites: list[str] = Field(min_length=1)
 
 
 class ModelOutputs(BaseModel):

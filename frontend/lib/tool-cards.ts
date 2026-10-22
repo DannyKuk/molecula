@@ -48,6 +48,7 @@ export type RetrievalTrace = {
   tool_call_id: string;
   question: string;
   translation: { step: string; output: string }[];
+  translation_error?: string | null;
   filter: LabelFilter | null;
   filter_source: "model" | "agent";
   widened: "labels"[];

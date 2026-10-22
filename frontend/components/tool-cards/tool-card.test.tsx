@@ -257,6 +257,26 @@ describe("search_labels", () => {
       });
     });
 
+    it("shows the queries a translated search searched with", () => {
+      const card = openTraced({
+        ...IMATINIB_TRACE,
+        translation: [
+          { step: "rewrite 1", output: "imatinib mechanism of action" },
+          { step: "rewrite 2", output: "How does Gleevec work?" },
+        ],
+      });
+
+      expect(facts(card).Translation).toBe("imatinib mechanism of actionHow does Gleevec work?");
+    });
+
+    it("says why a translation failed and the question was searched as written", () => {
+      const card = openTraced({ ...IMATINIB_TRACE, translation_error: "APITimeoutError" });
+
+      expect(facts(card).Translation).toBe(
+        "Skipped searched with the question as writtenThe translation gave no answer: APITimeoutError",
+      );
+    });
+
     it("ranks every candidate with its similarity and the section bonus, marking the cited one", () => {
       const card = openTraced(IMATINIB_TRACE);
 

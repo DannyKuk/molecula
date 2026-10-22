@@ -86,6 +86,11 @@ function SearchTrace({
           ) : (
             <Skipped>{t.cards.asWritten}</Skipped>
           )}
+          {trace.translation_error && (
+            <p className="mt-0.5 text-xs text-ink-3">
+              {t.cards.translationFailed(trace.translation_error)}
+            </p>
+          )}
         </Fact>
         <Fact term={t.cards.drugs}>
           <Drugs filter={trace.filter} />

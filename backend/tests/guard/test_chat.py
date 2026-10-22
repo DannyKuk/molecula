@@ -111,6 +111,7 @@ def test_the_answers_usage_counts_both_checks_too() -> None:
         "input_check": CHECK_USAGE,
         "answer": AGENT_CALL_USAGE,
         "label_filter": Usage(),
+        "query_translation": Usage(),
         "source_check": SOURCE_CHECK_USAGE,
     }
     assert done(events).usage == CHECK_USAGE + AGENT_CALL_USAGE + SOURCE_CHECK_USAGE

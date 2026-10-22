@@ -8,7 +8,7 @@ import pytest
 from langchain_core.embeddings import Embeddings
 from pydantic import SecretStr
 
-from fake_llm import ScriptedChatModel
+from fake_llm import ScriptedChatModel, answer_message
 from molecula import wiring
 from molecula.agent.label_filter import DecisionFirstFilterExtractor
 from molecula.config import Settings
@@ -168,6 +168,27 @@ def test_hybrid_mode_without_the_keyword_index_searches_by_embeddings_and_says_h
     assert found.dense_rank == 1 and found.fused_score is None
     assert "python -m molecula.ingest fetch" in caplog.text
     assert not settings.keyword_index_path.exists()
+
+
+def test_query_translation_is_off_by_default(make_settings: Callable[..., Settings]) -> None:
+    settings = make_settings()
+
+    assert settings.query_translation == "off"
+    assert wiring.open_query_translator(settings, ScriptedChatModel(script=[])) is None
+
+
+def test_query_translation_runs_on_the_model_it_is_given(
+    make_settings: Callable[..., Settings],
+) -> None:
+    settings = make_settings(query_translation="translate")
+    model = ScriptedChatModel(script=[answer_message("What are the side effects of imatinib?")])
+
+    translator = wiring.open_query_translator(settings, model)
+
+    assert translator is not None
+    translation = translator.translate("Welche Nebenwirkungen hat Imatinib?")
+    assert translation.queries == ["What are the side effects of imatinib?"]
+    assert len(model.received) == 1
 
 
 @pytest.mark.parametrize(

@@ -4,8 +4,10 @@ from typing import Any
 import pytest
 from langchain_core.tools import StructuredTool
 
+from fake_llm import ScriptedChatModel, answer_message, tool_call_message
+from molecula.rag.translation import QueryTranslator
 from molecula.schemas.compounds import Resolution
-from molecula.schemas.retrieval import LabelFilter, LabelQuery
+from molecula.schemas.retrieval import LabelFilter, LabelQuery, TranslationStep
 from molecula.schemas.tools import (
     DrugNotSupported,
     InvalidArguments,
@@ -183,3 +185,46 @@ def test_each_passage_starts_with_its_ref_so_the_number_sits_beside_its_own_text
 
     passages = json.loads(str(message.content))["passages"]
     assert [list(p)[:2] for p in passages] == [["ref", "id"], ["ref", "id"]]
+
+
+GERMAN_SIDE_EFFECTS = "Welche Nebenwirkungen hat Gleevec?"
+
+
+def test_without_a_translator_the_question_is_searched_as_written(
+    tool: StructuredTool, retriever: FakeLabelRetriever
+) -> None:
+    message = call_tool(tool, {"question": SIDE_EFFECTS})
+
+    assert retriever.queries == [[]]
+    assert message.artifact.retrieval.translation is None
+
+
+def test_a_translated_question_steers_the_search_but_the_result_keeps_the_agents_question(
+    extractor: FakeFilterExtractor, retriever: FakeLabelRetriever
+) -> None:
+    extractor.filters[GERMAN_SIDE_EFFECTS] = GLEEVEC_FILTER
+    model = ScriptedChatModel(script=[answer_message(SIDE_EFFECTS)])
+    tool = search_labels_tool(extractor, retriever, QueryTranslator(model, "translate"))
+
+    message = call_tool(tool, {"question": GERMAN_SIDE_EFFECTS})
+
+    assert retriever.searched == [GLEEVEC_FILTER]
+    assert retriever.queries == [[SIDE_EFFECTS]]
+    assert message.artifact.question == GERMAN_SIDE_EFFECTS
+    translation = message.artifact.retrieval.translation
+    assert translation is not None
+    assert translation.steps == [TranslationStep(step="translation", output=SIDE_EFFECTS)]
+    assert SIDE_EFFECTS not in str(message.content)
+
+
+def test_multi_query_searches_the_question_with_its_rewrites(
+    extractor: FakeFilterExtractor, retriever: FakeLabelRetriever
+) -> None:
+    extractor.filters[SIDE_EFFECTS] = GLEEVEC_FILTER
+    rewrites = ["Gleevec adverse reactions", "imatinib side effects"]
+    model = ScriptedChatModel(script=[tool_call_message("Rewrites", {"rewrites": rewrites})])
+    tool = search_labels_tool(extractor, retriever, QueryTranslator(model, "multi_query"))
+
+    call_tool(tool, {"question": SIDE_EFFECTS})
+
+    assert retriever.queries == [[SIDE_EFFECTS, *rewrites]]

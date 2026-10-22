@@ -317,6 +317,30 @@ describe("turnFlow", () => {
     );
   });
 
+  it("says a translated search searched with the English question", () => {
+    const translation = [{ step: "translation", output: "What does imatinib do?" }];
+    const flow = turnFlow(answered([search({ trace: { ...IMATINIB_TRACE, translation } })]));
+
+    expect(step(flow, "score").outcome).toContain("Searched with “What does imatinib do?”.");
+    expect(step(flow, "boost").title).toBe("Add the +0.15 and keep the top 2");
+  });
+
+  it("says a search with rewrites merged their rankings by place", () => {
+    const translation = [
+      { step: "rewrite 1", output: "imatinib mechanism of action" },
+      { step: "rewrite 2", output: "How does Gleevec work?" },
+    ];
+    const flow = turnFlow(answered([search({ trace: { ...IMATINIB_TRACE, translation } })]));
+
+    expect(step(flow, "score").outcome).toContain(
+      `Searched with “${IMATINIB_LABELS.question}” and 2 rewrites by the chat model.`,
+    );
+    const boost = step(flow, "boost");
+    expect(boost.title).toBe("Merge the rankings and keep the top 2");
+    expect(boost.line).toContain("the question and its rewrites");
+    expect(boost.ranking).toBeUndefined();
+  });
+
   it("scores a keyword-only search by code", () => {
     const score = step(
       turnFlow(answered([search({ trace: { ...IMATINIB_TRACE, mode: "bm25" } })])),

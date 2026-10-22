@@ -39,6 +39,7 @@ from molecula.mcp.server import build_server
 from molecula.rag.embeddings import embedding_model_id, get_embeddings
 from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
+from molecula.rag.translation import QueryTranslator
 from molecula.schemas.chat import ChatModel, Checker, CheckerId
 from molecula.services.complexes import ComplexService
 from molecula.services.compounds import CompoundService
@@ -229,12 +230,29 @@ def online_decision_model(settings: Settings) -> DecisionModel | None:
 
 
 def agent_tools(
-    services: Services, extractor: FilterExtractor, retriever: LabelRetriever
+    services: Services,
+    extractor: FilterExtractor,
+    retriever: LabelRetriever,
+    translator: QueryTranslator | None = None,
 ) -> list[BaseTool]:
     """The agent's tools over the services, as the chat and the MCP server both serve them."""
     return build_tools(
-        services.compounds, services.targets, services.complexes, extractor, retriever
+        services.compounds,
+        services.targets,
+        services.complexes,
+        extractor,
+        retriever,
+        translator,
     )
+
+
+def open_query_translator(settings: Settings, model: BaseChatModel) -> QueryTranslator | None:
+    """The label search's query translation by `model`, the model that extracts its filters,
+    or None while QUERY_TRANSLATION is off (#446)."""
+    if settings.query_translation == "off":
+        return None
+    logger.info("The label search translates its queries: %s", settings.query_translation)
+    return QueryTranslator(model, settings.query_translation)
 
 
 async def served(
@@ -340,7 +358,10 @@ async def open_chat_checked_by(
     its own too (#380)."""
     checker = get_chat_model(settings, checks_model)
     extractor = FilterExtractor(checker, services.compounds, services.labels)
-    tools = await served(settings, agent_tools(services, extractor, retriever), sessions)
+    translator = open_query_translator(settings, checker)
+    tools = await served(
+        settings, agent_tools(services, extractor, retriever, translator), sessions
+    )
     return guarded_chat(
         settings,
         ChatModelInputCheck(checker),
@@ -373,7 +394,10 @@ async def open_chat(
     embeddings = get_embeddings(settings)
     retriever = open_label_retriever(settings, index, embeddings)
     extractor = open_filter_extractor(settings, chat_model, services.compounds, services.labels)
-    tools = await served(settings, agent_tools(services, extractor, retriever), sessions)
+    translator = open_query_translator(settings, chat_model)
+    tools = await served(
+        settings, agent_tools(services, extractor, retriever, translator), sessions
+    )
     canary = secrets.token_hex(16)
     guarded = partial(
         guarded_chat,

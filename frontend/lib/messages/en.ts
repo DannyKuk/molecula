@@ -381,6 +381,7 @@ export const en = {
     },
     translation: "Translation",
     asWritten: "searched with the question as written",
+    translationFailed: (error: string) => `The translation gave no answer: ${error}`,
     drugs: "Drugs",
     noDrugNamed: "No drug named, so every label was searched.",
     namedByModel: "Named by the chat model when it called the search.",
@@ -590,6 +591,8 @@ export const en = {
     widened: "None of those labels has the section, so the drug's other labels were searched too.",
     range: (low: string, high: string) => `${low} to ${high}`,
     searchedWith: (question: string) => `Searched with “${question}”.`,
+    searchedWithRewrites: (question: string, rewrites: number) =>
+      `Searched with “${question}” and ${plural(rewrites, "rewrite")} by the chat model.`,
     bm25Title: "Score the passages by keywords",
     bm25Line: "Code ranks the drug's passages by the words they share with the question (BM25).",
     ranked: (count: number) => `${plural(count, "passage")} ranked.`,
@@ -601,6 +604,8 @@ export const en = {
     mergeTitle: (kept: number) => `Merge the rankings and keep the top ${kept}`,
     mergeLine:
       "Code merges the keyword and embedding rankings by place (rank fusion). No AI is asked.",
+    mergeRewritesLine:
+      "Code merges the rankings of the question and its rewrites by place (rank fusion). No AI is asked.",
     hybridOrder: "Hybrid search: the +0.15 only changed the order of the embedding ranking. ",
     kept: (count: number) => `Kept ${plural(count, "passage")}.`,
     noSectionGuessed: "No section was guessed, so no passage got the bonus.",

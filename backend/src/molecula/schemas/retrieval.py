@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from molecula.schemas.compounds import Resolution
 from molecula.schemas.labels import ProductType, SectionGroup
@@ -20,6 +20,37 @@ class LabelQuery(BaseModel):
 
 type Widening = Literal["labels"]
 type RetrievalMode = Literal["dense", "bm25", "hybrid"]
+type QueryTranslationMode = Literal["off", "translate", "multi_query"]
+
+
+class Rewrites(BaseModel):
+    # No docstring, as for LabelQuery: the instructions live in prompts/rag/rewrite_query.md.
+    model_config = ConfigDict(extra="forbid")
+
+    rewrites: list[str] = Field(min_length=1)
+
+
+class TranslationStep(BaseModel):
+    """One query translation step and the query it produced (#114, #446)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    step: str
+    output: str
+
+
+class QueryTranslation(BaseModel):
+    """What a label search searched for its question: `queries`, the question first unless it
+    was translated, and the `steps` that wrote them. `error` says why the model gave no usable
+    query, so the question was searched as written, and `usage` is what the model call used;
+    it is None when no model was asked."""
+
+    model_config = ConfigDict(frozen=True)
+
+    queries: list[str]
+    steps: list[TranslationStep] = []
+    error: str | None = None
+    usage: Usage | None = None
 
 
 class EmbeddingSetup(BaseModel):
@@ -121,7 +152,8 @@ class Retrieval(BaseModel):
     none of its section groups: "labels" searched every label of the named drugs (or any
     product type). `mode` is the ranking the search used, `min_score` the similarity a candidate
     needed to be kept and `section_group_boost` what a chunk in the filter's section groups
-    counted higher in the ranking.
+    counted higher in the ranking. `translation` is what QUERY_TRANSLATION searched in place of
+    `question`; None when it is off.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -134,3 +166,4 @@ class Retrieval(BaseModel):
     mode: RetrievalMode
     min_score: float
     section_group_boost: float
+    translation: QueryTranslation | None = None
