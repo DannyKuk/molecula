@@ -13,7 +13,8 @@ import {
 } from "./mcp-dialog";
 
 // A Windows checkout may have CRLF line endings.
-const readme = readFileSync(path.join(__dirname, "../../README.md"), "utf8").replace(/\r\n/g, "\n");
+const setupPath = path.join(__dirname, "../../docs/setup.md");
+const doc = readFileSync(setupPath, "utf8").replace(/\r\n/g, "\n");
 
 function stubClipboard(writeText: (text: string) => Promise<void>) {
   Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
@@ -24,14 +25,14 @@ afterEach(() => {
 });
 
 describe("McpGuide", () => {
-  it("shows the README's config, commands and tools", () => {
-    expect(readme).toContain(CLAUDE_DESKTOP_CONFIG);
+  it("shows the setup doc's config, commands and tools", () => {
+    expect(doc).toContain(CLAUDE_DESKTOP_CONFIG);
     for (const { command } of START_COMMANDS) {
-      expect(readme).toContain(command);
+      expect(doc).toContain(command);
     }
-    expect(readme).toContain("http://localhost:8001/mcp");
+    expect(doc).toContain("http://localhost:8001/mcp");
     for (const { name } of TOOLS) {
-      expect(readme).toContain(`\`${name}\``);
+      expect(doc).toContain(`\`${name}\``);
     }
   });
 

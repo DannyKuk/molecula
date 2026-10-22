@@ -15,7 +15,7 @@ import { useMessages } from "@/lib/messages";
 
 export const CHECKOUT_PLACEHOLDER = "/path/to/molecula";
 
-// The commands and the config are the README's "MCP server" section word for word; a test checks it.
+// The commands and the config are the "MCP server" section of docs/setup.md word for word; a test checks it.
 export const CLAUDE_DESKTOP_CONFIG = `{
   "mcpServers": {
     "molecula": {
