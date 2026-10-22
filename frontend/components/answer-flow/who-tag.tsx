@@ -1,6 +1,7 @@
 import { cn } from "cn";
 
-import { WHO, type Who } from "@/lib/answer-flow";
+import type { Who } from "@/lib/answer-flow";
+import { useMessages } from "@/lib/messages";
 
 export const WHO_COLOURS: Record<Who, { tag: string; mark: string }> = {
   model: { tag: "border-signal bg-signal-soft text-signal", mark: "bg-signal" },
@@ -14,6 +15,7 @@ export const WHO_COLOURS: Record<Who, { tag: string; mark: string }> = {
 /** Who does a step, as a small coloured tag; the word carries the meaning, the colour repeats it.
  * `label` replaces the word when the step can be done by either of two models. */
 export function WhoTag({ who, label }: { who: Who; label?: string }) {
+  const t = useMessages();
   return (
     <span
       className={cn(
@@ -22,7 +24,7 @@ export function WhoTag({ who, label }: { who: Who; label?: string }) {
       )}
     >
       <span aria-hidden className="size-1.5 rounded-full bg-current" />
-      {label ?? WHO[who].label}
+      {label ?? t.flow.who[who]}
     </span>
   );
 }

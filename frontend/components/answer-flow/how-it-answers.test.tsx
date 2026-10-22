@@ -1,8 +1,9 @@
 import { act, render, screen, within } from "@testing-library/react";
 import { useRouter } from "next/navigation";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { FLOW_STEPS, WHO } from "@/lib/answer-flow";
+import { FLOW_STEPS } from "@/lib/answer-flow";
+import { LANGUAGE_KEY } from "@/lib/language";
 import { de } from "@/lib/messages/de";
 import { en } from "@/lib/messages/en";
 import { memoryHistory } from "@/lib/test-fixtures";
@@ -37,7 +38,7 @@ describe("HowItAnswers", () => {
     await openPage();
 
     for (const step of FLOW_STEPS) {
-      expect(stepCard(step.title).getByText(WHO[step.who].label)).toBeTruthy();
+      expect(stepCard(en.flow.guide[step.id].title).getByText(en.flow.who[step.who])).toBeTruthy();
     }
   });
 
@@ -45,7 +46,8 @@ describe("HowItAnswers", () => {
     await openPage();
 
     for (const step of FLOW_STEPS) {
-      const card = screen.getByRole("heading", { name: (name) => name.includes(step.title) });
+      const title = en.flow.guide[step.id].title;
+      const card = screen.getByRole("heading", { name: (name) => name.includes(title) });
       expect(card.closest("li")?.id).toBe(step.id);
     }
   });
@@ -91,6 +93,49 @@ describe("HowItAnswers on the cloud setup", () => {
     expect(within(note).getByRole("link").getAttribute("href")).toBe(
       "https://github.com/DannyKuk/molecula/blob/main/docs/decisions/embeddings.md",
     );
+  });
+});
+
+describe("HowItAnswers in German", () => {
+  afterEach(() => localStorage.clear());
+
+  it("writes the page in German and keeps the recorded run in English", async () => {
+    localStorage.setItem(LANGUAGE_KEY, "de");
+    await openPage();
+
+    expect(
+      screen.getByRole("heading", { name: "So beantwortet Molecula eine Frage" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(/„Does ibuprofen interact with warfarin\?“, durch jeden Schritt/),
+    ).toBeTruthy();
+    const legend = within(screen.getByLabelText("Wer einen Schritt ausführt"));
+    expect(legend.getByText("Chatmodell")).toBeTruthy();
+    expect(legend.getByText(/Gleiche Eingabe, gleiches Ergebnis/)).toBeTruthy();
+    expect(stepCard("Die Frage prüfen").getByText("Chatmodell")).toBeTruthy();
+    expect(screen.getByText("Prüfe die Frage")).toBeTruthy();
+    expect(
+      screen.getByText("Durchsuche die Fachinformation von ibuprofen, die Zeilen mit ihren Balken"),
+    ).toBeTruthy();
+    const bars = within(screen.getByRole("list", { name: "Textstellen nach Punktzahl" }));
+    expect(bars.getAllByText("+0.15, gesuchter Abschnitt")).toHaveLength(2);
+    expect(bars.getAllByText("Nursing mothers")).toHaveLength(2);
+    expect(screen.getByRole("row", { current: true }).textContent).toBe("+0.1591 %97 %");
+    expect(
+      screen.getByText(/heißt dieser Schritt im Tab Ablauf „Die besten 5 behalten“/),
+    ).toBeTruthy();
+  });
+
+  it("takes the step titles from the Flow tab's keys", async () => {
+    localStorage.setItem(LANGUAGE_KEY, "de");
+    await openPage();
+
+    for (const step of FLOW_STEPS) {
+      const card = screen.getByRole("heading", {
+        name: (name) => name.includes(de.flow.guide[step.id].title),
+      });
+      expect(card.closest("li")?.id).toBe(step.id);
+    }
   });
 });
 

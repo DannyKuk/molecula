@@ -457,38 +457,60 @@ export const en = {
         title: "Check the question",
         short:
           "A short separate call sorts the message. Only medicine questions and possible overdoses go on to an answer.",
+        text: "A short separate call sorts the message: a normal medicine question, a possible overdose (the answer then starts with emergency help), or something Molecula refuses, which gets a fixed answer. Only normal questions and overdose questions go on.",
+        aside:
+          "Online, Jev does this: a small model that only answers yes/no questions. Offline, as in this run, the chat model does it.",
+        passes: "ok, a normal question",
       },
       "decide-what-to-look-up": {
         title: "Decide what to look up",
         short:
           "The chat model picks what to look up and fills in the call, before it has seen what the lookup returns.",
+        text: "The chat model hasn't seen any label text yet. It decides to search the labels and fills in the search: which drug, and which part of the label it expects the answer in.",
+        aside:
+          "The part of the label is a guess made before the search. For a question about two or more drugs the chat model names no drug, and one more small call reads the drugs and the parts of the label from the question instead (Jev online, the chat model offline).",
+        passes: "drug: ibuprofen · section: interactions",
       },
       "narrow-to-the-drug": {
         title: "Narrow the search to the drug",
         short: "Code looks the drug up in the store and searches only that drug's labels.",
+        text: "The code looks the drug name up in our store, so “Gleevec” becomes imatinib, and only that drug's labels are searched (here, 2 ibuprofen labels). The section must be one of the label's real sections: a made-up name is sent back to the chat model as an error and never reaches the search.",
+        aside: "Two drugs are searched one by one, and each keeps its own top 5.",
+        passes: "ibuprofen's labels, cut into passages and tagged by section",
       },
       "score-by-meaning": {
         title: "Score the passages by meaning",
         short:
           "The embedder scores the drug's passages by how close they are in meaning to the question.",
+        text: "The embedder turns the question into numbers and compares it with every ibuprofen passage. Each passage gets a similarity, about 0 for unrelated and 1 for the same meaning. Two lists are taken: the 5 closest passages in the interactions section and the 5 closest in the whole label, up to 10 candidates together.",
+        aside:
+          "Similarity means “sounds like the question”. It doesn't mean “is the right answer”.",
+        passes: "up to 10 candidates, each with a similarity",
       },
       "boost-and-keep-five": {
         title: "Add the +0.15 and keep the top 5",
         short:
           "Code adds +0.15 to passages in the guessed section, sorts by the new score and keeps the top 5. No AI is asked.",
+        text: "Each passage from the section guessed in step 2 gets +0.15 added to its score. Then the code sorts by the new score, keeps the top 5 and numbers them [1] to [5]. Plain arithmetic: no AI is asked anything here.",
+        passes: "5 passages, numbered [1] to [5]",
       },
       "write-the-answer": {
         title: "Write the answer",
         short:
           "The chat model reads what the lookups returned and writes the answer, citing each source as [n].",
+        text: "The chat model reads the 5 passages and writes the answer. Every fact gets the number of the passage it came from, like [3].",
+        passes: "the answer with its [n] citations",
       },
       "watch-for-a-leak": {
         title: "Watch for a leaked system prompt",
         short: "While the answer streams, code watches for a hidden marker from the system prompt.",
+        text: "While the answer streams out, the code looks for a hidden marker placed in the system prompt (the canary). If it shows up, the answer is replaced with a fixed one before the marker reaches you.",
+        passes: "the finished answer",
       },
       "check-the-sources": {
         title: "Check the answer against the sources",
         short: "A separate call checks each claim in the answer against the source it cites.",
+        text: "A separate call compares each claim in the answer with the passage it cites, and marks whether the passage really says that.",
       },
     },
     categories: {
@@ -755,6 +777,54 @@ export const en = {
       schema: (version: number) => `Store schema v${version}`,
       startFailed: "Could not start the update. Check that the backend is running.",
     },
+  },
+  howItAnswers: {
+    eyebrow: "One question, start to finish",
+    title: "How Molecula answers a question",
+    intro: (question: string) =>
+      `This follows one real question, ${question}, through every step. The tag on each step says who does it. Most steps are plain code; the AI is used in only a few places.`,
+    whoDoesAStep: "Who does a step",
+    whoMeaning: {
+      model:
+        "The AI that reads and writes text, gpt-oss-20b in this run. It is asked to decide or write something.",
+      embedder:
+        "A smaller AI, bge-m3 in this run, that only turns text into numbers so meanings can be compared. It never writes.",
+      code: "Our own rules. Same input, same result, every time.",
+    },
+    theFlow: "The flow",
+    youAsk: "You ask",
+    theQuestion: "the question",
+    onStepsTab: "On the Steps tab:",
+    rowsWithBars: (line: string) => `${line}, the rows with their bars`,
+    closeUp: {
+      eyebrow: "Step 5 up close",
+      title: "What the +0.15 did to the warfarin question",
+      before:
+        "These are the 5 passages from the real run. The two interactions passages scored lowest on similarity alone, and the bonus moves them to the top.",
+      after:
+        "The chat model still reads all 5 passages. In this run its answer cited [3], a nursing mothers passage: the bonus decides the order and which passages make the cut, the chat model decides which ones to use.",
+    },
+    setting: {
+      eyebrow: "Where 0.15 comes from",
+      title: "A fixed setting, chosen by testing",
+      lead: "The size of the bonus is one setting,",
+      rest: ". It is the same for every question and nothing changes it while the app runs. It was picked with 94 test questions whose answering passage is known: for each bonus size, how often that passage made the top 5, with the chat model's section guesses and with the right section every time.",
+      bonus: "Bonus",
+      guessed: "Guessed",
+      alwaysRight: "Always right",
+      noBonus: "None",
+      hardRule: "Search only the guessed section",
+      whyABonus:
+        "The last row is why it is a bonus and not a hard rule. The chat model guesses the wrong section for 20 of the 94 questions, and searching only that section then hides the answer. With the bonus the other sections still compete, so a wrong guess costs less. 0.15 is the smallest bonus that comes within one question of the hard rule when the guess is right; above 0.08 the real result stays at 90–91%.",
+      measuredIn: "Measured for bge-m3 in",
+      hybrid:
+        ". In hybrid search mode, which is off by default, the keyword and embedding rankings are merged by place, and the bonus only changes the order of the embedding ranking.",
+      cloud: (stepTitle: string) =>
+        `The cloud setup, for a server too small for bge-m3, embeds with gemini-embedding-2 and gives no bonus. Measured the same way, Gemini put the answering passage in the top 5 for 98% of the questions with no bonus and for 91% with +0.15: it finds the right section without help, so the bonus only let a wrong guess push the answer out. On such an instance the Flow tab calls this step ${stepTitle}. The numbers are in`,
+    },
+    inOneSentence: "In one sentence",
+    sentence:
+      "Before searching, the chat model guesses which part of the label holds the answer. The embedder scores the passages by meaning, and our code gives the guessed part a fixed +0.15 head start before keeping the top 5. We picked 0.15 by testing on 94 questions with known answers.",
   },
 };
 
