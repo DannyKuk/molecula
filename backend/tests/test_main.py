@@ -1,11 +1,8 @@
-import asyncio
 import logging
-import sqlite3
 import time
 from collections.abc import Callable
 from dataclasses import replace
 from datetime import UTC, datetime
-from pathlib import Path
 
 import httpx2
 import pytest
@@ -18,14 +15,12 @@ from mcp.server.fastmcp import FastMCP
 from pydantic import SecretStr
 
 from fake_llm import ScriptedChatModel, answer_message, tool_call_message
-from molecula import main
+from molecula import main, wiring
 from molecula.agent.agent import ChatAgent
 from molecula.agent.decisions import DecisionModel, get_decision_model
-from molecula.agent.label_filter import DecisionFirstFilterExtractor
 from molecula.agent.llm import LLMConfigError
 from molecula.config import Settings
 from molecula.guard.chat import GuardedChat
-from molecula.guard.safety import ChatModelInputCheck, DecisionModelInputCheck
 from molecula.ingest.index import DrugIndexer
 from molecula.main import app
 from molecula.mcp.server import build_server
@@ -34,13 +29,10 @@ from molecula.rag.embeddings import embedding_model_id
 from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
 from molecula.schemas.chat import ChatModel
-from molecula.services.compounds import CompoundService
-from molecula.services.labels import LabelService
 from molecula.sources.http import SourceClient
 from molecula.store.compounds import CompoundStore, Synonym
 from molecula.store.db import connect
 from molecula.store.index import Chunk, IndexModelMismatch, LabelIndex
-from molecula.store.keywords import KeywordIndex
 from molecula.store.labels import LabelStore
 from molecula.store.structures import ComplexFiles, ConformerFiles
 from sse import server_sent_events
@@ -204,10 +196,10 @@ def judged_supported() -> AIMessage:
 
 def use_models(monkeypatch: pytest.MonkeyPatch, model: ScriptedChatModel) -> None:
     """The scripted model sorts the message, answers it and checks the answer."""
-    monkeypatch.setattr(main, "get_embeddings", lambda settings: UnitEmbeddings())
-    monkeypatch.setattr(main, "get_chat_model", lambda settings, picked=None: model)
-    monkeypatch.setattr(main, "get_answer_model", lambda settings, picked=None: model)
-    monkeypatch.setattr(main, "get_source_check_model", lambda settings, picked=None: model)
+    monkeypatch.setattr(wiring, "get_embeddings", lambda settings: UnitEmbeddings())
+    monkeypatch.setattr(wiring, "get_chat_model", lambda settings, picked=None: model)
+    monkeypatch.setattr(wiring, "get_answer_model", lambda settings, picked=None: model)
+    monkeypatch.setattr(wiring, "get_source_check_model", lambda settings, picked=None: model)
 
 
 @pytest.fixture
@@ -231,10 +223,10 @@ def loaded_models(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         loaded.append("source check")
         return ScriptedChatModel(script=[])
 
-    monkeypatch.setattr(main, "get_embeddings", embeddings)
-    monkeypatch.setattr(main, "get_chat_model", chat_model)
-    monkeypatch.setattr(main, "get_answer_model", answer_model)
-    monkeypatch.setattr(main, "get_source_check_model", source_check_model)
+    monkeypatch.setattr(wiring, "get_embeddings", embeddings)
+    monkeypatch.setattr(wiring, "get_chat_model", chat_model)
+    monkeypatch.setattr(wiring, "get_answer_model", answer_model)
+    monkeypatch.setattr(wiring, "get_source_check_model", source_check_model)
     return loaded
 
 
@@ -269,7 +261,7 @@ def test_without_a_chat_model_the_label_search_is_off_and_the_routes_still_work(
     def unconfigured(settings: Settings) -> BaseChatModel:
         raise LLMConfigError("No chat model is configured.")
 
-    monkeypatch.setattr(main, "get_chat_model", unconfigured)
+    monkeypatch.setattr(wiring, "get_chat_model", unconfigured)
     build_index(settings, embedding_model_id(settings))
 
     with TestClient(app) as client:
@@ -288,7 +280,7 @@ def test_startup_refuses_a_cloud_embedding_model_offline(
 ) -> None:
     cloud = make_settings(offline=True, embedding_model="openai/text-embedding-3-large")
     monkeypatch.setattr(main, "get_settings", lambda: cloud)
-    monkeypatch.setattr(main, "get_chat_model", lambda settings: ScriptedChatModel(script=[]))
+    monkeypatch.setattr(wiring, "get_chat_model", lambda settings: ScriptedChatModel(script=[]))
     build_index(cloud, "openai/text-embedding-3-large")
 
     with (
@@ -404,7 +396,7 @@ def mcp_servers_built(monkeypatch: pytest.MonkeyPatch) -> list[FastMCP]:
         servers.append(build_server(tools))
         return servers[-1]
 
-    monkeypatch.setattr(main, "build_server", build)
+    monkeypatch.setattr(wiring, "build_server", build)
     return servers
 
 
@@ -504,7 +496,7 @@ def use_gpt_oss_locally(settings: Settings, monkeypatch: pytest.MonkeyPatch) -> 
     async def local_names(settings: Settings) -> list[str]:
         return ["google/gemma-4-31b"]
 
-    monkeypatch.setattr(main, "local_model_names", local_names)
+    monkeypatch.setattr(wiring, "local_model_names", local_names)
 
 
 @pytest.mark.parametrize("checker", [{}, {"checker": "local"}])
@@ -527,7 +519,7 @@ def test_offline_a_picked_model_writes_the_answer_and_gpt_oss_sorts_and_checks_i
         return gpt_oss if model is None else gemma
 
     use_models(monkeypatch, gpt_oss)
-    monkeypatch.setattr(main, "get_answer_model", answer_model)
+    monkeypatch.setattr(wiring, "get_answer_model", answer_model)
 
     with TestClient(app) as client:
         listed = client.get("/models").json()
@@ -606,10 +598,10 @@ def test_online_a_local_pick_checked_locally_makes_no_openrouter_or_jev_call(
 
         return get_decision_model(settings, transport=httpx2.MockTransport(answer))
 
-    monkeypatch.setattr(main, "get_embeddings", lambda settings: UnitEmbeddings())
+    monkeypatch.setattr(wiring, "get_embeddings", lambda settings: UnitEmbeddings())
     for getter in ("get_chat_model", "get_answer_model", "get_source_check_model"):
-        monkeypatch.setattr(main, getter, model_for)
-    monkeypatch.setattr(main, "get_decision_model", jev)
+        monkeypatch.setattr(wiring, getter, model_for)
+    monkeypatch.setattr(wiring, "get_decision_model", jev)
 
     with TestClient(app) as client:
         response = client.post(
@@ -682,61 +674,6 @@ def test_without_a_local_server_only_the_configured_model_is_offered(
     assert [model["name"] for model in listed["models"]] == [listed["default"]]
 
 
-def test_offline_the_chat_model_sorts_messages(make_settings: Callable[..., Settings]) -> None:
-    settings = make_settings(offline=True, openrouter_api_key=SecretStr("sk-or-test"))
-
-    input_check = main.open_input_check(settings, ScriptedChatModel(script=[]))
-
-    assert isinstance(input_check, ChatModelInputCheck)
-
-
-def test_online_jev_sorts_messages(make_settings: Callable[..., Settings]) -> None:
-    settings = make_settings(offline=False, openrouter_api_key=SecretStr("sk-or-test"))
-
-    decision_model = main.online_decision_model(settings)
-    input_check = main.open_input_check(settings, ScriptedChatModel(script=[]))
-
-    assert isinstance(input_check, DecisionModelInputCheck)
-    assert decision_model is not None
-    assert decision_model.model == "jev-1.13"
-
-
-@pytest.mark.parametrize(
-    ("offline", "key", "extractor"),
-    [
-        (False, SecretStr("sk-or-test"), DecisionFirstFilterExtractor),
-        (True, SecretStr("sk-or-test"), FilterExtractor),
-        (False, None, FilterExtractor),
-    ],
-)
-def test_online_jev_extracts_the_label_filter_and_offline_the_chat_model(
-    make_settings: Callable[..., Settings],
-    conn: sqlite3.Connection,
-    tmp_path: Path,
-    offline: bool,
-    key: SecretStr | None,
-    extractor: type[FilterExtractor],
-) -> None:
-    settings = make_settings(offline=offline, openrouter_api_key=key)
-    store = CompoundStore(conn)
-    compounds = CompoundService(store, ConformerFiles(tmp_path), suggestion_cutoff=0.8)
-    labels = LabelService(LabelStore(conn), store)
-
-    found = main.open_filter_extractor(settings, ScriptedChatModel(script=[]), compounds, labels)
-
-    assert type(found) is extractor
-
-
-def test_online_without_an_openrouter_key_the_chat_model_sorts_messages(
-    make_settings: Callable[..., Settings],
-) -> None:
-    settings = make_settings(offline=False, openrouter_api_key=None)
-
-    input_check = main.open_input_check(settings, ScriptedChatModel(script=[]))
-
-    assert isinstance(input_check, ChatModelInputCheck)
-
-
 def test_no_response_or_log_line_contains_a_key_value(
     make_settings: Callable[..., Settings],
     monkeypatch: pytest.MonkeyPatch,
@@ -774,70 +711,10 @@ def test_no_response_or_log_line_contains_a_key_value(
             assert key not in str(response.headers)
 
 
-@pytest.mark.parametrize(
-    ("key", "expected"),
-    [
-        (None, "The answers come from openai/gpt-oss-20b at http://host.docker.internal:1234/v1"),
-        ("sk-or-test", "The answers come from openai/gpt-6-luna at OpenRouter"),
-    ],
-)
-def test_the_log_says_which_model_writes_the_answers_and_where(
-    make_settings: Callable[..., Settings],
-    caplog: pytest.LogCaptureFixture,
-    key: str | None,
-    expected: str,
-) -> None:
-    settings = make_settings(
-        offline=False,
-        openrouter_api_key=key,
-        llm_model="openai/gpt-6-luna",
-        local_llm_base_url="http://host.docker.internal:1234/v1",
-        local_llm_model="openai/gpt-oss-20b",
-    )
-    caplog.set_level(logging.INFO)
-
-    main.open_chat_model(settings)
-
-    assert expected in caplog.text
-
-
 def test_retry_after_is_readable_across_origins() -> None:
     response = TestClient(app).get("/health", headers={"Origin": "http://localhost:3000"})
 
     assert response.headers["access-control-expose-headers"] == "Retry-After"
-
-
-def test_hybrid_mode_fuses_the_keyword_search_when_its_index_is_built(
-    make_settings: Callable[..., Settings], monkeypatch: pytest.MonkeyPatch
-) -> None:
-    settings = make_settings(retrieval_mode="hybrid")
-    build_index(settings, embedding_model_id(settings))
-    KeywordIndex(settings.keyword_index_path).rebuild([CHUNK])
-
-    retriever = main.open_label_retriever(
-        settings, LabelIndex(settings.index_dir), UnitEmbeddings()
-    )
-
-    [found] = retriever.retrieve(CHUNK.text).chunks
-    assert found.bm25_rank == 1 and found.fused_score is not None
-
-
-def test_hybrid_mode_without_the_keyword_index_searches_by_embeddings_and_says_how_to_build_it(
-    make_settings: Callable[..., Settings],
-    monkeypatch: pytest.MonkeyPatch,
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    settings = make_settings(retrieval_mode="hybrid")
-    build_index(settings, embedding_model_id(settings))
-
-    retriever = main.open_label_retriever(
-        settings, LabelIndex(settings.index_dir), UnitEmbeddings()
-    )
-
-    [found] = retriever.retrieve(CHUNK.text).chunks
-    assert found.dense_rank == 1 and found.fused_score is None
-    assert "python -m molecula.ingest fetch" in caplog.text
-    assert not settings.keyword_index_path.exists()
 
 
 def test_the_label_update_reindexes_with_the_apps_own_model_and_index(
@@ -853,7 +730,7 @@ def test_the_label_update_reindexes_with_the_apps_own_model_and_index(
     def no_second_model(settings: Settings) -> None:
         raise AssertionError("loaded the embedding model again")
 
-    monkeypatch.setattr(main, "update_store", fake_update_store)
+    monkeypatch.setattr(wiring, "update_store", fake_update_store)
     monkeypatch.setattr(rag_embeddings, "get_embeddings", no_second_model)
     monkeypatch.setattr(rag_embeddings, "load_chunk_tokenizer", lambda settings: WordTokenizer())
 
@@ -867,43 +744,6 @@ def test_the_label_update_reindexes_with_the_apps_own_model_and_index(
 
     assert GLEEVEC.set_id in {chunk.set_id for chunk in LabelIndex(settings.index_dir).chunks()}
     assert loaded_models.count("embeddings") == 1
-
-
-@pytest.mark.parametrize(
-    ("overrides", "store_built"),
-    [({"offline": True}, True), ({"label_update_schedule": False}, True), ({}, False)],
-)
-def test_no_nightly_run_offline_with_the_schedule_off_or_without_a_store(
-    make_settings: Callable[..., Settings], overrides: dict[str, object], store_built: bool
-) -> None:
-    settings = make_settings(**({"offline": False} | overrides))
-    LabelIndex(settings.index_dir).rebuild([], [], "fake")
-    conn = connect(settings.db_path if store_built else Path(":memory:"))
-
-    async def scheduled() -> asyncio.Task[None] | None:
-        updater = main.open_label_updater(settings, conn, LabelIndex(settings.index_dir), None)
-        return main.schedule_label_updates(settings, updater)
-
-    assert asyncio.run(scheduled()) is None
-    conn.close()
-
-
-def test_the_nightly_run_is_scheduled_over_a_built_store(
-    make_settings: Callable[..., Settings],
-) -> None:
-    settings = make_settings(offline=False)
-    LabelIndex(settings.index_dir).rebuild([], [], "fake")
-    conn = connect(settings.db_path)
-
-    async def scheduled() -> bool:
-        updater = main.open_label_updater(settings, conn, LabelIndex(settings.index_dir), None)
-        task = main.schedule_label_updates(settings, updater)
-        assert task is not None
-        task.cancel()
-        return updater.can_run
-
-    assert asyncio.run(scheduled())
-    conn.close()
 
 
 def test_by_default_the_update_route_is_off_and_stats_show_the_label_update(

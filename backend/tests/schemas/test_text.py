@@ -5,7 +5,7 @@ from molecula.schemas.text import has_control_characters
 
 @pytest.mark.parametrize(
     "text",
-    ["What is imatinib?\r\n\tAnd why?", "Wie wirkt Ibuprofen?", "Was ist 【1】?", "no break"],
+    ["What is imatinib?\r\n\tAnd why?", "Wie wirkt Ibuprofen?", "Was ist 【1】?", "no\u00a0break"],
 )
 def test_ordinary_text_has_no_control_characters(text: str) -> None:
     assert not has_control_characters(text)

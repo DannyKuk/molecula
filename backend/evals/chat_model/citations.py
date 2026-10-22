@@ -39,8 +39,9 @@ from molecula.agent.agent import ChatAgent
 from molecula.agent.llm import chat_model_name
 from molecula.agent.tool_registry import build_tools
 from molecula.config import Settings, get_settings
-from molecula.main import lifespan, online_decision_model
+from molecula.main import lifespan
 from molecula.schemas.chat import ChatMessage
+from molecula.wiring import online_decision_model
 
 SQUARE = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
 FULL_WIDTH = re.compile(r"【(\d+(?:\s*,\s*\d+)*)】")

@@ -1,5 +1,7 @@
 import asyncio
 import sqlite3
+import subprocess
+import sys
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -9,7 +11,7 @@ from mcp.server.fastmcp import FastMCP
 from mcp.shared.memory import create_connected_server_and_client_session
 
 from fake_llm import ScriptedChatModel
-from molecula import main
+from molecula import wiring
 from molecula.config import Settings
 from molecula.mcp import __main__ as mcp_main
 from molecula.mcp.__main__ import open_server
@@ -39,7 +41,7 @@ def test_the_server_serves_every_agent_tool_over_the_built_store(
 ) -> None:
     LabelIndex(settings.index_dir).rebuild([], [], embedding_model_id(settings))
     monkeypatch.setattr(mcp_main, "get_embeddings", lambda settings: FakeEmbeddings(size=3))
-    monkeypatch.setattr(main, "get_chat_model", lambda settings: ScriptedChatModel(script=[]))
+    monkeypatch.setattr(wiring, "get_chat_model", lambda settings: ScriptedChatModel(script=[]))
     server = open_server(settings, store, host="127.0.0.1", port=8001)
 
     async def listed() -> list[str]:
@@ -54,7 +56,7 @@ def test_main_runs_the_server_over_the_chosen_transport(
 ) -> None:
     LabelIndex(settings.index_dir).rebuild([], [], embedding_model_id(settings))
     monkeypatch.setattr(mcp_main, "get_embeddings", lambda settings: FakeEmbeddings(size=3))
-    monkeypatch.setattr(main, "get_chat_model", lambda settings: ScriptedChatModel(script=[]))
+    monkeypatch.setattr(wiring, "get_chat_model", lambda settings: ScriptedChatModel(script=[]))
     monkeypatch.setattr(mcp_main, "get_settings", lambda: settings)
     monkeypatch.setattr(mcp_main, "open_store", lambda settings: store)
     transports: list[str] = []
@@ -72,3 +74,16 @@ def test_without_the_label_index_the_server_says_how_to_get_it(
         open_server(settings, store, host="127.0.0.1", port=8001)
 
     assert not settings.index_dir.exists()
+
+
+def test_the_entry_point_builds_no_web_app() -> None:
+    loaded = subprocess.run(
+        [sys.executable, "-c", "import sys, molecula.mcp.__main__; print(*sys.modules)"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.split()
+
+    assert "molecula.main" not in loaded
+    assert "fastapi" not in loaded
+    assert not [module for module in loaded if module.startswith("molecula.api")]

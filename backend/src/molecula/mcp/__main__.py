@@ -2,9 +2,12 @@ import argparse
 
 from mcp.server.fastmcp import FastMCP
 
-from molecula.agent.tool_registry import build_tools
 from molecula.config import Settings, get_settings
-from molecula.main import (
+from molecula.mcp.server import DEFAULT_PORT, build_server
+from molecula.rag.embeddings import get_embeddings
+from molecula.store.db import StoreConnection
+from molecula.wiring import (
+    agent_tools,
     log_to_console,
     open_chat_model,
     open_filter_extractor,
@@ -13,9 +16,6 @@ from molecula.main import (
     open_services,
     open_store,
 )
-from molecula.mcp.server import DEFAULT_PORT, build_server
-from molecula.rag.embeddings import get_embeddings
-from molecula.store.db import StoreConnection
 
 NO_LABEL_SEARCH = (
     "The MCP server needs the label index and a chat model for search_labels: run "
@@ -31,10 +31,8 @@ def open_server(settings: Settings, conn: StoreConnection, *, host: str, port: i
     chat_model = open_chat_model(settings) if index is not None else None
     if index is None or chat_model is None:
         raise SystemExit(NO_LABEL_SEARCH)
-    tools = build_tools(
-        services.compounds,
-        services.targets,
-        services.complexes,
+    tools = agent_tools(
+        services,
         open_filter_extractor(settings, chat_model, services.compounds, services.labels),
         open_label_retriever(settings, index, get_embeddings(settings)),
     )
