@@ -2,6 +2,8 @@
 
 A medicines chatbot that answers with real 3D molecular structures. Ask "How does imatinib fight leukemia?" and it explains the mechanism from FDA drug labels, cites its sources, and shows the drug sitting in the pocket of its target protein.
 
+https://github.com/user-attachments/assets/2db2bf0b-647a-4ed8-90e8-022c327f57c4
+
 > **Not medical advice.** Molecula explains how medicines work. It does not give personal dosing or treatment advice.
 
 ## How it works
