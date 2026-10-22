@@ -40,13 +40,14 @@ from store_records import compound_record
 type Services = tuple[CompoundService, LabelService]
 
 FETCHED_AT = datetime(2026, 10, 12, tzinfo=UTC)
-IMATINIB, IBUPROFEN, WARFARIN, DICLOFENAC, DIPHENHYDRAMINE, METAMIZOLE = (
+IMATINIB, IBUPROFEN, WARFARIN, DICLOFENAC, DIPHENHYDRAMINE, METAMIZOLE, ASPIRIN = (
     5291,
     3672,
     54678486,
     3033,
     3100,
     3111,
+    2244,
 )
 # Brands as openFDA has them in the built store (2026-10-12).
 DRUGS: list[tuple[int, str, list[Synonym], list[tuple[str, str | None, str]]]] = [
@@ -74,6 +75,7 @@ DRUGS: list[tuple[int, str, list[Synonym], list[tuple[str, str | None, str]]]] =
         ],
     ),
     (METAMIZOLE, "metamizole", [], []),
+    (ASPIRIN, "aspirin", [], []),
 ]
 
 
@@ -333,6 +335,59 @@ def test_a_brand_from_a_label_finds_its_drug(services: Services) -> None:
     found = filters.check(LabelQuery(substances=["zipsor"]))
 
     assert found.set_ids == ["zipsor"]
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "Voltaren arthritis gel",
+        "Voltaren",
+        "diclofenac",
+        "Seacall diclofenac gel",
+        "zipsor",
+        "Warfarin Sodium",
+        "ibuprofen warfarin kit",
+        "Foobar gel",
+        "Gleevek",
+        "Non-Aspirin pain reliever",
+        "aspirin free Excedrin",
+        "aspirin",
+    ],
+)
+def test_a_drug_the_agent_names_is_the_drug_it_resolves_to(services: Services, name: str) -> None:
+    compounds, _ = services
+    filters, _ = extractor(services)
+
+    resolution = compounds.resolve(name)
+    found = filters.filter_for("What are its side effects?", drug=name)
+
+    assert [drug.cid for drug in found.drugs] == (
+        [resolution.compound.cid] if resolution.compound else []
+    )
+    assert [unsupported.query for unsupported in found.unsupported] == (
+        [] if resolution.compound else [name]
+    )
+
+
+@pytest.mark.parametrize("name", ["Non-Aspirin pain reliever", "aspirin-free", "Aspirin Free"])
+def test_a_drug_the_name_says_the_product_lacks_is_not_searched(
+    services: Services, name: str
+) -> None:
+    filters, _ = extractor(services)
+
+    found = filters.filter_for("What is in it?", drug=name)
+
+    assert found.drugs == []
+    assert [unsupported.query for unsupported in found.unsupported] == [name]
+
+
+def test_a_brand_with_a_dosage_form_searches_every_label_of_its_drug(services: Services) -> None:
+    filters, _ = extractor(services)
+
+    found = filters.filter_for("Can teenagers use it?", drug="Voltaren arthritis gel")
+
+    assert [drug.cid for drug in found.drugs] == [DICLOFENAC]
+    assert sorted(found.set_ids) == ["voltaren", "zipsor"]
 
 
 def test_a_drug_the_agent_names_is_searched_without_asking_the_model(services: Services) -> None:

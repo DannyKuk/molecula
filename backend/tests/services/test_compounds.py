@@ -484,6 +484,11 @@ def branded_service(
     caffeine = compound_record(2519, "caffeine")
     scope_store.save(caffeine, [Synonym("caffeine", "name")], FETCHED_AT)
     labels.save(2519, (brand_label("Stay Awake"),), FETCHED_AT)
+    diclofenac = compound_record(3033, "diclofenac")
+    scope_store.save(
+        diclofenac, [Synonym("diclofenac", "name"), Synonym("Voltaren", "alias")], FETCHED_AT
+    )
+    labels.save(3033, (brand_label("Voltaren Arthritis Pain"),), FETCHED_AT)
     return CompoundService(scope_store, conformers, suggestion_cutoff=SUGGESTION_CUTOFF)
 
 
@@ -513,6 +518,81 @@ def test_find_mentions_matches_label_brands_only_with_a_capital_first_letter(
     branded_service: CompoundService, text: str, mentions: list[tuple[str, str]]
 ) -> None:
     assert mentioned(branded_service, text) == mentions
+
+
+@pytest.mark.parametrize(
+    ("name", "cid", "alias", "kind"),
+    [
+        ("Voltaren", 3033, "Voltaren", "alias"),
+        ("diclofenac", 3033, "diclofenac", "name"),
+        ("Voltaren arthritis gel", 3033, "Voltaren", "alias"),
+        ("voltaren gel", 3033, "Voltaren", "alias"),
+        ("Seacall diclofenac gel", 3033, "diclofenac", "name"),
+        ("diclofenac sodium gel", 3033, "diclofenac", "name"),
+        ("Tylenol acetaminophen caplets", 1983, "Tylenol", "alias"),
+        ("Tylenol 8 HR Arthritis Pain caplets", 1983, "Tylenol 8 HR Arthritis Pain", "brand"),
+        ("Tirosint-SOL drops", 5819, "Tirosint SOL", "brand"),
+    ],
+)
+def test_a_product_name_with_one_supported_drug_in_it_resolves_to_that_drug(
+    branded_service: CompoundService, name: str, cid: int, alias: str, kind: str
+) -> None:
+    resolution = branded_service.resolve(name)
+
+    assert resolution.status == "found"
+    assert resolution.compound is not None
+    assert resolution.compound.cid == cid
+    assert (resolution.query, resolution.matched_alias, resolution.match_kind) == (
+        name,
+        alias,
+        kind,
+    )
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["Foobar gel", "Tylenol and Advil", "ibuprofen acetaminophen kit", "stay awake tablets"],
+)
+def test_a_product_name_with_no_or_two_supported_drugs_in_it_is_not_supported(
+    branded_service: CompoundService, name: str
+) -> None:
+    resolution = branded_service.resolve(name)
+
+    assert resolution.status == "not_supported"
+    assert resolution.match is None
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "Non-Aspirin pain reliever",
+        "non aspirin",
+        "aspirin free Excedrin",
+        "aspirin-free",
+        "Aspirin Free",
+        "Excedrin aspirin free",
+    ],
+)
+def test_a_drug_the_name_says_the_product_lacks_does_not_count(
+    branded_service: CompoundService, name: str
+) -> None:
+    resolution = branded_service.resolve(name)
+
+    assert resolution.status == "not_supported"
+    assert resolution.match is None
+
+
+@pytest.mark.parametrize(
+    ("name", "cid"),
+    [("aspirin free Tylenol", 1983), ("Canon aspirin", 2244), ("aspirin freezer pack", 2244)],
+)
+def test_only_non_and_free_right_beside_a_drug_negate_it(
+    branded_service: CompoundService, name: str, cid: int
+) -> None:
+    resolution = branded_service.resolve(name)
+
+    assert resolution.compound is not None
+    assert resolution.compound.cid == cid
 
 
 def test_find_names_adds_words_close_to_a_drug_name_as_written(

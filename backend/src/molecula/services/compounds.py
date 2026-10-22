@@ -10,7 +10,7 @@ from molecula.schemas.compounds import (
     Suggestion,
     SupportedDrug,
 )
-from molecula.store.compounds import CompoundRecord, CompoundStore
+from molecula.store.compounds import CompoundRecord, CompoundStore, SynonymMatch
 from molecula.store.structures import ConformerFiles
 
 PUBCHEM_COMPOUND_URL = "https://pubchem.ncbi.nlm.nih.gov/compound/{cid}"
@@ -22,6 +22,8 @@ MIN_PREFIX_LENGTH = 4
 NEAR_CUTOFF = 0.85
 # Shorter words are left out: abbreviations like "ASS" count only in capitals.
 MIN_NEAR_NAME_LENGTH = 5
+NEGATION_BEFORE = re.compile(r"(?i)\bnon[- ]?$")
+NEGATION_AFTER = re.compile(r"(?i)^[- ]?free\b")
 
 # Prescriptions and openFDA name the salt or hydrate ("imatinib mesylate"), the store holds the
 # parent compound. Ester words like "acetate" are left out: medroxyprogesterone acetate is a
@@ -89,6 +91,10 @@ class CompoundService:
     def resolve(self, name: str) -> Resolution:
         """The supported drug a name, brand, alias or salt name refers to, ignoring case.
 
+        A product name the store doesn't know is the one supported drug named in it: "Voltaren
+        arthritis gel" is diclofenac, by its alias Voltaren. A name with two drugs in it stays
+        unknown rather than picking one.
+
         An unsupported name gets the scope names and aliases it starts or is close to as
         suggestions, never as the answer: look-alike drug names (Celexa, Celebrex) make a silent
         correction unsafe.
@@ -97,16 +103,21 @@ class CompoundService:
         candidates = name_candidates(query)
         for candidate in candidates:
             if match := self._store.find(candidate):
-                return Resolution(
-                    query=query,
-                    status="found",
-                    compound=to_compound(match.compound),
-                    matched_alias=match.alias,
-                    match_kind=match.kind,
-                )
+                return found(query, match)
+        if match := self._drug_inside(query):
+            return found(query, match)
         # The last candidate is the name without salt words, so "imatinb mesylate" finds imatinib.
         suggestions = self._suggest(candidates[-1]) if candidates else []
         return Resolution(query=query, status="not_supported", suggestions=suggestions)
+
+    def _drug_inside(self, name: str) -> SynonymMatch | None:
+        """The one supported drug a name mentions, by the stored spelling it mentions it with.
+        A drug the name says the product lacks ("Non-Aspirin", "aspirin free") doesn't count."""
+        mentions = [mention for mention in self.find_mentions(name) if not negated(name, mention)]
+        if len({mention.cid for mention in mentions}) != 1:
+            return None
+        match = self._store.find(mentions[0].text)
+        return match if match and match.compound.cid == mentions[0].cid else None
 
     def _suggest(self, name: str) -> list[Suggestion]:
         """Up to three scope names and aliases that start with the name or are close to it.
@@ -260,6 +271,24 @@ def brand_pattern(brand: str) -> str:
     space or a hyphen."""
     words = re.split(r"[\s-]+", brand[1:])
     return f"{re.escape(brand[0].upper())}(?i:{'[ -]'.join(re.escape(word) for word in words)})"
+
+
+def negated(name: str, mention: DrugMention) -> bool:
+    """Whether `name` says its product is without the drug it mentions: "non-" before the
+    mention or "free" after it."""
+    return bool(
+        NEGATION_BEFORE.search(name[: mention.start]) or NEGATION_AFTER.match(name[mention.end :])
+    )
+
+
+def found(query: str, match: SynonymMatch) -> Resolution:
+    return Resolution(
+        query=query,
+        status="found",
+        compound=to_compound(match.compound),
+        matched_alias=match.alias,
+        match_kind=match.kind,
+    )
 
 
 def to_compound(record: CompoundRecord) -> Compound:
