@@ -130,6 +130,20 @@ Claude Desktop: add the server to `claude_desktop_config.json` (Settings → Dev
 
 Claude Desktop started from the Dock doesn't see your shell's `PATH`, so if it says it can't start the server, put the full path from `which uv` (e.g. `/opt/homebrew/bin/uv`) in `command`. Its log is `~/Library/Logs/Claude/mcp-server-molecula.log` on macOS.
 
+To use the server in Docker instead (`docker compose --profile mcp up --build`), let Claude Desktop reach it through [mcp-remote](https://www.npmjs.com/package/mcp-remote), because its config file starts only local commands and its URL connectors connect from Anthropic's cloud, which can't reach localhost. `npx` needs `node` on the `PATH` (`which node`):
+
+```json
+{
+  "mcpServers": {
+    "molecula": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote@0.14.3", "http://localhost:8001/mcp"],
+      "env": { "PATH": "/opt/homebrew/bin:/usr/bin:/bin" }
+    }
+  }
+}
+```
+
 Every result names where its facts come from. Each source has a `ref`, the number the model cites it with as `[ref]`, counted per MCP session: the same PubChem page or label passage keeps its number across calls, and two calls never share one. The result's `structuredContent` also lists its sources (kind, name, URL, label section and date, `ref`), so a client can show where an answer came from (#299).
 
 The chat gets its tools from this server too, through in-memory sessions inside the backend (`AGENT_TOOLS=mcp`, the default; `AGENT_TOOLS=local` calls them directly). The answer looks the same either way: the same sources list and retrieval trace, and the daily cost limit counts the label searches' model calls (#316).
