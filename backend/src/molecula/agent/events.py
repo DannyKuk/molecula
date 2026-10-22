@@ -63,7 +63,11 @@ class AgentRun:
         yield from tokens(self.markers.flush())
         self.model_calls += 1
         self.answer_usage += usage_of(message)
-        if not message.tool_calls:
+        if message.tool_calls:
+            # Some models write a line before they call a tool ("I'll look up the labels."),
+            # which would otherwise run into the first sentence of the answer (#399).
+            yield from tokens(paragraph_break(without_channel_markers(message.text)))
+        else:
             self.answer = without_channel_markers(message.text)
         for call in message.tool_calls:
             call_id = call["id"] or ""
@@ -112,6 +116,17 @@ class AgentRun:
 def tokens(text: str) -> Iterator[TokenEvent]:
     if text:
         yield TokenEvent(text=text)
+
+
+def paragraph_break(text: str) -> str:
+    """What `text` needs at its end so that what follows starts a paragraph of its own: none
+    after no text, else enough newlines to make a blank line. A single newline isn't enough,
+    because Markdown runs the next line into the same paragraph."""
+    if not text.strip():
+        return ""
+    end = text.rstrip(" \t")
+    newlines = len(end) - len(end.rstrip("\n"))
+    return "\n" * max(0, 2 - newlines)
 
 
 def parse_result(content: str) -> Any:
