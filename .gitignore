@@ -46,3 +46,6 @@ ollama/
 # Claude Code
 .claude/worktrees/
 .superpowers/
+
+# Launch video builds from the /brag skill
+brag-output/
