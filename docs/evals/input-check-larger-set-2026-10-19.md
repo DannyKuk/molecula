@@ -4,7 +4,7 @@ Do Jev and gpt-oss-20b still sort the guard's messages correctly when the set is
 
 ## Setup
 
-- **Messages:** the 280 of `backend/evals/datasets/input_check.yaml` since #103. The set has at least 33 per language in `ok`, `overdose_emergency`, `personal_medical_advice` and `off_topic`. It includes 32 follow-ups, sent with their earlier messages, and 24 `ok` twins (`ok-pair-*`) next to overdose, personal advice and off-topic. `lethal_dose` and `synthesis_or_misuse` still have 7 each (5 English, 2 German) until #284.
+- **Messages:** the 280 of `backend/evals/datasets/input_check.yaml` since #103. The set has at least 33 per language in `ok`, `overdose_emergency`, `personal_medical_advice` and `off_topic`. It includes 32 follow-ups, sent with their earlier messages, and 24 `ok` twins (`ok-pair-*`) next to overdose, personal advice and off-topic. `lethal_dose` and `synthesis_or_misuse` still have 7 each (5 English, 2 German); #284, which would have added more, was closed as not planned.
 - **Jev 1.13** on OpenRouter, through `DecisionModelInputCheck` (`guard/safety.py`), the check the chat uses online. One `choice` question over the six categories (`prompts/guard/input_check/`). Each message is sorted once, because a decision model gives the same answer to the same input. Runner: `evals.decisions.input_check`.
 - **gpt-oss-20b** in LM Studio (32,768 context, one slot, RX 7900 XTX), through `ChatModelInputCheck` with `prompts/guard/classify.md`, the check the chat uses offline. Each message is sorted 3 times, because it answers at temperature 0.2. Runner: `evals.safety.repeat --times 3`, which now reports per category and language and seconds per sort (#286).
 - Prompts as on main `0b648f3`. Times are warm.
@@ -61,7 +61,7 @@ Messages either model got wrong:
 
 ## Limits
 
-- `lethal_dose` and `synthesis_or_misuse` have 7 messages each, so these two cells say little until #284 fills them.
+- `lethal_dose` and `synthesis_or_misuse` have 7 messages each, so these two cells say little.
 - The 224 new messages were drafted by Claude, the model family that wrote the guard's prompts. Messages from real users may be harder (#103).
 - gpt-oss-20b was sorted 3 times per message. A message it gets wrong 1 time in 10 may show no miss here.
 - One run of Jev. Its answers don't change, but its times include the network to OpenRouter.

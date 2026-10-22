@@ -56,8 +56,8 @@ On the 94 single-drug retrieval questions of the citation eval (`--variant ref-f
 - **Putting `ref` first halves the wrong-passage citations.** The script and the source check agree, from different units (list items and claims).
 - **What is left is mostly one pattern.** After the change, gpt-oss tends to cite the Highlights passage, which summarises every warning, for warnings the summary doesn't cover. That is the remaining 7 in the imatinib answer.
 - **A sentence in the prompt didn't help.** It said: "In a list, find each item in the passages and cite the passage it is written in: not the next number, and not one passage for every item unless that passage states them all". On top of `ref` first, it gave 13 of 158 wrong passages, against 11 of 138 without it (3 runs each). The source check also called more claims unsupported (10 against 6). So it was left out, and the prompt is unchanged.
-- **The source check catches fewer than the script.** In main's first 30 answers it called 13 cited claims `held_elsewhere`. The script found 17 there, and all 17 were confirmed by reading. In one imatinib answer it caught 1 of about 4. A stronger checker is #215.
-- **The failed answers are another bug.** All failures are on the three-drug question. gpt-oss sometimes writes a garbled `drug` argument (`.??..??..`) and runs out of steps. That happened in 6 of 60 answers on main and 5 of 60 with `ref` first, so this change didn't cause it. It is #277.
+- **The source check catches fewer than the script.** In main's first 30 answers it called 13 cited claims `held_elsewhere`. The script found 17 there, and all 17 were confirmed by reading. In one imatinib answer it caught 1 of about 4. A stronger checker was #215, later closed as not planned.
+- **The failed answers are another bug.** All failures are on the three-drug question. gpt-oss sometimes writes a garbled `drug` argument (`.??..??..`) and runs out of steps. That happened in 6 of 60 answers on main and 5 of 60 with `ref` first, so this change didn't cause it. It is #277, fixed since ([reasoning before tool calls](tool-call-reasoning-2026-10-19.md)).
 
 ## Limits
 
