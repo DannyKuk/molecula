@@ -12,7 +12,16 @@ import { LOGIN_ON } from "@/lib/login";
 // colorBorder to a few percent, hence the !important.
 const RULE = "inset 0 0 0 1px var(--rule-2) !important";
 
+// Clerk's root box is fit-content and caps the card at 100vw - 2.5rem, so on a phone the form
+// shrank to its text and sat at the left of the column. The login pages fill their column instead.
+const FILL_COLUMN = {
+  elements: { rootBox: { width: "100%" }, cardBox: { maxWidth: "none" } },
+};
+
 const appearance = {
+  signIn: FILL_COLUMN,
+  signUp: FILL_COLUMN,
+  waitlist: FILL_COLUMN,
   variables: {
     colorPrimary: "var(--signal)",
     colorPrimaryForeground: "#ffffff",
