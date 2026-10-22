@@ -1,7 +1,6 @@
 import logging
 import time
 from collections.abc import Callable
-from dataclasses import replace
 from datetime import UTC, datetime
 
 import httpx2
@@ -29,10 +28,11 @@ from molecula.rag.embeddings import embedding_model_id
 from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
 from molecula.schemas.chat import ChatModel
+from molecula.schemas.retrieval import Chunk
 from molecula.sources.http import SourceClient
 from molecula.store.compounds import CompoundStore, Synonym
 from molecula.store.db import connect
-from molecula.store.index import Chunk, IndexModelMismatch, LabelIndex
+from molecula.store.index import IndexModelMismatch, LabelIndex
 from molecula.store.labels import LabelStore
 from molecula.store.structures import ComplexFiles, ConformerFiles
 from sse import server_sent_events
@@ -301,12 +301,13 @@ def test_startup_refuses_an_index_built_with_another_embedding_model(
     assert loaded_models == []
 
 
-MECHANISM = replace(
-    CHUNK,
-    id="gleevec:mechanism_of_action:0",
-    text="Imatinib inhibits the BCR-ABL tyrosine kinase.",
-    section="mechanism_of_action",
-    section_group="pharmacology",
+MECHANISM = CHUNK.model_copy(
+    update={
+        "id": "gleevec:mechanism_of_action:0",
+        "text": "Imatinib inhibits the BCR-ABL tyrosine kinase.",
+        "section": "mechanism_of_action",
+        "section_group": "pharmacology",
+    }
 )
 
 

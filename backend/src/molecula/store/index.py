@@ -1,13 +1,12 @@
 import shutil
 from collections.abc import Sequence
-from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
 import chromadb
 from chromadb.config import Settings as ChromaSettings
 
-from molecula.schemas.labels import ProductType, SectionGroup
+from molecula.schemas.retrieval import Chunk
 
 COLLECTION = "label_chunks"
 MODEL_KEY = "embedding_model"
@@ -15,24 +14,6 @@ MODEL_KEY = "embedding_model"
 
 class IndexModelMismatch(Exception):
     """The index was built with another embedding model than the settings name."""
-
-
-@dataclass(frozen=True)
-class Chunk:
-    """A piece of one label section, with what retrieval filters on and the source to cite."""
-
-    id: str
-    text: str
-    cid: int
-    substance: str
-    brand: str | None
-    product_type: ProductType
-    section: str
-    section_group: SectionGroup
-    sensitive: bool
-    set_id: str
-    effective_time: str
-    url: str
 
 
 class LabelIndex:
@@ -185,8 +166,7 @@ class LabelIndex:
 
 def to_metadata(chunk: Chunk) -> dict[str, Any]:
     # ChromaDB metadata values can't be None, so a label without a brand leaves the key out.
-    fields = asdict(chunk)
-    del fields["id"], fields["text"]
+    fields = chunk.model_dump(exclude={"id", "text"})
     return {key: value for key, value in fields.items() if value is not None}
 
 

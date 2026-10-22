@@ -2,14 +2,13 @@ import re
 import sqlite3
 from collections.abc import Sequence
 from contextlib import closing
-from dataclasses import astuple, fields
 from pathlib import Path
 from typing import Any
 
-from molecula.store.index import Chunk
+from molecula.schemas.retrieval import Chunk
 
 TABLE = "label_chunks"
-COLUMNS = [field.name for field in fields(Chunk)]
+COLUMNS = list(Chunk.model_fields)
 # Porter stemming, so "effects" finds "effect". unicode61 splits words at every hyphen, also the
 # non-breaking one (U+2011) the labels often use; a hyphenated query term is matched as a
 # phrase of its parts instead, so 5-HT3 finds "5-HT3" and not each "5".
@@ -43,7 +42,7 @@ class KeywordIndex:
             placeholders = ", ".join("?" for _ in COLUMNS)
             conn.executemany(
                 f"INSERT INTO {TABLE} ({', '.join(COLUMNS)}) VALUES ({placeholders})",
-                (astuple(chunk) for chunk in sorted(chunks, key=lambda chunk: chunk.id)),
+                (to_row(chunk) for chunk in sorted(chunks, key=lambda chunk: chunk.id)),
             )
             conn.execute(f"INSERT INTO {TABLE} ({TABLE}) VALUES ('optimize')")
         building.replace(self._path)
@@ -56,7 +55,7 @@ class KeywordIndex:
             conn.execute(f"DELETE FROM {TABLE} WHERE cid = ?", (cid,))
             conn.executemany(
                 f"INSERT INTO {TABLE} ({', '.join(COLUMNS)}) VALUES ({placeholders})",
-                (astuple(chunk) for chunk in chunks),
+                (to_row(chunk) for chunk in chunks),
             )
 
     def search(
@@ -106,6 +105,9 @@ def sql_condition(where: dict[str, Any] | None) -> tuple[str, list[Any]]:
     return f"{column} = ?", [test]
 
 
+def to_row(chunk: Chunk) -> tuple[Any, ...]:
+    return tuple(getattr(chunk, column) for column in COLUMNS)
+
+
 def to_chunk(row: Sequence[Any]) -> Chunk:
-    values = dict(zip(COLUMNS, row, strict=True))
-    return Chunk(**{**values, "sensitive": bool(values["sensitive"])})
+    return Chunk.model_validate(dict(zip(COLUMNS, row, strict=True)))

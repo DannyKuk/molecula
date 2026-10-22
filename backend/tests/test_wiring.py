@@ -15,11 +15,12 @@ from molecula.config import Settings
 from molecula.guard.safety import ChatModelInputCheck, DecisionModelInputCheck
 from molecula.rag.embeddings import embedding_model_id
 from molecula.rag.filters import FilterExtractor
+from molecula.schemas.retrieval import Chunk
 from molecula.services.compounds import CompoundService
 from molecula.services.labels import LabelService
 from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
-from molecula.store.index import Chunk, LabelIndex
+from molecula.store.index import LabelIndex
 from molecula.store.keywords import KeywordIndex
 from molecula.store.labels import LabelStore
 from molecula.store.structures import ConformerFiles

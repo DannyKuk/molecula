@@ -2,9 +2,10 @@ import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 
+from molecula.schemas.retrieval import Chunk
 from molecula.services.knowledge_base import KnowledgeBase
 from molecula.store.compounds import CompoundStore
-from molecula.store.index import Chunk, LabelIndex
+from molecula.store.index import LabelIndex
 from molecula.store.labels import LabelStore
 from molecula.store.schema import SCHEMA_VERSION
 from molecula.store.structures import ComplexFiles, ConformerFiles

@@ -11,11 +11,12 @@ import pytest
 from molecula.config import Settings
 from molecula.ingest import export
 from molecula.ingest.export import ARCHIVE, MANIFEST, ExportError, export_store, run
+from molecula.schemas.retrieval import Chunk
 from molecula.schemas.store import StoreManifest
 from molecula.store.compounds import CompoundRecord, CompoundStore
 from molecula.store.db import connect
 from molecula.store.http_cache import CachedResponse, HttpCache
-from molecula.store.index import Chunk, LabelIndex
+from molecula.store.index import LabelIndex
 from molecula.store.keywords import KeywordIndex
 from molecula.store.label_updates import LabelUpdateRun, LabelUpdateStore
 from molecula.store.labels import LabelRecord, LabelSection, LabelStore

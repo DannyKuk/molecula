@@ -4,7 +4,7 @@ import pytest
 from evals.retrieval.benchmark_export import page_data
 from evals.retrieval.dataset import Question
 
-from molecula.store.index import Chunk
+from molecula.schemas.retrieval import Chunk
 
 
 def chunk(id: str, text: str, cid: int = 5291) -> Chunk:

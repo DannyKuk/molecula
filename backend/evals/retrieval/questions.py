@@ -21,9 +21,9 @@ from evals.retrieval.compare_embeddings import label_chunks
 from evals.retrieval.dataset import Question, load_questions
 
 from molecula.config import Settings, get_settings
+from molecula.schemas.retrieval import Chunk
 from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
-from molecula.store.index import Chunk
 
 SEED = 88
 MIN_CHUNK_CHARS = 400

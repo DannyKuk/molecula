@@ -25,7 +25,7 @@ from evals.retrieval.compare_embeddings import (
 from evals.retrieval.dataset import Question, load_questions
 
 from molecula.config import get_settings
-from molecula.store.index import Chunk
+from molecula.schemas.retrieval import Chunk
 
 
 def main() -> int:

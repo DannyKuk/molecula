@@ -1,10 +1,10 @@
 import re
-from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
-from molecula.store.index import Chunk, IndexModelMismatch, LabelIndex
+from molecula.schemas.retrieval import Chunk
+from molecula.store.index import IndexModelMismatch, LabelIndex, to_metadata
 
 MODEL = "BAAI/bge-small-en-v1.5"
 MECHANISM = Chunk(
@@ -21,17 +21,18 @@ MECHANISM = Chunk(
     effective_time="20260713",
     url="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=gleevec",
 )
-PURPOSE = replace(
-    MECHANISM,
-    id="advil:purpose:0",
-    text="Pain reliever/fever reducer",
-    cid=3672,
-    substance="IBUPROFEN",
-    brand=None,
-    product_type="otc",
-    section="purpose",
-    section_group="otc_consumer",
-    set_id="advil",
+PURPOSE = MECHANISM.model_copy(
+    update={
+        "id": "advil:purpose:0",
+        "text": "Pain reliever/fever reducer",
+        "cid": 3672,
+        "substance": "IBUPROFEN",
+        "brand": None,
+        "product_type": "otc",
+        "section": "purpose",
+        "section_group": "otc_consumer",
+        "set_id": "advil",
+    }
 )
 
 
@@ -122,9 +123,13 @@ def test_search_before_the_first_build_finds_nothing(index: LabelIndex) -> None:
 
 
 def test_replace_drug_swaps_one_compounds_chunks_and_keeps_the_others(index: LabelIndex) -> None:
-    old_extra = replace(MECHANISM, id="gleevec:mechanism_of_action:1", text="Old second chunk.")
+    old_extra = MECHANISM.model_copy(
+        update={"id": "gleevec:mechanism_of_action:1", "text": "Old second chunk."}
+    )
     index.rebuild([MECHANISM, old_extra, PURPOSE], [[1.0, 0.0], [0.5, 0.5], [0.0, 1.0]], MODEL)
-    newer = replace(MECHANISM, text="Imatinib also inhibits KIT.", effective_time="20261101")
+    newer = MECHANISM.model_copy(
+        update={"text": "Imatinib also inhibits KIT.", "effective_time": "20261101"}
+    )
 
     index.replace_drug(5291, [newer], [[0.9, 0.1]])
 
@@ -138,3 +143,17 @@ def test_replace_drug_without_chunks_removes_the_compound(index: LabelIndex) -> 
     index.replace_drug(5291, [], [])
 
     assert index.chunks() == [PURPOSE]
+
+
+def test_the_metadata_is_every_field_but_the_id_and_text_and_leaves_out_a_missing_brand() -> None:
+    assert to_metadata(PURPOSE) == {
+        "cid": 3672,
+        "substance": "IBUPROFEN",
+        "product_type": "otc",
+        "section": "purpose",
+        "section_group": "otc_consumer",
+        "sensitive": False,
+        "set_id": "advil",
+        "effective_time": "20260713",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=gleevec",
+    }

@@ -1,9 +1,10 @@
-from dataclasses import replace
+import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 import pytest
 
-from molecula.store.index import Chunk
+from molecula.schemas.retrieval import Chunk
 from molecula.store.keywords import KeywordIndex
 
 INTERACTIONS = Chunk(
@@ -20,26 +21,28 @@ INTERACTIONS = Chunk(
     effective_time="20260713",
     url="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=zocor",
 )
-WARNINGS = replace(
-    INTERACTIONS,
-    id="zofran:warnings_and_cautions:0",
-    text="QT prolongation has been reported. Take 5 mg with water.",
-    cid=4595,
-    substance="ONDANSETRON",
-    brand=None,
-    section="warnings_and_cautions",
-    section_group="warnings",
-    set_id="zofran",
+WARNINGS = INTERACTIONS.model_copy(
+    update={
+        "id": "zofran:warnings_and_cautions:0",
+        "text": "QT prolongation has been reported. Take 5 mg with water.",
+        "cid": 4595,
+        "substance": "ONDANSETRON",
+        "brand": None,
+        "section": "warnings_and_cautions",
+        "section_group": "warnings",
+        "set_id": "zofran",
+    }
 )
-OVERDOSAGE = replace(
-    WARNINGS,
-    id="zofran-odt:overdosage:0",
-    text="Overdose of the 5\u2011HT3 antagonist caused hypotension.",
-    product_type="otc",
-    section="overdosage",
-    section_group="overdosage",
-    sensitive=True,
-    set_id="zofran-odt",
+OVERDOSAGE = WARNINGS.model_copy(
+    update={
+        "id": "zofran-odt:overdosage:0",
+        "text": "Overdose of the 5\u2011HT3 antagonist caused hypotension.",
+        "product_type": "otc",
+        "section": "overdosage",
+        "section_group": "overdosage",
+        "sensitive": True,
+        "set_id": "zofran-odt",
+    }
 )
 CHUNKS = [INTERACTIONS, WARNINGS, OVERDOSAGE]
 
@@ -125,10 +128,35 @@ def test_a_rebuild_replaces_the_chunks(keywords: KeywordIndex) -> None:
 def test_replace_drug_swaps_one_compounds_chunks_and_keeps_the_others(
     keywords: KeywordIndex,
 ) -> None:
-    newer = replace(WARNINGS, text="Serotonin syndrome has been reported.")
+    newer = WARNINGS.model_copy(update={"text": "Serotonin syndrome has been reported."})
 
     keywords.replace_drug(4595, [newer])
 
     assert sorted(found_ids(keywords, "QT serotonin CYP3A4 hypotension")) == sorted(
         [newer.id, INTERACTIONS.id]
+    )
+
+
+def test_a_chunk_is_stored_as_one_row_of_its_fields_in_their_order(tmp_path: Path) -> None:
+    KeywordIndex(tmp_path / "bm25.db").rebuild([OVERDOSAGE])
+
+    with closing(sqlite3.connect(tmp_path / "bm25.db")) as conn:
+        [row] = conn.execute(
+            "SELECT id, text, cid, substance, brand, product_type, section, section_group, "
+            "sensitive, set_id, effective_time, url FROM label_chunks"
+        ).fetchall()
+
+    assert row == (
+        "zofran-odt:overdosage:0",
+        OVERDOSAGE.text,
+        4595,
+        "ONDANSETRON",
+        None,
+        "otc",
+        "overdosage",
+        "overdosage",
+        1,
+        "zofran-odt",
+        "20260713",
+        "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=zocor",
     )
