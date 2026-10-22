@@ -193,12 +193,12 @@ class SourcesEvent(BaseModel):
 class RetrievalTraceEvent(BaseModel):
     """One label search, for the RAG panel (#41).
 
-    `filter_source` says who chose the filter: `model` when the chat model extracted it from
-    the question, `agent` when the agent named the drug and `filter.extracted` holds its
-    arguments. `translation` stays empty: #114 measured a query translation step and didn't
-    build it. `mode` is the ranking the search used, `min_score` the similarity a candidate needed
-    to be kept and `section_group_boost` what a candidate in the filter's section groups counted
-    higher in the ranking.
+    `filter_source` says who chose the filter: `model` when a model (Jev online, the chat model
+    offline) extracted it from the question, `agent` when the agent named the drug and
+    `filter.extracted` holds its arguments. `translation` stays empty: #114 measured a query
+    translation step and didn't build it. `mode` is the ranking the search used, `min_score` the
+    similarity a candidate needed to be kept and `section_group_boost` what a candidate in the
+    filter's section groups counted higher in the ranking.
     """
 
     type: Literal["retrieval_trace"] = "retrieval_trace"
@@ -216,8 +216,9 @@ class RetrievalTraceEvent(BaseModel):
 
 class SourceCheckEvent(BaseModel):
     """The source check's verdict on the answer just sent, one entry per claim in the answer's
-    order: `supported` when the results it cites hold it, `unsupported` when they don't,
-    `not_a_claim` when it states nothing about a drug. The answer is shown either way; this
+    order: `supported` when the results it cites hold it, `held_elsewhere` when another returned
+    result does (#220), `unsupported` when none does, `not_a_claim` when it states nothing about
+    a drug. The answer is shown either way; this
     only marks it. `checked` is false when the check failed, and then there are no claims."""
 
     type: Literal["source_check"] = "source_check"

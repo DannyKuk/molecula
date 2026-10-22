@@ -100,7 +100,7 @@ Demo values come from RDKit. logP differs by design: RDKit uses Crippen logP, Pu
   OK    raw file: protein chains ['A', 'B'], imatinib (STI) copies in chains ['A', 'B'], 172 water atoms, hydrogens present: False
   WARN  raw entries need cleaning before display: pick one chain and ligand copy, drop waters and other het groups. The demo file was already cleaned.
   OK    chain A: 37 ligand heavy atoms, 274 protein residues
-  OK    polar contacts < 3.3 Å from the raw file: Ile360 2.67 Å, Thr315 2.88 Å, Asp381 2.9 Å, Met318 2.9 Å, Glu286 3.0 Å, His361 3.19 Å
+  OK    polar contacts < 3.3 Ã… from the raw file: Ile360 2.67 Ã…, Thr315 2.88 Ã…, Asp381 2.9 Ã…, Met318 2.9 Ã…, Glu286 3.0 Ã…, His361 3.19 Ã…
   OK    identical to the six contacts shown in the demo
   ...   run from the molecula-prototype folder to compare coordinates with the demo file
 
@@ -123,7 +123,7 @@ Demo values come from RDKit. logP differs by design: RDKit uses Crippen logP, Pu
   OK    ibuprofen: 20 Rx labels with mechanism. First: Ibuprofen and famotidine
         12.1 Mechanism of Action Ibuprofen and famotidine tablet is a fixed-combination tablet of ibuprofen and famotidine. The ibuprofen component has analgesic, anti- inflammatory, and antipyretic properties. The mechanism of action of the ibuprofen component of ibuprofen and famotidine tablet, like that ...
   OK    acetaminophen: 144 Rx labels with mechanism. First: Hydrocodone Bitartrate and Acetaminophen
-        Mechanism of Action Hydrocodone is a full opioid agonist with relative selectivity for the mu-opioid (µ) receptor, although it can interact with other opioid receptors at higher doses. The principal therapeutic action of hydrocodone is analgesia. Like all full opioid agonists, there is no ceiling ef...
+        Mechanism of Action Hydrocodone is a full opioid agonist with relative selectivity for the mu-opioid (Âµ) receptor, although it can interact with other opioid receptors at higher doses. The principal therapeutic action of hydrocodone is analgesia. Like all full opioid agonists, there is no ceiling ef...
   OK    caffeine: 16 Rx labels with mechanism. First: Butalbital, Acetaminophen, Caffeine and Codeine Phosphate
         12.1 Mechanism of Action Butalbital, a barbiturate, is a GABA A receptor agonist and may inhibit excitatory AMPA receptors. The precise mechanism of the analgesic properties of acetaminophen is not established but is thought to involve central actions. Caffeine is a methylxanthine and CNS stimulant....
 

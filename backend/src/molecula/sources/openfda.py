@@ -122,12 +122,13 @@ class OpenFdaClient:
 
     def last_updated(self, set_id: str) -> date | None:
         """When openFDA last published new data, read off a count for one label; None when
-        openFDA no longer lists that label. Never cached."""
+        openFDA no longer lists that label. Always asked afresh."""
         page = self._count(f"set_id:{quoted(set_id)}", "set_id")
         return page.meta.last_updated if page else None
 
     def listed(self, set_ids: Sequence[str]) -> set[str]:
-        """Which of `set_ids` openFDA lists now; a label it dropped is missing. Never cached."""
+        """Which of `set_ids` openFDA lists now; a label it dropped is missing. Always asked
+        afresh."""
         listed: set[str] = set()
         for batch in batched(set_ids, SET_ID_BATCH, strict=False):
             search = f"set_id:({' '.join(quoted(set_id) for set_id in batch)})"
@@ -137,7 +138,7 @@ class OpenFdaClient:
 
     def newer(self, effective_times: Mapping[str, str]) -> set[str]:
         """The labels, by `set_id`, whose effective time in openFDA is later than the one given
-        (YYYYMMDD), i.e. that have a new version. Never cached."""
+        (YYYYMMDD), i.e. that have a new version. Always asked afresh."""
         newer: set[str] = set()
         for batch in batched(effective_times.items(), SET_ID_BATCH, strict=False):
             search = " OR ".join(
