@@ -55,7 +55,7 @@ Full run: 129 Rx and 27 OTC labels, 5,662,726 characters, 361 requests in 4.4 mi
 
 - **Some Rx labels are really OTC Drug Facts**: guaifenesin (941 characters) and loratadine (944) have no real prescribing information.
 - **The usual route isn't always the familiar one.** Acetaminophen's single-ingredient Rx labels are all injections; hydrocortisone's Rx pick is a topical cream (Proctozone-HC), not a tablet.
-- **The HTTP cache is 1.97 GB** for 5.7 MB of stored text. It only matters for rebuilding; the planned snapshot (#35) leaves it out.
+- **The HTTP cache is 1.97 GB** for 5.7 MB of stored text. It only matters for rebuilding; the snapshot (#35) leaves it out.
 - US labels only. The one stored drug without one, metamizole, was removed in #196 ([drugs without a label](drugs-without-label.md)).
 
 ## Reproduce

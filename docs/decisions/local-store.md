@@ -1,6 +1,6 @@
 # Local store: where the answers come from
 
-> **Answer:** from a local store that the ingest steps build ahead of time: one SQLite file, `data/build/molecula.db`, plus structure files. The app never calls PubChem, ChEMBL, RCSB or openFDA while it answers, and there is no live fallback. **The store is the supported set:** a drug that isn't in it is answered as "not supported". Re-runs come from the HTTP cache in the same file, so a rebuild costs no requests and evals run with `OFFLINE=1`. A fresh clone will download the store as a release snapshot without that cache (decided, not built yet).
+> **Answer:** from a local store that the ingest steps build ahead of time: one SQLite file, `data/build/molecula.db`, plus structure files. The app never calls PubChem, ChEMBL, RCSB or openFDA while it answers, and there is no live fallback. **The store is the supported set:** a drug that isn't in it is answered as "not supported". Re-runs come from the HTTP cache in the same file, so a rebuild costs no requests and evals run with `OFFLINE=1`. A fresh clone downloads the store as a release snapshot without that cache.
 
 ## Question
 
@@ -61,7 +61,7 @@ The answer has to:
 - **A body that fails to parse is dropped from the cache** (#64, PR #75), so an RCSB GraphQL error sent as HTTP 200 is fetched again next time. Offline it stays, because then the cache is the only copy.
 - **A drug taken out of the scope leaves the store** (#33, PR #76). Otherwise it would still be supported. Only a complete run prunes (no failures, nothing left unattempted), and an empty scope is rejected, so a broken `scope.yaml` can't wipe the store.
 - **`data/build/` is not in git** (PR #34): the database holds the raw HTTP cache, and no raw API dumps are committed.
-- **Fresh clones get a release snapshot** (#35, decided, not built yet). `ingest export` writes `molecula.db` without `http_cache`, plus the structures and later the labels and index; `ingest fetch` downloads the release pinned in settings, checks its SHA-256 and schema version, and runs before the backend in Docker. The other options and why not:
+- **Fresh clones get a release snapshot** (#35, built in #117 and #118). `ingest export` writes `molecula.db` without `http_cache`, plus the structures, the labels and the index; `ingest fetch` downloads the release pinned in settings, checks its SHA-256 and schema version, and runs before the backend in Docker. The other options and why not:
   - the ingest as a setup step: every reviewer would run a minutes-long ingest that can hit NCBI's block;
   - commit only the conformer files (1.2 MB): still no database;
   - commit a database without the cache: growing binary data (labels, the index) in the git history;
@@ -71,11 +71,10 @@ The answer has to:
 
 ## Limits
 
-- **134 drugs.** Everything else is "not supported", with suggestions for typos ([name resolution](name-resolution.md)).
-- **The data is as old as the build.** Labels are the only data that changes; the update step that re-indexes changed labels is planned (#25).
-- **No snapshot yet** (#35). Until it exists, a fresh clone has to run the ingest, which needs PubChem and can hit NCBI's block.
+- **133 drugs.** Everything else is "not supported", with suggestions for typos ([name resolution](name-resolution.md)).
+- **The data is as old as the build, except the labels.** Labels are the only data that changes; the backend checks openFDA every night and re-indexes only the drugs whose label changed ([label update](label-update.md), #25).
 - **A snapshot has no cache.** Re-running an ingest from it fetches everything again (~670 PubChem requests for the compounds) and can drift from the published data (#35).
-- **The label pages are large.** The full labels run (#63) cached 1.97 GB of openFDA pages for 5.7 MB of stored label text: 361 requests the first time, 0 on a re-run. Only rebuilds need the cache; the planned snapshot (#35) leaves it out.
+- **The label pages are large.** The full labels run (#63) cached 1.97 GB of openFDA pages for 5.7 MB of stored label text: 361 requests the first time, 0 on a re-run. Only rebuilds need the cache; the snapshot (#35) leaves it out.
 - **Remote MCP tools** for compounds outside the scope were planned (#45) and dropped: they would answer about drugs that aren't in the store, the supported set.
 
 ## Reproduce
