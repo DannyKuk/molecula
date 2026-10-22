@@ -137,3 +137,5 @@ OFFLINE=1 LOCAL_LLM_MODEL=zai-org/glm-4.7-flash uv run python -m evals.chat_mode
 ```
 
 Answers are cached in `data/build/eval/`, and the hand verdicts are in `backend/evals/chat_model/from_memory_verdicts/` and `backend/evals/safety/verdicts/`, named like the caches, so a re-run asks nothing. The comparisons eval only counts tool calls; its hand verdicts for #256, #386 and #387 are in `backend/evals/chat_model/comparisons_verdicts/`.
+
+The benchmark page (`/benchmarks`, #404) shows the five runs at medium from `frontend/lib/benchmarks/chat-models-2026-10-22.json`, which `uv run python -m evals.chat_model.benchmark_export` writes from those caches and verdicts; it prints the counts in the layout of the tables above to compare before committing.
