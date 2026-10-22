@@ -1,14 +1,22 @@
-import { useSyncExternalStore } from "react";
-
 import type { CheckerId } from "./api";
+import { createStoredValue } from "./stored-value";
 
 export const MODEL_KEY = "molecula:model";
 export const CHECKER_KEY = "molecula:checker";
 
 const CHECKERS: CheckerId[] = ["decision", "local", "answer"];
 
-const listeners = new Set<() => void>();
-const unsaved = new Map<string, string>();
+const pickedModel = createStoredValue<string | null>(MODEL_KEY, {
+  parse: (name) => name,
+  serialize: (name) => name,
+  server: null,
+});
+
+const pickedChecker = createStoredValue<CheckerId | null>(CHECKER_KEY, {
+  parse: (checker) => CHECKERS.find((id) => id === checker) ?? null,
+  serialize: (checker) => checker,
+  server: null,
+});
 
 /**
  * The model the user picked in the settings to write the answers, by name, kept in `localStorage`
@@ -16,56 +24,29 @@ const unsaved = new Map<string, string>();
  * keeps the choice until the page closes.
  */
 export function useChosenModel(): [string | null, (name: string | null) => void] {
-  const chosen = useSyncExternalStore(subscribe, chosenModel, () => null);
-  return [chosen, chooseModel];
+  return pickedModel.useValue();
 }
 
 /** The model the user picked to check the messages (#363), kept like the model; null for the
  * backend's default checker. */
 export function useChosenChecker(): [CheckerId | null, (checker: CheckerId | null) => void] {
-  const chosen = useSyncExternalStore(subscribe, chosenChecker, () => null);
-  return [chosen, chooseChecker];
-}
-
-function subscribe(onChange: () => void) {
-  listeners.add(onChange);
-  return () => listeners.delete(onChange);
+  return pickedChecker.useValue();
 }
 
 /** The picked model's name, read when a question is sent; null for the default. */
 export function chosenModel(): string | null {
-  return stored(MODEL_KEY);
+  return pickedModel.read();
 }
 
 export function chooseModel(name: string | null) {
-  store(MODEL_KEY, name);
+  pickedModel.write(name);
 }
 
 /** The picked checker, read when a question is sent; null for the default. */
 export function chosenChecker(): CheckerId | null {
-  const checker = stored(CHECKER_KEY);
-  return CHECKERS.find((id) => id === checker) ?? null;
+  return pickedChecker.read();
 }
 
 export function chooseChecker(checker: CheckerId | null) {
-  store(CHECKER_KEY, checker);
-}
-
-function stored(key: string): string | null {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return unsaved.get(key) ?? null;
-  }
-}
-
-function store(key: string, value: string | null) {
-  try {
-    if (value === null) localStorage.removeItem(key);
-    else localStorage.setItem(key, value);
-  } catch {
-    if (value === null) unsaved.delete(key);
-    else unsaved.set(key, value);
-  }
-  listeners.forEach((notify) => notify());
+  pickedChecker.write(checker);
 }
