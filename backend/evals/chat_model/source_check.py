@@ -32,6 +32,7 @@ from typing import Literal, Self
 
 import yaml
 from evals.chat_model.no_label import read_verdicts
+from evals.jsonl import append, jsonl_lines
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from molecula import prompts
@@ -148,7 +149,7 @@ def read_answers(settings: Settings, labelled: list[LabelledAnswer]) -> dict[str
         path = settings.build_dir / "eval" / eval_name / f"{cache}.jsonl"
         if not path.exists():
             raise SystemExit(f"Missing the eval cache {path}")
-        for line in path.read_text("utf-8").splitlines():
+        for line in jsonl_lines(path):
             entry = json.loads(line)
             # The from-memory eval caches the agent's answer, the no-label eval the last turn.
             events = (entry.get("answer") or entry["last"])["events"]
@@ -190,8 +191,7 @@ async def check_all(
                 print(f"{answer.key}: {error!r}", flush=True)
                 continue
             cached[answer.key] = Check(answer.key, checked, time.perf_counter() - start)
-            with cache.open("a", encoding="utf-8") as file:
-                file.write(json.dumps(to_json(cached[answer.key]), ensure_ascii=False) + "\n")
+            append(cache, to_json(cached[answer.key]))
             print(f"{answer.key}: {cached[answer.key].seconds:.1f} s", flush=True)
         checks.append(cached[answer.key])
     return checks
@@ -216,7 +216,7 @@ def read_cache(cache: Path) -> dict[str, Check]:
     if not cache.exists():
         return {}
     checks = {}
-    for line in cache.read_text("utf-8").splitlines():
+    for line in jsonl_lines(cache):
         entry = json.loads(line)
         checked = CheckedAnswer.model_validate(entry["checked"])
         checks[entry["key"]] = Check(entry["key"], checked, entry["seconds"])

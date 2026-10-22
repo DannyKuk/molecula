@@ -23,6 +23,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from evals.jsonl import append, jsonl_lines
 from evals.safety.dataset import InputCheckItem, load_items
 
 from molecula import prompts
@@ -77,8 +78,7 @@ async def sort_all(settings: Settings, items: list[InputCheckItem]) -> dict[str,
             time.perf_counter() - start,
             sorted_message.usage.input_tokens,
         )
-        with cache.open("a", encoding="utf-8") as file:
-            file.write(json.dumps(to_json(cached[item.id]), ensure_ascii=False) + "\n")
+        append(cache, to_json(cached[item.id]))
         print(f"{item.id}: {sorted_message.answer.choice} ({cached[item.id].seconds:.2f} s)")
     return cached
 
@@ -96,7 +96,7 @@ def read_cache(cache: Path) -> dict[str, Sorted]:
     if not cache.exists():
         return {}
     results = {}
-    for line in cache.read_text("utf-8").splitlines():
+    for line in jsonl_lines(cache):
         entry = json.loads(line)
         answer = ChoiceAnswer.model_validate(entry["answer"])
         results[entry["id"]] = Sorted(entry["id"], answer, entry["seconds"], entry["input_tokens"])

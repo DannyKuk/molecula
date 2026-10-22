@@ -31,6 +31,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+from evals.jsonl import jsonl_lines
+
 OPENROUTER = "https://openrouter.ai/api/v1"
 JUDGE = "anthropic/claude-haiku-5.5"
 EMBEDDINGS = "openai/text-embedding-3-small"
@@ -134,7 +136,7 @@ def usage(key: str) -> float:
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
-    return [json.loads(line) for line in path.read_text("utf-8").splitlines() if line.strip()]
+    return [json.loads(line) for line in jsonl_lines(path) if line.strip()]
 
 
 def summary(values: list[float | None]) -> str:
