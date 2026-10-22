@@ -87,7 +87,7 @@ One line each; the full reasoning, numbers and issues are on the design page nam
 - **3Dmol.js, bundled with the app, draws it in the evidence panel**, with the pocket and the hydrogen bonds marked.
 
 **Label search** ([details](design/search.md))
-- **bge-m3 embeds the labels, on the CPU**: the answering passage in the top 5 for 85% of 94 questions, tied with the best CPU-sized models. A server too small for it embeds with gemini-embedding-2 in the cloud (98%) ([embeddings](decisions/embeddings.md)).
+- **bge-m3 embeds the labels, on the CPU**: the answering passage in the top 5 for 85% of 94 questions, tied with the best CPU-sized models. A server too small for it embeds with gemini-embedding-2 in the cloud ([embeddings](decisions/embeddings.md)).
 - **The search is filtered to the drug and ranked by the part of the label**: the drug filter is hard, the section groups only add 0.15 to a chunk's similarity, because a wrong group as a hard filter hid the answer.
 - **A brand is a name of its drug and narrows the search to its label**; a label without the asked-for section widens it again.
 - **A search for several drugs searches each one** and keeps 5 passages per drug, so one drug can't take every slot.
@@ -117,7 +117,7 @@ One line each; the full reasoning, numbers and issues are on the design page nam
 - **The interface is in German or English**, with an "instrument" look the owner picked from clickable prototypes.
 
 **Running and deploying** ([details](design/operations.md))
-- **`.env.example` works on a new machine as it is** and shows every other default as a commented line.
+- **`.env.example` is filled in for a new machine, with working values**, and shows every other default as a commented line.
 - **`POST /chat` has a request limit per client and a daily cost limit, on by default.**
 - **A deployed app sits behind a Clerk login in waitlist mode** and runs on Coolify from a compose file of its own ([setup](setup.md)).
 - **Each chat request goes into a usage log with metadata only**, which feeds the dashboard.
