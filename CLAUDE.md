@@ -13,8 +13,9 @@ The structure is fixed. New code goes where this says; a new top-level folder ne
 ```
 backend/
   src/molecula/
-    main.py        FastAPI app
+    main.py        FastAPI app: routes, lifespan
     config.py      settings from the environment (pydantic-settings)
+    wiring.py      builds the app's parts from the settings, for main.py and the MCP server
     api/           HTTP routes only: validate, call a service, return a schema
     services/      domain logic (compounds, targets, complexes, labels) over the local store
     sources/       one client per external API (PubChem, ChEMBL, RCSB, openFDA): HTTP, rate limit, retries
@@ -35,7 +36,7 @@ docs/              architecture, setup, data plan, design/, decisions/, evals/, 
 docker-compose.yaml
 ```
 
-Dependencies point one way: `api` → `guard` → `agent` → `tools` → `rag` → `services` → `sources`, `store`; `api` and `mcp` also call `services` directly, and `rag` also reads `store`. The guard stands in front of the agent: it imports the agent, never the other way round. Services never import from `api`, `guard`, `tools`, `agent` or `rag`.
+Dependencies point one way: `api` → `guard` → `agent` → `tools` → `rag` → `services` → `sources`, `store`; `api` and `mcp` also call `services` directly, and `rag` also reads `store`. The guard stands in front of the agent: it imports the agent, never the other way round. Services never import from `api`, `guard`, `tools`, `agent` or `rag`. `schemas` imports only other schemas, so every layer may use it. `wiring.py` builds the store, services, models, tools and guarded chat, and in `src/` only `main.py` and `mcp/__main__.py` import it; the MCP server never imports `main.py`, which builds the FastAPI app. `sources/http.py` uses the store's HTTP cache (`store.http_cache`, `store.sources`) on purpose: it caches every source response.
 
 ## Prompts: one structure, no exceptions
 

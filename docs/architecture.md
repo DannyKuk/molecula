@@ -45,7 +45,7 @@ flowchart LR
 
 | Stage | What happens | Code |
 |---|---|---|
-| 1. Guard | The message is checked for length and control characters, then sorted, with the conversation for context, into `ok`, a possible overdose, personal medical advice, lethal dose, synthesis or misuse, prompt injection, or off-topic. A possible overdose gets a fixed emergency line before the agent's answer; the last five get only a fixed, friendly answer. | `guard/validation.py`, `guard/safety.py`, `guard/chat.py` |
+| 1. Guard | The message is checked for length and control characters, then sorted, with the conversation for context, into `ok`, a possible overdose, personal medical advice, lethal dose, synthesis or misuse, prompt injection, or off-topic. A possible overdose gets a fixed emergency line before the agent's answer; the last five get only a fixed, friendly answer. | `schemas/chat.py`, `guard/validation.py`, `guard/safety.py`, `guard/chat.py` |
 | 2. Resolve the drug | "Gleevec", "imatinib mesylate" or "Tylenol" becomes a stored compound, or `not_supported` with suggestions the user has to pick ([name resolution](decisions/name-resolution.md)). | `CompoundService.resolve`, `GET /drugs/resolve` |
 | 3. Tools | The agent looks things up instead of guessing: properties, targets and mechanism, the reviewed complex, a side-by-side comparison. Each tool wraps a service. | `tools/`, `agent/tool_registry.py` |
 | 4. Search the labels | A metadata filter for drug and label section, with brands and German names recognised in it, then embedding search over chunks of the canonical labels. BM25 keyword search next to it, merged by reciprocal rank fusion, is a setting (`RETRIEVAL_MODE=hybrid`), off because it found less. German → English translation and rewrites were measured and left out. | `rag/filters.py`, `rag/retriever.py`, `store/keywords.py` |
@@ -126,7 +126,7 @@ One line each; the full reasoning, numbers and issues are on the design page nam
 
 | Folder | Contents |
 |---|---|
-| `backend/src/molecula/` | `api/` (routes), `services/`, `sources/` (one client per API plus `http.py`), `store/` (SQLite, schema, HTTP cache, files), `ingest/` (build steps), `agent/` (LLM factory, tool registry), `tools/` (one module per agent tool), `guard/` (input validation, the input check, the guarded chat, and the source check that judges an answer's claims against its tool results), `prompts/` (loader and `.md` prompts), `schemas/` |
+| `backend/src/molecula/` | `main.py` (the FastAPI app), `wiring.py` (builds its parts and the MCP server's), `api/` (routes), `services/`, `sources/` (one client per API plus `http.py`), `store/` (SQLite, schema, HTTP cache, files), `ingest/` (build steps), `agent/` (LLM factory, tool registry), `tools/` (one module per agent tool), `guard/` (input validation, the input check, the guarded chat, and the source check that judges an answer's claims against its tool results), `prompts/` (loader and `.md` prompts), `schemas/` |
 | `backend/tests/` | pytest, mirroring `src/molecula/`; `fixtures/` holds recorded API responses; fake chat model in `fake_llm.py`, fake services for the tool tests in `tool_fakes.py` |
 | `backend/evals/` | Eval runners and datasets with real models, one folder per suite: `retrieval/`, `chat_model/`, `multilang/`, `safety/`, `decisions/`, `injection/`, `rag/`. The table below lists what each measured. |
 | `frontend/` | Next.js app: `app/` (pages), `components/`, `lib/` (typed API client, chat stream, search) |
