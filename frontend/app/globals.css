@@ -61,13 +61,21 @@
   --color-screen-dim: var(--screen-dim);
 }
 
-/* Dark mode is for the screen only, so a page printed from a dark browser comes out dark on white. */
-@custom-variant dark (@media screen and (prefers-color-scheme: dark));
+/* Dark mode is for the screen only, so a page printed from a dark browser comes out dark on white.
+   `<html data-theme>` holds the theme the screen shows, the picked one or the system's (#437). */
+@custom-variant dark {
+  @media screen {
+    &:where([data-theme="dark"], [data-theme="dark"] *) {
+      @slot;
+    }
+  }
+}
 
 /* The "instrument" look (#294): warm light-grey surfaces like lab hardware, soft contrast with no
    pure black or white, and one signal orange kept for what is live or being read, the Ask button,
-   the steps and the sources. Dark mode follows the system setting, not shadcn's `.dark` class. */
+   the steps and the sources. Dark mode follows the theme switch, not shadcn's `.dark` class. */
 :root {
+  color-scheme: light;
   --page: #e7e7e2;
   --panel: #dfdfd9;
   --card: #f2f2ee;
@@ -128,8 +136,9 @@
   --verdict-denies: #2f6fd0;
 }
 
-@media screen and (prefers-color-scheme: dark) {
-  :root {
+@media screen {
+  :root[data-theme="dark"] {
+    color-scheme: dark;
     --page: #18191b;
     --panel: #1e2022;
     --card: #232528;

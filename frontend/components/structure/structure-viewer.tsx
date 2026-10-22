@@ -2,6 +2,7 @@
 
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 
+import { useShownTheme } from "@/lib/theme";
 import { useMediaQuery } from "@/lib/use-media-query";
 
 import {
@@ -49,7 +50,7 @@ export function StructureViewer({
   const savedCamera = useRef<{ data: SceneData; camera: Camera } | null>(null);
   const [near, setNear] = useState(false);
   const reportError = useRef(onError);
-  const dark = useMediaQuery("(prefers-color-scheme: dark)");
+  const dark = useShownTheme() === "dark";
   const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
 
   useImperativeHandle(

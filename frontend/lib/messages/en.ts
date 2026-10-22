@@ -7,6 +7,12 @@ export const en = {
     en: "English",
     de: "Deutsch",
   },
+  theme: {
+    switch: "Theme",
+    system: "System",
+    light: "Light",
+    dark: "Dark",
+  },
   header: {
     thisChat: (usage: string) => `This chat: ${usage}`,
     supportedDrugs: "Supported drugs",
