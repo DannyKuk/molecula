@@ -1,22 +1,21 @@
 import { cn } from "cn";
 
 import { type RankedPassage } from "@/lib/answer-flow";
-import { en, type Messages } from "@/lib/messages";
+import type { Messages } from "@/lib/messages";
 
 /**
  * The passages a search kept, best first: the similarity as a grey bar, the section bonus as an
  * orange end, the score and the place before and after the bonus. The bars run from 0 to the best
- * score rounded up to a tenth, so the bonus is wide enough to see. The words are in the language
- * of `t`: the Flow tab's, or English on the guide, which is written in English only.
+ * score rounded up to a tenth, so the bonus is wide enough to see.
  */
 export function BoostBars({
   passages,
   boost,
-  t = en,
+  t,
 }: {
   passages: RankedPassage[];
   boost: number;
-  t?: Messages;
+  t: Messages;
 }) {
   const bars = t.flow.bars;
   const ordinal = bars.ordinal;

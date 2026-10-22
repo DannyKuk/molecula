@@ -1,45 +1,36 @@
-import { en } from "./messages/en";
+import type { Messages } from "./messages/en";
 
 /** Who does a step of an answer: the chat model, the embedder or our own code. */
 export type Who = "model" | "embedder" | "code";
 
-export const WHO: Record<Who, { label: string; meaning: string }> = {
-  model: {
-    label: en.flow.who.model,
-    meaning:
-      "The AI that reads and writes text, gpt-oss-20b in this run. It is asked to decide or write something.",
-  },
-  embedder: {
-    label: en.flow.who.embedder,
-    meaning:
-      "A smaller AI, bge-m3 in this run, that only turns text into numbers so meanings can be compared. It never writes.",
-  },
-  code: { label: en.flow.who.code, meaning: "Our own rules. Same input, same result, every time." },
+export const WHO: Who[] = ["model", "embedder", "code"];
+
+export type GuideStepId = keyof Messages["flow"]["guide"];
+
+/** A guide step's words, from `flow.guide` in the dictionaries. `title` and `short` are shared
+ * with an answer's Flow tab; `passes` is what the step hands to the next one. */
+export type GuideWords = {
+  title: string;
+  short: string;
+  text: string;
+  aside?: string;
+  passes?: string;
 };
 
 /**
  * One step from a question to a checked answer, as the guide explains it. `id` is the step's
- * anchor on `/how-it-answers`; `short` says what the step does for any question, for an answer's
- * Flow tab, which shows it and the `title` in the reader's language, so both come from the
- * dictionaries; `onSteps` names what the Steps tab shows for it; `passes` is what the step hands
- * to the next one.
+ * anchor on `/how-it-answers` and its key in `flow.guide`; `onSteps` names what the Steps tab
+ * shows for it, in the words of the progress lines.
  */
 export type FlowStep = {
-  id: string;
+  id: GuideStepId;
   number: string;
-  title: string;
   who: Who;
-  short: string;
-  text: string;
-  aside?: string;
   call?: string;
-  onSteps?: string;
-  passes?: string;
+  onSteps?: (t: Messages) => string;
 };
 
 export const EXAMPLE_QUESTION = "Does ibuprofen interact with warfarin?";
-
-const GUIDE = en.flow.guide;
 
 /** The steps of the example question, in the order the backend runs them: `guard/chat.py`, the
  * agent's `search_labels`, `rag/filters.py`, `rag/retriever.py`, `guard/canary.py` and
@@ -48,80 +39,35 @@ export const FLOW_STEPS: FlowStep[] = [
   {
     id: "check-the-question",
     number: "1",
-    ...GUIDE["check-the-question"],
     who: "model",
-    text: "A short separate call sorts the message: a normal medicine question, a possible overdose (the answer then starts with emergency help), or something Molecula refuses, which gets a fixed answer. Only normal questions and overdose questions go on.",
-    aside:
-      "Online, Jev does this: a small model that only answers yes/no questions. Offline, as in this run, the chat model does it.",
-    onSteps: "Checking the question",
-    passes: "ok, a normal question",
+    onSteps: (t) => t.progress.checking,
   },
   {
     id: "decide-what-to-look-up",
     number: "2",
-    ...GUIDE["decide-what-to-look-up"],
     who: "model",
-    text: "The chat model hasn't seen any label text yet. It decides to search the labels and fills in the search: which drug, and which part of the label it expects the answer in.",
     call: 'search_labels(drug="ibuprofen", section="interactions")',
-    aside:
-      "The part of the label is a guess made before the search. For a question about two or more drugs the chat model names no drug, and one more small call reads the drugs and the parts of the label from the question instead (Jev online, the chat model offline).",
-    passes: "drug: ibuprofen · section: interactions",
   },
-  {
-    id: "narrow-to-the-drug",
-    number: "3",
-    ...GUIDE["narrow-to-the-drug"],
-    who: "code",
-    text: "The code looks the drug name up in our store, so “Gleevec” becomes imatinib, and only that drug's labels are searched (here, 2 ibuprofen labels). The section must be one of the label's real sections: a made-up name is sent back to the chat model as an error and never reaches the search.",
-    aside: "Two drugs are searched one by one, and each keeps its own top 5.",
-    passes: "ibuprofen's labels, cut into passages and tagged by section",
-  },
-  {
-    id: "score-by-meaning",
-    number: "4",
-    ...GUIDE["score-by-meaning"],
-    who: "embedder",
-    text: "The embedder turns the question into numbers and compares it with every ibuprofen passage. Each passage gets a similarity, about 0 for unrelated and 1 for the same meaning. Two lists are taken: the 5 closest passages in the interactions section and the 5 closest in the whole label, up to 10 candidates together.",
-    aside: "Similarity means “sounds like the question”. It doesn't mean “is the right answer”.",
-    passes: "up to 10 candidates, each with a similarity",
-  },
+  { id: "narrow-to-the-drug", number: "3", who: "code" },
+  { id: "score-by-meaning", number: "4", who: "embedder" },
   {
     id: "boost-and-keep-five",
     number: "5",
-    ...GUIDE["boost-and-keep-five"],
     who: "code",
-    text: "Each passage from the section guessed in step 2 gets +0.15 added to its score. Then the code sorts by the new score, keeps the top 5 and numbers them [1] to [5]. Plain arithmetic: no AI is asked anything here.",
-    onSteps: "Searching the ibuprofen label, the rows with their bars",
-    passes: "5 passages, numbered [1] to [5]",
+    onSteps: (t) => t.howItAnswers.rowsWithBars(t.progress.searchingLabel("ibuprofen")),
   },
-  {
-    id: "write-the-answer",
-    number: "6",
-    ...GUIDE["write-the-answer"],
-    who: "model",
-    text: "The chat model reads the 5 passages and writes the answer. Every fact gets the number of the passage it came from, like [3].",
-    passes: "the answer with its [n] citations",
-  },
-  {
-    id: "watch-for-a-leak",
-    number: "6b",
-    ...GUIDE["watch-for-a-leak"],
-    who: "code",
-    text: "While the answer streams out, the code looks for a hidden marker placed in the system prompt (the canary). If it shows up, the answer is replaced with a fixed one before the marker reaches you.",
-    passes: "the finished answer",
-  },
+  { id: "write-the-answer", number: "6", who: "model" },
+  { id: "watch-for-a-leak", number: "6b", who: "code" },
   {
     id: "check-the-sources",
     number: "7",
-    ...GUIDE["check-the-sources"],
     who: "model",
-    text: "A separate call compares each claim in the answer with the passage it cites, and marks whether the passage really says that.",
-    onSteps: "Checking the answer against the sources",
+    onSteps: (t) => t.progress.checkingAnswer,
   },
 ];
 
 /** The guide's step with anchor `id`. */
-export function guideStep(id: string): FlowStep {
+export function guideStep(id: GuideStepId): FlowStep {
   const step = FLOW_STEPS.find((candidate) => candidate.id === id);
   if (!step) throw new Error(`No guide step ${id}`);
   return step;
@@ -166,12 +112,17 @@ export const EXAMPLE_PASSAGES: ScoredPassage[] = [
 
 /** How often the answering passage made the top 5 of 94 questions, by the size of the bonus
  * (`docs/evals/chat-model-filters-2026-10-12.md`): with the chat model's section guess, and
- * with the answer key's. */
-export const BOOST_MEASUREMENTS = [
-  { bonus: "None", guessed: 0.85, alwaysRight: 0.85 },
-  { bonus: "+0.08", guessed: 0.9, alwaysRight: 0.95 },
-  { bonus: "+0.12", guessed: 0.91, alwaysRight: 0.96 },
-  { bonus: "+0.15", guessed: 0.91, alwaysRight: 0.97, picked: true },
-  { bonus: "+0.20", guessed: 0.9, alwaysRight: 0.97 },
-  { bonus: "Search only the guessed section", guessed: 0.84, alwaysRight: 0.98 },
+ * with the answer key's. The hard rule searches only the guessed section. */
+export const BOOST_MEASUREMENTS: {
+  bonus: number | "hard rule";
+  guessed: number;
+  alwaysRight: number;
+  picked?: boolean;
+}[] = [
+  { bonus: 0, guessed: 0.85, alwaysRight: 0.85 },
+  { bonus: 0.08, guessed: 0.9, alwaysRight: 0.95 },
+  { bonus: 0.12, guessed: 0.91, alwaysRight: 0.96 },
+  { bonus: 0.15, guessed: 0.91, alwaysRight: 0.97, picked: true },
+  { bonus: 0.2, guessed: 0.9, alwaysRight: 0.97 },
+  { bonus: "hard rule", guessed: 0.84, alwaysRight: 0.98 },
 ];

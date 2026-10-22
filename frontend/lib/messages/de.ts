@@ -452,7 +452,7 @@ export const de: Messages = {
     intro:
       "Die Schritte, die diese Antwort durchlaufen hat, der Reihe nach. Das Schild an jedem nennt, wer ihn ausgeführt hat.",
     guideLink: "So antwortet Molecula",
-    guideAfter: "verfolgt eine Frage durch jeden Schritt (auf Englisch).",
+    guideAfter: "verfolgt eine Frage durch jeden Schritt.",
     steps: "Schritte",
     states: {
       skipped: "Übersprungen",
@@ -470,41 +470,65 @@ export const de: Messages = {
         title: "Die Frage prüfen",
         short:
           "Ein kurzer eigener Aufruf ordnet die Nachricht ein. Nur Medikamentenfragen und mögliche Überdosen gehen weiter zu einer Antwort.",
+        text: "Ein kurzer eigener Aufruf ordnet die Nachricht ein: eine normale Frage zu einem Medikament, eine mögliche Überdosis (die Antwort beginnt dann mit Notfallhilfe) oder etwas, das Molecula ablehnt und mit einer festen Antwort beantwortet. Nur normale Fragen und Fragen zu einer Überdosis gehen weiter.",
+        aside:
+          "Online erledigt das Jev, ein kleines Modell, das nur Ja-Nein-Fragen beantwortet. Offline, wie in diesem Durchlauf, erledigt es das Chatmodell.",
+        passes: "ok, eine normale Frage",
       },
       "decide-what-to-look-up": {
         title: "Entscheiden, was nachgeschlagen wird",
         short:
           "Das Chatmodell wählt, was nachgeschlagen wird, und füllt den Aufruf aus, bevor es gesehen hat, was die Suche liefert.",
+        text: "Das Chatmodell hat noch keinen Text aus einer Fachinformation gesehen. Es entscheidet, die Fachinformationen zu durchsuchen, und füllt die Suche aus: welches Medikament und in welchem Teil der Fachinformation es die Antwort erwartet.",
+        aside:
+          "Der Teil der Fachinformation ist eine Vermutung vor der Suche. Bei einer Frage zu zwei oder mehr Medikamenten nennt das Chatmodell kein Medikament, und ein weiterer kleiner Aufruf liest stattdessen die Medikamente und die Teile der Fachinformation aus der Frage (online Jev, offline das Chatmodell).",
+        passes: "Medikament: ibuprofen · Abschnitt: interactions",
       },
       "narrow-to-the-drug": {
         title: "Die Suche auf das Medikament eingrenzen",
         short:
           "Code schlägt das Medikament im Datenbestand nach und durchsucht nur die Fachinformationen dieses Medikaments.",
+        text: "Der Code schlägt den Namen des Medikaments in unserem Datenbestand nach, sodass aus „Gleevec“ Imatinib wird, und durchsucht nur die Fachinformationen dieses Medikaments (hier 2 Fachinformationen zu Ibuprofen). Der Abschnitt muss einer der echten Abschnitte der Fachinformation sein: Ein erfundener Name geht als Fehler an das Chatmodell zurück und erreicht die Suche nie.",
+        aside:
+          "Zwei Medikamente werden nacheinander durchsucht, und jedes behält seine eigenen besten 5.",
+        passes:
+          "die Fachinformationen zu Ibuprofen, in Textstellen zerlegt und nach Abschnitt markiert",
       },
       "score-by-meaning": {
         title: "Die Textstellen nach Bedeutung bewerten",
         short:
           "Der Embedder bewertet die Textstellen des Medikaments danach, wie nah sie der Frage in der Bedeutung sind.",
+        text: "Der Embedder verwandelt die Frage in Zahlen und vergleicht sie mit jeder Textstelle zu Ibuprofen. Jede Textstelle bekommt eine Ähnlichkeit, von etwa 0 (kein Bezug) bis 1 (dieselbe Bedeutung). Zwei Listen werden genommen: die 5 ähnlichsten Textstellen im Abschnitt interactions und die 5 ähnlichsten in der ganzen Fachinformation, zusammen bis zu 10 Kandidaten.",
+        aside:
+          "Ähnlichkeit heißt „klingt wie die Frage“. Sie heißt nicht „ist die richtige Antwort“.",
+        passes: "bis zu 10 Kandidaten, jeder mit seiner Ähnlichkeit",
       },
       "boost-and-keep-five": {
         title: "+0.15 addieren und die besten 5 behalten",
         short:
           "Code addiert +0.15 zu Textstellen im vermuteten Abschnitt, sortiert nach der neuen Punktzahl und behält die besten 5. Es wird keine KI gefragt.",
+        text: "Jede Textstelle aus dem in Schritt 2 vermuteten Abschnitt bekommt +0.15 auf ihre Punktzahl. Dann sortiert der Code nach der neuen Punktzahl, behält die besten 5 und nummeriert sie [1] bis [5]. Reine Rechnung: Hier wird keine KI gefragt.",
+        passes: "5 Textstellen, nummeriert [1] bis [5]",
       },
       "write-the-answer": {
         title: "Die Antwort schreiben",
         short:
           "Das Chatmodell liest, was die Suchen geliefert haben, und schreibt die Antwort; jede Quelle zitiert es als [n].",
+        text: "Das Chatmodell liest die 5 Textstellen und schreibt die Antwort. Jede Angabe bekommt die Nummer der Textstelle, aus der sie stammt, etwa [3].",
+        passes: "die Antwort mit ihren Zitaten [n]",
       },
       "watch-for-a-leak": {
         title: "Auf einen verratenen System-Prompt achten",
         short:
           "Während die Antwort hereinkommt, achtet Code auf eine versteckte Markierung aus dem System-Prompt.",
+        text: "Während die Antwort hereinkommt, sucht der Code nach einer versteckten Markierung, die im System-Prompt steht (dem Canary). Taucht sie auf, wird die Antwort durch eine feste ersetzt, bevor die Markierung Sie erreicht.",
+        passes: "die fertige Antwort",
       },
       "check-the-sources": {
         title: "Die Antwort anhand der Quellen prüfen",
         short:
           "Ein eigener Aufruf prüft jede Aussage der Antwort anhand der Quelle, die sie zitiert.",
+        text: "Ein eigener Aufruf vergleicht jede Aussage der Antwort mit der Textstelle, die sie zitiert, und markiert, ob die Textstelle das wirklich sagt.",
       },
     },
     categories: {
@@ -777,6 +801,54 @@ export const de: Messages = {
       startFailed:
         "Die Aktualisierung konnte nicht gestartet werden. Prüfen Sie, ob das Backend läuft.",
     },
+  },
+  howItAnswers: {
+    eyebrow: "Eine Frage, von Anfang bis Ende",
+    title: "So beantwortet Molecula eine Frage",
+    intro: (question) =>
+      `Diese Seite verfolgt eine echte Frage, ${question}, durch jeden Schritt. Sie wurde auf Englisch gestellt und aus der englischen US-Fachinformation beantwortet, deshalb stehen die Frage und die Textstellen hier auf Englisch. Das Schild an jedem Schritt nennt, wer ihn ausführt. Die meisten Schritte sind einfacher Code; die KI kommt nur an wenigen Stellen zum Einsatz.`,
+    whoDoesAStep: "Wer einen Schritt ausführt",
+    whoMeaning: {
+      model:
+        "Die KI, die Text liest und schreibt, in diesem Durchlauf gpt-oss-20b. Sie soll etwas entscheiden oder schreiben.",
+      embedder:
+        "Eine kleinere KI, in diesem Durchlauf bge-m3, die Text nur in Zahlen verwandelt, damit sich Bedeutungen vergleichen lassen. Sie schreibt nie.",
+      code: "Unsere eigenen Regeln. Gleiche Eingabe, gleiches Ergebnis, jedes Mal.",
+    },
+    theFlow: "Der Ablauf",
+    youAsk: "Sie fragen",
+    theQuestion: "die Frage",
+    onStepsTab: "Im Tab Schritte:",
+    rowsWithBars: (line) => `${line}, die Zeilen mit ihren Balken`,
+    closeUp: {
+      eyebrow: "Schritt 5 aus der Nähe",
+      title: "Was die +0.15 bei der Warfarin-Frage bewirkt haben",
+      before:
+        "Das sind die 5 Textstellen aus dem echten Durchlauf. Die beiden Textstellen aus den Abschnitten zu Wechselwirkungen hatten allein nach Ähnlichkeit die niedrigste Punktzahl, und der Bonus bringt sie nach oben.",
+      after:
+        "Das Chatmodell liest trotzdem alle 5 Textstellen. In diesem Durchlauf zitierte seine Antwort [3], eine Textstelle aus dem Abschnitt zur Stillzeit: Der Bonus entscheidet über die Reihenfolge und darüber, welche Textstellen in die Auswahl kommen; das Chatmodell entscheidet, welche es verwendet.",
+    },
+    setting: {
+      eyebrow: "Woher die 0.15 kommen",
+      title: "Eine feste Einstellung, durch Tests gewählt",
+      lead: "Die Größe des Bonus ist eine einzige Einstellung,",
+      rest: ". Sie ist für jede Frage gleich, und nichts ändert sie, während die App läuft. Gewählt wurde sie mit 94 Testfragen, deren antwortende Textstelle bekannt ist: für jede Bonusgröße, wie oft diese Textstelle unter die besten 5 kam, einmal mit den Abschnitten, die das Chatmodell vermutet hat, und einmal mit jedes Mal dem richtigen Abschnitt.",
+      bonus: "Bonus",
+      guessed: "Vermutet",
+      alwaysRight: "Immer richtig",
+      noBonus: "Keiner",
+      hardRule: "Nur den vermuteten Abschnitt durchsuchen",
+      whyABonus:
+        "Die letzte Zeile zeigt, warum es ein Bonus ist und keine feste Regel. Das Chatmodell vermutet bei 20 der 94 Fragen den falschen Abschnitt, und wenn dann nur dieser Abschnitt durchsucht wird, fehlt die Antwort. Mit dem Bonus konkurrieren die anderen Abschnitte weiter mit, sodass eine falsche Vermutung weniger kostet. 0.15 ist der kleinste Bonus, der bei richtiger Vermutung bis auf eine Frage an die feste Regel herankommt; ab 0.08 bleibt das echte Ergebnis bei 90–91 %.",
+      measuredIn: "Gemessen für bge-m3 in",
+      hybrid:
+        ". Im hybriden Suchmodus, der standardmäßig aus ist, werden die Rangfolge der Stichwortsuche und die der Embeddings nach Platz zusammengeführt, und der Bonus ändert nur die Reihenfolge der Embeddings.",
+      cloud: (stepTitle) =>
+        `Die Cloud-Variante, für einen Server, der für bge-m3 zu klein ist, rechnet die Embeddings mit gemini-embedding-2 und gibt keinen Bonus. Gleich gemessen brachte Gemini die antwortende Textstelle bei 98 % der Fragen ohne Bonus unter die besten 5 und bei 91 % mit +0.15: Es findet den richtigen Abschnitt ohne Hilfe, deshalb konnte der Bonus nur dafür sorgen, dass eine falsche Vermutung die Antwort verdrängt. Auf einer solchen Instanz heißt dieser Schritt im Tab Ablauf „${stepTitle}“. Die Zahlen stehen in`,
+    },
+    inOneSentence: "In einem Satz",
+    sentence:
+      "Vor der Suche vermutet das Chatmodell, welcher Teil der Fachinformation die Antwort enthält. Der Embedder bewertet die Textstellen nach Bedeutung, und unser Code gibt dem vermuteten Teil einen festen Vorsprung von +0.15, bevor er die besten 5 behält. Die 0.15 haben wir mit Tests an 94 Fragen mit bekannter Antwort gewählt.",
   },
 };
 

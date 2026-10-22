@@ -10,11 +10,13 @@ import {
   EXAMPLE_QUESTION,
   FLOW_STEPS,
   type FlowStep,
+  type GuideWords,
   SECTION_BOOST,
   WHO,
-  type Who,
 } from "@/lib/answer-flow";
 import type { ChatHistory } from "@/lib/chat-history";
+import { type Messages, useMessages } from "@/lib/messages";
+import { percent } from "@/lib/stats";
 
 import { ChatDrawer, ChatSidebar } from "../chat-sidebar";
 import { Disclaimer } from "../disclaimer";
@@ -26,76 +28,67 @@ import { WhoTag } from "./who-tag";
 const EMBEDDINGS_DECISION_URL =
   "https://github.com/DannyKuk/molecula/blob/main/docs/decisions/embeddings.md";
 
-/** The guide page: one fixed question followed through every step, each marked by who does it. */
+/** The guide page: one fixed question followed through every step, each marked by who does it.
+ * The question and the label passages stay as recorded, an English run against the English
+ * label. */
 export function HowItAnswers({ history }: { history?: ChatHistory }) {
   const chats = useSavedChats(history);
+  const t = useMessages();
+  const h = t.howItAnswers;
   return (
     <div className="flex flex-1">
       <ChatSidebar {...chats} />
       <main className="mx-auto flex w-full max-w-3xl min-w-0 flex-1 flex-col gap-10 px-4 py-8 sm:px-6 sm:py-12">
         <ChatDrawer {...chats} />
         <header className="flex flex-col gap-3">
-          <Eyebrow>One question, start to finish</Eyebrow>
-          <h1 className="text-2xl font-semibold tracking-tight">How Molecula answers a question</h1>
-          <p className="max-w-prose text-sm text-ink-2">
-            This follows one real question, “{EXAMPLE_QUESTION}”, through every step. The tag on
-            each step says who does it. Most steps are plain code; the AI is used in only a few
-            places.
-          </p>
-          <dl aria-label="Who does a step" className="flex flex-col gap-1.5 text-[13.5px]">
-            {(Object.keys(WHO) as Who[]).map((who) => (
+          <Eyebrow>{h.eyebrow}</Eyebrow>
+          <h1 className="text-2xl font-semibold tracking-tight">{h.title}</h1>
+          <p className="max-w-prose text-sm text-ink-2">{h.intro(t.quote(EXAMPLE_QUESTION))}</p>
+          <dl aria-label={h.whoDoesAStep} className="flex flex-col gap-1.5 text-[13.5px]">
+            {WHO.map((who) => (
               <div key={who} className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
                 <dt>
                   <WhoTag who={who} />
                 </dt>
-                <dd className="text-ink-2">{WHO[who].meaning}</dd>
+                <dd className="text-ink-2">{h.whoMeaning[who]}</dd>
               </div>
             ))}
           </dl>
         </header>
 
-        <Section title="The flow">
-          <ol aria-label="Steps" className="flex flex-col">
-            <Step number="0" title="You ask" who={null} passes="the question">
-              <p>“{EXAMPLE_QUESTION}”</p>
+        <Section title={h.theFlow}>
+          <ol aria-label={t.flow.steps} className="flex flex-col">
+            <Step number="0" title={h.youAsk} who={null} passes={h.theQuestion}>
+              <p>{t.quote(EXAMPLE_QUESTION)}</p>
             </Step>
             {FLOW_STEPS.map((step) => (
-              <FlowItem key={step.id} step={step} />
+              <FlowItem key={step.id} step={step} t={t} />
             ))}
           </ol>
         </Section>
 
-        <Section eyebrow="Step 5 up close" title="What the +0.15 did to the warfarin question">
-          <p>
-            These are the 5 passages from the real run. The two interactions passages scored lowest
-            on similarity alone, and the bonus moves them to the top.
-          </p>
+        <Section eyebrow={h.closeUp.eyebrow} title={h.closeUp.title}>
+          <p>{h.closeUp.before}</p>
           <BoostBars
             passages={boostedRanking(EXAMPLE_PASSAGES, SECTION_BOOST)}
             boost={SECTION_BOOST}
+            t={t}
           />
-          <p className="text-[13px] text-ink-3">
-            The chat model still reads all 5 passages. In this run its answer cited [3], a nursing
-            mothers passage: the bonus decides the order and which passages make the cut, the chat
-            model decides which ones to use.
-          </p>
+          <p className="text-[13px] text-ink-3">{h.closeUp.after}</p>
         </Section>
 
-        <Section eyebrow="Where 0.15 comes from" title="A fixed setting, chosen by testing">
+        <Section eyebrow={h.setting.eyebrow} title={h.setting.title}>
           <p>
-            The size of the bonus is one setting, <Code>RETRIEVAL_SECTION_GROUP_BOOST</Code>. It is
-            the same for every question and nothing changes it while the app runs. It was picked
-            with 94 test questions whose answering passage is known: for each bonus size, how often
-            that passage made the top 5, with the chat model&apos;s section guesses and with the
-            right section every time.
+            {h.setting.lead} <Code>RETRIEVAL_SECTION_GROUP_BOOST</Code>
+            {h.setting.rest}
           </p>
           <div className="thin-scrollbar overflow-x-auto border-y border-rule">
             <table className="w-full text-[13.5px] tabular-nums">
               <thead>
                 <tr className="font-mono text-[10.5px] tracking-wider whitespace-nowrap text-ink-3 uppercase">
-                  <th className="py-2.5 pr-6 text-left font-medium">Bonus</th>
-                  <th className="py-2.5 pr-6 text-left font-medium">Guessed</th>
-                  <th className="py-2.5 pr-6 text-left font-medium">Always right</th>
+                  <th className="py-2.5 pr-6 text-left font-medium">{h.setting.bonus}</th>
+                  <th className="py-2.5 pr-6 text-left font-medium">{h.setting.guessed}</th>
+                  <th className="py-2.5 pr-6 text-left font-medium">{h.setting.alwaysRight}</th>
                 </tr>
               </thead>
               <tbody>
@@ -108,32 +101,21 @@ export function HowItAnswers({ history }: { history?: ChatHistory }) {
                       row.picked && "font-semibold text-signal",
                     )}
                   >
-                    <td className="py-2 pr-6">{row.bonus}</td>
-                    <td className="py-2 pr-6">{percent(row.guessed)}</td>
-                    <td className="py-2 pr-6">{percent(row.alwaysRight)}</td>
+                    <td className="py-2 pr-6">{bonusName(row.bonus, t)}</td>
+                    <td className="py-2 pr-6">{percent(row.guessed, t)}</td>
+                    <td className="py-2 pr-6">{percent(row.alwaysRight, t)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p>
-            The last row is why it is a bonus and not a hard rule. The chat model guesses the wrong
-            section for 20 of the 94 questions, and searching only that section then hides the
-            answer. With the bonus the other sections still compete, so a wrong guess costs less.
-            0.15 is the smallest bonus that comes within one question of the hard rule when the
-            guess is right; above 0.08 the real result stays at 90–91%.
+          <p>{h.setting.whyABonus}</p>
+          <p className="text-[13px] text-ink-3">
+            {h.setting.measuredIn} <Code>docs/evals/chat-model-filters-2026-10-12.md</Code>
+            {h.setting.hybrid}
           </p>
           <p className="text-[13px] text-ink-3">
-            Measured for bge-m3 in <Code>docs/evals/chat-model-filters-2026-10-12.md</Code>. In
-            hybrid search mode, which is off by default, the keyword and embedding rankings are
-            merged by place, and the bonus only changes the order of the embedding ranking.
-          </p>
-          <p className="text-[13px] text-ink-3">
-            The cloud setup, for a server too small for bge-m3, embeds with gemini-embedding-2 and
-            gives no bonus. Measured the same way, Gemini put the answering passage in the top 5 for
-            98% of the questions with no bonus and for 91% with +0.15: it finds the right section
-            without help, so the bonus only let a wrong guess push the answer out. On such an
-            instance the Flow tab calls this step Keep the top 5. The numbers are in{" "}
+            {h.setting.cloud(t.flow.keepTitle(5))}{" "}
             <a
               href={EMBEDDINGS_DECISION_URL}
               target="_blank"
@@ -146,12 +128,9 @@ export function HowItAnswers({ history }: { history?: ChatHistory }) {
           </p>
         </Section>
 
-        <Section title="In one sentence">
+        <Section title={h.inOneSentence}>
           <p className="border-l-[3px] border-signal py-1 pl-3.5 text-[15px]">
-            “Before searching, the chat model guesses which part of the label holds the answer. The
-            embedder scores the passages by meaning, and our code gives the guessed part a fixed
-            +0.15 head start before keeping the top 5. We picked 0.15 by testing on 94 questions
-            with known answers.”
+            {t.quote(h.sentence)}
           </p>
         </Section>
 
@@ -163,19 +142,33 @@ export function HowItAnswers({ history }: { history?: ChatHistory }) {
   );
 }
 
-function FlowItem({ step }: { step: FlowStep }) {
+function FlowItem({ step, t }: { step: FlowStep; t: Messages }) {
+  const words: GuideWords = t.flow.guide[step.id];
   return (
-    <Step id={step.id} number={step.number} title={step.title} who={step.who} passes={step.passes}>
-      <p>{step.text}</p>
+    <Step
+      id={step.id}
+      number={step.number}
+      title={words.title}
+      who={step.who}
+      passes={words.passes}
+    >
+      <p>{words.text}</p>
       {step.call && <Code>{step.call}</Code>}
-      {step.aside && <p className="text-[13px] text-ink-3">{step.aside}</p>}
+      {words.aside && <p className="text-[13px] text-ink-3">{words.aside}</p>}
       {step.onSteps && (
         <p className="text-xs text-ink-3">
-          On the Steps tab: <span className="font-medium text-ink-2">{step.onSteps}</span>
+          {t.howItAnswers.onStepsTab}{" "}
+          <span className="font-medium text-ink-2">{step.onSteps(t)}</span>
         </p>
       )}
     </Step>
   );
+}
+
+function bonusName(bonus: number | "hard rule", t: Messages): string {
+  if (bonus === "hard rule") return t.howItAnswers.setting.hardRule;
+  if (bonus === 0) return t.howItAnswers.setting.noBonus;
+  return `+${bonus.toFixed(2)}`;
 }
 
 function Section({
@@ -204,8 +197,4 @@ function Eyebrow({ children }: { children: ReactNode }) {
 
 function Code({ children }: { children: ReactNode }) {
   return <code className="font-mono text-[12px] break-words">{children}</code>;
-}
-
-function percent(share: number): string {
-  return `${Math.round(share * 100)}%`;
 }
