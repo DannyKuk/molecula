@@ -35,7 +35,7 @@ async function openBenchmark() {
 }
 
 function intro(): string {
-  return screen.getByText(/Every square is one question/).textContent ?? "";
+  return screen.getByText(/Every dot is one question/).textContent ?? "";
 }
 
 function appModelCards(): string[] {

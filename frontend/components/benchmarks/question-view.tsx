@@ -19,20 +19,10 @@ import {
   topPassages,
 } from "@/lib/embedding-benchmark";
 
-export function Pill({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs whitespace-nowrap text-ink-2">
-      {children}
-    </span>
-  );
-}
+export const TAG = "font-mono text-[10px] font-medium tracking-wide uppercase";
 
-export function AppBadge({ children = "used by the app" }: { children?: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center rounded-full bg-app-model px-2 py-0.5 text-xs font-medium whitespace-nowrap text-app-model-foreground">
-      {children}
-    </span>
-  );
+export function AppBadge() {
+  return <span className={cn(TAG, "whitespace-nowrap text-signal")}>used by the app</span>;
 }
 
 const MARK = "rounded-[3px] bg-evidence px-0.5 text-evidence-foreground";
@@ -55,13 +45,10 @@ export function QuestionView({
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-1.5">
-        <Pill>{sectionName(question.section_group)}</Pill>
-        <Pill>{question.drug}</Pill>
-        <span className="text-xs text-ink-2">
-          Question {question.index + 1} of {benchmark.questions.length}
-        </span>
-      </div>
+      <p className={cn(TAG, "text-ink-3")}>
+        {sectionName(question.section_group)} · {question.drug} · Question {question.index + 1} of{" "}
+        {benchmark.questions.length}
+      </p>
       <p className="text-lg/relaxed font-semibold tracking-tight">{question.question}</p>
       <div className="flex flex-col gap-1.5 border-l-3 border-rule-2 py-0.5 pl-3 text-sm">
         <span className="text-xs text-ink-2">
@@ -115,8 +102,8 @@ function PassageCard({ question, top }: { question: Question; top: TopPassage })
   return (
     <article
       className={cn(
-        "flex min-w-0 flex-col gap-2 rounded-lg border px-3.5 py-3",
-        top.holdsAnswer && "border-rule-2",
+        "flex min-w-0 flex-col gap-2 border-l-2 border-rule py-1 pl-3",
+        top.holdsAnswer && "border-ink-3",
       )}
     >
       <div className="flex flex-wrap items-center justify-between gap-x-2.5 gap-y-1.5">
@@ -133,15 +120,14 @@ function PassageCard({ question, top }: { question: Question; top: TopPassage })
           {top.holdsAnswer ? "Holds the answer" : "Doesn't hold the answer"}
         </span>
       </div>
-      <ul aria-label="Models that ranked it first" className="flex flex-wrap gap-1">
+      <ul
+        aria-label="Models that ranked it first"
+        className="flex flex-wrap gap-x-3 gap-y-0.5 font-mono text-[11px] text-ink-2"
+      >
         {top.models.map((m) => (
           <li
             key={m.label}
-            className={cn(
-              "rounded-full border px-2 py-px text-[0.72rem] whitespace-nowrap text-ink-2",
-              m.isApp &&
-                "border-transparent bg-app-model font-semibold text-app-model-foreground dark:text-app-model-foreground",
-            )}
+            className={cn("whitespace-nowrap", m.isApp && "font-medium text-signal")}
           >
             {m.isApp ? `${m.name} (app)` : m.name}
           </li>

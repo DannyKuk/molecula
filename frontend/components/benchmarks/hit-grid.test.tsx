@@ -43,7 +43,7 @@ describe("HitGrid", () => {
     expect(screen.getByTitle("Qwen3-Embedding-8B: 2 of 2 in the top 5").textContent).toBe("2");
   });
 
-  it("labels every square with its question, model and rank", () => {
+  it("labels every dot with its question, model and rank", () => {
     renderGrid();
     expect(
       screen.getByRole("button", {
@@ -53,7 +53,7 @@ describe("HitGrid", () => {
     expect(screen.getAllByRole("button", { name: /answer/ })).toHaveLength(16);
   });
 
-  it("reports the question and model of a clicked square", () => {
+  it("reports the question and model of a clicked dot", () => {
     const onQuestion = renderGrid();
     fireEvent.click(
       screen.getByRole("button", {
@@ -63,7 +63,7 @@ describe("HitGrid", () => {
     expect(onQuestion).toHaveBeenCalledExactlyOnceWith(1, "bge-small");
   });
 
-  it("moves between squares with the arrow keys, one tab stop for the grid", () => {
+  it("moves between dots with the arrow keys, one tab stop for the grid", () => {
     renderGrid();
     const first = screen.getByRole("button", {
       name: "What is lisinopril for? · bge-small: answer ranked 1st",
@@ -85,27 +85,27 @@ describe("HitGrid", () => {
 describe("EmbeddingBenchmark", () => {
   it("shows the whole-index ranks after the switch", () => {
     render(<EmbeddingBenchmark run={TINY_RUN} />);
-    const square = () =>
+    const dot = () =>
       screen.getAllByRole("button", { name: /^What is lisinopril for\? · bge-small:/ })[0];
-    expect(square().getAttribute("aria-label")).toMatch(/answer ranked 1st$/);
+    expect(dot().getAttribute("aria-label")).toMatch(/answer ranked 1st$/);
 
     fireEvent.click(screen.getByRole("button", { name: "Whole index" }));
 
-    expect(square().getAttribute("aria-label")).toMatch(/answer ranked 3rd$/);
+    expect(dot().getAttribute("aria-label")).toMatch(/answer ranked 3rd$/);
     expect(screen.getByTitle("bge-m3: 0 of 2 in the top 5")).toBeDefined();
   });
 
-  it("selects the clicked square's question and opens it in a sheet on a phone", () => {
+  it("selects the clicked dot's question and opens it in a sheet on a phone", () => {
     render(<EmbeddingBenchmark run={TINY_RUN} />);
-    const square = screen.getByRole("button", {
+    const dot = screen.getByRole("button", {
       name: "What is lactic acidosis? · Qwen3-Embedding-8B: answer ranked 1st",
     });
 
-    fireEvent.click(square);
+    fireEvent.click(dot);
 
-    expect(square.getAttribute("aria-pressed")).toBe("true");
+    expect(dot.getAttribute("aria-pressed")).toBe("true");
     const sheet = screen.getByRole("dialog");
     expect(within(sheet).getByText("What is lactic acidosis?")).toBeDefined();
-    expect(within(sheet).getByText("Question 3 of 4")).toBeDefined();
+    expect(within(sheet).getByText(/Question 3 of 4/)).toBeDefined();
   });
 });
