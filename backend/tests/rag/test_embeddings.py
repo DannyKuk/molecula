@@ -2,7 +2,7 @@ import os
 from collections.abc import Callable
 from typing import Any
 
-import httpx
+import httpx2
 import numpy as np
 import pytest
 from langchain_openai import OpenAIEmbeddings
@@ -204,7 +204,7 @@ def test_another_model_is_not_downloaded(
 
 @pytest.mark.parametrize(
     "error",
-    [httpx.ConnectError("connection refused"), OSError("401 Client Error")],
+    [httpx2.ConnectError("connection refused"), OSError("401 Client Error")],
 )
 def test_failed_model_download_is_a_download_error(
     make_settings: Callable[..., Settings],

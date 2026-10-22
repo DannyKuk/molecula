@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import httpx
+import httpx2
 from langchain_core.embeddings import Embeddings
 from langchain_openai import OpenAIEmbeddings
 
@@ -189,8 +189,8 @@ def download_local_model(settings: Settings) -> None:
             cache_dir=settings.models_dir,
             allow_patterns=list(MODEL_FILES),
         )
-    # huggingface_hub raises its HTTP errors as OSError and connection errors as httpx's.
-    except (OSError, httpx.HTTPError) as error:
+    # huggingface_hub raises its HTTP errors as OSError and connection errors as httpx2's.
+    except (OSError, httpx2.HTTPError) as error:
         raise ModelDownloadError(
             f"{PINNED_MODEL} could not be downloaded from Hugging Face: {error}"
         ) from error
