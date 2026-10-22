@@ -19,7 +19,7 @@ from evals.retrieval.dataset import Question, load_questions
 from evals.retrieval.rescore import rescored_run
 
 from molecula.config import get_settings
-from molecula.store.index import Chunk
+from molecula.schemas.retrieval import Chunk
 
 RUN = "embeddings-20261012T122048Z.json"
 CPU_RUN = "embeddings-20261012T122456Z.json"

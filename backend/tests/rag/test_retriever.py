@@ -1,5 +1,4 @@
 from collections import Counter
-from dataclasses import replace
 from datetime import date
 from pathlib import Path
 
@@ -7,11 +6,11 @@ import numpy as np
 import pytest
 from langchain_core.embeddings import Embeddings
 
-from molecula.rag.retriever import LabelRetriever
+from molecula.rag.retriever import LabelRetriever, retrieved
 from molecula.schemas.compounds import Resolution
 from molecula.schemas.labels import SectionGroup
-from molecula.schemas.retrieval import DrugFilter, LabelFilter, LabelQuery, RetrievalMode
-from molecula.store.index import Chunk, LabelIndex
+from molecula.schemas.retrieval import Chunk, DrugFilter, LabelFilter, LabelQuery, RetrievalMode
+from molecula.store.index import LabelIndex
 from molecula.store.keywords import KeywordIndex
 
 MODEL = "keyword-fake"
@@ -45,31 +44,34 @@ IMATINIB_SIDE_EFFECTS = Chunk(
     effective_time="20260713",
     url="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=gleevec",
 )
-IMATINIB_MECHANISM = replace(
-    IMATINIB_SIDE_EFFECTS,
-    id="gleevec:mechanism_of_action:0",
-    text="inhibits the bcr-abl kinase",
-    section="mechanism_of_action",
-    section_group="pharmacology",
+IMATINIB_MECHANISM = IMATINIB_SIDE_EFFECTS.model_copy(
+    update={
+        "id": "gleevec:mechanism_of_action:0",
+        "text": "inhibits the bcr-abl kinase",
+        "section": "mechanism_of_action",
+        "section_group": "pharmacology",
+    }
 )
-IBUPROFEN_SIDE_EFFECTS = replace(
-    IMATINIB_SIDE_EFFECTS,
-    id="ibuprofen-rx:adverse_reactions:0",
-    text="nausea heartburn and bleeding",
-    cid=3672,
-    substance="IBUPROFEN",
-    brand=None,
-    set_id="ibuprofen-rx",
+IBUPROFEN_SIDE_EFFECTS = IMATINIB_SIDE_EFFECTS.model_copy(
+    update={
+        "id": "ibuprofen-rx:adverse_reactions:0",
+        "text": "nausea heartburn and bleeding",
+        "cid": 3672,
+        "substance": "IBUPROFEN",
+        "brand": None,
+        "set_id": "ibuprofen-rx",
+    }
 )
-IBUPROFEN_PURPOSE = replace(
-    IBUPROFEN_SIDE_EFFECTS,
-    id="advil:purpose:0",
-    text="pain reliever and fever reducer",
-    brand="Advil",
-    product_type="otc",
-    section="purpose",
-    section_group="otc_consumer",
-    set_id="advil",
+IBUPROFEN_PURPOSE = IBUPROFEN_SIDE_EFFECTS.model_copy(
+    update={
+        "id": "advil:purpose:0",
+        "text": "pain reliever and fever reducer",
+        "brand": "Advil",
+        "product_type": "otc",
+        "section": "purpose",
+        "section_group": "otc_consumer",
+        "set_id": "advil",
+    }
 )
 CHUNKS = [IMATINIB_SIDE_EFFECTS, IMATINIB_MECHANISM, IBUPROFEN_SIDE_EFFECTS, IBUPROFEN_PURPOSE]
 
@@ -336,12 +338,13 @@ def test_a_product_type_without_the_section_widens_to_every_product_type(
     assert retrieval.widened == ["labels"]
 
 
-IMATINIB_INTERACTIONS = replace(
-    IMATINIB_SIDE_EFFECTS,
-    id="gleevec:drug_interactions:0",
-    text="strong CYP3A4 inhibitors raise imatinib levels so watch for bleeding and nausea",
-    section="drug_interactions",
-    section_group="interactions",
+IMATINIB_INTERACTIONS = IMATINIB_SIDE_EFFECTS.model_copy(
+    update={
+        "id": "gleevec:drug_interactions:0",
+        "text": "strong CYP3A4 inhibitors raise imatinib levels so watch for bleeding and nausea",
+        "section": "drug_interactions",
+        "section_group": "interactions",
+    }
 )
 WITH_INTERACTIONS = [*CHUNKS, IMATINIB_INTERACTIONS]
 
@@ -446,3 +449,14 @@ def test_keyword_modes_need_the_keyword_index(index: LabelIndex, mode: Retrieval
         LabelRetriever(
             index, KeywordEmbeddings(), top_k=5, min_score=0.0, section_group_boost=BOOST, mode=mode
         )
+
+
+def test_a_found_chunk_keeps_every_label_field_and_reads_the_label_date_as_a_date() -> None:
+    found = retrieved(IBUPROFEN_PURPOSE, 0.42, in_section_groups=True)
+
+    assert found.model_dump(exclude={"effective_time", "score", "in_section_groups"}) == (
+        IBUPROFEN_PURPOSE.model_dump(exclude={"effective_time"})
+        | {"dense_rank": None, "bm25_rank": None, "fused_score": None}
+    )
+    assert found.effective_time == date(2026, 7, 13)
+    assert (found.score, found.in_section_groups) == (0.42, True)

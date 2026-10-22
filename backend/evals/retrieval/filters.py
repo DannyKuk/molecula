@@ -9,7 +9,6 @@ these numbers. Also reports the scores of the answering chunks and of the best c
 answer, which the score threshold (`retrieval_min_score`) is chosen from. No chat model runs.
 """
 
-import dataclasses
 import statistics
 from collections import defaultdict
 
@@ -18,8 +17,8 @@ from evals.retrieval.dataset import Question, is_hit, load_questions
 from molecula.config import get_settings
 from molecula.rag.embeddings import embedding_model_id, get_embeddings
 from molecula.rag.retriever import LabelRetriever
-from molecula.schemas.retrieval import DrugFilter, LabelFilter, LabelQuery, RetrievedChunk
-from molecula.store.index import Chunk, LabelIndex
+from molecula.schemas.retrieval import Chunk, DrugFilter, LabelFilter, LabelQuery, RetrievedChunk
+from molecula.store.index import LabelIndex
 from molecula.store.keywords import KeywordIndex
 
 TOP_K = 10
@@ -50,8 +49,8 @@ def main() -> int:
             found = retriever.retrieve(question.question, gold_filter(question, setup, set_ids))
             ranks[setup].append(first_hit_rank(question, found.chunks))
             if setup == "drug + section group":
-                hit_scores += [c.score for c in found.chunks if is_hit(question, as_chunk(c))]
-                misses = [c.score for c in found.chunks if not is_hit(question, as_chunk(c))]
+                hit_scores += [c.score for c in found.chunks if is_hit(question, c)]
+                misses = [c.score for c in found.chunks if not is_hit(question, c)]
                 miss_scores += misses[:1]
 
     print(f"{len(questions)} questions, {embedding_model_id(settings)}, top {TOP_K}\n")
@@ -88,14 +87,9 @@ def gold_filter(
     return LabelFilter(extracted=LabelQuery(), drugs=[drug], section_groups=groups)
 
 
-def as_chunk(found: RetrievedChunk) -> Chunk:
-    fields = found.model_dump(include={field.name for field in dataclasses.fields(Chunk)})
-    return Chunk(**{**fields, "effective_time": found.effective_time.strftime("%Y%m%d")})
-
-
 def first_hit_rank(question: Question, found: list[RetrievedChunk]) -> int | None:
     for rank, chunk in enumerate(found, start=1):
-        if is_hit(question, as_chunk(chunk)):
+        if is_hit(question, chunk):
             return rank
     return None
 

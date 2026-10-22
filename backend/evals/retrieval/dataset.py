@@ -4,7 +4,7 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from molecula.store.index import Chunk
+from molecula.schemas.retrieval import Chunk
 from molecula.store.labels import SectionGroup
 
 DATASET = Path(__file__).resolve().parents[1] / "datasets" / "retrieval_questions.yaml"

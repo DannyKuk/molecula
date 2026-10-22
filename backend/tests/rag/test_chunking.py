@@ -1,9 +1,9 @@
-from dataclasses import fields, replace
+from dataclasses import replace
 
 import pytest
 
 from molecula.rag.chunking import CHUNK_TOKENS, MIN_REMAINDER_TOKENS, chunk_labels
-from molecula.store.index import Chunk
+from molecula.schemas.retrieval import Chunk
 from molecula.store.labels import LabelRecord, LabelSection
 
 IMATINIB_CID = 5291
@@ -114,7 +114,7 @@ def test_chunk_carries_the_label_metadata_and_the_sensitive_flag(chunks: list[Ch
         effective_time="20260713",
         url="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=gleevec",
     )
-    assert all(getattr(chunk, field.name) != "" for chunk in chunks for field in fields(Chunk))
+    assert all(getattr(chunk, field) != "" for chunk in chunks for field in Chunk.model_fields)
     assert {chunk.sensitive for chunk in chunks if chunk.section_group != "dosing"} == {False}
 
 

@@ -35,7 +35,8 @@ from molecula.config import Settings, get_settings
 from molecula.ingest.index import stored_labels
 from molecula.rag.chunking import CHUNK_TOKENS, OVERLAP_TOKENS, chunk_labels
 from molecula.rag.embeddings import get_embeddings, load_chunk_tokenizer
-from molecula.store.index import Chunk, LabelIndex
+from molecula.schemas.retrieval import Chunk
+from molecula.store.index import LabelIndex
 
 if TYPE_CHECKING:
     from langchain_core.embeddings import Embeddings

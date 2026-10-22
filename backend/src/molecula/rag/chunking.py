@@ -3,7 +3,7 @@ from collections.abc import Callable, Sequence
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from molecula.store.index import Chunk
+from molecula.schemas.retrieval import Chunk
 from molecula.store.labels import LabelRecord, LabelSection
 
 type CountTokens = Callable[[str], int]

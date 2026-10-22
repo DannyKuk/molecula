@@ -7,13 +7,14 @@ from langchain_core.embeddings import Embeddings
 
 from molecula.rag.fusion import reciprocal_rank_fusion
 from molecula.schemas.retrieval import (
+    Chunk,
     LabelFilter,
     Retrieval,
     RetrievalMode,
     RetrievedChunk,
     Widening,
 )
-from molecula.store.index import Chunk, LabelIndex
+from molecula.store.index import LabelIndex
 from molecula.store.keywords import KeywordIndex
 from molecula.store.labels import label_date
 
@@ -231,19 +232,9 @@ def where_clause(
 
 def retrieved(chunk: Chunk, score: float, in_section_groups: bool = False) -> RetrievedChunk:
     return RetrievedChunk(
-        id=chunk.id,
-        text=chunk.text,
-        score=score,
-        cid=chunk.cid,
-        substance=chunk.substance,
-        brand=chunk.brand,
-        product_type=chunk.product_type,
-        section=chunk.section,
-        section_group=chunk.section_group,
-        sensitive=chunk.sensitive,
-        set_id=chunk.set_id,
+        **chunk.model_dump(exclude={"effective_time"}),
         effective_time=label_date(chunk.effective_time),
-        url=chunk.url,
+        score=score,
         in_section_groups=in_section_groups,
     )
 

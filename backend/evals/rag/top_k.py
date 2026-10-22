@@ -24,11 +24,11 @@ from evals.chat_model.citations import read_cache
 from evals.retrieval.dataset import Question, load_questions
 
 from molecula.config import get_settings
-from molecula.main import open_label_index
 from molecula.rag.embeddings import get_embeddings
 from molecula.rag.retriever import LabelRetriever
 from molecula.schemas.retrieval import LabelFilter, Retrieval, RetrievedChunk
 from molecula.store.keywords import KeywordIndex
+from molecula.wiring import open_label_index
 
 TOP_KS = (5, 10)
 

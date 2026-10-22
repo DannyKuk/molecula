@@ -10,9 +10,10 @@ from langchain_core.embeddings import Embeddings
 
 from molecula.config import Settings
 from molecula.rag.chunking import CountTokens, chunk_labels
+from molecula.schemas.retrieval import Chunk
 from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
-from molecula.store.index import Chunk, LabelIndex
+from molecula.store.index import LabelIndex
 from molecula.store.keywords import KeywordIndex
 from molecula.store.labels import LabelRecord, LabelStore
 

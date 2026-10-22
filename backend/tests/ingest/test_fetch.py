@@ -19,10 +19,11 @@ from molecula.config import Settings
 from molecula.ingest.export import ARCHIVE, MANIFEST, export_store
 from molecula.ingest.fetch import run
 from molecula.rag.embeddings import has_local_model
+from molecula.schemas.retrieval import Chunk
 from molecula.schemas.store import StoreManifest
 from molecula.store.compounds import CompoundStore
 from molecula.store.db import connect
-from molecula.store.index import Chunk, LabelIndex
+from molecula.store.index import LabelIndex
 from molecula.store.keywords import KeywordIndex
 from molecula.store.labels import LabelStore
 from molecula.store.schema import SCHEMA_VERSION

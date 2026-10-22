@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from molecula.config import get_settings
 from molecula.rag.embeddings import embedding_model_id, get_embeddings
 from molecula.rag.retriever import LabelRetriever
-from molecula.schemas.retrieval import DrugFilter, LabelFilter, LabelQuery, RetrievalMode
-from molecula.store.index import Chunk, LabelIndex
+from molecula.schemas.retrieval import Chunk, DrugFilter, LabelFilter, LabelQuery, RetrievalMode
+from molecula.store.index import LabelIndex
 from molecula.store.keywords import KeywordIndex
 
 TOP_K = 5

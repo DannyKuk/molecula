@@ -75,19 +75,15 @@ class LabelFilter(BaseModel):
         return [set_id for drug in self.drugs for set_id in drug.set_ids]
 
 
-class RetrievedChunk(BaseModel):
-    """A label chunk a search found, with its cosine similarity to the query and what to cite.
-    `in_section_groups` means it is in one of the filter's section groups and ranked higher.
-
-    `dense_rank` and `bm25_rank` are its places in the embedding and keyword rankings of the
-    search that found it (None: not in that ranking), and `fused_score` its reciprocal rank
-    fusion score, which orders the chunks in the "bm25" and "hybrid" modes (#44)."""
+class Chunk(BaseModel):
+    """A piece of one label section, with what retrieval filters on and the source to cite, as
+    the label indexes store it: `effective_time` is the label's date as openFDA writes it
+    (YYYYMMDD)."""
 
     model_config = ConfigDict(frozen=True)
 
     id: str
     text: str
-    score: float
     cid: int
     substance: str
     brand: str | None
@@ -96,8 +92,21 @@ class RetrievedChunk(BaseModel):
     section_group: SectionGroup
     sensitive: bool
     set_id: str
-    effective_time: date
+    effective_time: str
     url: str
+
+
+class RetrievedChunk(Chunk):
+    """A label chunk a search found, with its cosine similarity to the query and what to cite.
+    `effective_time` is the stored YYYYMMDD read as a date. `in_section_groups` means it is in one
+    of the filter's section groups and ranked higher.
+
+    `dense_rank` and `bm25_rank` are its places in the embedding and keyword rankings of the
+    search that found it (None: not in that ranking), and `fused_score` its reciprocal rank
+    fusion score, which orders the chunks in the "bm25" and "hybrid" modes (#44)."""
+
+    effective_time: date
+    score: float
     in_section_groups: bool = False
     dense_rank: int | None = None
     bm25_rank: int | None = None
