@@ -1,13 +1,22 @@
-# Molecula
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
+    <img alt="Molecula" src="docs/assets/logo-light.svg" width="340">
+  </picture>
+</p>
 
-[![License: MIT](https://img.shields.io/badge/code-MIT-blue)](LICENSE)
-[![Data: CC BY-SA 3.0](https://img.shields.io/badge/data-CC%20BY--SA%203.0-lightgrey)](#data-sources-and-licences)
-[![Python 3.14](https://img.shields.io/badge/python-3.14-3776AB?logo=python&logoColor=white)](backend/pyproject.toml)
-[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](backend/)
-[![LangChain](https://img.shields.io/badge/LangChain-1C3C3C?logo=langchain&logoColor=white)](backend/src/molecula/agent/)
-[![Next.js 16](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)](frontend/)
+<p align="center"><b>A medicines chatbot that answers with real 3D molecular structures.</b></p>
 
-A medicines chatbot that answers with real 3D molecular structures. Ask "How does imatinib fight leukemia?" and it explains the mechanism from FDA drug labels, cites its sources, and shows the drug sitting in the pocket of its target protein.
+<p align="center">
+  <a href="LICENSE"><img alt="Code: MIT" src="https://img.shields.io/badge/code-MIT-blue"></a>
+  <a href="#data-sources-and-licences"><img alt="Data: CC BY-SA 3.0" src="https://img.shields.io/badge/data-CC%20BY--SA%203.0-lightgrey"></a>
+  <a href="backend/pyproject.toml"><img alt="Python 3.14" src="https://img.shields.io/badge/python-3.14-3776AB?logo=python&logoColor=white"></a>
+  <a href="backend/"><img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white"></a>
+  <a href="backend/src/molecula/agent/"><img alt="LangChain" src="https://img.shields.io/badge/LangChain-1C3C3C?logo=langchain&logoColor=white"></a>
+  <a href="frontend/"><img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white"></a>
+</p>
+
+Ask "How does imatinib fight leukemia?" and it explains the mechanism from FDA drug labels, cites its sources, and shows the drug sitting in the pocket of its target protein.
 
 https://github.com/user-attachments/assets/2db2bf0b-647a-4ed8-90e8-022c327f57c4
 
