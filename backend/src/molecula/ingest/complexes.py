@@ -48,8 +48,11 @@ HYDROGENS = ["H", "D"]
 # mmCIF coordinates have three decimals, so rounding to three loses nothing.
 COORDINATE_DECIMALS = 3
 DISTANCE_DECIMALS = 2
-# P-SEA labels from biotite's annotate_sse.
-SECONDARY_STRUCTURE: dict[str, SecondaryStructure] = {"a": "helix", "b": "sheet", "c": "coil"}
+SECONDARY_STRUCTURE: dict[struc.PSeaElement, SecondaryStructure] = {
+    struc.PSeaElement.HELIX: "helix",
+    struc.PSeaElement.STRAND: "sheet",
+    struc.PSeaElement.COIL: "coil",
+}
 # The chem-comp SMILES of some ligands spell out a hydrogen to fix a C=N bond's geometry
 # (zanamivir's and metformin's guanidine), but the PDB atoms they are matched to have none.
 HEAVY_ATOMS_ONLY = Chem.RemoveHsParameters()
@@ -356,7 +359,7 @@ def protein_trace(protein: AtomArray) -> list[TraceResidue]:
     return [
         TraceResidue(
             **residue_of(residue).model_dump(),
-            sse=SECONDARY_STRUCTURE.get(str(label), "coil"),
+            sse=SECONDARY_STRUCTURE.get(struc.PSeaElement(label), "coil"),
             xyz=xyz(residue[residue.atom_name == "CA"].coord[0]),
         )
         for residue, label in zip(
