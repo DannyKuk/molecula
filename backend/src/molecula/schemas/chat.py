@@ -11,10 +11,10 @@ from pydantic import (
     model_validator,
 )
 
-from molecula.guard.validation import has_control_characters
 from molecula.schemas.claims import CheckedClaim
 from molecula.schemas.guard import InputCategory
 from molecula.schemas.retrieval import LabelFilter, RetrievalMode, RetrievedChunk, Widening
+from molecula.schemas.text import has_control_characters
 from molecula.schemas.usage import Usage
 
 # Earlier turns travel as question and answer text only, so ten messages stay around 15k
