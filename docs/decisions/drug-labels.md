@@ -1,6 +1,6 @@
 # Drug labels
 
-> **Answer:** The chatbot answers from **one openFDA label per drug and product type** (Rx and OTC). The label must have a single ingredient that is the drug itself. Among those labels, only the ones on the **drug's most common route** are kept. From these, the pick is the one with a `mechanism_of_action` section, then the brand's own label, then the newest. Fourteen groups of sections are stored, including pregnancy, patient leaflets, dosage forms and overdosage (#92). Dosing, specific populations, patient leaflets, abuse and overdosage are flagged sensitive. 133 of 134 drugs have a label (11.2M characters); metamizole has no US label.
+> **Answer:** The chatbot answers from **one openFDA label per drug and product type** (Rx and OTC). The label must have a single ingredient that is the drug itself. Among those labels, only the ones on the **drug's most common route** are kept. From these, the pick is the one with a `mechanism_of_action` section, then the brand's own label, then the newest. Fourteen groups of sections are stored, including pregnancy, patient leaflets, dosage forms and overdosage (#92). Dosing, specific populations, patient leaflets, abuse and overdosage are flagged sensitive. All 133 drugs have a label (11.2M characters); metamizole, which has no US label, was removed (#196).
 
 ## Question
 
