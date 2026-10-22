@@ -31,7 +31,7 @@ backend/
   evals/           eval runners and datasets (real models; not part of pytest)
 frontend/          Next.js app
 data/              curated inputs (scope.yaml, hero_set.yaml) and the built store (build/)
-docs/              architecture, data plan, decisions/, evals/, spikes/
+docs/              architecture, setup, data plan, design/, decisions/, evals/, spikes/
 docker-compose.yaml
 ```
 
@@ -66,7 +66,7 @@ Dependencies point one way: `api` → `guard` → `agent` → `tools` → `rag` 
 3. **Fill in the PR template completely.** "How to review", the Risk boxes and the Tested list must be honest and specific. Write `Closes #N`.
 4. **Never claim a check passed unless it was actually run.** Eval scores go into the PR as before → after.
 5. Follow-ups go into new issues using the issue forms. Issues must stand alone: point at code (file + function), `docs/data-plan.md` and other issues.
-6. **A PR that makes or changes a design decision updates the docs in the same PR.** A big question with evidence gets a topic doc in `docs/decisions/` (`> **Answer:**`, Question, What we tried, Result, What it shows, Decided along the way, Limits, Reproduce; see `docs/decisions/local-store.md`), listed in the table at the end of `docs/architecture.md`. A small choice gets a bullet with its reason and issue under "Key design choices" in `docs/architecture.md`. Only real sources and measured numbers.
+6. **A PR that makes or changes a design decision updates the docs in the same PR.** A big question with evidence gets a topic doc in `docs/decisions/` (`> **Answer:**`, Question, What we tried, Result, What it shows, Decided along the way, Limits, Reproduce; see `docs/decisions/local-store.md`), listed in the table at the end of `docs/architecture.md`. A small choice gets a bullet with its reason and issue in the matching `docs/design/<area>.md` page; if it changes the overview, the one-line bullet under "Key design choices" in `docs/architecture.md` changes too. Keep `docs/architecture.md` short: the detail goes to `docs/design/`. Only real sources and measured numbers.
 
 There is no automatic CI. `.github/workflows/ci.yml` runs the same checks on a clean machine when started by hand from the Actions tab.
 

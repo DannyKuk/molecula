@@ -45,5 +45,5 @@ Closes #
 
 - [ ] Follow-ups are filed as issues (not left only in docs)
 - [ ] README / docs updated where behaviour changed
-- [ ] A design decision made or changed here is in the docs: a topic doc in `docs/decisions/` or a bullet under "Key design choices" in `docs/architecture.md`
+- [ ] A design decision made or changed here is in the docs: a topic doc in `docs/decisions/` or a bullet in `docs/design/<area>.md` (and its one line in `docs/architecture.md` if the overview changes)
 - [ ] No API keys, `.env` files or raw data dumps committed

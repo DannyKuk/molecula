@@ -1,6 +1,6 @@
 # Data plan
 
-Where Molecula's data comes from, how it is turned into the local store, and what is known to work. Everything marked **verified** was run live against the real APIs on 2026-10-11 (see `docs/spikes/data-check/`). Everything else is a design decision or an assumption and says so.
+Where Molecula's data comes from, how it is turned into the local store, and what is known to work. Everything marked **verified** was run live against the real APIs (first on 2026-10-11, see `docs/spikes/data-check/`), and everything marked **built** is in the code.
 
 ---
 
@@ -20,16 +20,16 @@ Known limits, and how the app handles them:
 
 | Feature | Data | Status |
 |---|---|---|
-| Knowledge base: embeddings, chunking, similarity search | openFDA labels (Rx + OTC), section-aware chunks | verified |
-| Query translation | brand / non-US name → US generic; German → English; multi-query | name layer verified (PubChem) |
-| Structured retrieval | chunk metadata `{substance, section_group, product_type, source}` with self-query filters; SQL tables for properties and targets | metadata verified in every label |
-| Agent tools | PubChem (properties, 3D), ChEMBL (mechanism → target), RCSB (complex), own contact calculation | verified |
-| Safety | "not medical advice" under the question box; `overdosage` indexed as sensitive, answers put emergency help first; no personal dosing | design decision (§5.5, #92, #100) |
-| Sources in the UI | every chunk has `set_id`, `effective_time` and a DailyMed link | verified |
+| Knowledge base: embeddings, chunking, similarity search | openFDA labels (Rx + OTC), section-aware chunks | verified, built (#87, #88) |
+| Query translation | brand / non-US name → US generic; German → English; multi-query | names built ([name resolution](decisions/name-resolution.md)); German → English and multi-query measured and not built (#114) |
+| Structured retrieval | chunk metadata `{substance, section_group, product_type, source}` with self-query filters; SQL tables for properties and targets | metadata verified in every label; built: filtered to the drug, ranked by section group (#13, #112) |
+| Agent tools | PubChem (properties, 3D), ChEMBL (mechanism → target), RCSB (complex), own contact calculation | verified, built (#107, #108, #109) |
+| Safety | "not medical advice" under the question box; `overdosage` indexed as sensitive, answers put emergency help first; no personal dosing | built (§5.5, #92, #100, #148) |
+| Sources in the UI | every chunk has `set_id`, `effective_time` and a DailyMed link | verified, built: citation chips (#160) |
 | Hybrid search | BM25 next to embeddings: drug names, "QT prolongation", "CYP3A4" need exact matches | built, off by default: it found less than embeddings alone ([hybrid search](decisions/hybrid-search.md), #44) |
 | Tools as an MCP server | the data services exposed through FastMCP (§4) | built (#42) |
 | Remote MCP server | public PubChem MCP at `https://pubchem.caseyjhand.com/mcp` | verified (answered `initialize`), then dropped: it would answer about drugs outside the store (#45) |
-| RAG evaluation and A/B tests | QA set generated from label sections; dense vs hybrid, query translation on/off | design decision |
+| RAG evaluation and A/B tests | QA set generated from label sections; dense vs hybrid, query translation on/off | built: the datasets in §5.7; hybrid search and query translation measured (#44, #114) |
 | Knowledge-base updates | counts over the stored labels' `set_id`s: withdrawn, or a newer `effective_time`; `meta.last_updated` says whether openFDA published anything since the last run | verified 2026-10-21 (#340), built (#341, §5.6) |
 | Multi-language | German query → English retrieval → German answer | measured: German answers as good as English (#357) |
 
@@ -177,7 +177,7 @@ Molecule-only (no candidate): paracetamol, cetirizine, omeprazole. Of the 134 co
 - Contacts: pocket residues ≤ 4.0 Å, H-bonds between N/O atoms ≤ 3.3 Å. This reproduces the published imatinib–ABL contacts (Ile360, Thr315, Met318, Asp381, Glu286, His361).
 - Output: one compact JSON per complex (CA trace with secondary structure, pocket atoms, ligand atoms and bonds, the metal ions and cofactors with their atoms and bonds, contacts, and the hero entry's target, organism, caption and showcase flag), so the frontend never parses mmCIF.
 - Built for one complex in `ingest/complexes.py` (`build_complex`, #126), schema in `schemas/complexes.py`. Measured on the 1IEP mmCIF recorded 2026-10-13: chain A's copy (A/201) gives Ile360 O 2.67, Thr315 OG1 2.88, Met318 N 2.90, Asp381 N 2.90, Glu286 OE2 3.00 and His361 O 3.19 Å; chain B's copy (B/202) gives Ile360 2.74, Asp381 2.89, Thr315 2.93, Met318 2.94 and Glu286 3.03 Å, no His361. The pocket is 21 residues of chain A, the trace 274 residues, imatinib's bonds 24 aromatic, 16 single and the amide C=O double, and the JSON 44 KB.
-- All 73 hero entries (#127), run on 2026-10-13 from mmCIFs fetched that day: every entry builds, in 0.0 to 0.7 s each, 8.5 s for the whole step from the cache, so the all-pairs distances need no cropping, even for 8ZSQ (118k atoms). 5.1 MB of JSON; the largest are azithromycin (306 KB, 2,898 nucleotides of 23S rRNA in the trace) and memantine (240 KB, three NMDA receptor chains). Before nucleotides were kept, azithromycin's pocket was one protein residue; now it is nine rRNA residues, A2058 to C2611 with the modified 2MA2503, PSU746 and 5MU747, plus L22 Lys90, and A2058 N1 to azithromycin's O2A is an H-bond (3.11 Å). Two chem-comp SMILES spell out a hydrogen on a guanidine (zanamivir ZMR, metformin MF8) and failed the template match until it was removed. Within 4 Å of a hero ligand and dropped: metal ions (zinc in 3HS4 and 1O86, magnesium in 9C9M, 3OYA and 5BTC, sodium in 9JKI and 5I71), heme (4WMZ), NADPH (1U72), lipids and buffers, and the second drug in 8E42 and 3N8Y. Keeping the ions and cofactors a ligand binds through is #144.
+- All 73 hero entries (#127), run on 2026-10-13 from mmCIFs fetched that day: every entry builds, in 0.0 to 0.7 s each, 8.5 s for the whole step from the cache, so the all-pairs distances need no cropping, even for 8ZSQ (118k atoms). 5.1 MB of JSON; the largest are azithromycin (306 KB, 2,898 nucleotides of 23S rRNA in the trace) and memantine (240 KB, three NMDA receptor chains). Before nucleotides were kept, azithromycin's pocket was one protein residue; now it is nine rRNA residues, A2058 to C2611 with the modified 2MA2503, PSU746 and 5MU747, plus L22 Lys90, and A2058 N1 to azithromycin's O2A is an H-bond (3.11 Å). Two chem-comp SMILES spell out a hydrogen on a guanidine (zanamivir ZMR, metformin MF8) and failed the template match until it was removed. Within 4 Å of a hero ligand and dropped: metal ions (zinc in 3HS4 and 1O86, magnesium in 9C9M, 3OYA and 5BTC, sodium in 9JKI and 5I71), heme (4WMZ), NADPH (1U72), lipids and buffers, and the second drug in 8E42 and 3N8Y. The ions and cofactors a ligand binds through are kept since #144 (next bullet).
 - Metal ions and cofactors (#144), measured on 2026-10-18 on all 73 hero mmCIFs in the HTTP cache: every non-polymer, non-water residue within 4.5 Å of the hero copy. Metal ions within 2.8 Å: zinc in 3HS4 (ZN A/301, 1.94 Å to N1) and 1O86 (ZN A/701, 2.14 Å to O3), magnesium in 9C9M (MG I/301 2.09, I/302 2.03 Å), 3OYA (MG A/396 1.84, A/397 2.03 Å) and 5BTC (MG C/601 2.20 Å to O1), each bound to a drug oxygen or nitrogen; no other entry has a metal ion within 4.5 Å except sodium at 3.45 Å (5I71), 3.51 and 4.24 Å (9JKI) and 4.41 Å (8Y2G). The other close neighbours are heme (4WMZ, Fe–N5 2.13 Å), NADPH (1U72, 3.27 Å), ubiquinone next to metformin (8ZSQ U10, 2.73 Å), monoolein next to warfarin (6WV3, 2.54 Å) and aripiprazole (7VOE, 3.42 Å), glycerol (3HS4), ethylene glycol (4PH9), β-octyl glucoside (3NT1) and the second drugs of 3N8Y and 8E42. Rebuilt offline with the rule, 7 complexes gained a metal ion or cofactor, the five with metal ions and the two with listed cofactors, and the other 66 only the two empty lists; trace, pocket and ligand are unchanged in all 73, and 14 N/O pairs across a metal stopped counting as hydrogen bonds. 5.11 → 5.13 MB of JSON (heme +4.6 KB, NADPH +4.8 KB, a metal ion about 0.2 to 0.6 KB), 10.6 s for the step from the cache.
 
 ### 5.5 Labels → knowledge base (`ingest labels`)
@@ -280,11 +280,12 @@ The run logs the chosen labels of every drug with their `set_id` and size. Why l
 
 Checked against openFDA on 2026-10-21 (#340), without an API key or a VPN: a grouped search returns the sum of the single searches (ibuprofen, naproxen and metformin: 1134 + 432 + 356 = 1922); all 156 stored labels come back from 4 `set_id` counts; with five stored dates set back a day, the newer-version count returns exactly those five. openFDA publishes labels weeks after their `effective_time`: the data of 2026-10-20 held no ibuprofen label newer than 2026-09-09. On the store fetched 2026-10-12 a run sent 9 requests and took 3 s, and nothing had changed.
 
-### 5.7 Eval datasets (`backend/evals/`)
+### 5.7 Eval datasets (`backend/evals/datasets/`)
 
-- **Tool accuracy:** ~50 questions with exact answers from the `compound` table, scored automatically.
-- **RAG QA:** ~60 questions generated from canonical label sections, reviewed by hand (generated "ground truths" are often wrong). Scored with RAGAs: faithfulness, answer relevancy, context precision and recall.
-- **Safety:** ~40 prompts covering personal dosing, lethal dose, synthesis, and injection hidden in retrieved text.
+- **Retrieval:** 94 questions with a pooled answer key (`retrieval_questions.yaml`), their German versions and 18 with misspelled drug names. They measure the embedding models, the label filter, hybrid search and query translation ([embeddings](decisions/embeddings.md)).
+- **RAG answers:** 42 of the retrieval questions, answered by the agent and scored with RAGAs for faithfulness and answer relevancy (`rag_questions.yaml`, [RAG answers](evals/rag-2026-10-19.md)).
+- **Safety:** 360 messages over the guard's categories in English and German, with follow-ups and `ok` twins (`input_check.yaml`); the safety run judges the ones marked `judged` by hand ([safety eval](evals/safety.md)). The prompt-injection attacks are in `injection.yaml` ([prompt injection](evals/injection.md)).
+- **Answers:** one file per eval in [`docs/evals/`](evals/): 28 from-memory questions, comparisons, 3D in a follow-up, unknown drug names, drugs without a label, cited passages, and the hand-labelled claims of the source check.
 - **Multi-language:** 15 German questions compared with the English answers (`evals/multilang/`, #357; [result](evals/multilang.md)).
 
 ---
@@ -293,10 +294,8 @@ Checked against openFDA on 2026-10-21 (#340), without an API key or a VPN: a gro
 
 | Risk | Impact | Handling |
 |---|---|---|
-| Scope grows faster than the core gets finished | high | core features first; 3D polish last |
-| Label text is long and legalistic, so answers read dry | medium | prompt for plain language with citations; optionally Wikipedia pharmacology sections for the hero drugs (CC BY-SA, attributed) as a second source |
+| Label text is long and legalistic, so answers read dry | medium | the system prompt asks for plain language and explains each technical term once; every fact is cited |
 | Interaction answers read as medical advice | medium | quote labels with citations; "not medical advice" under the question box; no verdicts |
-| Community PubChem MCP goes offline | low | used only as the remote-MCP option; local tools are the default |
-| Local 8B models are unreliable at tool calling | medium | measured in the benchmarks; cloud model stays the default |
+| Local models are unreliable at tool calling | medium | gpt-oss-20b, the local model, is measured on every eval; gpt-6-luna is the cloud default ([chat model](decisions/chat-model.md)) |
 | PubChem / RCSB flakiness | low | local store, retries, `OFFLINE=1` |
 | Licensing | low | openFDA CC0, PDB free, PubChem mostly public domain, ChEMBL CC BY-SA 3.0 (attributed). Raw dumps are not committed |

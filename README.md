@@ -29,6 +29,7 @@ The first start downloads the built store (about 90 MB) and the embedding model 
 |---|---|
 | [Architecture](docs/architecture.md) | The pieces, one question from start to end, the ingest steps, the key design choices, and the list of every decision and eval |
 | [Setup](docs/setup.md) | Running it with and without Docker, every setting worth knowing, login, deploy, MCP |
+| [Design details](docs/design/) | The full reasoning behind every design choice, one page per area: data, 3D structures, label search, agent, safety, the app, running and deploying |
 | [Data plan](docs/data-plan.md) | Every source and query, verified live, and what each ingest step stores |
 | [Decisions](docs/decisions/) | The big questions with evidence: what we tried, what we measured, what we picked |
 | [Evals](docs/evals/) | Dated eval reports with their numbers |
@@ -46,7 +47,7 @@ The first start downloads the built store (about 90 MB) and the embedding model 
 backend/    FastAPI app, LangChain agent, data services, MCP server, tests, evals
 frontend/   Next.js chat UI, 3D viewer and benchmark page
 data/       curated inputs (drug scope, hero complexes) and the built store
-docs/       architecture, setup, data plan, decisions, eval results
+docs/       architecture, setup, data plan, design details, decisions, eval results
 ```
 
 ## Data sources and licences
