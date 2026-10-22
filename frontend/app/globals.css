@@ -39,6 +39,8 @@
   --color-usage-light: var(--usage-light);
   --color-usage-bar: var(--outcome-answered);
   --color-rank-first: var(--rank-first);
+  --color-verdict-memory: var(--verdict-memory);
+  --color-verdict-denies: var(--verdict-denies);
   --color-rank-top5: var(--rank-top5);
   --color-rank-top10: var(--rank-top10);
   --color-app-model: var(--app-model);
@@ -120,6 +122,11 @@
   --outcome-error: #d4351c;
   --usage-strong: #184f95;
   --usage-light: #6fa3e6;
+  /* Chat-model benchmark (#404): the two hand-judged flags, red and blue so they stay apart for
+     every kind of colour blindness, checked against the page in both themes; an answer without a
+     flag is a grey dot and a failed one an empty ring, so neither needs a hue. */
+  --verdict-memory: #c43c3c;
+  --verdict-denies: #2f6fd0;
 }
 
 @media screen and (prefers-color-scheme: dark) {
@@ -142,6 +149,8 @@
     --rank-first: #9ec5f4;
     --rank-top5: #3987e5;
     --rank-top10: #1c5cab;
+    --verdict-memory: #e05252;
+    --verdict-denies: #4489e3;
     --app-model: #082f49;
     --app-model-foreground: #7dd3fc;
     --evidence: #1e3a6b;
