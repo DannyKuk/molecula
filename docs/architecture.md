@@ -45,7 +45,7 @@ flowchart LR
 
 | Stage | What happens | Code |
 |---|---|---|
-| 1. Guard | The message is checked for length and control characters, then sorted, with the conversation for context, into `ok`, a possible overdose, personal medical advice, lethal dose, synthesis or misuse, or off-topic. A possible overdose gets a fixed emergency line before the agent's answer; the last four get only a fixed, friendly answer. | `guard/validation.py`, `guard/safety.py`, `guard/chat.py` |
+| 1. Guard | The message is checked for length and control characters, then sorted, with the conversation for context, into `ok`, a possible overdose, personal medical advice, lethal dose, synthesis or misuse, prompt injection, or off-topic. A possible overdose gets a fixed emergency line before the agent's answer; the last five get only a fixed, friendly answer. | `guard/validation.py`, `guard/safety.py`, `guard/chat.py` |
 | 2. Resolve the drug | "Gleevec", "imatinib mesylate" or "Tylenol" becomes a stored compound, or `not_supported` with suggestions the user has to pick ([name resolution](decisions/name-resolution.md)). | `CompoundService.resolve`, `GET /drugs/resolve` |
 | 3. Tools | The agent looks things up instead of guessing: properties, targets and mechanism, the reviewed complex, a side-by-side comparison. Each tool wraps a service. | `tools/`, `agent/tool_registry.py` |
 | 4. Search the labels | A metadata filter for drug and label section, with brands and German names recognised in it, then embedding search over chunks of the canonical labels. BM25 keyword search next to it, merged by reciprocal rank fusion, is a setting (`RETRIEVAL_MODE=hybrid`), off because it found less. German → English translation and rewrites were measured and left out. | `rag/filters.py`, `rag/retriever.py`, `store/keywords.py` |
@@ -54,17 +54,17 @@ flowchart LR
 
 ## The data pipeline in short
 
-Each step is `cd backend && uv run python -m molecula.ingest <step>`, calls its sources through the `SourceClient` and is served from its cache on a re-run (`export` and `fetch` call no source). [`docs/data-plan.md`](data-plan.md) has the queries, the measured numbers and the tables.
+Each step is `cd backend && uv run python -m molecula.ingest <step>`, calls its sources through the `SourceClient` and is served from its cache on a re-run (`index`, `export` and `fetch` call no source; `update` always asks openFDA afresh). [`docs/data-plan.md`](data-plan.md) has the queries, the measured numbers and the tables.
 
 | Step | Reads | Stores |
 |---|---|---|
 | `compounds` | `data/scope.yaml`, PubChem (RDKit fills missing 3D) | `compound`, `synonym`, `structures/compounds/{cid}.sdf`. 133 compounds: 127 conformers from PubChem, 4 from RDKit, 2 peptides without 3D |
-| `targets` | stored InChIKeys, ChEMBL, RCSB | `target`, `ligand_code`, `complex_candidate`, and `complex_candidates.md` for the hero review. 132 compounds with targets, 70 with candidate complexes |
+| `targets` | stored InChIKeys, ChEMBL, RCSB | `target`, `ligand_code`, `complex_candidate`, and `complex_candidates.md` for the hero review. 131 compounds with targets, 69 with candidate complexes |
 | `labels` | openFDA | one canonical Rx and one OTC label per drug, split into section groups. all 133 drugs: 129 Rx and 27 OTC labels, 11.2M characters |
 | `complexes` | `data/hero_set.yaml` (reviewed by hand, #6), the stored CIDs, RCSB mmCIF | `structures/complexes/{cid}.json`, one viewer-ready complex per hero entry: backbone trace, pocket, ligand, contacts. 73 of 73 hero entries, 5.1 MB, the largest 306 KB (azithromycin's 23S rRNA); 8.5 s from the cache |
 | `index` | the stored label sections | chunks with label metadata in ChromaDB, embedded with `BAAI/bge-m3` saved in `data/build/models/` (2.3 GB), and the same chunks in a BM25 index (SQLite FTS5, `index/bm25.db`, 24 MB). 7,012 chunks from 156 labels |
-| `export` | the built store | `data/build/export/`: `molecula-store.tar.gz` (`molecula.db` with an empty HTTP cache, `structures/`, `index/`) and `manifest.json`. 79 MB, 149.9 MB unpacked |
-| `fetch` | the pinned store release (`STORE_RELEASE`) and `BAAI/bge-m3` at a pinned revision from Hugging Face; only what is missing, whatever `OFFLINE` says | `molecula.db`, `structures/` and `index/` from the release (79 MB download), the model in `data/build/models/` (2.29 GB) |
+| `export` | the built store | `data/build/export/`: `molecula-store.tar.gz` (`molecula.db` with an empty HTTP cache, `structures/`, `index/`) and `manifest.json`. 88.6 MB, 179.2 MB unpacked (`store-2026-10-21`) |
+| `fetch` | the pinned store release (`STORE_RELEASE`) and `BAAI/bge-m3` at a pinned revision from Hugging Face; only what is missing, whatever `OFFLINE` says | `molecula.db`, `structures/` and `index/` from the release (88.6 MB download), the model in `data/build/models/` (2.29 GB) |
 | `update` | openFDA: which stored labels were withdrawn or have a new version, then all labels of those drugs | their labels and chunks replaced, the run in `label_update`. 9 requests and 3 s when nothing changed; as a command with the backend stopped, or inside the backend every night |
 
 ## Key design choices
@@ -102,7 +102,7 @@ One line each; the full reasoning, numbers and issues are on the design page nam
 - **Prompts are `.md` files with a strict loader**; tool docstrings are the only LLM-facing text in Python.
 
 **Answers and safety** ([details](design/safety.md))
-- **Every message is sorted before the agent runs** (Jev online, the chat model offline): a possible overdose gets emergency help first, and personal advice, lethal doses, synthesis and off-topic questions get a fixed answer in the question's language ([safety eval](evals/safety.md)).
+- **Every message is sorted before the agent runs** (Jev online, the chat model offline): a possible overdose gets emergency help first, and personal advice, lethal doses, synthesis, prompt injection and off-topic questions get a fixed answer in the question's language ([safety eval](evals/safety.md)).
 - **Prompt injection is stopped at the input check, and control tokens never reach a model** ([prompt injection](evals/injection.md)).
 - **Every answer is checked against its sources after it streams, and marked, never cut** ([answer check](decisions/answer-check.md)).
 - **An answer that repeats the system prompt is stopped** before the leak goes out, by a canary in the prompt.

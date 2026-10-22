@@ -1,6 +1,6 @@
 # Hybrid search: does BM25 next to the embeddings find more?
 
-> **Answer:** not with reciprocal rank fusion, so the label search stays dense (bge-m3 alone). Replaying the agent's 99 real label searches, hybrid search returns the answering passage in the top 5 for 76 of 94 questions, dense for 78. It gains 8 questions, all with the answer in a section the agent didn't ask for, and loses 10, mostly ones dense ranked first. Where it helps is exact terms: on 8 probe questions about terms such as CYP3A4, QT and eGFR, 29 of the top 40 chunks contain the term, against 26 for dense. The BM25 index is built and shipped anyway, and `RETRIEVAL_MODE=hybrid` turns it on.
+> **Answer:** not with reciprocal rank fusion, so the label search stays dense (the embeddings alone, bge-m3 locally). Replaying the agent's 99 real label searches, hybrid search returns the answering passage in the top 5 for 76 of 94 questions, dense for 78. It gains 8 questions, all with the answer in a section the agent didn't ask for, and loses 10, mostly ones dense ranked first. Where it helps is exact terms: on 8 probe questions about terms such as CYP3A4, QT and eGFR, 29 of the top 40 chunks contain the term, against 26 for dense. The BM25 index is built and shipped anyway, and `RETRIEVAL_MODE=hybrid` turns it on.
 
 ## Question
 

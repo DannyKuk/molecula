@@ -13,7 +13,8 @@ class StoreManifest(BaseModel):
 
     schema_version: int
     built_at: datetime
-    # The oldest label fetch: the label update (#25) asks openFDA for changes since then.
+    # Since when the labels are known to be current: the start of the last label update that
+    # checked every drug, else the oldest label fetch.
     last_run: datetime | None
     embedding_model: str
     row_counts: dict[str, int]

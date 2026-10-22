@@ -323,7 +323,8 @@ async def open_chat_checked_by(
     canary: str,
 ) -> GuardedChat:
     """A chat in which `model` writes the answer and `checks_model` sorts the message, extracts
-    the label filters and checks the answer, so a local pick of both makes no cloud call (#363).
+    the label filters and checks the answer, so a local pick of both makes no cloud call (#363)
+    unless the instance embeds in the cloud.
     Its label filter needs tools of its own, so with AGENT_TOOLS=mcp it opens an MCP session of
     its own too (#380)."""
     checker = get_chat_model(settings, checks_model)

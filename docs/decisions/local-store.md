@@ -56,7 +56,7 @@ The answer has to:
 ## Decided along the way
 
 - **No live fallback** (#30, 2026-10-11). This replaced the first plan. The compound service has no source client, and a test checks its imports (PR #49). `CLAUDE.md` and `docs/data-plan.md` §4 say the store is the supported set.
-- **Only ingest steps call sources**, all through the shared `SourceClient` (rate limit, retries, cache, `OFFLINE=1`). Every stored row records `source` and `fetched_at`.
+- **Only ingest steps call sources**, all through the shared `SourceClient` (rate limit, retries, cache, `OFFLINE=1`). Every compound, target, ligand code, complex candidate and label row records `source` and `fetched_at`; the rows under them (synonyms, label sections) take them from their parent.
 - **404s are cached too** (PR #34). PubChem says "no 3D conformer" with a 404; without caching it, an `OFFLINE=1` run failed for the six drugs without one. The first version cached only 2xx (PR #24).
 - **A body that fails to parse is dropped from the cache** (#64, PR #75), so an RCSB GraphQL error sent as HTTP 200 is fetched again next time. Offline it stays, because then the cache is the only copy.
 - **A drug taken out of the scope leaves the store** (#33, PR #76). Otherwise it would still be supported. Only a complete run prunes (no failures, nothing left unattempted), and an empty scope is rejected, so a broken `scope.yaml` can't wipe the store.
