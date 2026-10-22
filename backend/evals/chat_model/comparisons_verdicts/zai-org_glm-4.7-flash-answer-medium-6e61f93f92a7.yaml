@@ -1,0 +1,180 @@
+# Hand verdicts for docs/decisions/chat-model.md (#387): whether each answer states a drug fact no tool
+# result of that answer holds (from_memory), or says Molecula has no data it never searched
+# (denies_data). Judged by a subagent against the from-memory eval's RULES, flags re-read by hand.
+# zai-org/glm-4.7-flash in LM Studio, OFFLINE=1, ANSWER_REASONING_EFFORT=medium, main at 2ce1626.
+
+- id: typo-3d-ibuprofen-aspirin#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    "Ibuprofen is a reversible COX-2 inhibitor": 4PH9 has no caption and gives only H-bonds and
+    contacts with PTGS2, so nothing says ibuprofen inhibits COX-2 or does so reversibly. Both
+    structures, H-bonds, contacts, the Ser530 caption and every property match get_complex and
+    compare_drugs. The "I'll get the 3D structures..." announcement is glued to the answer.
+- id: typo-3d-ibuprofen-aspirin#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    4PH9 contacts, the TYR356 OH and ARG121 NH2/NE H-bonds ("guanidinium group" glosses the NH2
+    and NE atoms) and every property match get_complex and compare_drugs. Close call: "sits in the
+    enzyme's active site" names a site no result gives. Announcement glued to the answer.
+- id: typo-3d-ibuprofen-aspirin#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    4PH9 and 3N8Y with targets, species, H-bonds, contacts and the caption's acetyl transfer to
+    Ser530 and salicylate match get_complex [3][4]; all properties match compare_drugs [1][2].
+    Announcement glued to the answer.
+- id: 3d-ibuprofen-aspirin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    PTGS2 from mouse, the TYR356 and ARG121 H-bonds, the eleven contacts within 4 Å and every
+    table cell match get_complex and the two get_properties results. Announcement glued to the
+    answer.
+- id: 3d-ibuprofen-aspirin#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    H-bonds and contacts match get_complex, all properties match compare_drugs, and the XLogP and
+    TPSA readings are plain glosses. "An enzyme that makes signaling molecules called
+    prostaglandins" is the allowed "COX makes prostaglandins". Announcement glued to the answer.
+- id: 3d-ibuprofen-aspirin#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    PTGS2 in mouse, the tyrosine 356 and arginine 121 H-bonds, the named contacts and every table
+    cell match get_complex and the two get_properties results. Announcement glued to the answer.
+- id: compare-ibuprofen-naproxen#1
+  from_memory: true
+  denies_data: true
+  note: >-
+    "Both nonsteroidal anti-inflammatory drugs (NSAIDs) used to reduce pain and inflammation":
+    only compare_drugs was called, which holds no class or use. "Molecula's data do not cover how
+    these differences affect how the drugs work or their side effects" after never searching the
+    labels, which hold both. All property values match compare_drugs.
+- id: compare-ibuprofen-naproxen#2
+  from_memory: true
+  denies_data: false
+  note: >-
+    "Naproxen is more tightly bound to proteins in the blood (greater than 99%) than ibuprofen
+    [11]": no result gives ibuprofen's protein binding. "Because of its longer half-life, naproxen
+    can be taken once daily [11]": [11] credits Naprelan's sustained-release absorption, not the
+    half-life. NSAID class, prostaglandin mechanism, PK and properties match [1]-[12]; close call
+    cleared: prostaglandins causing "fever" goes past [8]'s pain and inflammation.
+- id: compare-ibuprofen-naproxen#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Failed: The language model didn't answer in time. Try again.
+- id: diff-metformin-glimepiride#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Metformin's liver glucose output, gut absorption, peripheral uptake and unchanged insulin
+    secretion from [6]; glimepiride as a sulfonylurea with the beta-cell receptor and ATP-sensitive
+    potassium channel from [4]. Close call: "glucose in the muscles and other tissues" glosses
+    peripheral uptake. Announcement glued to the answer.
+- id: diff-metformin-glimepiride#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Mechanisms match [10][11], the complex I and GPD2 inhibition and the SUR1/Kir6.2 block match
+    get_targets, and the properties match get_properties. Close call: "more polar" fits XLogP
+    -1.3 vs 3.9 though the quoted TPSA (91.5 vs 133.0) points the other way; the numbers are
+    right. Announcement glued to the answer.
+- id: diff-metformin-glimepiride#3
+  from_memory: true
+  denies_data: false
+  note: >-
+    "Glimepiride is metabolized by the liver into inactive compounds (M1 and M2)": [3] says only
+    M2 is inactive and M1 has about one-third of glimepiride's activity in animals, and names no
+    liver. Metformin's mechanism, unchanged urinary excretion, 6.2 h half-life and glimepiride's
+    >99.5% binding match [2][3][7][10]; "not bound to plasma proteins" rounds [10]'s negligibly.
+- id: de-ibuprofen-paracetamol#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Weights, XLogP, TPSA, donors and acceptors, rotatable bonds and the acetaminophen alias match
+    compare_drugs and resolve_drug. Close calls: "Ibuprofen enthält mehr Atome (15 vs. 11)" calls
+    heavy atoms just atoms, and "Paracetamol eher wasserlöslich" glosses XLogP 0.5. Announcement
+    "Zuerst rufe ich die Informationen ab." is glued to the answer.
+- id: de-ibuprofen-paracetamol#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Weights, XLogP, donors and acceptors, rotatable bonds and heavy atoms (15 vs 11) match the two
+    get_properties results. Close call: "Diese Unterschiede beeinflussen, wie die Wirkstoffe im
+    Körper verteilt und verarbeitet werden" is a generic remark, not a drug fact. Announcement
+    glued to the answer.
+- id: de-ibuprofen-paracetamol#3
+  from_memory: true
+  denies_data: true
+  note: >-
+    "Beide haben je einen Wasserstoffdonor": compare_drugs gives paracetamol hbond_donors 2, so the
+    count is wrong. It called only compare_drugs and says "Molecula deckt die Wirkweise,
+    Anwendungsgebiete und Nebenwirkungen dieser Medikamente nicht ab"; the store has both labels.
+    Other values match; acceptors are listed twice and "je 15 bzw. 11" is garbled.
+- id: diff-omeprazole-famotidine#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Acid pump and final step of acid production from [11], ATPase inhibitor [3], competitive H2
+    block of gastric secretion [7][4], onset, peak and duration from [13] and [6], CYP2C19 [10],
+    weak CYP1A2 and transporter substrate [5], weights and XLogP from [1][2]. "Proton-pump
+    inhibitor" and "stomach cells" gloss [11]'s acid (proton) pump and gastric parietal cell.
+- id: diff-omeprazole-famotidine#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Failed: The answer took longer than 180 seconds. The only text is the announcement "I'll look
+    up information about both drugs from their labels and compare their properties."
+- id: diff-omeprazole-famotidine#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Failed: The answer took longer than 180 seconds. The only text is the announcement "I'll look
+    up information about both drugs to compare them for you."
+- id: control-use-ibuprofen#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Rx indications from [1], OTC aches, pains and fever from [2]; "pain and inflammation" is in [4]
+    (comparable to aspirin in controlling pain and inflammation) and "menstrual cramps" glosses
+    primary dysmenorrhea.
+- id: control-use-ibuprofen#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Rx indications (RA, OA, mild to moderate pain, primary dysmenorrhea) from [1] and the OTC uses
+    and fever from [2].
+- id: control-use-ibuprofen#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    NSAID from [5], indications from [3], the propoxyphene comparison, gold salts and analgesic and
+    antipyretic activity from [1][2]. Close call: "works by inhibiting prostaglandin synthesis"
+    drops the hedge of [1] ("probable mechanism") and [2] ("may be related to"), but the fact is
+    in the passages.
+- id: control-3d-aspirin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    3N8Y, sheep PTGS1, SAL, the caption's acetyl transfer to Ser530 ("permanently" = "for good"),
+    both OAS530 H-bonds at 2.89 and 3.23 Å and the five other contacts match get_complex; "(COX-1)"
+    is a name expansion and "within 4 Å" holds for contacts up to 3.71 Å.
+- id: control-3d-aspirin#2
+  from_memory: true
+  denies_data: false
+  note: >-
+    "PTGS1 enzyme (also called COX-1), which makes prostaglandins—molecules that cause
+    inflammation, pain, and fever": get_complex holds only the target name, caption, H-bonds and
+    contacts, nothing on prostaglandins' role. "That help hold aspirin in place" also goes past the
+    contact list. Acetyl transfer to Ser530 and the contacts match.
+- id: control-3d-aspirin#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    3N8Y, sheep PTGS1 (cyclooxygenase-1 is a name expansion), the caption's acetyl transfer to
+    Ser530 and salicylate, and the six contact residues match get_complex. Announcement "I'll look
+    up aspirin and show you its 3D structure." is glued to the answer.

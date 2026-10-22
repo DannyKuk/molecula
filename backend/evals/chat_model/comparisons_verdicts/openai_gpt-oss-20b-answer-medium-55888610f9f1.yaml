@@ -1,0 +1,180 @@
+# Hand verdicts for docs/decisions/chat-model.md (#387): whether each answer states a drug fact no tool
+# result of that answer holds (from_memory), or says Molecula has no data it never searched
+# (denies_data). Judged by a subagent against the from-memory eval's RULES, flags re-read by hand.
+# openai/gpt-oss-20b in LM Studio, OFFLINE=1, ANSWER_REASONING_EFFORT=medium, main at 2ce1626.
+
+- id: typo-3d-ibuprofen-aspirin#1
+  from_memory: false
+  denies_data: true
+  note: >-
+    The 4PH9 structure (mouse PTGS2, H-bonds TYR356 OH and ARG121 NH2/NE at 2.44/2.71/2.85 Å,
+    contacts 3.32 to 3.95 Å) matches get_complex; "cyclooxygenase-2" is a synonym of PTGS2. But it
+    only called get_complex for ibuprofen and says "I do not have a reviewed structure of aspirin
+    bound to its target in Molecula's database"; the store has 3N8Y.
+- id: typo-3d-ibuprofen-aspirin#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Both structures, H-bond residues and contacts match get_complex. "Aspirin's acetyl group is
+    covalently attached to Ser530, blocking the enzyme" glosses the caption's "moves its acetyl
+    group onto Ser530, which blocks the enzyme"; COX-1/COX-2 are synonyms of PTGS1/PTGS2.
+- id: typo-3d-ibuprofen-aspirin#3
+  from_memory: false
+  denies_data: true
+  note: >-
+    The 4PH9 description matches get_complex. But it never looked up aspirin and says "I don't
+    have a reviewed structure or label information for aspirin in this result"; the hedge "in
+    this result" doesn't help when no call asked for aspirin, and the store has 3N8Y and labels.
+- id: 3d-ibuprofen-aspirin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Both structures, H-bonds, contacts and the acetylation of Ser530 (irreversible = "blocks the
+    enzyme for good") come from get_complex and the 3N8Y caption; "prostaglandin G₂ synthase"
+    expands the PTGS name with no function claim. Close call: "binds non-covalently" is read off
+    the ibuprofen result holding only H-bonds and contacts against aspirin's caption.
+- id: 3d-ibuprofen-aspirin#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    H-bond atoms, contacts and every table cell (formula, MW, XLogP, TPSA, donors, acceptors,
+    rotatable bonds, heavy atoms) match get_complex and get_properties; "cyclooxygenase-2" is a
+    synonym of PTGS2.
+- id: 3d-ibuprofen-aspirin#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    The three ibuprofen and two aspirin H-bonds with atoms and distances, both contact lists and
+    the targets and species match get_complex; "prostaglandin H synthase-2" expands PTGS2 and the
+    Ser530 acetylation is credited to the caption.
+- id: compare-ibuprofen-naproxen#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    "Typical maximum daily dose 1 500 mg (e.g., two 750 mg tablets or three 500 mg tablets)":
+    [4] allows 1,500 mg only "for a limited period. Thereafter, the total daily dose should not
+    exceed" 1,000 mg, so this misreads the dosing passage. "Rare severe skin and gastrointestinal
+    events" for ibuprofen also goes past [10], which lists skin events (SJS, TEN, FDE) and no
+    severe GI event. Other cells match [1][5][6][7][9].
+- id: compare-ibuprofen-naproxen#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    GI complaints 4-16% [5], naproxen nausea/diarrhea/constipation/abdominal pain [1], the 3,200 mg
+    and 1,000 mg caps [4][7] and ibuprofen indications [9] match. Close call: "starting ibuprofen
+    at 400 mg every 4–6 h" is the label's mild-to-moderate pain dose, not a general starting dose;
+    the figure is right. Missing naproxen indications is said of the passages after a search.
+- id: compare-ibuprofen-naproxen#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Every value (formula, MW, XLogP, TPSA, donors, acceptors, rotatable bonds, heavy atoms) and
+    the PubChem 3D conformer match the two get_properties results.
+- id: diff-metformin-glimepiride#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Metformin's basal and postprandial lowering, liver glucose output, gut absorption and insulin
+    sensitivity come from [1]; glimepiride as a sulfonylurea and its beta-cell, receptor and
+    ATP-sensitive potassium channel mechanism from [6][7].
+- id: diff-metformin-glimepiride#2
+  from_memory: true
+  denies_data: false
+  note: >-
+    Close call. "Metformin lowers blood sugar ... without changing insulin levels": [1] says
+    "insulin secretion remains unchanged while fasting insulin levels and day-long plasma insulin
+    response may decrease", so the answer states the opposite of the passage about insulin levels.
+    The glimepiride mechanism matches [6].
+- id: diff-metformin-glimepiride#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Both mechanisms match [1] and [6]; "mainly" ranks metformin actions the label lists unranked,
+    which is framing, not a drug fact.
+- id: de-ibuprofen-paracetamol#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Formulas, weights, XLogP, TPSA, H-bond donors and acceptors, rotatable bonds and heavy atoms
+    (15 vs 11) all match the two get_properties results.
+- id: de-ibuprofen-paracetamol#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Uses, GI ulceration and bleeding, PK and both daily limits match [1]-[10]; "exceeding this
+    increases GI risk" stretches [1]'s more gastric irritation at higher doses, and "oral limits
+    are similar" follows [8]'s no dose change between oral and injection. Close call: "indicating
+    a lower risk of bleeding complications [9]" is a conclusion [9] doesn't draw (no effect on
+    platelet aggregation or bleeding time). "Mechanism of paracetamol is not described in the
+    retrieved label passages" is true of [6]-[10].
+- id: de-ibuprofen-paracetamol#3
+  from_memory: true
+  denies_data: false
+  note: >-
+    "Mechanism not fully defined but involves central pathways [8]": [8] says only analgesic and
+    antipyretic activity and no effect on platelets or hemostasis; no result mentions central
+    pathways. Also "less GI ulceration than aspirin" bends [1] (not definitely known whether it
+    causes less peptic ulceration) and "after surgery or injury" adds injury to [7]'s
+    postoperative pain. NSAID, uses, side effects and the CYP2E1/warfarin interactions match.
+- id: diff-omeprazole-famotidine#1
+  from_memory: true
+  denies_data: false
+  note: >-
+    "Because omeprazole irreversibly inhibits the proton pump, its antisecretory effect ... can
+    last up to 72 hours, with no cumulative build-up after repeated dosing [6]": [6] says the
+    effect increases with repeated dosing to a plateau after four days and gives "prolonged
+    binding", not irreversible. "Famotidine's blockade of H2 receptors is reversible" and
+    "preventing histamine from stimulating the pump" on "those same cells" are in no result.
+- id: diff-omeprazole-famotidine#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    H+/K+-ATPase proton pump in parietal cells from [3] and competitive H2-receptor inhibition
+    reducing acid secretion from [8]. Close call: "on those same cells" puts the H2 receptors on
+    parietal cells, which no result says; treated as a gloss like earlier histamine glosses.
+- id: diff-omeprazole-famotidine#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Proton pump in parietal cells and the final step of acid production from [1], competitive
+    H2-receptor block reducing acid secretion from [6]. Close call: "on those same cells" and
+    "preventing histamine from activating its receptor" go past [6]; treated as glosses of a
+    histamine-2 receptor inhibitor.
+- id: control-use-ibuprofen#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    Rx indications (RA, OA, mild to moderate pain, primary dysmenorrhea) from [1] and the OTC
+    aches, pains and fever list from [2].
+- id: control-use-ibuprofen#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    Rx indications from [1] and OTC uses from [2]; "painful menstrual cramps" is a plain gloss of
+    primary dysmenorrhea.
+- id: control-use-ibuprofen#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    Rx indications from [1] and the OTC uses from [2], whose label is product_type otc; the
+    dysmenorrhea gloss is plain language.
+- id: control-3d-aspirin#1
+  from_memory: false
+  denies_data: false
+  note: >-
+    SAL, sheep PTGS1, the caption's acetyl transfer to Ser530 and salicylate, both H-bonds (OAC
+    to O1' at 2.89 Å, OG to O2 at 3.23 Å) and all six contacts match get_complex. "(COX-1)" is a
+    name expansion of PTGS1 with no function claim.
+- id: control-3d-aspirin#2
+  from_memory: false
+  denies_data: false
+  note: >-
+    "Prostaglandin H synthase-1" expands the PTGS1 name; caption, both H-bonds and the six
+    contacts match get_complex. Close call: "bound in the active site" is not in the result,
+    which gives contacts and the caption's enzyme-blocking acetyl transfer but no site name.
+- id: control-3d-aspirin#3
+  from_memory: false
+  denies_data: false
+  note: >-
+    PTGS1 (cyclooxygenase-1 is a name expansion), sheep, SAL, the quoted caption, both H-bonds
+    and the six contacts with distances all match get_complex.
