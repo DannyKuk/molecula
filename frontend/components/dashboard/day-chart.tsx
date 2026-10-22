@@ -3,6 +3,7 @@
 import { type ReactNode, useState } from "react";
 
 import type { UsageDay } from "@/lib/api";
+import { useMessages } from "@/lib/messages";
 import { shortDate } from "@/lib/stats";
 import { useElementWidth } from "@/lib/use-element-width";
 import { cn } from "cn";
@@ -28,7 +29,7 @@ type DayChartProps = {
 };
 
 const HEIGHT = 160;
-const MARGIN = { left: 44, right: 8, top: 8, bottom: 22 };
+const MARGIN = { left: 52, right: 8, top: 8, bottom: 22 };
 
 /** A rounded axis top: 1, 2, 2.5 or 5 times a power of ten. */
 function niceMax(value: number): number {
@@ -40,6 +41,7 @@ function niceMax(value: number): number {
 /** A chart card for a measure over the days of the range, columns stacked per day or lines, with a
  * tooltip per day and a table of the same numbers behind a button. */
 export function DayChart({ title, days, series, kind, format, note }: DayChartProps) {
+  const t = useMessages();
   const [asTable, setAsTable] = useState(false);
   return (
     <section className="min-w-0 rounded-xl border border-rule bg-card p-4">
@@ -50,7 +52,7 @@ export function DayChart({ title, days, series, kind, format, note }: DayChartPr
           onClick={() => setAsTable(!asTable)}
           className="text-xs text-ink-3 underline-offset-4 hover:text-foreground hover:underline"
         >
-          {asTable ? "Show chart" : "Show table"}
+          {asTable ? t.dashboard.charts.showChart : t.dashboard.charts.showTable}
         </button>
       </div>
       {series.length > 1 && <Legend series={series} line={kind === "lines"} />}
@@ -78,6 +80,7 @@ function Legend({ series, line }: { series: DaySeries[]; line: boolean }) {
 }
 
 function DayPlot({ title, days, series, kind, format }: Omit<DayChartProps, "note">) {
+  const t = useMessages();
   const [ref, width] = useElementWidth();
   const [hover, setHover] = useState<(TipAt & { i: number }) | null>(null);
   const plotWidth = width - MARGIN.left - MARGIN.right;
@@ -104,7 +107,7 @@ function DayPlot({ title, days, series, kind, format }: Omit<DayChartProps, "not
         width={width}
         height={HEIGHT}
         role="img"
-        aria-label={`${title}, ${days.length} days; the table has the numbers`}
+        aria-label={t.dashboard.charts.label(title, days.length)}
         className="block overflow-visible text-[11px] [&_text]:fill-ink-3"
         onPointerMove={(e) => {
           const left = e.currentTarget.getBoundingClientRect().left;
@@ -144,7 +147,7 @@ function DayPlot({ title, days, series, kind, format }: Omit<DayChartProps, "not
         {days.map((day, i) =>
           (days.length - 1 - i) % labelEvery === 0 ? (
             <text key={day.date} x={x(i)} y={HEIGHT - 6} textAnchor="middle">
-              {shortDate(day.date)}
+              {shortDate(day.date, t)}
             </text>
           ) : null,
         )}
@@ -156,7 +159,7 @@ function DayPlot({ title, days, series, kind, format }: Omit<DayChartProps, "not
       </svg>
       {hover && (
         <FloatingTip at={hover}>
-          <div className="mb-1 font-semibold">{shortDate(days[hover.i].date)}</div>
+          <div className="mb-1 font-semibold">{shortDate(days[hover.i].date, t)}</div>
           {series.map((s, j) => (
             <div key={s.label} className="flex items-center gap-1.5">
               <span className={cn("size-2 rounded-[2px]", s.bg)} />
@@ -273,13 +276,14 @@ function DayTable({
   series: DaySeries[];
   format: (value: number) => string;
 }) {
+  const t = useMessages();
   const rows = days.filter((day) => day.requests > 0).reverse();
   return (
     <div className="max-h-64 overflow-y-auto">
       <table className="w-full text-xs tabular-nums">
         <thead className="sticky top-0 bg-card text-ink-3">
           <tr>
-            <th className="py-1 text-left font-medium">Day</th>
+            <th className="py-1 text-left font-medium">{t.dashboard.charts.day}</th>
             {series.map((s) => (
               <th key={s.label} className="py-1 pl-3 text-right font-medium">
                 {s.label}
@@ -290,7 +294,7 @@ function DayTable({
         <tbody>
           {rows.map((day) => (
             <tr key={day.date} className="border-t border-rule">
-              <td className="py-1">{shortDate(day.date)}</td>
+              <td className="py-1">{shortDate(day.date, t)}</td>
               {series.map((s) => {
                 const value = s.value(day);
                 return (
@@ -303,7 +307,7 @@ function DayTable({
           ))}
         </tbody>
       </table>
-      <p className="mt-1.5 text-xs text-ink-3">Days without a request are left out.</p>
+      <p className="mt-1.5 text-xs text-ink-3">{t.dashboard.charts.daysLeftOut}</p>
     </div>
   );
 }
