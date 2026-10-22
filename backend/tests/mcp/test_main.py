@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from langchain_core.embeddings import FakeEmbeddings
+from mcp.server.fastmcp import FastMCP
 from mcp.shared.memory import create_connected_server_and_client_session
 
 from fake_llm import ScriptedChatModel
@@ -46,6 +47,22 @@ def test_the_server_serves_every_agent_tool_over_the_built_store(
             return [tool.name for tool in (await session.list_tools()).tools]
 
     assert asyncio.run(listed()) == TOOL_NAMES
+
+
+def test_main_runs_the_server_over_the_chosen_transport(
+    settings: Settings, store: sqlite3.Connection, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    LabelIndex(settings.index_dir).rebuild([], [], embedding_model_id(settings))
+    monkeypatch.setattr(mcp_main, "get_embeddings", lambda settings: FakeEmbeddings(size=3))
+    monkeypatch.setattr(main, "get_chat_model", lambda settings: ScriptedChatModel(script=[]))
+    monkeypatch.setattr(mcp_main, "get_settings", lambda: settings)
+    monkeypatch.setattr(mcp_main, "open_store", lambda settings: store)
+    transports: list[str] = []
+    monkeypatch.setattr(FastMCP, "run", lambda self, transport: transports.append(transport))
+
+    mcp_main.main(["--transport", "streamable-http"])
+
+    assert transports == ["streamable-http"]
 
 
 def test_without_the_label_index_the_server_says_how_to_get_it(

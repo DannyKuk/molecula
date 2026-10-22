@@ -49,8 +49,8 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
     args = parser.parse_args(argv)
-    log_to_console()
     settings = get_settings()
+    log_to_console(settings.log_level)
     conn = open_store(settings)
     try:
         open_server(settings, conn, host=args.host, port=args.port).run(args.transport)
