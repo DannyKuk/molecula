@@ -1,12 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 
 import type { ChatHistory } from "@/lib/chat-history";
 import { browserHistory } from "@/lib/chat-history-indexeddb";
 import { savedChatLink } from "@/lib/chat-link";
 import { useChatHistory } from "@/lib/use-chat-history";
+import { useTransient } from "@/lib/use-transient";
 
 import type { ChatListProps } from "./chat-sidebar";
 
@@ -43,13 +43,7 @@ const UNDO_SHOWN_MS = 6000;
  * its place. It lives outside the list because the sidebar and the drawer share it.
  */
 export function useBookmarkUndo(saved: ReturnType<typeof useChatHistory>) {
-  const [removed, setRemoved] = useState<{ id: string; at: number } | null>(null);
-
-  useEffect(() => {
-    if (!removed) return;
-    const timer = setTimeout(() => setRemoved(null), UNDO_SHOWN_MS);
-    return () => clearTimeout(timer);
-  }, [removed]);
+  const [removed, setRemoved] = useTransient<{ id: string; at: number }>(UNDO_SHOWN_MS);
 
   const unbookmark = (id: string) => {
     setRemoved({ id, at: saved.bookmarks.indexOf(id) });
