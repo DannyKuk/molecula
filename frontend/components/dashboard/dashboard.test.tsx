@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError, type Stats, getChatModel, getStats, startLabelUpdate } from "@/lib/api";
+import { LANGUAGE_KEY } from "@/lib/language";
 import { memoryHistory } from "@/lib/test-fixtures";
 import { CLOUD_STATS, EMPTY_STATS, STATS } from "@/lib/test-stats";
 
@@ -68,7 +69,7 @@ describe("Dashboard page", () => {
     const kb = screen.getByRole("region", { name: "Knowledge base" });
     expect(kb.textContent).toContain("133 drugs");
     expect(kb.textContent).toContain("7,012 label passages");
-    expect(kb.textContent).toContain("Labels fetched 12 Oct 2026");
+    expect(kb.textContent).toContain("Labels fetched Oct 12, 2026");
     expect(kb.textContent).not.toContain("Last label update");
     expect(usageNumber("Requests")).toBe("Requests5last 30 days");
     expect(usageNumber("Answered")).toBe("Answered60%3 of 5");
@@ -154,8 +155,8 @@ describe("Dashboard page", () => {
     const rows = within(card).getAllByRole("row");
     expect(rows.map((row) => row.textContent)).toEqual([
       "DayAnsweredStopped by the userTurned away by a limitError",
-      "21 Oct2100",
-      "19 Oct1001",
+      "Oct 212100",
+      "Oct 191001",
     ]);
   });
 
@@ -182,7 +183,9 @@ describe("Dashboard page", () => {
 
     await openPage();
 
-    expect(knowledgeBase().textContent).toContain("Last label update 21 Oct 2026: 2 drugs changed");
+    expect(knowledgeBase().textContent).toContain(
+      "Last label update Oct 21, 2026: 2 drugs changed",
+    );
   });
 
   it("says when the last label update failed", async () => {
@@ -195,7 +198,7 @@ describe("Dashboard page", () => {
     await openPage();
 
     expect(knowledgeBase().textContent).toContain(
-      "Last label update 21 Oct 2026: failed (see the backend log)",
+      "Last label update Oct 21, 2026: failed (see the backend log)",
     );
   });
 
@@ -227,8 +230,8 @@ describe("Dashboard page", () => {
     );
     await act(async () => vi.advanceTimersByTime(5000));
 
-    expect(knowledgeBase().textContent).toContain("Labels fetched 22 Oct 2026");
-    expect(knowledgeBase().textContent).toContain("Last label update 22 Oct 2026: 1 drug changed");
+    expect(knowledgeBase().textContent).toContain("Labels fetched Oct 22, 2026");
+    expect(knowledgeBase().textContent).toContain("Last label update Oct 22, 2026: 1 drug changed");
     expect(screen.getByRole("button", { name: "Update now" })).toBeDefined();
   });
 
@@ -242,6 +245,43 @@ describe("Dashboard page", () => {
     expect(within(knowledgeBase()).getByRole("alert").textContent).toContain(
       "Could not start the update.",
     );
+  });
+
+  it("writes its text, numbers and dates in German", async () => {
+    localStorage.setItem(LANGUAGE_KEY, "de");
+    vi.mocked(getStats).mockResolvedValue(
+      withLabelUpdate({
+        last_run: { finished_at: "2026-10-21T03:04:00Z", outcome: "complete", drugs_changed: 2 },
+      }),
+    );
+
+    await openPage();
+
+    expect(screen.getByRole("heading", { name: "Dashboard", level: 1 })).toBeDefined();
+    const kb = screen.getByRole("region", { name: "Wissensbasis" });
+    expect(kb.textContent).toContain("7.012 Textstellen");
+    expect(kb.textContent).toContain("Fachinformationen abgerufen am 12. Okt. 2026");
+    expect(kb.textContent).toContain(
+      "Letzte Aktualisierung am 21. Okt. 2026: 2 Medikamente geändert",
+    );
+    expect(usageNumber("Anfragen")).toBe("Anfragen5letzte 30 Tage");
+    expect(usageNumber("Beantwortet")).toBe("Beantwortet60\u00a0%3 von 5");
+    expect(usageNumber("Typische Wartezeit")).toBe(
+      "Typische Wartezeit13,0 smittlere Antwortzeit (Median)",
+    );
+    expect(usageNumber("Tokens")).toBe("Tokens29 Tsd.27 Tsd. gelesen · 1.600 geschrieben");
+    expect(usageNumber("Kosten")).toBe("Kosten0,00\u00a0$lokales Modell, Tokens kosten nichts");
+    const guard = screen.getByRole("heading", {
+      name: "Wie die Sicherheitsprüfung die Fragen sortiert hat",
+    }).parentElement!;
+    expect(guard.textContent).toContain("Außerhalb des Themas1");
+    const errors = screen.getByRole("heading", { name: "Fehler" }).parentElement!;
+    expect(errors.textContent).toBe("FehlerZeit überschritten1");
+
+    const card = screen.getByRole("heading", { name: "Anfragen pro Tag" }).closest("section")!;
+    fireEvent.click(within(card).getByRole("button", { name: "Tabelle zeigen" }));
+    expect(within(card).getAllByRole("row")[1].textContent).toBe("21. Okt.2100");
+    expect(screen.getByRole("button", { name: "7 Tage" })).toBeDefined();
   });
 
   it("is linked from the sidebar rail", async () => {

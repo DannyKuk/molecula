@@ -11,7 +11,18 @@ import {
   startLabelUpdate,
 } from "@/lib/api";
 import type { ChatHistory } from "@/lib/chat-history";
-import { OUTCOMES, RANGES, compact, seconds, typicalWaitMs, usageTotals, usd } from "@/lib/stats";
+import { type Messages, useMessages } from "@/lib/messages";
+import {
+  OUTCOMES,
+  RANGES,
+  compact,
+  count,
+  percent,
+  seconds,
+  typicalWaitMs,
+  usageTotals,
+  usd,
+} from "@/lib/stats";
 import { useFetched } from "@/lib/use-fetched";
 import { cn } from "cn";
 
@@ -27,46 +38,57 @@ type LoadState =
 // How often the page asks whether a label update has ended; re-embedding on a CPU takes minutes.
 const UPDATE_POLL_MS = 5000;
 
-const OUTCOME_SERIES: DaySeries[] = OUTCOMES.map(({ key, label }) => ({
-  label,
-  value: (day) => day.outcomes[key] ?? 0,
-  ...{
-    answered: {
-      fill: "fill-outcome-answered",
-      stroke: "stroke-outcome-answered",
-      bg: "bg-outcome-answered",
-    },
-    stopped: {
-      fill: "fill-outcome-stopped",
-      stroke: "stroke-outcome-stopped",
-      bg: "bg-outcome-stopped",
-    },
-    limited: {
-      fill: "fill-outcome-limited",
-      stroke: "stroke-outcome-limited",
-      bg: "bg-outcome-limited",
-    },
-    error: { fill: "fill-outcome-error", stroke: "stroke-outcome-error", bg: "bg-outcome-error" },
-  }[key],
-}));
+const OUTCOME_COLOURS = {
+  answered: {
+    fill: "fill-outcome-answered",
+    stroke: "stroke-outcome-answered",
+    bg: "bg-outcome-answered",
+  },
+  stopped: {
+    fill: "fill-outcome-stopped",
+    stroke: "stroke-outcome-stopped",
+    bg: "bg-outcome-stopped",
+  },
+  limited: {
+    fill: "fill-outcome-limited",
+    stroke: "stroke-outcome-limited",
+    bg: "bg-outcome-limited",
+  },
+  error: { fill: "fill-outcome-error", stroke: "stroke-outcome-error", bg: "bg-outcome-error" },
+};
 
 const STRONG = { fill: "fill-usage-strong", stroke: "stroke-usage-strong", bg: "bg-usage-strong" };
 const LIGHT = { fill: "fill-usage-light", stroke: "stroke-usage-light", bg: "bg-usage-light" };
 
-const LATENCY_SERIES: DaySeries[] = [
-  { label: "Median (p50)", value: (day) => day.latency_p50_ms, ...STRONG },
-  { label: "Slowest 5% (p95)", value: (day) => day.latency_p95_ms, ...LIGHT },
-];
+function outcomeSeries(t: Messages): DaySeries[] {
+  return OUTCOMES.map((outcome) => ({
+    label: t.dashboard.outcomes[outcome],
+    value: (day) => day.outcomes[outcome] ?? 0,
+    ...OUTCOME_COLOURS[outcome],
+  }));
+}
 
-const TOKEN_SERIES: DaySeries[] = [
-  { label: "Read by the model (input)", value: (day) => day.input_tokens, ...STRONG },
-  { label: "Written (output)", value: (day) => day.output_tokens, ...LIGHT },
-];
+function latencySeries(t: Messages): DaySeries[] {
+  return [
+    { label: t.dashboard.charts.median, value: (day) => day.latency_p50_ms, ...STRONG },
+    { label: t.dashboard.charts.slowest, value: (day) => day.latency_p95_ms, ...LIGHT },
+  ];
+}
 
-const COST_SERIES: DaySeries[] = [{ label: "Cost", value: (day) => day.cost_usd, ...STRONG }];
+function tokenSeries(t: Messages): DaySeries[] {
+  return [
+    { label: t.dashboard.charts.input, value: (day) => day.input_tokens, ...STRONG },
+    { label: t.dashboard.charts.output, value: (day) => day.output_tokens, ...LIGHT },
+  ];
+}
+
+function costSeries(t: Messages): DaySeries[] {
+  return [{ label: t.dashboard.charts.cost, value: (day) => day.cost_usd, ...STRONG }];
+}
 
 /** The dashboard page: what the store holds, then how the chat was used over the picked range. */
 export function Dashboard({ history }: { history?: ChatHistory }) {
+  const t = useMessages();
   const chats = useSavedChats(history);
   const [days, setDays] = useState<number>(30);
   const [state, setState] = useState<LoadState>({ kind: "loading" });
@@ -112,21 +134,19 @@ export function Dashboard({ history }: { history?: ChatHistory }) {
         <ChatDrawer {...chats} />
         <div className="mb-2 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-            <p className="mt-1 text-sm text-ink-2">
-              What Molecula answers from, and how the chat is used.
-            </p>
+            <h1 className="text-2xl font-semibold tracking-tight">{t.dashboard.title}</h1>
+            <p className="mt-1 text-sm text-ink-2">{t.dashboard.intro}</p>
           </div>
           <RangePicker days={days} onPick={setDays} />
         </div>
         {state.kind === "loading" && (
           <p role="status" className="text-sm text-ink-2">
-            Loading the numbers…
+            {t.dashboard.loading}
           </p>
         )}
         {state.kind === "failed" && (
           <p role="alert" className="text-sm text-red-700 dark:text-red-400">
-            Could not load the numbers. Check that the backend is running, then reload the page.
+            {t.dashboard.failed}
           </p>
         )}
         {state.kind === "loaded" && (
@@ -155,10 +175,11 @@ export function Dashboard({ history }: { history?: ChatHistory }) {
 }
 
 function RangePicker({ days, onPick }: { days: number; onPick: (days: number) => void }) {
+  const t = useMessages();
   return (
     <div
       role="group"
-      aria-label="Range"
+      aria-label={t.dashboard.range}
       className="inline-flex overflow-hidden rounded-lg border border-input bg-card text-sm"
     >
       {RANGES.map((n) => (
@@ -172,7 +193,7 @@ function RangePicker({ days, onPick }: { days: number; onPick: (days: number) =>
             n === days && "bg-ink text-card hover:text-card",
           )}
         >
-          {n === 365 ? "1 year" : `${n} days`}
+          {t.dashboard.rangeOption(n)}
         </button>
       ))}
     </div>
@@ -188,36 +209,39 @@ function Usage({
   days: number;
   model: ChatModel | null;
 }) {
+  const t = useMessages();
   const totals = usageTotals(usage.days);
   if (!totals.requests) {
     return (
       <div className="rounded-xl border border-dashed border-rule-2 bg-card px-4 py-10 text-center text-sm text-ink-2">
         <p className="mb-1 text-base font-semibold text-foreground">
-          No chat requests in the last {days} days
+          {t.dashboard.noRequests(days)}
         </p>
-        Ask something in the chat and it shows up here.
+        {t.dashboard.noRequestsHint}
       </div>
     );
   }
   const hasCost = totals.costUsd > 0;
+  const charts = t.dashboard.charts;
+  const asCount = (n: number) => compact(n, t);
   return (
     <>
       <UsageNumbers totals={totals} wait={typicalWaitMs(usage.days)} days={days} model={model} />
       <div className="grid gap-4 lg:grid-cols-2">
         <DayChart
-          title="Requests per day"
+          title={charts.requestsPerDay}
           days={usage.days}
-          series={OUTCOME_SERIES}
+          series={outcomeSeries(t)}
           kind="columns"
-          format={compact}
+          format={asCount}
         />
         <DayChart
-          title="Time to answer"
+          title={charts.timeToAnswer}
           days={usage.days}
-          series={LATENCY_SERIES}
+          series={latencySeries(t)}
           kind="lines"
-          format={seconds}
-          note="Answered requests only."
+          format={(ms) => seconds(ms, t)}
+          note={charts.answeredOnly}
         />
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
@@ -227,19 +251,19 @@ function Usage({
       </div>
       <div className={cn("grid gap-4", hasCost && "lg:grid-cols-2")}>
         <DayChart
-          title="Tokens per day"
+          title={charts.tokensPerDay}
           days={usage.days}
-          series={TOKEN_SERIES}
+          series={tokenSeries(t)}
           kind="columns"
-          format={compact}
+          format={asCount}
         />
         {hasCost && (
           <DayChart
-            title="Cost per day"
+            title={charts.costPerDay}
             days={usage.days}
-            series={COST_SERIES}
+            series={costSeries(t)}
             kind="columns"
-            format={usd}
+            format={(n) => usd(n, t)}
           />
         )}
       </div>
@@ -258,24 +282,22 @@ function UsageNumbers({
   days: number;
   model: ChatModel | null;
 }) {
+  const t = useMessages();
+  const text = t.dashboard.numbers;
   const numbers: [string, string, string][] = [
+    [text.requests, count(totals.requests, t), text.lastRange(days)],
     [
-      "Requests",
-      totals.requests.toLocaleString("en-GB"),
-      `last ${days === 365 ? "year" : `${days} days`}`,
+      text.answered,
+      percent(totals.answered / totals.requests, t),
+      text.answeredOf(count(totals.answered, t), count(totals.requests, t)),
     ],
+    [text.typicalWait, seconds(wait, t), text.medianAnswerTime],
     [
-      "Answered",
-      `${Math.round((totals.answered / totals.requests) * 100)}%`,
-      `${totals.answered.toLocaleString("en-GB")} of ${totals.requests.toLocaleString("en-GB")}`,
+      text.tokens,
+      compact(totals.inputTokens + totals.outputTokens, t),
+      text.tokensInOut(compact(totals.inputTokens, t), compact(totals.outputTokens, t)),
     ],
-    ["Typical wait", seconds(wait), "median answer time"],
-    [
-      "Tokens",
-      compact(totals.inputTokens + totals.outputTokens),
-      `${compact(totals.inputTokens)} in · ${compact(totals.outputTokens)} out`,
-    ],
-    ["Cost", usd(totals.costUsd), costNote(totals.costUsd, model)],
+    [text.cost, usd(totals.costUsd, t), costNote(totals.costUsd, model, t)],
   ];
   return (
     <dl className="grid grid-cols-2 overflow-hidden rounded-xl border border-rule bg-card sm:grid-cols-5">
@@ -299,8 +321,8 @@ function UsageNumbers({
   );
 }
 
-function costNote(costUsd: number, model: ChatModel | null): string {
-  if (costUsd > 0) return "reported by the cloud model";
-  if (model?.local) return "local model, tokens are free";
-  return "none reported";
+function costNote(costUsd: number, model: ChatModel | null, t: Messages): string {
+  if (costUsd > 0) return t.dashboard.numbers.costReported;
+  if (model?.local) return t.dashboard.numbers.costFree;
+  return t.dashboard.numbers.costNone;
 }

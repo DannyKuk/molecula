@@ -1,34 +1,13 @@
-import type { ErrorKind, InputCategory, Outcome, Stats, UsageDay } from "./api";
+import type { Outcome, Stats, UsageDay } from "./api";
+import { en, type Messages } from "./messages";
 
 export type Usage = Stats["usage"];
 
 /** The `?days=` ranges the dashboard offers. */
 export const RANGES = [7, 30, 90, 365] as const;
 
-export const OUTCOMES: { key: Outcome; label: string }[] = [
-  { key: "answered", label: "Answered" },
-  { key: "stopped", label: "Stopped by the user" },
-  { key: "limited", label: "Turned away by a limit" },
-  { key: "error", label: "Error" },
-];
-
-export const CATEGORY_LABELS: Record<InputCategory, string> = {
-  ok: "Medicine question",
-  off_topic: "Off topic",
-  personal_medical_advice: "Personal advice",
-  overdose_emergency: "Overdose emergency",
-  lethal_dose: "Lethal dose",
-  synthesis_or_misuse: "Synthesis or misuse",
-  prompt_injection: "Prompt injection",
-};
-
-export const ERROR_LABELS: Record<ErrorKind, string> = {
-  timeout: "Timed out",
-  model_error: "Model error",
-  no_answer: "No answer",
-  input_check_failed: "Input check failed",
-  server_error: "Server error",
-};
+/** The outcomes in the order the dashboard stacks and lists them. */
+export const OUTCOMES: Outcome[] = ["answered", "stopped", "limited", "error"];
 
 const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
 
@@ -62,37 +41,45 @@ export function ranked<K extends string>(counts: Partial<Record<K, number>>): [K
     .sort((a, b) => b[1] - a[1]);
 }
 
-/** 1,284 below ten thousand, then 12K and 5.5M. */
-export function compact(n: number): string {
-  if (n >= 1e6) return `${trim(n / 1e6)}M`;
-  if (n >= 1e4) return `${Math.round(n / 1e3)}K`;
-  return n.toLocaleString("en-GB");
+/** 1,284 below ten thousand, then 12K and 5.5M; in German 1.284, 12 Tsd. and 5,5 Mio. */
+export function compact(n: number, t: Messages = en): string {
+  if (n >= 1e6) return t.dashboard.millions(oneDecimal(n / 1e6, t, 0));
+  if (n >= 1e4) return t.dashboard.thousands(count(Math.round(n / 1e3), t));
+  return count(n, t);
 }
 
-function trim(n: number): string {
-  return n.toFixed(1).replace(/\.0$/, "");
+export function count(n: number, t: Messages = en): string {
+  return n.toLocaleString(t.locale);
 }
 
-export function seconds(ms: number | null): string {
-  return ms === null ? "–" : `${(ms / 1000).toFixed(1)} s`;
+export function percent(share: number, t: Messages = en): string {
+  return share.toLocaleString(t.locale, { style: "percent" });
 }
 
-export function usd(n: number): string {
-  return `$${n.toFixed(2)}`;
+function oneDecimal(n: number, t: Messages, minimumFractionDigits: number): string {
+  return n.toLocaleString(t.locale, { minimumFractionDigits, maximumFractionDigits: 1 });
 }
 
-/** "21 Oct" for a `YYYY-MM-DD` UTC day. */
-export function shortDate(day: string): string {
-  return new Date(`${day}T00:00:00Z`).toLocaleDateString("en-GB", {
+export function seconds(ms: number | null, t: Messages = en): string {
+  return ms === null ? "–" : `${oneDecimal(ms / 1000, t, 1)} s`;
+}
+
+export function usd(n: number, t: Messages = en): string {
+  return n.toLocaleString(t.locale, { style: "currency", currency: "USD" });
+}
+
+/** "Oct 21" for a `YYYY-MM-DD` UTC day; "21. Okt." in German. */
+export function shortDate(day: string, t: Messages = en): string {
+  return new Date(`${day}T00:00:00Z`).toLocaleDateString(t.locale, {
     day: "numeric",
     month: "short",
     timeZone: "UTC",
   });
 }
 
-/** "12 Oct 2026" for a timestamp. */
-export function longDate(timestamp: string): string {
-  return new Date(timestamp).toLocaleDateString("en-GB", {
+/** "Oct 12, 2026" for a timestamp; "12. Okt. 2026" in German. */
+export function longDate(timestamp: string, t: Messages = en): string {
+  return new Date(timestamp).toLocaleDateString(t.locale, {
     day: "numeric",
     month: "short",
     year: "numeric",

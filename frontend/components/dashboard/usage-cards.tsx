@@ -1,7 +1,8 @@
 import { type ReactNode, useState } from "react";
 
 import type { InputCategory, LabelUpdateStatus, Stats } from "@/lib/api";
-import { CATEGORY_LABELS, ERROR_LABELS, compact, longDate, ranked } from "@/lib/stats";
+import { type Messages, useMessages } from "@/lib/messages";
+import { compact, count, longDate, ranked } from "@/lib/stats";
 import { cn } from "cn";
 
 export function Card({ title, children }: { title: string; children: ReactNode }) {
@@ -15,6 +16,7 @@ export function Card({ title, children }: { title: string; children: ReactNode }
 
 /** Horizontal bars in one colour, longest first, each with its count at the end. */
 function BarList({ counts, mono }: { counts: [string, number][]; mono?: boolean }) {
+  const t = useMessages();
   const most = Math.max(...counts.map(([, n]) => n));
   return (
     <dl className="grid grid-cols-[minmax(5.5rem,max-content)_1fr_auto] items-center gap-x-2.5 gap-y-1.5 text-[0.8125rem]">
@@ -27,7 +29,7 @@ function BarList({ counts, mono }: { counts: [string, number][]; mono?: boolean 
               style={{ width: `${(n / most) * 100}%` }}
             />
           </dd>
-          <dd className="text-right tabular-nums">{n.toLocaleString("en-GB")}</dd>
+          <dd className="text-right tabular-nums">{count(n, t)}</dd>
         </div>
       ))}
     </dl>
@@ -39,50 +41,58 @@ function Quiet({ children }: { children: ReactNode }) {
 }
 
 export function ToolCalls({ counts }: { counts: Record<string, number> }) {
+  const t = useMessages();
   const list = ranked(counts);
   return (
-    <Card title="Tool calls">
-      {list.length ? <BarList counts={list} mono /> : <Quiet>No tool calls in this range.</Quiet>}
+    <Card title={t.dashboard.toolCalls}>
+      {list.length ? <BarList counts={list} mono /> : <Quiet>{t.dashboard.noToolCalls}</Quiet>}
     </Card>
   );
 }
 
 /** How many questions the guard passed to the agent, then bars for the ones it answered itself. */
 export function GuardSorting({ counts }: { counts: Partial<Record<InputCategory, number>> }) {
+  const t = useMessages();
   const list = ranked(counts);
   const total = list.reduce((a, [, n]) => a + n, 0);
   const fixed = list.filter(([category]) => category !== "ok");
   return (
-    <Card title="How the guard sorted questions">
+    <Card title={t.dashboard.guard}>
       {total ? (
         <>
           <p className="mb-3 text-[0.8125rem] text-ink-2">
             <b className="block text-2xl font-semibold tracking-tight text-foreground">
-              {(counts.ok ?? 0).toLocaleString("en-GB")} of {total.toLocaleString("en-GB")}
+              {t.dashboard.okOfTotal(count(counts.ok ?? 0, t), count(total, t))}
             </b>
-            went to the agent as medicine questions
+            {t.dashboard.wentToAgent}
           </p>
           {fixed.length ? (
             <>
-              <p className="mb-1.5 text-xs text-ink-3">The rest got a fixed answer:</p>
-              <BarList counts={fixed.map(([category, n]) => [CATEGORY_LABELS[category], n])} />
+              <p className="mb-1.5 text-xs text-ink-3">{t.dashboard.restFixed}</p>
+              <BarList
+                counts={fixed.map(([category, n]) => [t.dashboard.categories[category], n])}
+              />
             </>
           ) : (
-            <Quiet>None got a fixed answer.</Quiet>
+            <Quiet>{t.dashboard.noneFixed}</Quiet>
           )}
         </>
       ) : (
-        <Quiet>No questions sorted in this range.</Quiet>
+        <Quiet>{t.dashboard.noneSorted}</Quiet>
       )}
     </Card>
   );
 }
 
 export function Errors({ counts }: { counts: Stats["usage"]["errors"] }) {
-  const list = ranked(counts).map(([kind, n]): [string, number] => [ERROR_LABELS[kind], n]);
+  const t = useMessages();
+  const list = ranked(counts).map(([kind, n]): [string, number] => [
+    t.dashboard.errorKinds[kind],
+    n,
+  ]);
   return (
-    <Card title="Errors">
-      {list.length ? <BarList counts={list} /> : <Quiet>No errors in this range.</Quiet>}
+    <Card title={t.dashboard.errors}>
+      {list.length ? <BarList counts={list} /> : <Quiet>{t.dashboard.noErrors}</Quiet>}
     </Card>
   );
 }
@@ -98,15 +108,17 @@ export function KnowledgeBase({
   labelUpdate: LabelUpdateStatus;
   onUpdate: () => Promise<void>;
 }) {
+  const t = useMessages();
+  const text = t.dashboard.knowledgeBase;
   const [problem, setProblem] = useState(false);
   const items: [string, string][] = [
-    [compact(kb.drugs), "drugs"],
-    [compact(kb.labels), "labels"],
-    [compact(kb.label_sections), "label sections"],
-    [compact(kb.chunks), "label passages"],
-    [compact(kb.targets), "targets"],
-    [compact(kb.conformers), "3D drug shapes"],
-    [compact(kb.complexes), "drug–target structures"],
+    [compact(kb.drugs, t), text.drugs],
+    [compact(kb.labels, t), text.labels],
+    [compact(kb.label_sections, t), text.sections],
+    [compact(kb.chunks, t), text.passages],
+    [compact(kb.targets, t), text.targets],
+    [compact(kb.conformers, t), text.conformers],
+    [compact(kb.complexes, t), text.complexes],
   ];
   const last = labelUpdate.last_run;
 
@@ -122,7 +134,7 @@ export function KnowledgeBase({
     >
       <div className="mb-1.5 flex items-center justify-between gap-3">
         <h2 id="knowledge-base" className="text-sm font-semibold text-ink-2">
-          Knowledge base
+          {text.title}
         </h2>
         {labelUpdate.can_start && (
           <button
@@ -131,7 +143,7 @@ export function KnowledgeBase({
             disabled={labelUpdate.running}
             className="rounded-md border border-rule px-2.5 py-1 text-xs text-ink-2 hover:text-foreground disabled:opacity-60 disabled:hover:text-ink-2"
           >
-            {labelUpdate.running ? "Updating…" : "Update now"}
+            {labelUpdate.running ? text.updating : text.updateNow}
           </button>
         )}
       </div>
@@ -144,41 +156,37 @@ export function KnowledgeBase({
       </ul>
       <ul className="mt-1.5 flex flex-wrap gap-x-5 gap-y-1 text-xs text-ink-3">
         <li>
-          Labels fetched{" "}
           {kb.labels_fetched_to
-            ? longDate(kb.labels_fetched_to)
-            : "not yet, the labels aren't built"}
+            ? text.labelsFetched(longDate(kb.labels_fetched_to, t))
+            : text.labelsNotFetched}
         </li>
         {labelUpdate.running ? (
-          <li role="status">Updating the labels…</li>
+          <li role="status">{text.updatingLabels}</li>
         ) : (
-          last && (
-            <li>
-              Last label update {longDate(last.finished_at)}: {updateResult(last)}
-            </li>
-          )
+          last && <li>{text.lastUpdate(longDate(last.finished_at, t), updateResult(last, t))}</li>
         )}
-        <li>Store schema v{kb.schema_version}</li>
+        <li>{text.schema(kb.schema_version)}</li>
       </ul>
       {problem && (
         <p role="alert" className="mt-1.5 text-xs text-red-700 dark:text-red-400">
-          Could not start the update. Check that the backend is running.
+          {text.startFailed}
         </p>
       )}
     </section>
   );
 }
 
-function updateResult(run: NonNullable<LabelUpdateStatus["last_run"]>): string {
-  const drugs = `${run.drugs_changed} ${run.drugs_changed === 1 ? "drug" : "drugs"} changed`;
+function updateResult(run: NonNullable<LabelUpdateStatus["last_run"]>, t: Messages): string {
+  const text = t.dashboard.knowledgeBase;
+  const drugs = text.drugsChanged(run.drugs_changed);
   switch (run.outcome) {
     case "complete":
-      return run.drugs_changed ? drugs : "no label changed";
+      return run.drugs_changed ? drugs : text.noLabelChanged;
     case "nothing_new":
-      return "nothing new on openFDA";
+      return text.nothingNew;
     case "incomplete":
-      return `${drugs}, some drugs not checked (see the backend log)`;
+      return text.incomplete(drugs);
     case "failed":
-      return "failed (see the backend log)";
+      return text.updateFailed;
   }
 }
