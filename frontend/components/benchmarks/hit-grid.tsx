@@ -7,7 +7,6 @@ import {
   type Benchmark,
   type Model,
   type Rank,
-  type RankBand,
   type Scope,
   SCOPES,
   hitsInGroup,
@@ -17,14 +16,8 @@ import {
   sectionName,
 } from "@/lib/embedding-benchmark";
 
+import { RankDot } from "./dots";
 import { FloatingTip, type TipAt } from "./floating-tip";
-
-export const BAND_CLASSES: Record<RankBand, string> = {
-  first: "bg-rank-first",
-  top5: "bg-rank-top5",
-  top10: "bg-rank-top10",
-  missed: "ring-1 ring-inset ring-rule-2",
-};
 
 const GROUP_SHORT = { cpu: "Local CPU", gpu: "GPU", cloud: "Cloud" };
 
@@ -38,26 +31,7 @@ type HitGridProps = {
   onModel: (label: string) => void;
 };
 
-export function RankLegend() {
-  const items: [RankBand, string][] = [
-    ["first", "Answer ranked 1st"],
-    ["top5", "2nd–5th (still a hit)"],
-    ["top10", "6th–10th (a miss at top 5)"],
-    ["missed", "Not in the top 10"],
-  ];
-  return (
-    <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-xs text-ink-2">
-      {items.map(([band, label]) => (
-        <span key={band} className="inline-flex items-center gap-1.5">
-          <i className={cn("size-3.5 rounded-[4px]", BAND_CLASSES[band])} />
-          {label}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-/** Questions × models, grouped by section group; each square is where the answer ranked. */
+/** Questions × models, grouped by section group; each dot is where the answer ranked. */
 export function HitGrid(props: HitGridProps) {
   const [tip, setTip] = useState<(TipAt & { question: number; label: string }) | null>(null);
 
@@ -71,7 +45,7 @@ export function HitGrid(props: HitGridProps) {
 
   return (
     <div
-      className="max-h-[70vh] max-w-full overflow-auto rounded-lg border lg:max-h-[calc(100vh-140px)]"
+      className="max-h-[70vh] max-w-full overflow-auto lg:max-h-[calc(100vh-140px)]"
       onPointerMove={hover}
       onPointerLeave={() => setTip(null)}
     >
@@ -81,7 +55,7 @@ export function HitGrid(props: HitGridProps) {
   );
 }
 
-// Memoized so that moving the pointer over a thousand squares redraws only the tooltip.
+// Memoized so that moving the pointer over a thousand dots redraws only the tooltip.
 const GridTable = memo(function GridTable({
   benchmark,
   scope,
@@ -129,7 +103,7 @@ const GridTable = memo(function GridTable({
               {i > 0 && <th className="w-2 min-w-2" />}
               <th
                 colSpan={size}
-                className="max-w-0 pt-1.5 pl-0.5 text-left text-[10px] font-medium whitespace-nowrap text-ink-3"
+                className="max-w-0 pt-1.5 pl-0.5 text-left font-mono text-[10px] font-medium tracking-wide whitespace-nowrap text-ink-3 uppercase"
               >
                 {GROUP_SHORT[group]}
               </th>
@@ -168,7 +142,7 @@ const GridTable = memo(function GridTable({
             <tr>
               <th
                 scope="row"
-                className="sticky left-0 z-[1] border-t bg-background px-2 pt-3 pb-1 text-left text-xs font-semibold"
+                className="sticky left-0 z-[1] border-t border-rule-2 bg-background px-2 pt-3 pb-1 text-left text-xs font-semibold"
               >
                 {section.name} ({section.questions.length})
               </th>
@@ -176,10 +150,10 @@ const GridTable = memo(function GridTable({
                 const hits = hitsInGroup(benchmark.ranks[m.label][scope], section);
                 return (
                   <Fragment key={m.label}>
-                    {separatorBefore(m) && <td className="border-t" />}
+                    {separatorBefore(m) && <td className="border-t border-rule-2" />}
                     <td
                       title={`${m.name}: ${hits} of ${section.questions.length} in the top 5`}
-                      className="border-t pt-3 text-center align-bottom text-[10px] text-ink-3 tabular-nums"
+                      className="border-t border-rule-2 pt-3 text-center align-bottom text-[10px] text-ink-3 tabular-nums"
                     >
                       {hits}
                     </td>
@@ -193,8 +167,8 @@ const GridTable = memo(function GridTable({
                 <tr key={q.index} className="group/row">
                   <td
                     className={cn(
-                      "sticky left-0 z-[1] bg-background group-hover/row:bg-muted",
-                      rowSelected && "shadow-[inset_3px_0_0_var(--foreground)]",
+                      "sticky left-0 z-[1] bg-background group-hover/row:bg-panel",
+                      rowSelected && "shadow-[inset_3px_0_0_var(--signal)]",
                     )}
                   >
                     <button
@@ -216,7 +190,7 @@ const GridTable = memo(function GridTable({
                         {separatorBefore(m) && <td />}
                         <td
                           className={cn(
-                            "h-5 w-[22px] p-0 group-hover/row:bg-muted",
+                            "h-5 w-[22px] p-0 group-hover/row:bg-panel",
                             m.isApp && "bg-app-model/55",
                           )}
                         >
@@ -231,11 +205,13 @@ const GridTable = memo(function GridTable({
                               onQuestion(q.index, m.label);
                             }}
                             className={cn(
-                              "mx-auto my-0.5 block size-4 rounded-[4px] outline-offset-1 hover:outline-2 hover:outline-foreground focus-visible:outline-2 focus-visible:outline-foreground",
-                              BAND_CLASSES[rankBand(r)],
-                              cellSelected && "outline-2 outline-foreground",
+                              "mx-auto my-0.5 flex size-4 items-center justify-center rounded-full outline-offset-0 hover:outline-1 hover:outline-ink-3 focus-visible:outline-2 focus-visible:outline-ink",
+                              cellSelected &&
+                                "outline-2 outline-signal hover:outline-2 hover:outline-signal",
                             )}
-                          />
+                          >
+                            <RankDot band={rankBand(r)} />
+                          </button>
                         </td>
                       </Fragment>
                     );

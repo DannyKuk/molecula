@@ -76,13 +76,13 @@ export function ModelView({
         ))}
       </dl>
       <h3 className="font-semibold">Missed in the top 5 ({missed.length})</h3>
-      <ul className="flex flex-col rounded-lg border">
+      <ul className="flex flex-col">
         {missed.map((q) => (
-          <li key={q.index} className="border-b last:border-b-0">
+          <li key={q.index}>
             <button
               type="button"
               onClick={() => onQuestion(q.index)}
-              className="flex w-full justify-between gap-2 px-2.5 py-1.5 text-left text-[0.8125rem] hover:bg-muted"
+              className="flex w-full justify-between gap-2 border-l-2 border-rule-2 py-1.5 pr-1 pl-3 text-left text-[0.8125rem] hover:border-ink-3 hover:bg-panel"
             >
               <span>{q.question}</span>
               <span className="whitespace-nowrap text-ink-3 tabular-nums">

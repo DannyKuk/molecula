@@ -22,10 +22,12 @@ import {
 } from "@/lib/embedding-benchmark";
 import { useMediaQuery } from "@/lib/use-media-query";
 
-import { HitGrid, RankLegend } from "./hit-grid";
+import { RankLegend } from "./dots";
+import { HitGrid } from "./hit-grid";
 import { ModelView } from "./model-view";
 import { QuestionView } from "./question-view";
 import { ModelRecall, RecallLegend } from "./recall-chart";
+import { TabSwitch } from "./tab-switch";
 import { TradeoffTable } from "./tradeoff-table";
 
 const DOC_URL = "https://github.com/DannyKuk/molecula/blob/main/docs/decisions/embeddings.md";
@@ -161,8 +163,8 @@ function BenchmarkView({ run, instance }: { run: EmbeddingRun; instance: Instanc
           Which embedding model finds the answer?
         </h1>
         <p className={MUTED}>
-          Every square is one question asked of one model, shaded by where the passage with the
-          answer ranked. <InstanceSentence benchmark={benchmark} instance={instance} />
+          Every dot is one question asked of one model, shaded by where the passage with the answer
+          ranked. <InstanceSentence benchmark={benchmark} instance={instance} />
         </p>
       </div>
 
@@ -175,26 +177,7 @@ function BenchmarkView({ run, instance }: { run: EmbeddingRun; instance: Instanc
             <h2 className="text-xl font-semibold tracking-tight">
               {benchmark.questions.length} questions × {benchmark.models.length} models
             </h2>
-            <div
-              role="group"
-              aria-label="Search"
-              className="inline-flex gap-0.5 rounded-lg border p-0.5"
-            >
-              {(Object.keys(SCOPES) as Scope[]).map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  aria-pressed={key === scope}
-                  onClick={() => setScope(key)}
-                  className={cn(
-                    "rounded-md px-2.5 py-0.5 text-sm",
-                    key === scope ? "bg-muted font-medium" : MUTED,
-                  )}
-                >
-                  {SCOPES[key]}
-                </button>
-              ))}
-            </div>
+            <TabSwitch label="Search" options={SCOPES} value={scope} onChange={setScope} />
           </div>
           <p className={cn("text-[0.8125rem]", MUTED)}>
             Click a question for what each model found. Click a model&apos;s name for its scores and
@@ -213,7 +196,7 @@ function BenchmarkView({ run, instance }: { run: EmbeddingRun; instance: Instanc
         <aside
           ref={panelRef}
           aria-label="Details"
-          className="sticky top-4 hidden max-h-[calc(100vh-2rem)] overflow-auto rounded-lg border p-4 lg:block"
+          className="sticky top-4 hidden max-h-[calc(100vh-2rem)] overflow-auto border-l border-rule-2 pl-5 lg:block"
         >
           <div className="mb-2 flex justify-end">{steps}</div>
           {detail}
@@ -263,8 +246,8 @@ function BenchmarkView({ run, instance }: { run: EmbeddingRun; instance: Instanc
                       if (wide) hubRef.current?.scrollIntoView({ behavior: "smooth" });
                     }}
                     className={cn(
-                      "flex min-w-0 flex-col gap-0.5 rounded-lg border px-2 pt-2.5 pb-1 text-left hover:border-ink-3",
-                      m.isApp && "border-app-model-foreground ring-1 ring-app-model-foreground",
+                      "flex min-w-0 flex-col gap-0.5 border-l-2 border-rule-2 pt-1 pl-2.5 text-left hover:border-ink-3 hover:bg-panel",
+                      m.isApp && "border-app-model-foreground hover:border-app-model-foreground",
                     )}
                   >
                     <span className="truncate text-[0.8125rem] font-semibold">{m.name}</span>

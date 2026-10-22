@@ -115,8 +115,8 @@ function PassageCard({ question, top }: { question: Question; top: TopPassage })
   return (
     <article
       className={cn(
-        "flex min-w-0 flex-col gap-2 rounded-lg border px-3.5 py-3",
-        top.holdsAnswer && "border-rule-2",
+        "flex min-w-0 flex-col gap-2 border-l-2 border-rule py-1 pl-3",
+        top.holdsAnswer && "border-ink-3",
       )}
     >
       <div className="flex flex-wrap items-center justify-between gap-x-2.5 gap-y-1.5">

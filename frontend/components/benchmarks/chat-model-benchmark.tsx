@@ -28,7 +28,8 @@ import {
 } from "@/lib/chat-model-benchmark";
 import { useMediaQuery } from "@/lib/use-media-query";
 
-import { VerdictDot, VerdictLegend } from "./verdict-dot";
+import { VerdictDot, VerdictLegend } from "./dots";
+import { TabSwitch } from "./tab-switch";
 
 const DOC_URL = "https://github.com/DannyKuk/molecula/blob/main/docs/decisions/chat-model.md";
 const MUTED = "text-ink-2";
@@ -107,22 +108,7 @@ export function ChatModelBenchmark({ run }: { run: ChatModelRun }) {
         <div className="flex min-w-0 flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <h2 className="text-xl font-semibold tracking-tight">Every answer</h2>
-            <div role="group" aria-label="Eval" className="flex gap-4 border-b border-rule">
-              {(Object.keys(EVALS) as EvalName[]).map((name) => (
-                <button
-                  key={name}
-                  type="button"
-                  aria-pressed={name === evalName}
-                  onClick={() => setEvalName(name)}
-                  className={cn(
-                    "-mb-px border-b-2 py-1 text-sm",
-                    name === evalName ? "border-signal text-ink" : "border-transparent text-ink-2",
-                  )}
-                >
-                  {EVALS[name]}
-                </button>
-              ))}
-            </div>
+            <TabSwitch label="Eval" options={EVALS} value={evalName} onChange={setEvalName} />
           </div>
           <p className={cn("text-[0.8125rem]", MUTED)}>
             {evalName === "from_memory"
