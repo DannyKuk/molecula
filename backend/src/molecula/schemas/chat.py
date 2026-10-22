@@ -13,7 +13,13 @@ from pydantic import (
 
 from molecula.schemas.claims import CheckedClaim
 from molecula.schemas.guard import InputCategory
-from molecula.schemas.retrieval import LabelFilter, RetrievalMode, RetrievedChunk, Widening
+from molecula.schemas.retrieval import (
+    LabelFilter,
+    RetrievalMode,
+    RetrievedChunk,
+    TranslationStep,
+    Widening,
+)
 from molecula.schemas.text import has_control_characters
 from molecula.schemas.usage import Usage
 
@@ -129,15 +135,6 @@ class Source(BaseModel):
     ref: int | None = None
 
 
-class TranslationStep(BaseModel):
-    """One query translation step and the query it produced (#114)."""
-
-    model_config = ConfigDict(frozen=True)
-
-    step: str
-    output: str
-
-
 class Candidate(RetrievedChunk):
     """A chunk the label search scored, and whether it was kept or dropped below the threshold."""
 
@@ -195,8 +192,9 @@ class RetrievalTraceEvent(BaseModel):
 
     `filter_source` says who chose the filter: `model` when a model (Jev online, the chat model
     offline) extracted it from the question, `agent` when the agent named the drug and
-    `filter.extracted` holds its arguments. `translation` stays empty: #114 measured a query
-    translation step and didn't build it. `mode` is the ranking the search used, `min_score` the
+    `filter.extracted` holds its arguments. `translation` holds what QUERY_TRANSLATION wrote
+    for the search (empty: the question was searched as written), and `translation_error` why
+    it wrote nothing usable. `mode` is the ranking the search used, `min_score` the
     similarity a candidate needed to be kept and `section_group_boost` what a candidate in the
     filter's section groups counted higher in the ranking.
     """
@@ -205,6 +203,7 @@ class RetrievalTraceEvent(BaseModel):
     tool_call_id: str
     question: str
     translation: list[TranslationStep]
+    translation_error: str | None = None
     filter: LabelFilter | None
     filter_source: Literal["model", "agent"]
     widened: list[Widening]
@@ -226,16 +225,18 @@ class SourceCheckEvent(BaseModel):
     claims: list[CheckedClaim] = []
 
 
-type UsageStep = Literal["input_check", "answer", "label_filter", "source_check"]
+type UsageStep = Literal[
+    "input_check", "answer", "label_filter", "query_translation", "source_check"
+]
 
 
 class DoneEvent(BaseModel):
     """The answer is complete. `usage` is what all its model calls used, `usage_by_step` the
     same split by the step that made the calls: the input check, the agent's answer, the label
-    searches' filter extraction and the source check. `step_limit_reached` means the agent had
-    to answer without further tool calls. `category` is how the guard sorted the question;
-    anything but `ok` and `overdose_emergency` got a fixed answer. It is None from an agent
-    without a guard."""
+    searches' filter extraction and query translation, and the source check.
+    `step_limit_reached` means the agent had to answer without further tool calls. `category`
+    is how the guard sorted the question; anything but `ok` and `overdose_emergency` got a fixed
+    answer. It is None from an agent without a guard."""
 
     type: Literal["done"] = "done"
     usage_by_step: dict[UsageStep, Usage] = {}

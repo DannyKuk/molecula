@@ -4,8 +4,9 @@ from langchain_core.tools import StructuredTool
 
 from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
+from molecula.rag.translation import QueryTranslator
 from molecula.schemas.labels import SectionGroup
-from molecula.schemas.retrieval import LabelFilter
+from molecula.schemas.retrieval import LabelFilter, Retrieval
 from molecula.schemas.tools import (
     CitedPassage,
     LabelDrugsNotSupported,
@@ -15,7 +16,11 @@ from molecula.schemas.tools import (
 from molecula.tools.base import build_tool, not_supported
 
 
-def search_labels_tool(extractor: FilterExtractor, retriever: LabelRetriever) -> StructuredTool:
+def search_labels_tool(
+    extractor: FilterExtractor,
+    retriever: LabelRetriever,
+    translator: QueryTranslator | None = None,
+) -> StructuredTool:
     def search_labels(
         question: str, drug: str | None = None, section: SectionGroup | None = None
     ) -> LabelPassages | LabelDrugsNotSupported:
@@ -52,7 +57,7 @@ def search_labels_tool(extractor: FilterExtractor, retriever: LabelRetriever) ->
         `question` and `drug` as the user wrote them, typos included.
         """
         label_filter = extractor.filter_for(question, drug=drug, section=section)
-        retrieval = retriever.retrieve(question, label_filter)
+        retrieval = searched(question, label_filter, retriever, translator)
         unsupported = [not_supported(resolution) for resolution in label_filter.unsupported]
         if unsupported and not label_filter.drugs:
             return LabelDrugsNotSupported(question=question, drugs=unsupported, retrieval=retrieval)
@@ -69,6 +74,22 @@ def search_labels_tool(extractor: FilterExtractor, retriever: LabelRetriever) ->
         )
 
     return build_tool(search_labels, SearchLabelsArgs, searching_labels)
+
+
+def searched(
+    question: str,
+    label_filter: LabelFilter,
+    retriever: LabelRetriever,
+    translator: QueryTranslator | None,
+) -> Retrieval:
+    """The search for `question` under the filter, with the queries the translator wrote for
+    it; without one, the question as written. The queries only steer the search: the result
+    the agent reads keeps its own question."""
+    if translator is None:
+        return retriever.retrieve(question, label_filter)
+    translation = translator.translate(question)
+    retrieval = retriever.retrieve(question, label_filter, queries=translation.queries)
+    return retrieval.model_copy(update={"translation": translation})
 
 
 def searching_labels(args: dict[str, Any]) -> str:

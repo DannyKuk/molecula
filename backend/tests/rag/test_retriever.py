@@ -460,3 +460,37 @@ def test_a_found_chunk_keeps_every_label_field_and_reads_the_label_date_as_a_dat
     )
     assert found.effective_time == date(2026, 7, 13)
     assert (found.score, found.in_section_groups) == (0.42, True)
+
+
+def test_a_rewrite_moves_the_passage_it_matches_up_by_reciprocal_rank_fusion(
+    index: LabelIndex,
+) -> None:
+    retrieval = retriever(index).retrieve(
+        "nausea", label_filter([IMATINIB]), queries=["nausea", "kinase", "kinase"]
+    )
+
+    assert [chunk.id for chunk in retrieval.chunks] == [
+        IMATINIB_MECHANISM.id,
+        IMATINIB_SIDE_EFFECTS.id,
+    ]
+    assert retrieval.chunks[0].fused_score == pytest.approx(1 / 62 + 2 / 61)
+    assert retrieval.chunks[1].fused_score == pytest.approx(1 / 61 + 2 / 62)
+
+
+def test_several_queries_still_keep_top_k_per_drug(index: LabelIndex) -> None:
+    retrieval = retriever(index, top_k=1).retrieve(
+        "bleeding",
+        label_filter([IMATINIB, IBUPROFEN]),
+        queries=["bleeding pain fever", "nausea"],
+    )
+
+    assert sorted(chunk.cid for chunk in retrieval.chunks) == [IBUPROFEN.cid, IMATINIB.cid]
+
+
+def test_the_retrieval_keeps_the_question_it_was_asked_for(index: LabelIndex) -> None:
+    retrieval = retriever(index).retrieve(
+        "Welche Nebenwirkungen?", label_filter([IMATINIB]), queries=["nausea"]
+    )
+
+    assert retrieval.question == "Welche Nebenwirkungen?"
+    assert retrieval.chunks[0].id == IMATINIB_SIDE_EFFECTS.id

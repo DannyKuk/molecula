@@ -77,6 +77,9 @@ class Settings(BaseSettings):
     retrieval_section_group_boost: Annotated[float | None, Field(ge=0.0, le=2.0)] = None
     # "hybrid" adds BM25 keyword search to the embeddings, merged by reciprocal rank fusion (#44).
     retrieval_mode: Literal["dense", "bm25", "hybrid"] = "dense"
+    # "translate" searches a German question in English, "multi_query" the question and three
+    # rewrites, both written by the chat model; off, as #114 measured neither to help (#446).
+    query_translation: Literal["off", "translate", "multi_query"] = "off"
     # Model calls per answer; the last one gets no tools, so the agent answers (#124).
     chat_max_steps: Annotated[int, Field(ge=1, le=20)] = 8
     chat_timeout_seconds: Annotated[float, Field(gt=0)] = 180.0

@@ -3,7 +3,7 @@ from collections import Counter
 import pytest
 from evals.safety.dataset import load_items
 
-from molecula.guard.language import detect_language
+from molecula.rag.language import detect_language
 from molecula.schemas.guard import Language
 
 # A bare, misspelled drug name says nothing about the language it was typed in.

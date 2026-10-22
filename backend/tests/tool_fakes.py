@@ -1,6 +1,7 @@
 """Fake services, filter extractor and label retriever for the agent tool tests, and a tool
 call helper."""
 
+from collections.abc import Sequence
 from datetime import date
 from typing import Any
 
@@ -193,7 +194,7 @@ class FakeFilterExtractor:
 class FakeLabelRetriever:
     """Finds `chunks` (or the question's own in `chunks_by_question`) and drops `dropped`
     unless the filter names drugs without labels, like the real retriever; records the filters
-    it searched under."""
+    it searched under and the queries it was given."""
 
     def __init__(self) -> None:
         self.chunks = [IMATINIB_SIDE_EFFECTS]
@@ -201,9 +202,17 @@ class FakeLabelRetriever:
         self.dropped = [IMATINIB_LOW_SCORE]
         self.widened: list[Widening] = []
         self.searched: list[LabelFilter | None] = []
+        self.queries: list[list[str]] = []
 
-    def retrieve(self, question: str, label_filter: LabelFilter | None = None) -> Retrieval:
+    def retrieve(
+        self,
+        question: str,
+        label_filter: LabelFilter | None = None,
+        *,
+        queries: Sequence[str] = (),
+    ) -> Retrieval:
         self.searched.append(label_filter)
+        self.queries.append(list(queries))
         if label_filter is not None and label_filter.names_drugs and not label_filter.set_ids:
             return Retrieval(
                 question=question,

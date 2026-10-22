@@ -54,7 +54,7 @@ Through the chat, 19 German questions:
 | Multi-query: 3 rewrites, reciprocal rank fusion | −5 of 94 (0.85 → 0.80) | one model call and 3 more searches | It ranks the answering passage lower more often than higher, and the rewrites carry the model's memory |
 | Ask for the search `question` in English in the `search_labels` description | 8 → 6 of 16 searches in German | none | gpt-oss-20b mostly ignores it |
 
-The two prompts stay in `prompts/rag/` so the measurement can be repeated; nothing in the app loads them.
+The two prompts stay in `prompts/rag/` so the measurement can be repeated. Since #446 both steps are also a setting of the app, `QUERY_TRANSLATION=translate` or `multi_query`, off by default as this eval found; the eval keeps its own copy of the steps, so these numbers reproduce as they are.
 
 ## Limits
 

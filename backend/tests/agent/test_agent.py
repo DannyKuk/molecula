@@ -5,12 +5,14 @@ import httpx
 import openai
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolCall, ToolMessage
+from langchain_core.tools import BaseTool
 
 from fake_llm import CANARY, DEFAULT_COST, ScriptedChatModel, answer_message, tool_call_message
 from molecula import prompts
 from molecula.agent.agent import NO_ANSWER, ChatAgent
 from molecula.agent.tool_registry import build_tools, tools_over_mcp
 from molecula.mcp.server import build_server
+from molecula.rag.translation import QueryTranslator
 from molecula.schemas.chat import (
     ChatEvent,
     ChatMessage,
@@ -23,7 +25,7 @@ from molecula.schemas.chat import (
     ToolCallEvent,
     ToolResultEvent,
 )
-from molecula.schemas.retrieval import LabelFilter, LabelQuery
+from molecula.schemas.retrieval import LabelFilter, LabelQuery, TranslationStep
 from molecula.schemas.usage import Usage
 from tool_fakes import (
     IMATINIB,
@@ -71,6 +73,7 @@ def agent(
     *,
     extractor: FakeFilterExtractor | None = None,
     retriever: FakeLabelRetriever | None = None,
+    translator: QueryTranslator | None = None,
     max_steps: int = 5,
     timeout_seconds: float = 10.0,
 ) -> ChatAgent:
@@ -80,6 +83,7 @@ def agent(
         FakeComplexService(),
         extractor or FakeFilterExtractor(),
         retriever or FakeLabelRetriever(),
+        translator,
     )
     return ChatAgent(
         model, tools, canary=CANARY, max_steps=max_steps, timeout_seconds=timeout_seconds
@@ -531,6 +535,64 @@ def test_a_label_search_by_drug_emits_one_retrieval_trace() -> None:
     assert [(s.kind, s.name, s.url, s.section) for s in sources.sources] == [
         ("dailymed", "Gleevec", IMATINIB_SIDE_EFFECTS.url, "adverse_reactions")
     ]
+
+
+GERMAN_SIDE_EFFECTS = "Welche Nebenwirkungen hat Imatinib?"
+TRANSLATED = "What are the side effects of imatinib?"
+
+
+def translator() -> QueryTranslator:
+    return QueryTranslator(ScriptedChatModel(script=[answer_message(TRANSLATED)]), "translate")
+
+
+def translated_search() -> ScriptedChatModel:
+    return ScriptedChatModel(
+        script=[
+            tool_call_message(
+                "search_labels", {"question": GERMAN_SIDE_EFFECTS, "drug": "imatinib"}
+            ),
+            answer_message("Übelkeit [1]."),
+        ]
+    )
+
+
+def test_a_translated_search_is_traced_and_its_model_call_counted_apart() -> None:
+    events = run(agent(translated_search(), translator=translator()))
+
+    [trace] = [e for e in events if isinstance(e, RetrievalTraceEvent)]
+    assert trace.question == GERMAN_SIDE_EFFECTS
+    assert trace.translation == [TranslationStep(step="translation", output=TRANSLATED)]
+    assert trace.translation_error is None
+    done = events[-1]
+    assert isinstance(done, DoneEvent)
+    translation = Usage(input_tokens=12, output_tokens=8, total_tokens=20, cost_usd=DEFAULT_COST)
+    assert done.usage_by_step["query_translation"] == translation
+    assert done.usage == done.usage_by_step["answer"] + translation
+
+
+def test_over_mcp_a_translated_search_gives_the_same_trace() -> None:
+    def tools() -> list[BaseTool]:
+        return build_tools(
+            FakeCompoundService(),
+            FakeTargetService(),
+            FakeComplexService(),
+            FakeFilterExtractor(),
+            label_retriever(),
+            translator(),
+        )
+
+    async def over_mcp() -> list[ChatEvent]:
+        local = tools()
+        async with tools_over_mcp(build_server(local), local) as served:
+            chat = ChatAgent(
+                translated_search(), served, canary=CANARY, max_steps=5, timeout_seconds=10.0
+            )
+            return [event async for event in chat.stream(QUESTION)]
+
+    local = ChatAgent(
+        translated_search(), tools(), canary=CANARY, max_steps=5, timeout_seconds=10.0
+    )
+    assert asyncio.run(over_mcp()) == run(local)
 
 
 def test_a_label_search_without_a_drug_traces_the_filter_the_model_extracted() -> None:

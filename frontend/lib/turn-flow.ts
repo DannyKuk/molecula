@@ -424,7 +424,7 @@ function narrowText(trace: RetrievalTrace, result: LabelPassages, f: Flow): stri
 function scoreStep(score: Draft, trace: RetrievalTrace, f: Flow): Draft {
   const similarities = trace.candidates.map((candidate) => candidate.score);
   const range = f.range(Math.min(...similarities).toFixed(2), Math.max(...similarities).toFixed(2));
-  const searched = f.searchedWith(trace.question);
+  const searched = searchedText(trace, f);
   if (trace.mode === "bm25") {
     return {
       ...score,
@@ -443,15 +443,29 @@ function scoreStep(score: Draft, trace: RetrievalTrace, f: Flow): Draft {
   };
 }
 
+/** What the search searched with: the question, its English translation, or the question and
+ * the rewrites it was merged with (QUERY_TRANSLATION, #446). */
+function searchedText(trace: RetrievalTrace, f: Flow): string {
+  const rewrites = rewriteCount(trace);
+  if (rewrites > 0) return f.searchedWithRewrites(trace.question, rewrites);
+  if (trace.translation.length > 0) return f.searchedWith(trace.translation[0].output);
+  return f.searchedWith(trace.question);
+}
+
+function rewriteCount(trace: RetrievalTrace): number {
+  return trace.translation.filter((step) => step.step !== "translation").length;
+}
+
 function boostStep(boost: Draft, trace: RetrievalTrace, f: Flow): Draft {
   const kept = trace.candidates.filter((candidate) => candidate.kept);
   const dropped = trace.candidates.length - kept.length;
   const droppedText = dropped > 0 ? ` ${f.droppedBelow(dropped, trace.min_score.toFixed(2))}` : "";
-  if (trace.mode !== "dense") {
+  const rewritten = rewriteCount(trace) > 0;
+  if (trace.mode !== "dense" || rewritten) {
     return {
       ...boost,
       title: f.mergeTitle(kept.length),
-      line: f.mergeLine,
+      line: rewritten ? f.mergeRewritesLine : f.mergeLine,
       state: "done",
       outcome: `${trace.mode === "hybrid" && trace.section_group_boost > 0 ? f.hybridOrder : ""}${f.kept(kept.length)}${droppedText}`,
     };

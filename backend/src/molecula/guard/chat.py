@@ -9,8 +9,8 @@ from molecula.agent.channel_markers import without_control_tokens
 from molecula.agent.decisions import DecisionModelError
 from molecula.agent.llm import ChatModelError, describe_provider_error
 from molecula.guard.canary import CanaryWatch, PromptLeaked
-from molecula.guard.language import detect_language
 from molecula.guard.safety import REFUSED, InputCheck, InputCheckFailed, Verdict, fixed_answer
+from molecula.rag.language import detect_language
 from molecula.schemas.chat import (
     ChatEvent,
     ChatMessage,

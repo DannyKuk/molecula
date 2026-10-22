@@ -389,6 +389,7 @@ export const de: Messages = {
     },
     translation: "Übersetzung",
     asWritten: "mit der Frage im Wortlaut gesucht",
+    translationFailed: (error) => `Die Übersetzung gab keine Antwort: ${error}`,
     drugs: "Medikamente",
     noDrugNamed: "Kein Medikament genannt, deshalb wurden alle Fachinformationen durchsucht.",
     namedByModel: "Vom Chatmodell beim Aufruf der Suche genannt.",
@@ -608,6 +609,8 @@ export const de: Messages = {
       "Keine dieser Fachinformationen hat den Abschnitt, deshalb wurden auch die anderen Fachinformationen des Medikaments durchsucht.",
     range: (low, high) => `${low} bis ${high}`,
     searchedWith: (question) => `Gesucht mit „${question}“.`,
+    searchedWithRewrites: (question, rewrites) =>
+      `Gesucht mit „${question}“ und ${plural(rewrites, "Umformulierung", "Umformulierungen")} des Chatmodells.`,
     bm25Title: "Die Textstellen nach Stichwörtern bewerten",
     bm25Line:
       "Code ordnet die Textstellen des Medikaments nach den Wörtern, die sie mit der Frage teilen (BM25).",
@@ -622,6 +625,8 @@ export const de: Messages = {
     mergeTitle: (kept) => `Die Rangfolgen zusammenführen und die besten ${kept} behalten`,
     mergeLine:
       "Code führt die Stichwort- und die Embedding-Rangfolge nach Plätzen zusammen (Rank Fusion). Es wird keine KI gefragt.",
+    mergeRewritesLine:
+      "Code führt die Rangfolgen der Frage und ihrer Umformulierungen nach Plätzen zusammen (Rank Fusion). Es wird keine KI gefragt.",
     hybridOrder:
       "Hybride Suche: Die +0.15 haben nur die Reihenfolge der Embedding-Rangfolge geändert. ",
     kept: (count) => `${passages(count)} behalten.`,

@@ -10,6 +10,7 @@ from mcp.shared.memory import create_connected_server_and_client_session
 
 from molecula.rag.filters import FilterExtractor
 from molecula.rag.retriever import LabelRetriever
+from molecula.rag.translation import QueryTranslator
 from molecula.schemas.tools import ToolResult
 from molecula.services.complexes import ComplexService
 from molecula.services.compounds import CompoundService
@@ -29,14 +30,16 @@ def build_tools(
     complexes: ComplexService,
     extractor: FilterExtractor,
     retriever: LabelRetriever,
+    translator: QueryTranslator | None = None,
 ) -> list[BaseTool]:
-    """The agent's tools over the services built at startup."""
+    """The agent's tools over the services built at startup. Without a `translator`, the label
+    search searches each question as written."""
     return [
         resolve_drug_tool(compounds),
         get_properties_tool(compounds),
         get_targets_tool(compounds, targets),
         get_complex_tool(compounds, complexes),
-        search_labels_tool(extractor, retriever),
+        search_labels_tool(extractor, retriever, translator),
         compare_drugs_tool(compounds),
     ]
 

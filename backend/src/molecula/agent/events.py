@@ -37,6 +37,7 @@ class AgentRun:
         self.model_calls = 0
         self.answer_usage = Usage()
         self.label_filter_usage = Usage()
+        self.query_translation_usage = Usage()
         self.calls: dict[str, ToolCall] = {}
         self.sources: dict[tuple[str, str | None, int | None], Source] = {}
         self.answer = ""
@@ -90,6 +91,9 @@ class AgentRun:
             label_filter = artifact.retrieval.filter
             if label_filter is not None and label_filter.extraction_usage is not None:
                 self.label_filter_usage += label_filter.extraction_usage
+            translation = artifact.retrieval.translation
+            if translation is not None and translation.usage is not None:
+                self.query_translation_usage += translation.usage
         if isinstance(artifact, ToolResult):
             for source in artifact.sources():
                 self.sources.setdefault((source.url, source.section, source.ref), source)
@@ -99,7 +103,11 @@ class AgentRun:
         unknown = [ref for ref in cited_refs(self.answer) if ref not in refs]
         yield SourcesEvent(sources=list(self.sources.values()), unknown_refs=unknown)
         yield DoneEvent(
-            usage_by_step={"answer": self.answer_usage, "label_filter": self.label_filter_usage},
+            usage_by_step={
+                "answer": self.answer_usage,
+                "label_filter": self.label_filter_usage,
+                "query_translation": self.query_translation_usage,
+            },
             step_limit_reached=self.model_calls >= self.max_steps,
         )
 
@@ -146,7 +154,8 @@ def retrieval_trace(
     return RetrievalTraceEvent(
         tool_call_id=call_id,
         question=retrieval.question,
-        translation=[],
+        translation=retrieval.translation.steps if retrieval.translation else [],
+        translation_error=retrieval.translation.error if retrieval.translation else None,
         filter=retrieval.filter,
         filter_source="agent" if call and call["args"].get("drug") else "model",
         widened=retrieval.widened,

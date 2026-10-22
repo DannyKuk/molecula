@@ -13,6 +13,7 @@ from molecula.wiring import (
     open_filter_extractor,
     open_label_index,
     open_label_retriever,
+    open_query_translator,
     open_services,
     open_store,
 )
@@ -35,6 +36,7 @@ def open_server(settings: Settings, conn: StoreConnection, *, host: str, port: i
         services,
         open_filter_extractor(settings, chat_model, services.compounds, services.labels),
         open_label_retriever(settings, index, get_embeddings(settings)),
+        open_query_translator(settings, chat_model),
     )
     return build_server(tools, number_sources=True, host=host, port=port)
 
