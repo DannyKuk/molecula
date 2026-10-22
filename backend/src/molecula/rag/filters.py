@@ -5,7 +5,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from molecula import prompts
-from molecula.schemas.compounds import Compound, Resolution
+from molecula.schemas.compounds import Resolution
 from molecula.schemas.decisions import (
     DecisionResponse,
     NoulQuestion,
@@ -171,13 +171,13 @@ class FilterCheck:
         self, name: str, resolution: Resolution, product_type: ProductType | None
     ) -> DrugFilter | None:
         match = resolution.match
-        compound = match.compound if match else self._drug_inside(name)
-        if compound is None:
+        if match is None:
             return None
+        compound = match.compound
         drug_labels = self._labels.get_labels(compound.cid)
         all_labels = drug_labels.labels if drug_labels else []
         labels = all_labels
-        if match is None or match.kind != "name":
+        if match.kind != "name":
             labels = narrowed(labels, lambda label: is_brand_of(name, label, compound.name))
         if product_type:
             labels = narrowed(labels, lambda label: label.product_type == product_type)
@@ -188,14 +188,6 @@ class FilterCheck:
             set_ids=[label.set_id for label in labels],
             narrowed=len(labels) < len(all_labels),
         )
-
-    def _drug_inside(self, name: str) -> Compound | None:
-        """The one supported drug an unknown product name contains: "Fleqsuvy baclofen" is
-        baclofen. A name with two drugs in it stays unknown rather than picking one."""
-        cids = {mention.cid for mention in self._compounds.find_mentions(name)}
-        if len(cids) != 1:
-            return None
-        return self._compounds.get_compound(cids.pop())
 
 
 def narrowed[T](items: list[T], keep: Callable[[T], bool]) -> list[T]:
