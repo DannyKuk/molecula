@@ -247,7 +247,7 @@ function BenchmarkView({ run, instance }: { run: EmbeddingRun; instance: Instanc
                     }}
                     className={cn(
                       "flex min-w-0 flex-col gap-0.5 border-l-2 border-rule-2 pt-1 pl-2.5 text-left hover:border-ink-3 hover:bg-panel",
-                      m.isApp && "border-app-model-foreground hover:border-app-model-foreground",
+                      m.isApp && "border-signal hover:border-signal",
                     )}
                   >
                     <span className="truncate text-[0.8125rem] font-semibold">{m.name}</span>

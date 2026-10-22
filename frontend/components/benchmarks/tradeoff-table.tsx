@@ -14,7 +14,7 @@ const COLUMNS = [
   "Model download",
 ];
 
-const APP_ROW = "bg-[color-mix(in_oklab,var(--app-model)_45%,var(--background))]";
+const APP_ROW = "bg-signal-tint";
 
 function Note({ children }: { children: React.ReactNode }) {
   return <span className="block text-[0.72rem] font-normal text-ink-3">{children}</span>;

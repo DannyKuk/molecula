@@ -1,3 +1,5 @@
+import { cn } from "cn";
+
 import {
   type Benchmark,
   type Model,
@@ -10,7 +12,7 @@ import {
   percent,
 } from "@/lib/embedding-benchmark";
 
-import { AppBadge, Pill } from "./question-view";
+import { AppBadge, TAG } from "./question-view";
 import { ModelRecall } from "./recall-chart";
 
 function missedRank(rank: Rank): string {
@@ -58,10 +60,10 @@ export function ModelView({
 
   return (
     <div className="flex flex-col gap-3.5">
-      <div className="flex flex-wrap items-center gap-1.5">
-        <Pill>{GROUP_NAMES[model.group]}</Pill>
+      <p className="flex flex-wrap gap-x-2">
+        <span className={cn(TAG, "text-ink-3")}>{GROUP_NAMES[model.group]}</span>
         {model.isApp && <AppBadge />}
-      </div>
+      </p>
       <div>
         <p className="text-lg font-semibold tracking-tight">{model.name}</p>
         <p className="text-xs text-ink-2">{model.model}</p>

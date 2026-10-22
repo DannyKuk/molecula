@@ -106,6 +106,6 @@ describe("EmbeddingBenchmark", () => {
     expect(dot.getAttribute("aria-pressed")).toBe("true");
     const sheet = screen.getByRole("dialog");
     expect(within(sheet).getByText("What is lactic acidosis?")).toBeDefined();
-    expect(within(sheet).getByText("Question 3 of 4")).toBeDefined();
+    expect(within(sheet).getByText(/Question 3 of 4/)).toBeDefined();
   });
 });

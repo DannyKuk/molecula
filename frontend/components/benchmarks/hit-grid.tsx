@@ -117,7 +117,12 @@ const GridTable = memo(function GridTable({
           {models.map((m) => (
             <Fragment key={m.label}>
               {separatorBefore(m) && <th className="sticky top-0 z-[2] w-2 bg-background" />}
-              <th className="sticky top-0 z-[2] h-[118px] w-[22px] bg-background p-0 align-bottom">
+              <th
+                className={cn(
+                  "sticky top-0 z-[2] h-[118px] w-[22px] bg-background p-0 align-bottom",
+                  m.isApp && "bg-signal-tint",
+                )}
+              >
                 <button
                   type="button"
                   title={m.name}
@@ -125,11 +130,11 @@ const GridTable = memo(function GridTable({
                   onClick={() => onModel(m.label)}
                   className={cn(
                     "rotate-180 py-1.5 text-[0.72rem] font-medium whitespace-nowrap text-ink-2 [writing-mode:vertical-rl] hover:text-foreground hover:underline",
-                    m.isApp &&
-                      "font-semibold text-app-model-foreground dark:text-app-model-foreground",
+                    m.isApp && "font-semibold text-ink",
                   )}
                 >
                   {m.short}
+                  {m.isApp && <span className="text-signal"> ●</span>}
                 </button>
               </th>
             </Fragment>
@@ -153,7 +158,10 @@ const GridTable = memo(function GridTable({
                     {separatorBefore(m) && <td className="border-t border-rule-2" />}
                     <td
                       title={`${m.name}: ${hits} of ${section.questions.length} in the top 5`}
-                      className="border-t border-rule-2 pt-3 text-center align-bottom text-[10px] text-ink-3 tabular-nums"
+                      className={cn(
+                        "border-t border-rule-2 pt-3 text-center align-bottom text-[10px] text-ink-3 tabular-nums",
+                        m.isApp && "bg-signal-tint",
+                      )}
                     >
                       {hits}
                     </td>
@@ -167,8 +175,10 @@ const GridTable = memo(function GridTable({
                 <tr key={q.index} className="group/row">
                   <td
                     className={cn(
-                      "sticky left-0 z-[1] bg-background group-hover/row:bg-panel",
-                      rowSelected && "shadow-[inset_3px_0_0_var(--signal)]",
+                      "sticky left-0 z-[1] bg-background",
+                      rowSelected
+                        ? "bg-signal-tint shadow-[inset_3px_0_0_var(--signal)]"
+                        : "group-hover/row:bg-panel",
                     )}
                   >
                     <button
@@ -190,8 +200,10 @@ const GridTable = memo(function GridTable({
                         {separatorBefore(m) && <td />}
                         <td
                           className={cn(
-                            "h-5 w-[22px] p-0 group-hover/row:bg-panel",
-                            m.isApp && "bg-app-model/55",
+                            "h-5 w-[22px] p-0",
+                            rowSelected && m.isApp && "bg-signal-soft",
+                            rowSelected !== m.isApp && "bg-signal-tint",
+                            !rowSelected && !m.isApp && "group-hover/row:bg-panel",
                           )}
                         >
                           <button
