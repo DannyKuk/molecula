@@ -1,6 +1,8 @@
 # Query translation and multi-query, 2026-10-16
 
-> **Answer:** Neither is built. Translating a German question to English finds the answering label passage for 3 more of 94 questions (recall@5 0.80 → 0.83, English 0.85), at about 4 s of gpt-oss-20b per search. Multi-query (the question plus 3 rewrites, merged) loses more questions than it gains (0.85 → 0.80). Asking the agent to write its search question in English costs nothing, but gpt-oss-20b still wrote 6 of 16 searches in German.
+> **Answer:** Neither was worth building on 2026-10-16. Translating a German question to English finds the answering label passage for 3 more of 94 questions (recall@5 0.80 → 0.83, English 0.85), at about 4 s of gpt-oss-20b per search. Multi-query (the question plus 3 rewrites, merged) loses more questions than it gains (0.85 → 0.80). Asking the agent to write its search question in English costs nothing, but gpt-oss-20b still wrote 6 of 16 searches in German.
+>
+> Since #446 both steps are built as the setting `QUERY_TRANSLATION` (`off`, `translate`, `multi_query`), off by default for the reasons measured here ([label search](../design/search.md)).
 
 #114 asked whether two query-translation steps make the label search find the answer more often, and to build a step only if a measurement shows it helps. Name recognition, the third step of #14, is built in the filter (#113). The baseline is `main` at 74aebb0.
 

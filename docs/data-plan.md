@@ -21,7 +21,7 @@ Known limits, and how the app handles them:
 | Feature | Data | Status |
 |---|---|---|
 | Knowledge base: embeddings, chunking, similarity search | openFDA labels (Rx + OTC), section-aware chunks | verified, built (#87, #88) |
-| Query translation | brand / non-US name → US generic; German → English; multi-query | names built ([name resolution](decisions/name-resolution.md)); German → English and multi-query measured and not built (#114) |
+| Query translation | brand / non-US name → US generic; German → English; multi-query | names built ([name resolution](decisions/name-resolution.md)); German → English and multi-query built as the setting `QUERY_TRANSLATION`, off by default because they gained 3 and lost 5 of 94 questions (#114, #446) |
 | Structured retrieval | chunk metadata (`cid`, `substance`, `product_type`, `section_group` and more, §5.5) with self-query filters; SQL tables for properties and targets | metadata verified in every label; built: filtered to the drug, ranked by section group (#13, #112) |
 | Agent tools | PubChem (properties, 3D), ChEMBL (mechanism → target), RCSB (complex), own contact calculation | verified, built (#107, #108, #109) |
 | Safety | "not medical advice" under the question box; `overdosage` indexed as sensitive, answers put emergency help first; no personal dosing | built (§5.5, #92, #100, #148) |
