@@ -33,7 +33,7 @@ Closes #
 ## Tested
 
 - [ ] `uv run ruff check . && uv run pytest` (in `backend/`)
-- [ ] `npm run format:check && npm run lint && npm test && npm run build` (in `frontend/`)
+- [ ] `npm run format:check && npm run lint && npm run typecheck && npm test && npm run build` (in `frontend/`)
 - [ ] `docker compose up --build`: <!-- what you asked in the chat and what happened -->
 - [ ] Evals: <!-- suite, scores before → after, or "not needed" -->
 

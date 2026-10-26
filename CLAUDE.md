@@ -113,7 +113,7 @@ Use subagents when work is independent and the result can be checked:
 
 ## Scripts
 
-- `scripts/dev.ps1 start|stop|status [-Port N]`: backend (port N + 5000) and `next dev` (port N), wired to each other; test pairs use `-Port 3001` or higher, since Danny runs 3000/8000. Stop what you started; logs in `.dev/*.log`.
-- `scripts/worktree.sh <branch> [--remove]`: a worktree under `.claude/worktrees/` with `.env` (DATA_DIR at main's `data/`), `npm ci` and `uv sync` done.
-- `scripts/board.sh <issue#> <Backlog|Ready|In progress|In review>`: sets the issue's Status on the board.
-- `scripts/check_docs.py` (`uv run --project backend python scripts/check_docs.py`): broken relative links and "not built yet" phrases in `docs/` and the README.
+- `scripts/dev.ps1 start|stop|status [-Port N]`: backend on N + 5000 and `next dev` on N; test pairs use `-Port 3001`+, Danny runs 3000/8000. Stop what you started; logs in `.dev/*.log`.
+- `scripts/worktree.sh <branch> [--remove]`: a worktree under `.claude/worktrees/` with `.env`, `npm ci` and `uv sync` done.
+- `scripts/board.sh <issue#> <Backlog|Ready|In progress|In review>`: sets the issue's board Status.
+- `uv run --project backend python scripts/check_docs.py`: broken links and "not built yet" phrases in docs.

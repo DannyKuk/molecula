@@ -57,13 +57,31 @@ function Start-Pair {
         }
     }
 
-    # The root .env addresses LM Studio from inside Docker; this runs on the host.
-    $env:LOCAL_LLM_BASE_URL = "http://localhost:1234/v1"
-    $env:CORS_ORIGINS = "[`"http://localhost:$Port`"]"
-    $env:NEXT_PUBLIC_API_URL = "http://localhost:$backendPort"
-    # A dev backend must not rewrite the store with the nightly label update.
-    $env:LABEL_UPDATE_SCHEDULE = "0"
+    $childEnv = @{
+        # The root .env addresses LM Studio from inside Docker; this runs on the host.
+        LOCAL_LLM_BASE_URL    = "http://localhost:1234/v1"
+        CORS_ORIGINS          = "[`"http://localhost:$Port`"]"
+        NEXT_PUBLIC_API_URL   = "http://localhost:$backendPort"
+        # A dev backend must not rewrite the store with the nightly label update.
+        LABEL_UPDATE_SCHEDULE = "0"
+    }
+    $callerEnv = @{}
+    foreach ($name in $childEnv.Keys) {
+        $callerEnv[$name] = [Environment]::GetEnvironmentVariable($name, "Process")
+        [Environment]::SetEnvironmentVariable($name, $childEnv[$name], "Process")
+    }
+    try {
+        Start-Services
+    } finally {
+        # The children have their copy; the caller's shell gets its own values back.
+        foreach ($name in $callerEnv.Keys) {
+            [Environment]::SetEnvironmentVariable($name, $callerEnv[$name], "Process")
+        }
+    }
+    Wait-Services
+}
 
+function Start-Services {
     $commands = @{
         backend  = @{
             File = "uv"
@@ -86,7 +104,9 @@ function Start-Pair {
         Set-Content -Path (Get-PidFile $service) -Value $process.Id -Encoding ascii
         Write-Output "$($service.Name): started pid $($process.Id) for port $($service.Port), logs in .dev\$($service.Name)-$($service.Port).log and .err.log"
     }
+}
 
+function Wait-Services {
     $deadline = (Get-Date).AddSeconds(180)
     foreach ($service in Get-Services) {
         while (-not (Get-Listener $service.Port) -and (Get-Date) -lt $deadline) {
