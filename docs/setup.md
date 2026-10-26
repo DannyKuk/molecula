@@ -25,8 +25,10 @@ Frontend development needs Node.js 22. The dev server expects the backend on htt
 cd frontend
 npm ci
 npm run dev                       # http://localhost:3000
-npm run format:check && npm run lint && npm test && npm run build
+npm run format:check && npm run lint && npm run typecheck && npm test && npm run build
 ```
+
+`scripts/dev.ps1 start` starts both on Windows, with pid and log files in `.dev/` (`stop` and `status` too; `-Port 3001` runs a second pair on 3001 and 8001). `git config core.hooksPath .githooks` turns on the pre-commit hook, which runs the format, lint and type checks and `scripts/check_docs.py`.
 
 ## Label update
 

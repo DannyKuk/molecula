@@ -33,6 +33,8 @@ backend/
 frontend/          Next.js app
 data/              curated inputs (scope.yaml, hero_set.yaml) and the built store (build/)
 docs/              architecture, setup, data plan, design/, decisions/, evals/, spikes/
+scripts/           dev and repo helpers (see "Scripts")
+.githooks/         the pre-commit hook
 docker-compose.yaml
 ```
 
@@ -50,7 +52,8 @@ Dependencies point one way: `api` → `guard` → `agent` → `tools` → `rag` 
 - Run `uv run pytest` in `backend/`. Every service, source client, tool, chunker, guard rule and route gets tests.
 - **Tests never touch the network.** Source clients are tested against recorded responses in `tests/fixtures/`; LLM calls use fake models. Real-model checks belong in `evals/`.
 - Test the behaviour and the edge cases (salt → parent, unknown name, 503 retry, empty retrieval, prompt injection in retrieved text), not the implementation.
-- Frontend: `npm run format:check`, `npm run lint`, `npm test` and `npm run build` must pass; component tests where there is logic.
+- Frontend: `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` must pass; component tests where there is logic.
+- The pre-commit hook runs ruff, prettier, eslint, typecheck and `scripts/check_docs.py`; enable it once per clone with `git config core.hooksPath .githooks`.
 
 ## Code style
 
@@ -58,7 +61,6 @@ Dependencies point one way: `api` → `guard` → `agent` → `tools` → `rag` 
 - Short docstrings on public functions whose name doesn't say everything. Tool docstrings are prompts and are written for the model.
 - Type hints everywhere; pydantic models at every boundary (API, tools, MCP, source responses).
 - Errors: source clients raise typed errors; services turn them into results the agent can explain. No bare `except`.
-- Match the surrounding code: naming, error handling, test layout.
 
 ## How work flows
 
@@ -108,4 +110,10 @@ Use subagents when work is independent and the result can be checked:
 
 - Commit messages: one plain sentence saying what changed and why, no type prefixes.
 - **No `Co-Authored-By` or other AI attribution lines** in commits or PRs.
-- Write PRs, issues and docs in plain, direct English.
+
+## Scripts
+
+- `scripts/dev.ps1 start|stop|status [-Port N]`: backend (port N + 5000) and `next dev` (port N), wired to each other; test pairs use `-Port 3001` or higher, since Danny runs 3000/8000. Stop what you started; logs in `.dev/*.log`.
+- `scripts/worktree.sh <branch> [--remove]`: a worktree under `.claude/worktrees/` with `.env` (DATA_DIR at main's `data/`), `npm ci` and `uv sync` done.
+- `scripts/board.sh <issue#> <Backlog|Ready|In progress|In review>`: sets the issue's Status on the board.
+- `scripts/check_docs.py` (`uv run --project backend python scripts/check_docs.py`): broken relative links and "not built yet" phrases in `docs/` and the README.

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# The fast checks before every commit. Enable once per clone: git config core.hooksPath .githooks
+# The backend and frontend checks run only when the commit touches that folder; the docs check always.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+staged=$(git diff --cached --name-only)
+
+if grep -q '^backend/' <<<"$staged"; then
+  (cd backend && uv run ruff format --check . && uv run ruff check .)
+fi
+
+if grep -q '^frontend/' <<<"$staged"; then
+  (cd frontend && npm run format:check && npm run lint && npm run typecheck)
+fi
+
+uv run --project backend python scripts/check_docs.py

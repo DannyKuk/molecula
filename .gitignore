@@ -45,6 +45,8 @@ ollama/
 
 # Claude Code
 .claude/worktrees/
+# Pid and log files of scripts/dev.ps1
+.dev/
 .superpowers/
 
 # Launch video builds from the /brag skill
