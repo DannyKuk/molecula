@@ -119,7 +119,7 @@ One line each; the full reasoning, numbers and issues are on the design page nam
 **Running and deploying** ([details](design/operations.md))
 - **`.env.example` is filled in for a new machine, with working values**, and shows every other default as a commented line.
 - **`POST /chat` has a request limit per client and a daily cost limit, on by default.**
-- **A deployed app sits behind a Clerk login in waitlist mode** and runs on Coolify from a compose file of its own ([setup](setup.md)).
+- **A deployed app sits behind a Clerk login in waitlist mode** and runs on Coolify from a compose file of its own ([setup](setup.md)). A visitor who isn't signed in gets a landing page with the live 3D view ([the app](design/app.md#the-other-pages)).
 - **Each chat request goes into a usage log with metadata only**, which feeds the dashboard.
 
 ## Repository map

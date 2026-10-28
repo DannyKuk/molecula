@@ -65,3 +65,21 @@ describe("fetchWithLogin", () => {
     expect(fetchMock).toHaveBeenCalledWith(URL, {});
   });
 });
+
+describe("isPublicPage", () => {
+  it("lets a visitor who isn't signed in open the landing page and the login's pages", async () => {
+    const { isPublicPage } = await loadLogin("pk_test_x");
+
+    for (const page of ["/about", "/sign-in", "/sign-in/factor-one", "/sign-up", "/waitlist"]) {
+      expect(isPublicPage(page)).toBe(true);
+    }
+  });
+
+  it("keeps the app's pages, and names that only start like a public one, behind the login", async () => {
+    const { isPublicPage } = await loadLogin("pk_test_x");
+
+    for (const page of ["/", "/drugs", "/dashboard", "/about-us", "/sign-in-later"]) {
+      expect(isPublicPage(page)).toBe(false);
+    }
+  });
+});

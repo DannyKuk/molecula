@@ -256,4 +256,29 @@ describe("StructureViewer", () => {
 
     await waitFor(() => expect(onError).toHaveBeenCalledOnce());
   });
+
+  it("leaves the wheel and a finger to the page with scrollsPage, and a mouse to the view", () => {
+    const view = render(
+      <StructureViewer data={complex} mode="site" label="View" onError={vi.fn()} scrollsPage />,
+    );
+    const canvas = document.createElement("canvas");
+    (view.container.firstChild as HTMLElement).append(canvas);
+    const reached = vi.fn();
+    for (const type of ["wheel", "touchmove", "pointerdown"])
+      canvas.addEventListener(type, reached);
+
+    const wheel = new Event("wheel", { bubbles: true, cancelable: true });
+    canvas.dispatchEvent(wheel);
+    canvas.dispatchEvent(new Event("touchmove", { bubbles: true }));
+    canvas.dispatchEvent(pointerDown("touch"));
+    expect(reached).not.toHaveBeenCalled();
+    expect(wheel.defaultPrevented).toBe(false);
+
+    canvas.dispatchEvent(pointerDown("mouse"));
+    expect(reached).toHaveBeenCalledOnce();
+  });
 });
+
+function pointerDown(pointerType: string): Event {
+  return Object.assign(new Event("pointerdown", { bubbles: true }), { pointerType });
+}
