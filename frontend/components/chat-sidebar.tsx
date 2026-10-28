@@ -36,6 +36,7 @@ import { useSidebarExpanded } from "@/lib/use-sidebar-expanded";
 import { Brand, BrandMark } from "./brand-mark";
 import { HistoryRow } from "./history-row";
 import { LanguageSwitch } from "./language-switch";
+import { LegalLinks } from "./legal-links";
 import { UserMenu } from "./login";
 import { McpDialog } from "./mcp-dialog";
 import { ModelSettings } from "./model-settings";
@@ -295,7 +296,7 @@ export function ChatDrawer(props: ChatListProps) {
 /**
  * "New chat", the links to the other pages, the bookmarked chats, the others by day, newest
  * first, what to know about where the chats are kept, the MCP server guide when `withMcp`, the
- * theme, the language and the settings. The current page is outlined.
+ * theme, the language, the settings and the legal notice. The current page is outlined.
  */
 function ChatList({
   onNew,
@@ -356,6 +357,7 @@ function ChatList({
           <LanguageSwitch className="shrink-0" />
           <UserMenu />
         </div>
+        <LegalLinks className="px-2 pt-1" />
       </div>
     </>
   );

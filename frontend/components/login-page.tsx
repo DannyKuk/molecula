@@ -4,6 +4,7 @@ import { type ReactNode, Suspense } from "react";
 import { LOGIN_ON } from "@/lib/login";
 
 import { Brand } from "./brand-mark";
+import { LegalLinks } from "./legal-links";
 
 /** A page of the login (sign-in, sign-up, waitlist): Clerk's form in a narrow column under the
  * app's name. Not found while the login is off. */
@@ -15,6 +16,7 @@ export function LoginPage({ children }: { children: ReactNode }) {
         <Brand className="mb-8 text-[17px]" />
         {/* Clerk's forms read the URL, which is only known when the page is requested. */}
         <Suspense>{children}</Suspense>
+        <LegalLinks className="mt-10" />
       </div>
     </main>
   );

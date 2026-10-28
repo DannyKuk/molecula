@@ -669,6 +669,18 @@ describe("Chat sidebar", () => {
     expect(expandSidebar().getByText("Molecula")).toBeDefined();
   });
 
+  it("links the legal notice and the privacy policy at the foot of the list", async () => {
+    await openPage(memoryHistory().history);
+
+    const list = expandSidebar();
+    expect(list.getByRole("link", { name: "Legal notice" }).getAttribute("href")).toBe(
+      "https://dkwebsite.de/imprint",
+    );
+    expect(list.getByRole("link", { name: "Privacy" }).getAttribute("href")).toBe(
+      "https://dkwebsite.de/privacy",
+    );
+  });
+
   it("opens the list as a drawer on a phone and closes it when a chat is picked", async () => {
     const stream = stubChatStream();
     await openPage(memoryHistory().history);

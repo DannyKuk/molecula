@@ -10,6 +10,7 @@ import { useMediaQuery } from "@/lib/use-media-query";
 
 import { Brand } from "../brand-mark";
 import { LanguageSwitch } from "../language-switch";
+import { LegalLinks } from "../legal-links";
 import { ThemeSwitch } from "../theme-switch";
 import { LandingScreen } from "./landing-screen";
 import { QuestionTrace } from "./question-trace";
@@ -120,7 +121,10 @@ export function LandingPage() {
             <ThemeSwitch />
           </div>
         </div>
-        <p className="pb-12 text-sm text-ink-3">{l.notAdvice}</p>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 pb-12">
+          <p className="text-sm text-ink-3">{l.notAdvice}</p>
+          <LegalLinks className="text-sm" />
+        </div>
       </footer>
     </div>
   );
