@@ -5,7 +5,7 @@ export const LOGIN_ON = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 /** The landing page, which `/` shows a visitor who isn't signed in (#455). */
 export const LANDING_PAGE = "/about";
 
-const LOGIN_PAGES = ["/sign-in", "/sign-up", "/waitlist"];
+const LOGIN_PAGES = ["/sign-in", "/sign-up"];
 
 /** Whether a visitor who isn't signed in may open `pathname`: the landing page and the login's
  * own pages, whose catch-all routes go deeper. */

@@ -54,15 +54,15 @@ The label search can translate its queries before it searches (#446). `QUERY_TRA
 
 ## Login for a deployed app
 
-A deployed Molecula can sit behind a [Clerk](https://clerk.com) login, so only testers you approve use it, on your OpenRouter key ([#343](https://github.com/DannyKuk/molecula/issues/343)). Without the keys below the login is off, as for local development and the evals.
+A deployed Molecula can sit behind a [Clerk](https://clerk.com) login, so only testers you invite use it, on your OpenRouter key ([#343](https://github.com/DannyKuk/molecula/issues/343)). Without the keys below the login is off, as for local development and the evals.
 
-1. Create an application in the [Clerk Dashboard](https://dashboard.clerk.com) with email sign-in. On its Restrictions page set the sign-up mode to **Waitlist**: a new person can only join the waitlist, and nobody gets in until you approve them.
+1. Create an application in the [Clerk Dashboard](https://dashboard.clerk.com) with email sign-in. On its Restrictions page set the sign-up mode to **Restricted**: only people you invite can create an account ([#458](https://github.com/DannyKuk/molecula/issues/458)).
 2. Put three values in `.env`. From API keys: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` for the frontend, and the **JWKS Public Key** as `CLERK_JWT_KEY` for the backend, on one line in double quotes. Set `CORS_ORIGINS` to the frontend's address, e.g. `["https://molecula.example.com"]`: the backend accepts only tokens issued for those sites.
 3. Rebuild the frontend (`docker compose up --build`): the publishable key is built into the page, so each Clerk instance (development or production) needs its own build.
 
 For production, Clerk needs a domain you own: `npx clerk@latest deploy` creates the production instance, and Clerk's Domains page lists the DNS records to add (on Cloudflare, set them to "DNS only"). The production keys replace the development ones in `.env`.
 
-**Approving people:** a tester opens the app, chooses "Join waitlist" and enters their email. In the Clerk Dashboard, Users → Waitlist lists them; **Invite** sends them an email to finish signing up, **Revoke** turns them down. A user is removed under Users.
+**Inviting people:** in the Clerk Dashboard, Users → Invitations → **Invite** sends a tester an email whose link opens the sign-up form, where they set their password. A user is removed under Users.
 
 With the login on, every page needs a signed-in user, and every backend route but `/health` answers 401 without a valid session token. The backend checks the token with the public key, without a call to Clerk, so the check also works with `OFFLINE=1`. The chat's request limits count per user instead of per IP. The MCP server below has no login: keep its port off the internet.
 

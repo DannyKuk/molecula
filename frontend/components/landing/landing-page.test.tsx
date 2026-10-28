@@ -50,13 +50,12 @@ describe("LandingPage", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it("sends a visitor to the waitlist or the sign-in while the login is on", async () => {
+  it("sends a visitor to the sign-in while the login is on, with no way to ask for access", async () => {
     await openLanding({ login: true });
 
-    expect(screen.getByRole("link", { name: "Request access" }).getAttribute("href")).toBe(
-      "/waitlist",
-    );
-    expect(screen.getByRole("link", { name: "Sign in" }).getAttribute("href")).toBe("/sign-in");
+    const signIn = screen.getAllByRole("link", { name: "Sign in" });
+    expect(signIn.map((link) => link.getAttribute("href"))).toEqual(["/sign-in"]);
+    expect(screen.queryByRole("link", { name: "Request access" })).toBeNull();
   });
 
   it("leads straight to the chat while the login is off", async () => {
@@ -64,7 +63,6 @@ describe("LandingPage", () => {
 
     expect(screen.getByRole("link", { name: "Open the chat" }).getAttribute("href")).toBe("/");
     expect(screen.queryByRole("link", { name: "Sign in" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Request access" })).toBeNull();
   });
 
   it("follows the recorded question through its four steps", async () => {
@@ -90,7 +88,7 @@ describe("LandingPage", () => {
     expect(
       screen.getByRole("heading", { name: /How does imatinib fight leukemia\?/ }),
     ).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Zugang anfragen" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Anmelden" })).toBeTruthy();
   });
 
   it("links dkwebsite.de's legal notice and privacy policy", async () => {

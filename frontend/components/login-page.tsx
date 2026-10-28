@@ -6,7 +6,7 @@ import { LOGIN_ON } from "@/lib/login";
 import { Brand } from "./brand-mark";
 import { LegalLinks } from "./legal-links";
 
-/** A page of the login (sign-in, sign-up, waitlist): Clerk's form in a narrow column under the
+/** A page of the login (sign-in, sign-up): Clerk's form in a narrow column under the
  * app's name. Not found while the login is off. */
 export function LoginPage({ children }: { children: ReactNode }) {
   if (!LOGIN_ON) notFound();

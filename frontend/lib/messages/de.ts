@@ -863,11 +863,11 @@ export const de: Messages = {
       "Vor der Suche vermutet das Chatmodell, welcher Teil der Fachinformation die Antwort enthält. Der Embedder bewertet die Textstellen nach Bedeutung, und unser Code gibt dem vermuteten Teil einen festen Vorsprung von +0.15, bevor er die besten 5 behält. Die 0.15 haben wir mit Tests an 94 Fragen mit bekannter Antwort gewählt.",
   },
   landing: {
-    nav: { how: "So funktioniert es", code: "Code", signIn: "Anmelden" },
+    nav: { how: "So funktioniert es", code: "Code" },
     headline: "Fragen Sie, wie ein Medikament wirkt.",
     accent: "Sehen Sie, wie es bindet.",
     lead: "Molecula antwortet aus den FDA-Fachinformationen, belegt jede Textstelle, die es nutzt, und zeigt den Wirkstoff in der Tasche seines Zielproteins. Die 3D-Ansicht auf diesem Bildschirm ist live.",
-    requestAccess: "Zugang anfragen",
+    signIn: "Anmelden",
     openChat: "Zum Chat",
     screen: {
       title: "Imatinib in ABL1 (BCR-ABL)",
@@ -906,7 +906,7 @@ export const de: Messages = {
       label: "Das Launch-Video von Molecula",
       caption:
         "Ein Wirkstoff findet sein Ziel, eine Frage in der App, ihre Schritte, die Quellenprüfung und dieselben Werkzeuge in einem KI-Assistenten.",
-      meta: "28 s · der Chat ist für freigeschaltete Tester offen",
+      meta: "28 s · der Chat ist für eingeladene Tester offen",
     },
     builtWith: "Gebaut mit",
     builtBy: "Gebaut von",

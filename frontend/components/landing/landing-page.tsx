@@ -60,13 +60,13 @@ export function LandingPage() {
         <div className="flex flex-wrap gap-2.5">
           {/* Without the login the chat is open, as in development, so the page leads straight to it. */}
           <Link
-            href={LOGIN_ON ? "/waitlist" : "/"}
+            href={LOGIN_ON ? "/sign-in" : "/"}
             className={cn(
               BUTTON,
               "bg-signal text-white hover:brightness-95 focus-visible:outline-signal",
             )}
           >
-            {LOGIN_ON ? l.requestAccess : l.openChat}
+            {LOGIN_ON ? l.signIn : l.openChat}
           </Link>
           <a href="#how" className={cn(BUTTON, ON_SCREEN)}>
             {l.nav.how} ↓
@@ -144,11 +144,6 @@ function Nav() {
         <a href={REPO_URL} className="hidden hover:text-screen-ink sm:inline">
           {l.nav.code}
         </a>
-        {LOGIN_ON && (
-          <Link href="/sign-in" className={cn(BUTTON, ON_SCREEN)}>
-            {l.nav.signIn}
-          </Link>
-        )}
       </div>
     </nav>
   );

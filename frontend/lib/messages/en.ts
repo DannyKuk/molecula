@@ -839,11 +839,11 @@ export const en = {
       "Before searching, the chat model guesses which part of the label holds the answer. The embedder scores the passages by meaning, and our code gives the guessed part a fixed +0.15 head start before keeping the top 5. We picked 0.15 by testing on 94 questions with known answers.",
   },
   landing: {
-    nav: { how: "How it works", code: "Code", signIn: "Sign in" },
+    nav: { how: "How it works", code: "Code" },
     headline: "Ask how a medicine works.",
     accent: "Watch it bind.",
     lead: "Molecula answers from FDA drug labels, cites every passage it used, and shows the drug in the pocket of its target protein. The 3D view on this screen is live.",
-    requestAccess: "Request access",
+    signIn: "Sign in",
     openChat: "Open the chat",
     screen: {
       title: "Imatinib in ABL1 (BCR-ABL)",
@@ -881,7 +881,7 @@ export const en = {
       label: "Molecula's launch video",
       caption:
         "A drug finding its target, a question in the app, its steps, the source check and the same tools in an AI assistant.",
-      meta: "28 s · the chat is open to approved testers",
+      meta: "28 s · the chat is open to invited testers",
     },
     builtWith: "Built with",
     builtBy: "Built by",
