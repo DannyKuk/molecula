@@ -861,6 +861,58 @@ export const de: Messages = {
     sentence:
       "Vor der Suche vermutet das Chatmodell, welcher Teil der Fachinformation die Antwort enthält. Der Embedder bewertet die Textstellen nach Bedeutung, und unser Code gibt dem vermuteten Teil einen festen Vorsprung von +0.15, bevor er die besten 5 behält. Die 0.15 haben wir mit Tests an 94 Fragen mit bekannter Antwort gewählt.",
   },
+  landing: {
+    nav: { how: "So funktioniert es", code: "Code", signIn: "Anmelden" },
+    headline: "Fragen Sie, wie ein Medikament wirkt.",
+    accent: "Sehen Sie, wie es bindet.",
+    lead: "Molecula antwortet aus den FDA-Fachinformationen, belegt jede Textstelle, die es nutzt, und zeigt den Wirkstoff in der Tasche seines Zielproteins. Die 3D-Ansicht auf diesem Bildschirm ist live.",
+    requestAccess: "Zugang anfragen",
+    openChat: "Zum Chat",
+    screen: {
+      title: "Imatinib in ABL1 (BCR-ABL)",
+      subtitle: "PDB 2HYY · Mensch · 2,4 Å",
+      label: "Imatinib, ein Leukämie-Medikament, in der Tasche seines Zielproteins ABL1, in 3D",
+      drag: "Ziehen zum Drehen",
+    },
+    oneQuestion: "Eine Frage, von Anfang bis Ende",
+    recorded: "Aufgezeichnet mit gpt-oss-20b, offline",
+    steps: {
+      guard: {
+        title: "Darf das beantwortet werden?",
+        text: "Jede Nachricht wird eingeordnet, bevor der Agent startet. Bei einer Überdosis kommt zuerst der Notruf; persönliche Dosierungsberatung, eine tödliche Dosis oder eine Synthese bekommen eine feste Antwort.",
+      },
+      agent: {
+        title: "Nachschlagen statt raten",
+        text: "Der Agent durchsucht die FDA-Fachinformationen von 133 Wirkstoffen in einem lokalen Speicher nach Bedeutung, mit Vorsprung für den Abschnitt, der zur Frage passt. Fünf weitere Werkzeuge liefern Eigenschaften, Zielproteine, Vergleiche und die 3D-Struktur.",
+      },
+      answer: {
+        title: "Jede Aussage belegen",
+        text: "Jeder Satz verweist auf die Textstelle, aus der er stammt, und ein Klick öffnet sie. Die Antwort kommt in der Sprache der Frage.",
+      },
+      check: {
+        title: "Markieren, was nicht belegt ist",
+        text: "Nach der Antwort wird jede Aussage mit den Textstellen abgeglichen, die sie zitiert, und was diese nicht stützen, wird markiert.",
+      },
+    },
+    numbers: {
+      drugs: "Wirkstoffe, aus PubChem, ChEMBL, RCSB PDB und openFDA",
+      complexes: "Wirkstoff-Zielprotein-Strukturen, jede von Hand geprüft",
+      safety:
+        "Sicherheits-Testnachrichten, die das gehostete Setup sicher beantwortet, von Hand bewertet",
+      offline: "Anfragen, die im Offline-Modus den Rechner verlassen",
+    },
+    video: {
+      label: "Das Launch-Video von Molecula",
+      caption:
+        "Ein Wirkstoff findet sein Ziel, eine Frage in der App, ihre Schritte, die Quellenprüfung und dieselben Werkzeuge in einem KI-Assistenten.",
+      meta: "28 s · der Chat ist für freigeschaltete Tester offen",
+    },
+    builtWith: "Gebaut mit",
+    builtBy: "Gebaut von",
+    architecture: "Architektur",
+    notAdvice:
+      "Keine medizinische Beratung. Molecula erklärt, wie Medikamente wirken; es gibt keine persönliche Dosierungs- oder Behandlungsberatung.",
+  },
 };
 
 function plural(count: number, one: string, many: string): string {

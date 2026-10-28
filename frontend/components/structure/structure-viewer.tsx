@@ -21,11 +21,15 @@ export type StructureViewerHandle = { replay(): void; reset(): void };
 // wide so that normal scrolling doesn't build views again all the time.
 const NEARBY = "200% 0px";
 
+// 3Dmol zooms on the wheel and turns on a touch drag, and both keep the page from scrolling.
+const SCROLL_EVENTS = ["wheel", "touchstart", "touchmove", "pointerdown"] as const;
+
 /**
  * The 3D canvas. 3Dmol is bundled with the app, not fetched from a CDN, so the view works offline;
  * it is loaded only when a view first comes near the screen. The drug builds itself up, and in a
  * complex binds, the first time half of the view is on screen, and a view off screen stops turning. Far off screen the view
- * is closed, and it is built again with the same mode and camera when it comes back.
+ * is closed, and it is built again with the same mode and camera when it comes back. With
+ * `scrollsPage` the wheel and a finger scroll the page instead of zooming or turning the view.
  */
 export function StructureViewer({
   data,
@@ -33,6 +37,7 @@ export function StructureViewer({
   label,
   onError,
   className,
+  scrollsPage = false,
   ref,
 }: {
   data: SceneData;
@@ -41,6 +46,7 @@ export function StructureViewer({
   /** Called when the view can't be drawn, e.g. without WebGL. */
   onError: () => void;
   className?: string;
+  scrollsPage?: boolean;
   ref?: Ref<StructureViewerHandle>;
 }) {
   const container = useRef<HTMLDivElement>(null);
@@ -117,6 +123,21 @@ export function StructureViewer({
       scene.current = null;
     };
   }, [data, dark, reduceMotion, near]);
+
+  useEffect(() => {
+    if (!scrollsPage) return;
+    const element = container.current!;
+    // Stopped on the way down, the events never reach 3Dmol's canvas, which would cancel them.
+    // A touch's pointerdown would also count as grabbing the view and end the binding at once.
+    const pass = (event: Event) => {
+      const mouse = event.type === "pointerdown" && (event as PointerEvent).pointerType !== "touch";
+      if (!mouse) event.stopPropagation();
+    };
+    for (const type of SCROLL_EVENTS) element.addEventListener(type, pass, { capture: true });
+    return () => {
+      for (const type of SCROLL_EVENTS) element.removeEventListener(type, pass, { capture: true });
+    };
+  }, [scrollsPage]);
 
   useEffect(() => {
     const previous = shownMode.current;

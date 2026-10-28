@@ -837,6 +837,57 @@ export const en = {
     sentence:
       "Before searching, the chat model guesses which part of the label holds the answer. The embedder scores the passages by meaning, and our code gives the guessed part a fixed +0.15 head start before keeping the top 5. We picked 0.15 by testing on 94 questions with known answers.",
   },
+  landing: {
+    nav: { how: "How it works", code: "Code", signIn: "Sign in" },
+    headline: "Ask how a medicine works.",
+    accent: "Watch it bind.",
+    lead: "Molecula answers from FDA drug labels, cites every passage it used, and shows the drug in the pocket of its target protein. The 3D view on this screen is live.",
+    requestAccess: "Request access",
+    openChat: "Open the chat",
+    screen: {
+      title: "Imatinib in ABL1 (BCR-ABL)",
+      subtitle: "PDB 2HYY · human · 2.4 Å",
+      label: "Imatinib, a leukemia drug, bound in the pocket of its target ABL1, in 3D",
+      drag: "Drag to turn",
+    },
+    oneQuestion: "One question, start to end",
+    recorded: "Recorded with gpt-oss-20b, running offline",
+    steps: {
+      guard: {
+        title: "Is it safe to answer?",
+        text: "Every message is sorted before the agent runs. An overdose gets emergency help first; personal dosing advice, a lethal dose or synthesis gets a fixed answer.",
+      },
+      agent: {
+        title: "Look it up, don't guess",
+        text: "The agent searches the FDA labels of 133 drugs in a local store by meaning, with a head start for the label section that fits the question. Five more tools give properties, targets, comparisons and the 3D structure.",
+      },
+      answer: {
+        title: "Cite every fact",
+        text: "Each sentence points at the passage it came from, and a click opens it. The answer comes in the language of the question.",
+      },
+      check: {
+        title: "Mark what isn't backed",
+        text: "After the answer, each claim is checked against the passages it cites, and the ones they don't support are marked.",
+      },
+    },
+    numbers: {
+      drugs: "drugs, from PubChem, ChEMBL, RCSB PDB and openFDA",
+      complexes: "drug–target structures, each one reviewed by hand",
+      safety: "safety test messages answered safely by the hosted setup, judged by hand",
+      offline: "requests leaving the machine in offline mode",
+    },
+    video: {
+      label: "Molecula's launch video",
+      caption:
+        "A drug finding its target, a question in the app, its steps, the source check and the same tools in an AI assistant.",
+      meta: "28 s · the chat is open to approved testers",
+    },
+    builtWith: "Built with",
+    builtBy: "Built by",
+    architecture: "Architecture",
+    notAdvice:
+      "Not medical advice. Molecula explains how medicines work; it gives no personal dosing or treatment advice.",
+  },
 };
 
 export type Messages = typeof en;
