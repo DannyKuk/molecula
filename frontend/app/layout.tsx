@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter_Tight, JetBrains_Mono } from "next/font/google";
 
 import { DocumentLanguage } from "@/components/language-switch";
-import { LoginProvider } from "@/components/login-provider";
 import { DocumentTheme } from "@/components/theme-switch";
 import { THEME_SCRIPT } from "@/lib/theme-script";
 
@@ -37,11 +36,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col">
-        <LoginProvider>
-          <DocumentLanguage />
-          <DocumentTheme />
-          {children}
-        </LoginProvider>
+        <DocumentLanguage />
+        <DocumentTheme />
+        {children}
       </body>
     </html>
   );

@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { LoginToken } from "@/components/login";
 import { LOGIN_ON } from "@/lib/login";
 
-// Clerk's sign-in, waitlist and profile drawn like the app: no card box, left-aligned text,
+// Clerk's sign-in, sign-up and profile drawn like the app: no card box, left-aligned text,
 // thin rules, the flat signal orange of Send for the one action, and the app's fonts. The colours
 // are the app's tokens (globals.css), so the dark ones follow the system as the app does.
 //
@@ -21,7 +21,6 @@ const FILL_COLUMN = {
 const appearance = {
   signIn: FILL_COLUMN,
   signUp: FILL_COLUMN,
-  waitlist: FILL_COLUMN,
   variables: {
     colorPrimary: "var(--signal)",
     colorPrimaryForeground: "#ffffff",
@@ -77,16 +76,12 @@ const appearance = {
 };
 
 /** The Clerk login around the app when the build has a publishable key; the app alone without
- * one. Its own pages are /sign-in, /sign-up and /waitlist. */
+ * one. Its own pages are /sign-in and /sign-up, where an invitation link lets the invited person
+ * set a password (sign-up is invite only). */
 export function LoginProvider({ children }: { children: ReactNode }) {
   if (!LOGIN_ON) return children;
   return (
-    <ClerkProvider
-      appearance={appearance}
-      signInUrl="/sign-in"
-      signUpUrl="/sign-up"
-      waitlistUrl="/waitlist"
-    >
+    <ClerkProvider appearance={appearance} signInUrl="/sign-in" signUpUrl="/sign-up">
       <LoginToken />
       {children}
     </ClerkProvider>
