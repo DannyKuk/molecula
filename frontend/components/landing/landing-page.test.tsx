@@ -93,6 +93,29 @@ describe("LandingPage", () => {
     expect(screen.getByRole("link", { name: "Zugang anfragen" })).toBeTruthy();
   });
 
+  it("links dkwebsite.de's legal notice and privacy policy", async () => {
+    await openLanding({ login: true });
+
+    expect(screen.getByRole("link", { name: "Legal notice" }).getAttribute("href")).toBe(
+      "https://dkwebsite.de/imprint",
+    );
+    expect(screen.getByRole("link", { name: "Privacy" }).getAttribute("href")).toBe(
+      "https://dkwebsite.de/privacy",
+    );
+  });
+
+  it("links dkwebsite.de's German legal pages in German", async () => {
+    localStorage.setItem(LANGUAGE_KEY, "de");
+    await openLanding({ login: true });
+
+    expect(screen.getByRole("link", { name: "Impressum" }).getAttribute("href")).toBe(
+      "https://dkwebsite.de/de/imprint",
+    );
+    expect(screen.getByRole("link", { name: "Datenschutz" }).getAttribute("href")).toBe(
+      "https://dkwebsite.de/de/privacy",
+    );
+  });
+
   it("plays the launch video from the app, muted", async () => {
     await openLanding({ login: true });
 

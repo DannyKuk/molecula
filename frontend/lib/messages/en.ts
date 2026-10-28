@@ -53,6 +53,7 @@ export const en = {
     link: "DailyMed",
     after: "and ask a pharmacist or doctor before acting on anything here.",
   },
+  legal: { notice: "Legal notice", privacy: "Privacy" },
   help: {
     open: "How to use",
     title: "How to use Molecula",

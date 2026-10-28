@@ -55,6 +55,7 @@ export const de: Messages = {
     link: "DailyMed",
     after: "und fragen Sie Ihren Arzt oder Apotheker, bevor Sie sich nach etwas von hier richten.",
   },
+  legal: { notice: "Impressum", privacy: "Datenschutz" },
   help: {
     open: "Anleitung",
     title: "So benutzen Sie Molecula",
