@@ -57,7 +57,7 @@ The label search can translate its queries before it searches (#446). `QUERY_TRA
 A deployed Molecula can sit behind a [Clerk](https://clerk.com) login, so only testers you invite use it, on your OpenRouter key ([#343](https://github.com/DannyKuk/molecula/issues/343)). Without the keys below the login is off, as for local development and the evals.
 
 1. Create an application in the [Clerk Dashboard](https://dashboard.clerk.com) with email sign-in. On its Restrictions page set the sign-up mode to **Restricted**: only people you invite can create an account ([#458](https://github.com/DannyKuk/molecula/issues/458)).
-2. Put three values in `.env`. From API keys: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` for the frontend, and the **JWKS Public Key** as `CLERK_JWT_KEY` for the backend, on one line in double quotes. Set `CORS_ORIGINS` to the frontend's address, e.g. `["https://molecula.example.com"]`: the backend accepts only tokens issued for those sites.
+2. Put three values in `.env`. From API keys: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` for the frontend, and the **JWKS Public Key** as `CLERK_JWT_KEY` for the backend, on one line in double quotes. Set `CORS_ORIGINS` to the frontend's address, e.g. `["https://molecula.dkwebsite.de"]`: the backend accepts only tokens issued for those sites.
 3. Rebuild the frontend (`docker compose up --build`): the publishable key is built into the page, so each Clerk instance (development or production) needs its own build.
 
 For production, Clerk needs a domain you own: `npx clerk@latest deploy` creates the production instance, and Clerk's Domains page lists the DNS records to add (on Cloudflare, set them to "DNS only"). The production keys replace the development ones in `.env`.
@@ -68,16 +68,16 @@ With the login on, every page needs a signed-in user, and every backend route bu
 
 ## Deploying on Coolify
 
-`docker-compose.coolify.yaml` runs the app on a server managed by [Coolify](https://coolify.io) ([#383](https://github.com/DannyKuk/molecula/issues/383)). It differs from `docker-compose.yaml` where a server needs it: no published ports (Coolify's proxy routes each domain to its container, and Coolify's own dashboard already uses port 8000), no MCP server, the store in a named volume that survives redeploys, and fixed `OFFLINE=0`, `TRUST_PROXY=1` and cloud embeddings by default, since a small server can't hold bge-m3. It uses Coolify's `exclude_from_hc` key, so plain Docker Compose won't read it.
+The live app runs at [molecula.dkwebsite.de](https://molecula.dkwebsite.de), its API at `api.molecula.dkwebsite.de`. `docker-compose.coolify.yaml` runs the app on a server managed by [Coolify](https://coolify.io) ([#383](https://github.com/DannyKuk/molecula/issues/383)). It differs from `docker-compose.yaml` where a server needs it: no published ports (Coolify's proxy routes each domain to its container, and Coolify's own dashboard already uses port 8000), no MCP server, the store in a named volume that survives redeploys, and fixed `OFFLINE=0`, `TRUST_PROXY=1` and cloud embeddings by default, since a small server can't hold bge-m3. It uses Coolify's `exclude_from_hc` key, so plain Docker Compose won't read it.
 
-1. Add two DNS A records pointing at the server, one for the app and one for its API, e.g. `molecula.example.com` and `api.molecula.example.com`.
+1. Add two DNS A records pointing at the server, one for the app and one for its API, here `molecula.dkwebsite.de` and `api.molecula.dkwebsite.de`.
 2. In Coolify: New Resource → Private Repository (with GitHub App), this repo, branch `main`, Build Pack **Docker Compose**, Docker Compose Location `/docker-compose.coolify.yaml`.
 3. Under Advanced → Build, set build arguments to **Managed manually in Dockerfile**. Otherwise Coolify adds every variable, the API keys too, as an `ARG` to the Dockerfiles, and Docker records them in the image history. The compose file passes the frontend the two values it needs at build time.
-4. Under Domains, give `frontend` `https://molecula.example.com` and `backend` `https://api.molecula.example.com`; the ports come from the file's `expose`. Coolify hands the frontend's domain to the build as `SERVICE_URL_FRONTEND`, which the preview card's links start with (#461).
-5. Under Environment Variables, fill `OPENROUTER_API_KEY`, `NEXT_PUBLIC_API_URL=https://api.molecula.example.com`, `CORS_ORIGINS=["https://molecula.example.com"]` (brackets and quotes included) and the three Clerk keys from the section above. Paste `CLERK_JWT_KEY` on one line with **Is Multiline?** off: a multiline value arrived empty in the backend, which then ran with the login off (its log says so). Fields left empty keep the defaults in `.env.example`.
+4. Under Domains, give `frontend` `https://molecula.dkwebsite.de` and `backend` `https://api.molecula.dkwebsite.de`; the ports come from the file's `expose`. Coolify hands the frontend's domain to the build as `SERVICE_URL_FRONTEND`, which the preview card's links start with (#461).
+5. Under Environment Variables, fill `OPENROUTER_API_KEY`, `NEXT_PUBLIC_API_URL=https://api.molecula.dkwebsite.de`, `CORS_ORIGINS=["https://molecula.dkwebsite.de"]` (brackets and quotes included) and the three Clerk keys from the section above. Paste `CLERK_JWT_KEY` on one line with **Is Multiline?** off: a multiline value arrived empty in the backend, which then ran with the login off (its log says so). Fields left empty keep the defaults in `.env.example`.
 6. Deploy. The first deploy downloads the store into the volume and builds the cloud index from it (about 3 minutes and $0.56, see above); later deploys reuse both. The build needs outgoing HTTP (port 80) for Debian's packages, and the GitHub App needs the server's clock in sync (NTP, outgoing UDP 123).
 
-Check the login after a deploy: `https://api.molecula.example.com/stats` must answer 401.
+Check the login after a deploy: `https://api.molecula.dkwebsite.de/stats` must answer 401, and `https://molecula.dkwebsite.de/robots.txt` must answer 200 with the robots file, not a redirect to the sign-in page (#463).
 
 ## MCP server
 
