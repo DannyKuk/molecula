@@ -60,6 +60,9 @@ services:
         # The backend's public address, as the browser reaches it.
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?}
         NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}
+        # The frontend's public address, which the links of a shared link's preview card start with.
+        # Coolify fills SERVICE_URL_FRONTEND from the domain given to this service.
+        SITE_URL: ${SERVICE_URL_FRONTEND:?}
     expose:
       - "3000"
     environment:

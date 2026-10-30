@@ -67,10 +67,16 @@ describe("fetchWithLogin", () => {
 });
 
 describe("isPublicPage", () => {
-  it("lets a visitor who isn't signed in open the landing page and the login's pages", async () => {
+  it("lets a visitor who isn't signed in open the landing page, the preview card and the login's pages", async () => {
     const { isPublicPage } = await loadLogin("pk_test_x");
 
-    for (const page of ["/about", "/sign-in", "/sign-in/factor-one", "/sign-up"]) {
+    for (const page of [
+      "/about",
+      "/opengraph-image",
+      "/sign-in",
+      "/sign-in/factor-one",
+      "/sign-up",
+    ]) {
       expect(isPublicPage(page)).toBe(true);
     }
   });

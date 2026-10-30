@@ -49,3 +49,32 @@ describe("the layouts", () => {
     expect(clerkProvider).toHaveBeenCalledOnce();
   });
 });
+
+describe("the preview card", () => {
+  it("is a large card whose links start with SITE_URL", async () => {
+    vi.stubEnv("SITE_URL", "https://molecula.example.com");
+    vi.resetModules();
+
+    const { metadata } = await import("./layout");
+
+    expect(String(metadata.metadataBase)).toBe("https://molecula.example.com/");
+    expect(metadata.openGraph).toMatchObject({ title: "Molecula", type: "website" });
+    expect(metadata.twitter).toMatchObject({ card: "summary_large_image" });
+  });
+
+  it("serves a 1200 × 630 PNG with its alt text", async () => {
+    const card = await import("./opengraph-image");
+
+    const response = await card.default();
+    const png = Buffer.from(await response.arrayBuffer());
+
+    expect(response.headers.get("Content-Type")).toBe("image/png");
+    // A PNG's width and height are the first two numbers of its IHDR chunk, at bytes 16 and 20.
+    expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([
+      card.size.width,
+      card.size.height,
+    ]);
+    expect(card.size).toEqual({ width: 1200, height: 630 });
+    expect(card.alt).toContain("Imatinib");
+  });
+});

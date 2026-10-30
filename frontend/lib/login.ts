@@ -5,13 +5,17 @@ export const LOGIN_ON = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 /** The landing page, which `/` shows a visitor who isn't signed in (#455). */
 export const LANDING_PAGE = "/about";
 
+/** The picture of the preview card a shared link shows (#461), which the apps fetch signed out. */
+const PREVIEW_CARD = "/opengraph-image";
+
 const LOGIN_PAGES = ["/sign-in", "/sign-up"];
 
-/** Whether a visitor who isn't signed in may open `pathname`: the landing page and the login's
- * own pages, whose catch-all routes go deeper. */
+/** Whether a visitor who isn't signed in may open `pathname`: the landing page, the preview card's
+ * picture and the login's own pages, whose catch-all routes go deeper. */
 export function isPublicPage(pathname: string): boolean {
   return (
     pathname === LANDING_PAGE ||
+    pathname === PREVIEW_CARD ||
     LOGIN_PAGES.some((page) => pathname === page || pathname.startsWith(`${page}/`))
   );
 }
