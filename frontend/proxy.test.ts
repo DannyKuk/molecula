@@ -48,4 +48,13 @@ describe("the login gate", () => {
     expect(rewrite).toBeNull();
     expect(protect).not.toHaveBeenCalled();
   });
+
+  it("lets search engines read the robots file and the sitemap signed out", async () => {
+    for (const file of ["/robots.txt", "/sitemap.xml"]) {
+      const { rewrite, protect } = await visit(file, { signedIn: false });
+
+      expect(rewrite).toBeNull();
+      expect(protect).not.toHaveBeenCalled();
+    }
+  });
 });

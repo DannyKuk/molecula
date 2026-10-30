@@ -3,6 +3,7 @@ import { Inter_Tight, JetBrains_Mono } from "next/font/google";
 
 import { DocumentLanguage } from "@/components/language-switch";
 import { DocumentTheme } from "@/components/theme-switch";
+import { SITE_URL } from "@/lib/site";
 import { THEME_SCRIPT } from "@/lib/theme-script";
 
 import "./globals.css";
@@ -23,9 +24,9 @@ const DESCRIPTION =
   "A medicines chatbot that answers from FDA drug labels and shows drugs binding in 3D.";
 
 // The preview card a shared link shows (#461). Its picture comes from `opengraph-image.tsx` beside
-// this file, and its address starts with SITE_URL, which the build needs: without it Next uses localhost.
+// this file, and its address starts with SITE_URL.
 export const metadata: Metadata = {
-  metadataBase: process.env.SITE_URL ? new URL(process.env.SITE_URL) : undefined,
+  metadataBase: SITE_URL,
   title: "Molecula",
   description: DESCRIPTION,
   openGraph: { title: "Molecula", description: DESCRIPTION, siteName: "Molecula", type: "website" },

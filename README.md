@@ -7,6 +7,8 @@
 
 <p align="center"><b>A medicines chatbot that answers with real 3D molecular structures.</b></p>
 
+<p align="center"><a href="https://molecula.dkwebsite.de">molecula.dkwebsite.de</a> · sign-in by invitation</p>
+
 <p align="center">
   <a href="LICENSE"><img alt="Code: MIT" src="https://img.shields.io/badge/code-MIT-blue"></a>
   <a href="#data-sources-and-licences"><img alt="Data: CC BY-SA 3.0" src="https://img.shields.io/badge/data-CC%20BY--SA%203.0-lightgrey"></a>
