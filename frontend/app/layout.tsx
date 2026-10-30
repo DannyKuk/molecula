@@ -19,9 +19,17 @@ const jetBrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+const DESCRIPTION =
+  "A medicines chatbot that answers from FDA drug labels and shows drugs binding in 3D.";
+
+// The preview card a shared link shows (#461). Its picture comes from `opengraph-image.tsx` beside
+// this file, and its address starts with SITE_URL, which the build needs: without it Next uses localhost.
 export const metadata: Metadata = {
+  metadataBase: process.env.SITE_URL ? new URL(process.env.SITE_URL) : undefined,
   title: "Molecula",
-  description: "A medicines chatbot grounded in FDA drug labels and chemistry data.",
+  description: DESCRIPTION,
+  openGraph: { title: "Molecula", description: DESCRIPTION, siteName: "Molecula", type: "website" },
+  twitter: { card: "summary_large_image", title: "Molecula", description: DESCRIPTION },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

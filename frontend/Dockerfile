@@ -10,8 +10,11 @@ WORKDIR /app
 ARG NEXT_PUBLIC_API_URL=http://localhost:8000
 # Empty builds the app without the Clerk login (#343).
 ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+# The app's own public address, which the links of the preview card start with (#461).
+ARG SITE_URL=http://localhost:3000
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \
+    SITE_URL=$SITE_URL \
     NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

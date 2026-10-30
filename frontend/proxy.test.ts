@@ -41,4 +41,11 @@ describe("the login gate", () => {
     expect((await visit("/drugs", { signedIn: false })).protect).toHaveBeenCalledOnce();
     expect((await visit("/about", { signedIn: false })).protect).not.toHaveBeenCalled();
   });
+
+  it("lets the apps that build a link's preview card fetch its picture signed out", async () => {
+    const { rewrite, protect } = await visit("/opengraph-image", { signedIn: false });
+
+    expect(rewrite).toBeNull();
+    expect(protect).not.toHaveBeenCalled();
+  });
 });
