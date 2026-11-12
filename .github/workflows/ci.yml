@@ -1,10 +1,15 @@
 name: CI
 
-# Manual only: GitHub Free's Actions minutes for private repos run out fast,
-# and every PR is already checked locally before it's opened. Start it from the
-# Actions tab ("Run workflow", pick the branch) when a PR needs a second, clean check.
+# Standard GitHub-hosted runners are free on a public repo, so keep every job on
+# one: larger runners are billed even here (#465).
 on:
+  pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -28,7 +33,7 @@ jobs:
           echo "docker=$([ -f docker-compose.yaml ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
   backend:
-    name: Backend (ruff, pytest)
+    name: Backend (ruff, pytest, docs links)
     needs: detect
     if: needs.detect.outputs.backend == 'true'
     runs-on: ubuntu-latest
@@ -44,9 +49,10 @@ jobs:
       - run: uv sync --locked
       - run: uv run ruff check .
       - run: uv run pytest
+      - run: uv run python ../scripts/check_docs.py
 
   frontend:
-    name: Frontend (format, lint, test, build)
+    name: Frontend (format, lint, typecheck, test, build)
     needs: detect
     if: needs.detect.outputs.frontend == 'true'
     runs-on: ubuntu-latest
@@ -64,6 +70,7 @@ jobs:
       - run: npm ci
       - run: npm run format:check
       - run: npm run lint
+      - run: npm run typecheck
       - run: npm test
       - run: npm run build
 

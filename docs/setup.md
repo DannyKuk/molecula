@@ -28,7 +28,7 @@ npm run dev                       # http://localhost:3000
 npm run format:check && npm run lint && npm run typecheck && npm test && npm run build
 ```
 
-`scripts/dev.ps1 start` starts both on Windows, with pid and log files in `.dev/` (`stop` and `status` too; `-Port 3001` runs a second pair on 3001 and 8001). `git config core.hooksPath .githooks` turns on the pre-commit hook, which runs the format, lint and type checks and `scripts/check_docs.py`.
+`scripts/dev.ps1 start` starts both on Windows, with pid and log files in `.dev/` (`stop` and `status` too; `-Port 3001` runs a second pair on 3001 and 8001). `git config core.hooksPath .githooks` turns on the pre-commit hook, which runs the format, lint and type checks and `scripts/check_docs.py`. CI (`.github/workflows/ci.yml`) runs these checks, the tests, the frontend build and `docker compose build` on every pull request and push to `main`.
 
 ## Label update
 

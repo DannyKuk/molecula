@@ -71,7 +71,7 @@ Dependencies point one way: `api` → `guard` → `agent` → `tools` → `rag` 
 5. Follow-ups go into new issues using the issue forms. Issues must stand alone: point at code (file + function), `docs/data-plan.md` and other issues.
 6. **A PR that makes or changes a design decision updates the docs in the same PR.** A big question with evidence gets a topic doc in `docs/decisions/` (`> **Answer:**`, Question, What we tried, Result, What it shows, Decided along the way, Limits, Reproduce; see `docs/decisions/local-store.md`), listed in the table at the end of `docs/architecture.md`. A small choice gets a bullet with its reason and issue in the matching `docs/design/<area>.md` page; if it changes the overview, the one-line bullet under "Key design choices" in `docs/architecture.md` changes too. Keep `docs/architecture.md` short: the detail goes to `docs/design/`. Only real sources and measured numbers.
 
-There is no automatic CI. `.github/workflows/ci.yml` runs the same checks on a clean machine when started by hand from the Actions tab.
+CI (`.github/workflows/ci.yml`) runs the same checks on a clean machine for every pull request and every push to `main`, and can be started by hand from the Actions tab. It is free because the repo is public and the jobs use standard GitHub-hosted runners; keep them on those, since larger runners are billed (#465). A green CI run doesn't replace running the checks yourself before the PR.
 
 ### Splitting issues
 
