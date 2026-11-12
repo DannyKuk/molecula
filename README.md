@@ -10,6 +10,7 @@
 <p align="center"><a href="https://molecula.dkwebsite.de">molecula.dkwebsite.de</a> · sign-in by invitation</p>
 
 <p align="center">
+  <a href="https://github.com/DannyKuk/molecula/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/DannyKuk/molecula/actions/workflows/ci.yml/badge.svg?branch=main"></a>
   <a href="LICENSE"><img alt="Code: MIT" src="https://img.shields.io/badge/code-MIT-blue"></a>
   <a href="#data-sources-and-licences"><img alt="Data: CC BY-SA 3.0" src="https://img.shields.io/badge/data-CC%20BY--SA%203.0-lightgrey"></a>
   <a href="backend/pyproject.toml"><img alt="Python 3.14" src="https://img.shields.io/badge/python-3.14-3776AB?logo=python&logoColor=white"></a>
